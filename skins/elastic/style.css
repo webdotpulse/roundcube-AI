@@ -5,495 +5,487 @@
    Overlay
    ============================ */
 #lpai-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(22, 27, 29, 0.5);
-    z-index: 9998;
+    position: fixed !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.65) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 9998 !important;
+    animation: lpai-fade-in 0.2s ease;
+}
+
+@keyframes lpai-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* ============================
-   Panel (main modal)
+   Panel (Gemini Executive Modal Dialog)
    ============================ */
 #lpai-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 520px;
-    max-width: 95vw;
-    max-height: 85vh;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 0.3rem;
-    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 660px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: calc(100vh - 48px) !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(229, 231, 235, 0.9) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(147, 51, 234, 0.08) !important;
+    z-index: 10000 !important;
     display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    font-family: inherit;
-    font-size: 14px;
-    color: #2c363a;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    font-size: 14px !important;
+    color: #1f2937 !important;
+    box-sizing: border-box !important;
+    animation: lpai-modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
-/* ============================
-   Header
-   ============================ */
+#lpai-panel[style*="display: none"],
+#lpai-panel[style*="display:none"] {
+    display: none !important;
+}
+
+#lpai-overlay[style*="display: none"],
+#lpai-overlay[style*="display:none"] {
+    display: none !important;
+}
+
+#lpai-preview[style*="display: none"],
+#lpai-preview[style*="display:none"] {
+    display: none !important;
+}
+
+#lpai-loading[style*="display: none"],
+#lpai-loading[style*="display:none"] {
+    display: none !important;
+}
+
+#lpai-cancel[style*="display: none"],
+#lpai-cancel[style*="display:none"],
+#lpai-copy[style*="display: none"],
+#lpai-copy[style*="display:none"],
+#lpai-apply[style*="display: none"],
+#lpai-apply[style*="display:none"],
+#lpai-generate[style*="display: none"],
+#lpai-generate[style*="display:none"] {
+    display: none !important;
+}
+
+@keyframes lpai-modal-pop {
+    0% { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+    100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Modal Header */
 #lpai-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 16px;
-    background: #f4f4f4;
-    border-bottom: 1px solid #ddd;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 16px 22px !important;
+    background: #fafafa !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.lpai-title-wrapper {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.lpai-gemini-sparkle {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%) !important;
+    border: 1px solid #e9d5ff !important;
+    color: #9333ea !important;
+    box-shadow: 0 2px 5px rgba(147, 51, 234, 0.12) !important;
+    flex-shrink: 0 !important;
+}
+
+.lpai-gemini-sparkle svg {
+    width: 20px !important;
+    height: 20px !important;
+    color: #9333ea !important;
 }
 
 #lpai-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: #2c363a;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #111827 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.lpai-model-tag {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 2px 8px !important;
+    border-radius: 12px !important;
+    background: #f3e8ff !important;
+    border: 1px solid #d8b4fe !important;
+    color: #7e22ce !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
 }
 
 #lpai-close {
-    background: none;
-    border: 1px solid transparent;
-    color: #8b9fa7;
-    font-size: 20px;
-    width: 30px;
-    height: 30px;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.15s;
+    background: #f3f4f6 !important;
+    border: 1px solid transparent !important;
+    color: #6b7280 !important;
+    font-size: 22px !important;
+    line-height: 1 !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+    outline: none !important;
+    flex-shrink: 0 !important;
 }
 
 #lpai-close:hover {
-    background: #e9ecef;
-    color: #2c363a;
-    border-color: #ced4da;
+    background: #fee2e2 !important;
+    color: #ef4444 !important;
+    transform: rotate(90deg) !important;
 }
 
+/* Modal Body */
 #lpai-body {
-    padding: 14px 16px;
-    overflow-y: auto;
+    padding: 20px 22px !important;
+    overflow-y: auto !important;
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    box-sizing: border-box !important;
 }
 
-/* ============================
-   Provider Selector
-   ============================ */
-#lpai-provider-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.lpai-provider-btn {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 14px;
-    background: #fff;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-.lpai-provider-btn:hover {
-    border-color: #37beff;
-    background: #f8f9fa;
-}
-
-.lpai-provider-btn.active {
-    border-color: #37beff;
-    background: #fff;
-    box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.25);
-}
-
-.lpai-provider-icon {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    color: #8b9fa7;
-    transition: color 0.15s;
-}
-
-.lpai-provider-btn.active .lpai-provider-icon {
-    color: #37beff;
-}
-
-.lpai-provider-btn[data-provider-id="openai"] .lpai-provider-icon { color: #10a37f; }
-.lpai-provider-btn[data-provider-id="openai"].active .lpai-provider-icon { color: #10a37f; }
-.lpai-provider-btn[data-provider-id="xai"] .lpai-provider-icon { color: #2c363a; }
-.lpai-provider-btn[data-provider-id="xai"].active .lpai-provider-icon { color: #2c363a; }
-.lpai-provider-btn[data-provider-id="anthropic"] .lpai-provider-icon { color: #d4a574; }
-.lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon { color: #c96442; }
-.lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon { color: #1a73e8; }
-.lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon { color: #1a73e8; }
-
-.lpai-provider-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-    transition: color 0.15s;
-}
-
-.lpai-provider-btn.active .lpai-provider-name { color: #2c363a; }
-
-.lpai-provider-btn.active::after { display: none; }
-
-/* ============================
-   Action buttons
-   ============================ */
+/* Actions Segmented Tab Bar */
 #lpai-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
+    display: flex !important;
+    background: #f1f5f9 !important;
+    padding: 4px !important;
+    border-radius: 12px !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
 .lpai-action-btn {
-    padding: 6px 12px;
-    border: 1px solid #ced4da;
-    background: #fff;
-    color: #555;
-    border-radius: 0.25rem;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
+    flex: 1 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 8px 12px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    white-space: nowrap !important;
+    outline: none !important;
+    text-decoration: none !important;
 }
 
 .lpai-action-btn:hover {
-    border-color: #37beff;
-    color: #37beff;
-    background: #f8f9fa;
+    color: #1e293b !important;
+    background: rgba(255, 255, 255, 0.6) !important;
 }
 
 .lpai-action-btn.active {
-    background: #37beff;
-    color: #fff;
-    border-color: #37beff;
+    background: #ffffff !important;
+    color: #7e22ce !important;
+    font-weight: 700 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06) !important;
 }
 
-.lpai-action-scam {
-    border-color: #e0c349;
-    color: #856404;
-    background: #fff9e6;
+.lpai-action-btn svg {
+    flex-shrink: 0 !important;
 }
 
-.lpai-action-scam:hover {
-    border-color: #d4a90a !important;
-    color: #856404 !important;
-    background: #fff3cd !important;
+/* 3-Column Controls Row */
+#lpai-controls {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 12px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
-.lpai-action-scam.active {
-    background: #e0a800 !important;
-    color: #fff !important;
-    border-color: #d39e00 !important;
+.lpai-control-group {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 5px !important;
 }
 
-/* ============================
-   Option button groups
-   ============================ */
-.lpai-btn-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+.lpai-control-group label {
+    display: block !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #6b7280 !important;
+    margin: 0 !important;
 }
 
-.lpai-group-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #8b9fa7;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    min-width: 68px;
+select.lpai-select,
+#lpai-model-select,
+#lpai-tone-select,
+#lpai-lang-select {
+    width: 100% !important;
+    height: 38px !important;
+    padding: 6px 30px 6px 12px !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    background-color: #ffffff !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 8px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 16px 16px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+    box-sizing: border-box !important;
+    outline: none !important;
 }
 
-.lpai-opt-btn {
-    padding: 4px 10px;
-    border: 1px solid #ced4da;
-    background: #fff;
-    color: #555;
-    border-radius: 0.25rem;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
+select.lpai-select:focus,
+#lpai-model-select:focus,
+#lpai-tone-select:focus,
+#lpai-lang-select:focus {
+    border-color: #9333ea !important;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15) !important;
 }
 
-.lpai-opt-btn:hover {
-    border-color: #37beff;
-    color: #37beff;
-    background: #f8f9fa;
+/* Prompt Input Textarea */
+#lpai-input-wrapper {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
 }
 
-.lpai-opt-btn.active {
-    background: #37beff;
-    color: #fff;
-    border-color: #37beff;
-}
-
-/* ============================
-   Input textarea
-   ============================ */
 #lpai-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    resize: vertical;
-    min-height: 56px;
-    font-family: inherit;
-    color: #2c363a;
-    transition: border-color 0.15s, box-shadow 0.15s;
-    box-sizing: border-box;
+    width: 100% !important;
+    min-height: 96px !important;
+    max-height: 180px !important;
+    padding: 12px 14px !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    font-family: inherit !important;
+    line-height: 1.5 !important;
+    color: #111827 !important;
+    background: #fafafa !important;
+    resize: vertical !important;
+    box-sizing: border-box !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
 }
 
 #lpai-input:focus {
-    outline: none;
-    border-color: #37beff;
-    box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.25);
+    background: #ffffff !important;
+    border-color: #9333ea !important;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.12) !important;
 }
 
-#lpai-input::placeholder { color: #aaa; }
-
-/* ============================
-   Buttons
-   ============================ */
-#lpai-buttons {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
+.lpai-input-hint {
+    font-size: 11.5px !important;
+    color: #9ca3af !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    padding: 0 2px !important;
 }
 
-#lpai-submit {
-    flex: 1;
-    padding: 8px 18px;
-    background: #37beff;
-    color: #fff;
-    border: 1px solid #37beff;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-#lpai-submit:hover { background: #1eb6ff; border-color: #13b2ff; }
-#lpai-submit:focus { box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.5); }
-#lpai-submit:disabled { opacity: 0.65; cursor: not-allowed; }
-
-#lpai-apply {
-    padding: 8px 18px;
-    background: #41b849;
-    color: #fff;
-    border: 1px solid #41b849;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-#lpai-apply:hover { background: #38a840; border-color: #35a03d; }
-
-#lpai-copy {
-    padding: 8px 14px;
-    background: #8b9fa7;
-    color: #fff;
-    border: 1px solid #8b9fa7;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-#lpai-copy:hover { background: #7c939c; border-color: #778e98; }
-
-#lpai-undo {
-    padding: 8px 14px;
-    background: #fff;
-    color: #555;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-#lpai-undo:hover { background: #f8f9fa; border-color: #adb5bd; }
-
-/* ============================
-   Preview
-   ============================ */
+/* Preview Result Box */
 #lpai-preview {
-    margin-top: 12px;
-    border: 1px solid #ddd;
-    border-radius: 0.25rem;
-    overflow: hidden;
+    border: 1.5px solid #e9d5ff !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    overflow: hidden !important;
+    animation: lpai-hub-slide 0.2s ease !important;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.06) !important;
 }
 
-#lpai-preview-label {
-    padding: 6px 12px;
-    background: #f4f4f4;
-    font-size: 11px;
-    font-weight: 600;
-    color: #8b9fa7;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    border-bottom: 1px solid #ddd;
+#lpai-preview-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 10px 14px !important;
+    background: #faf5ff !important;
+    border-bottom: 1px solid #f3e8ff !important;
+    font-size: 12.5px !important;
+    font-weight: 600 !important;
+    color: #7e22ce !important;
 }
 
-#lpai-preview-text {
-    padding: 12px;
-    font-size: 14px;
-    line-height: 1.6;
-    color: #2c363a;
-    max-height: 220px;
-    overflow-y: auto;
-    word-wrap: break-word;
+.lpai-preview-title {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
 }
 
-#lpai-preview-text strong { font-weight: 600; }
-#lpai-preview-text em { font-style: italic; }
-#lpai-preview-text ul { margin: 4px 0; padding-left: 20px; }
-#lpai-preview-text li { margin: 2px 0; }
-
-/* ============================
-   Context Preview
-   ============================ */
-#lpai-context-preview {
-    margin-bottom: 8px;
-    border: 1px solid #ddd;
-    border-radius: 0.25rem;
-    overflow: hidden;
+#lpai-preview-content {
+    padding: 14px 16px !important;
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+    color: #1f2937 !important;
+    max-height: 220px !important;
+    overflow-y: auto !important;
+    background: #ffffff !important;
 }
 
-.lpai-context-toggle {
-    padding: 6px 12px;
-    font-size: 11px;
-    font-weight: 600;
-    color: #8b9fa7;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    cursor: pointer;
-    background: #f4f4f4;
-    user-select: none;
-    transition: background 0.15s;
-}
-
-.lpai-context-toggle:hover { background: #eee; }
-
-.lpai-context-body {
-    padding: 8px 12px;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #555;
-    max-height: 150px;
-    overflow-y: auto;
-    border-top: 1px solid #ddd;
-}
-
-.lpai-context-body hr { border: none; border-top: 1px solid #eee; margin: 6px 0; }
-
-/* ============================
-   Templates
-   ============================ */
-.lpai-template-select {
-    padding: 4px 8px;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    font-size: 12px;
-    font-family: inherit;
-    color: #2c363a;
-    background: #fff;
-    min-width: 140px;
-    max-width: 200px;
-}
-
-.lpai-template-select:focus {
-    outline: none;
-    border-color: #37beff;
-    box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.25);
-}
-
-/* ============================
-   Draft Button
-   ============================ */
-#lpai-draft {
-    padding: 8px 14px;
-    background: #6c757d;
-    color: #fff;
-    border: 1px solid #6c757d;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: inherit;
-}
-
-#lpai-draft:hover { background: #5a6268; border-color: #545b62; }
-
-/* ============================
-   Loading
-   ============================ */
 #lpai-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 18px;
-    color: #37beff;
-    font-size: 14px;
-    font-weight: 500;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
+    padding: 14px !important;
+    color: #7e22ce !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
 }
 
-.lpai-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #ddd;
-    border-top-color: #37beff;
-    border-radius: 50%;
-    animation: lpai-spin 0.7s linear infinite;
+/* Modal Footer */
+#lpai-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 14px 22px !important;
+    background: #fafafa !important;
+    border-top: 1px solid #e5e7eb !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
 }
 
-@keyframes lpai-spin {
-    to { transform: rotate(360deg); }
+#lpai-footer-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
 }
 
-/* ============================
+.lpai-cost-tag {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #6b7280 !important;
+    background: #f3f4f6 !important;
+    padding: 3px 8px !important;
+    border-radius: 6px !important;
+}
+
+#lpai-footer-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.lpai-btn-generate {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 9px 20px !important;
+    background: linear-gradient(135deg, #9333ea 0%, #7e22ce 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-shadow: 0 2px 6px rgba(147, 51, 234, 0.35) !important;
+    outline: none !important;
+}
+
+.lpai-btn-generate:hover {
+    box-shadow: 0 4px 14px rgba(147, 51, 234, 0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+.lpai-btn-apply {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 9px 18px !important;
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 9px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+}
+
+.lpai-btn-apply:hover {
+    background: #15803d !important;
+}
+
+.lpai-btn-secondary {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    padding: 8px 16px !important;
+    background: #ffffff !important;
+    color: #374151 !important;
+    border: 1.5px solid #d1d5db !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    outline: none !important;
+}
+
+.lpai-btn-secondary:hover {
+    background: #f3f4f6 !important;
+    border-color: #9ca3af !important;
+}
+
+/* ============================================================
    Purple Gemini Sidebar Icon Button (#taskmenu)
-   ============================ */
+   ============================================================ */
 #taskmenu a.button-gemini-ai,
 #layout-menu #taskmenu a.button-gemini-ai,
 .button-gemini-ai {
-    display: block;
-    text-align: center;
-    padding: 1rem 0;
+    display: block !important;
+    text-align: center !important;
+    padding: 0.85rem 0 !important;
     color: #9333ea !important;
-    text-decoration: none;
-    cursor: pointer;
-    position: relative;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none !important;
+    cursor: pointer !important;
+    position: relative !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 #taskmenu a.button-gemini-ai:before,
@@ -501,29 +493,31 @@
     display: none !important;
 }
 
-#taskmenu a.button-gemini-ai .button-inner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
+#taskmenu a.button-gemini-ai .inner,
+#layout-menu #taskmenu a.button-gemini-ai .inner {
+    display: none !important;
 }
 
-#taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon {
-    width: 22px;
-    height: 22px;
-    color: #9333ea;
-    display: block;
-    margin: 0 auto;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    filter: drop-shadow(0 1px 2px rgba(147, 51, 234, 0.25));
+#taskmenu a.button-gemini-ai svg,
+#layout-menu #taskmenu a.button-gemini-ai svg,
+.button-gemini-ai svg {
+    width: 24px !important;
+    height: 24px !important;
+    color: #9333ea !important;
+    fill: currentColor !important;
+    display: block !important;
+    margin: 0 auto !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    filter: drop-shadow(0 1px 3px rgba(147, 51, 234, 0.3)) !important;
 }
 
-#taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon,
-#taskmenu a.button-gemini-ai.active svg.lpai-sidebar-gemini-icon {
-    color: #a855f7;
-    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.75));
-    transform: scale(1.15);
+#taskmenu a.button-gemini-ai:hover svg,
+#taskmenu a.button-gemini-ai.active svg,
+#layout-menu #taskmenu a.button-gemini-ai:hover svg,
+#layout-menu #taskmenu a.button-gemini-ai.active svg {
+    color: #a855f7 !important;
+    filter: drop-shadow(0 0 10px rgba(168, 85, 247, 0.85)) !important;
+    transform: scale(1.15) !important;
 }
 
 #taskmenu a.button-gemini-ai:hover {
@@ -1029,130 +1023,119 @@ body.xskin #lpai-undo-bar {
    ============================ */
 html.dark-mode #lpai-panel,
 .dark-mode #lpai-panel {
-    background: #21292c;
-    border-color: #4d6066;
-    color: #c5d1d3;
+    background: #1e1e24 !important;
+    border-color: #374151 !important;
+    color: #f3f4f6 !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
 }
 
 html.dark-mode #lpai-header,
-.dark-mode #lpai-header {
-    background: #2c373a;
-    border-bottom-color: #4d6066;
+.dark-mode #lpai-header,
+html.dark-mode #lpai-footer,
+.dark-mode #lpai-footer {
+    background: #18181b !important;
+    border-color: #27272a !important;
 }
 
 html.dark-mode #lpai-title,
-.dark-mode #lpai-title { color: #c5d1d3; }
+.dark-mode #lpai-title {
+    color: #f3f4f6 !important;
+}
 
 html.dark-mode #lpai-close,
-.dark-mode #lpai-close { color: #7c949c; }
+.dark-mode #lpai-close {
+    background: #27272a !important;
+    color: #9ca3af !important;
+}
 
 html.dark-mode #lpai-close:hover,
-.dark-mode #lpai-close:hover { background: #374549; color: #c5d1d3; border-color: #4d6066; }
+.dark-mode #lpai-close:hover {
+    background: #7f1d1d !important;
+    color: #fca5a5 !important;
+}
 
-html.dark-mode #lpai-overlay,
-.dark-mode #lpai-overlay { background: rgba(0, 0, 0, 0.7); }
-
-html.dark-mode .lpai-provider-btn,
-.dark-mode .lpai-provider-btn { background: #21292c; border-color: #4d6066; }
-
-html.dark-mode .lpai-provider-btn:hover,
-.dark-mode .lpai-provider-btn:hover { background: #2c373a; border-color: #7c949c; }
-
-html.dark-mode .lpai-provider-btn.active,
-.dark-mode .lpai-provider-btn.active { border-color: #37beff; box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.15); background: #2c373a; }
-
-html.dark-mode .lpai-provider-name,
-.dark-mode .lpai-provider-name { color: #8b9fa7; }
-
-html.dark-mode .lpai-provider-btn.active .lpai-provider-name,
-.dark-mode .lpai-provider-btn.active .lpai-provider-name { color: #c5d1d3; }
-
-html.dark-mode .lpai-provider-btn[data-provider-id="xai"] .lpai-provider-icon,
-.dark-mode .lpai-provider-btn[data-provider-id="xai"] .lpai-provider-icon { color: #c5d1d3; }
-
-html.dark-mode .lpai-provider-btn[data-provider-id="anthropic"] .lpai-provider-icon,
-.dark-mode .lpai-provider-btn[data-provider-id="anthropic"] .lpai-provider-icon { color: #d4a574; }
-
-html.dark-mode .lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon,
-.dark-mode .lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon { color: #e8a06a; }
-
-html.dark-mode .lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon,
-.dark-mode .lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon { color: #8ab4f8; }
-
-html.dark-mode .lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon,
-.dark-mode .lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon { color: #8ab4f8; }
+html.dark-mode #lpai-actions,
+.dark-mode #lpai-actions {
+    background: #27272a !important;
+}
 
 html.dark-mode .lpai-action-btn,
-.dark-mode .lpai-action-btn { background: #2c373a; border-color: #4d6066; color: #8b9fa7; }
+.dark-mode .lpai-action-btn {
+    color: #9ca3af !important;
+}
 
 html.dark-mode .lpai-action-btn:hover,
-.dark-mode .lpai-action-btn:hover { background: #374549; border-color: #37beff; color: #37beff; }
+.dark-mode .lpai-action-btn:hover {
+    color: #f3f4f6 !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+}
 
 html.dark-mode .lpai-action-btn.active,
-.dark-mode .lpai-action-btn.active { background: #37beff; color: #fff; border-color: #37beff; }
+.dark-mode .lpai-action-btn.active {
+    background: #3b0764 !important;
+    color: #d8b4fe !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
 
-html.dark-mode .lpai-action-scam,
-.dark-mode .lpai-action-scam { background: #3d3200; border-color: #665200; color: #ffd452; }
-
-html.dark-mode .lpai-action-scam.active,
-.dark-mode .lpai-action-scam.active { background: #e0a800 !important; color: #fff !important; border-color: #d39e00 !important; }
-
-html.dark-mode .lpai-opt-btn,
-.dark-mode .lpai-opt-btn { background: #2c373a; border-color: #4d6066; color: #8b9fa7; }
-
-html.dark-mode .lpai-opt-btn:hover,
-.dark-mode .lpai-opt-btn:hover { background: #374549; border-color: #37beff; color: #37beff; }
-
-html.dark-mode .lpai-opt-btn.active,
-.dark-mode .lpai-opt-btn.active { background: #37beff; color: #fff; border-color: #37beff; }
-
-html.dark-mode .lpai-group-label,
-.dark-mode .lpai-group-label { color: #5e7278; }
-
+html.dark-mode select.lpai-select,
+.dark-mode select.lpai-select,
+html.dark-mode #lpai-model-select,
+.dark-mode #lpai-model-select,
+html.dark-mode #lpai-tone-select,
+.dark-mode #lpai-tone-select,
+html.dark-mode #lpai-lang-select,
+.dark-mode #lpai-lang-select,
 html.dark-mode #lpai-input,
-.dark-mode #lpai-input { background: #21292c; border-color: #4d6066; color: #c5d1d3; }
-
-html.dark-mode #lpai-input:focus,
-.dark-mode #lpai-input:focus { border-color: #37beff; box-shadow: 0 0 0 0.2rem rgba(55, 190, 255, 0.15); }
+.dark-mode #lpai-input {
+    background-color: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #f3f4f6 !important;
+}
 
 html.dark-mode #lpai-preview,
-.dark-mode #lpai-preview { border-color: #4d6066; }
+.dark-mode #lpai-preview {
+    border-color: #581c87 !important;
+    background: #18181b !important;
+}
 
-html.dark-mode #lpai-preview-label,
-.dark-mode #lpai-preview-label { background: #2c373a; color: #7c949c; border-bottom-color: #4d6066; }
+html.dark-mode #lpai-preview-header,
+.dark-mode #lpai-preview-header {
+    background: #2e1065 !important;
+    border-color: #3b0764 !important;
+    color: #e9d5ff !important;
+}
 
-html.dark-mode #lpai-preview-text,
-.dark-mode #lpai-preview-text { color: #c5d1d3; }
+html.dark-mode #lpai-preview-content,
+.dark-mode #lpai-preview-content {
+    background: #18181b !important;
+    color: #f3f4f6 !important;
+}
 
-html.dark-mode #lpai-footer,
-.dark-mode #lpai-footer { border-top-color: #374549; }
+html.dark-mode .lpai-btn-secondary,
+.dark-mode .lpai-btn-secondary {
+    background: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #f3f4f6 !important;
+}
 
-html.dark-mode #lpai-powered,
-.dark-mode #lpai-powered { color: #5e7278; }
+html.dark-mode .lpai-btn-secondary:hover,
+.dark-mode .lpai-btn-secondary:hover {
+    background: #3f3f46 !important;
+}
 
-html.dark-mode #lpai-powered:hover,
-.dark-mode #lpai-powered:hover { background: #2c373a; color: #37beff; }
+html.dark-mode #taskmenu a.button-gemini-ai svg,
+.dark-mode #taskmenu a.button-gemini-ai svg,
+html.dark-mode #layout-menu #taskmenu a.button-gemini-ai svg {
+    color: #c084fc !important;
+    filter: drop-shadow(0 0 6px rgba(192, 132, 252, 0.45)) !important;
+}
 
-html.dark-mode #lpai-undo-bar,
-.dark-mode #lpai-undo-bar { background: #161b1d; }
-
-html.dark-mode #lpai-context-preview,
-.dark-mode #lpai-context-preview { border-color: #4d6066; }
-
-html.dark-mode .lpai-context-toggle,
-.dark-mode .lpai-context-toggle { background: #2c373a; color: #7c949c; }
-
-html.dark-mode .lpai-context-toggle:hover,
-.dark-mode .lpai-context-toggle:hover { background: #374549; }
-
-html.dark-mode .lpai-context-body,
-.dark-mode .lpai-context-body { color: #8b9fa7; border-top-color: #4d6066; }
-
-html.dark-mode .lpai-template-select,
-.dark-mode .lpai-template-select { background: #21292c; border-color: #4d6066; color: #c5d1d3; }
-
-html.dark-mode #lpai-draft,
-.dark-mode #lpai-draft { background: #4d6066; border-color: #4d6066; }
+html.dark-mode #taskmenu a.button-gemini-ai:hover svg,
+.dark-mode #taskmenu a.button-gemini-ai:hover svg,
+html.dark-mode #layout-menu #taskmenu a.button-gemini-ai:hover svg {
+    color: #e9d5ff !important;
+    filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.9)) !important;
+}
 
 /* Quick Actions dark mode (Elastic Theme Adaptation) */
 html.dark-mode .lpai-qa-bar,

@@ -158,6 +158,23 @@ class lifeprisma_ai extends rcube_plugin
             $rcmail->output->add_footer($this->get_ai_panel_html($gemini));
         }
 
+        // Replace sidebar button text with exact purple Gemini SVG icon
+        $svg_sidebar = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>';
+        if (isset($args['content'])) {
+            $args['content'] = preg_replace(
+                '#<a([^>]*class="[^"]*button-gemini-ai[^"]*"[^>]*)>.*?<span class="inner">.*?</span>.*?</a>#is',
+                '<a$1>' . $svg_sidebar . '</a>',
+                $args['content']
+            );
+            $args['content'] = preg_replace(
+                '#<span class="inner">\s*\[?(?:gemini)\]?\s*</span>#is',
+                $svg_sidebar,
+                $args['content']
+            );
+            $args['content'] = str_ireplace('<span class="inner">[Gemini]</span>', $svg_sidebar, $args['content']);
+            $args['content'] = str_ireplace('<span class="inner">Gemini</span>', $svg_sidebar, $args['content']);
+        }
+
         return $args;
     }
 
@@ -1960,7 +1977,7 @@ Body:
     <div id="lpai-header">
         <div class="lpai-title-wrapper">
             <span class="lpai-gemini-sparkle">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
                     <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/>
                 </svg>
             </span>
@@ -1972,12 +1989,30 @@ Body:
 
     <div id="lpai-body">
         <div id="lpai-actions">
-            <button type="button" class="lpai-action-btn active" data-action="compose">Compose</button>
-            <button type="button" class="lpai-action-btn" data-action="rewrite">Rewrite</button>
-            <button type="button" class="lpai-action-btn" data-action="fix">Fix Grammar</button>
-            <button type="button" class="lpai-action-btn" data-action="translate">Translate</button>
-            <button type="button" class="lpai-action-btn" data-action="summarize">Summarize</button>
-            <button type="button" class="lpai-action-btn" data-action="suggest_subject">Subject Lines</button>
+            <button type="button" class="lpai-action-btn active" data-action="compose">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                <span>Compose</span>
+            </button>
+            <button type="button" class="lpai-action-btn" data-action="rewrite">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span>Rewrite</span>
+            </button>
+            <button type="button" class="lpai-action-btn" data-action="fix">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                <span>Fix Grammar</span>
+            </button>
+            <button type="button" class="lpai-action-btn" data-action="translate">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                <span>Translate</span>
+            </button>
+            <button type="button" class="lpai-action-btn" data-action="summarize">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>
+                <span>Summarize</span>
+            </button>
+            <button type="button" class="lpai-action-btn" data-action="suggest_subject">
+                <svg class="lpai-btn-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>
+                <span>Subject Lines</span>
+            </button>
         </div>
 
         <div id="lpai-controls">
@@ -1999,28 +2034,27 @@ Body:
                 <label for="lpai-lang-select">Language</label>
                 <select id="lpai-lang-select" class="lpai-select">
                     <option value="English">English</option>
-                    <option value="Portuguese">Portuguese</option>
+                    <option value="Dutch">Dutch</option>
                     <option value="Spanish">Spanish</option>
                     <option value="French">French</option>
                     <option value="German">German</option>
+                    <option value="Portuguese">Portuguese</option>
                     <option value="Italian">Italian</option>
-                    <option value="Dutch">Dutch</option>
                 </select>
             </div>
         </div>
 
         <div id="lpai-input-wrapper">
-            <textarea id="lpai-input" placeholder="What should Gemini write or change?"></textarea>
-        </div>
-
-        <div id="lpai-templates-row" style="display:none">
-            <select id="lpai-template-select"><option value="">Select template...</option></select>
-            <button type="button" id="lpai-template-save" class="lpai-btn-sm">Save as Template</button>
+            <textarea id="lpai-input" rows="4" placeholder="What should Gemini write or change?"></textarea>
+            <div class="lpai-input-hint"><span>💡 Press <strong>Enter</strong> to generate &bull; <strong>Shift+Enter</strong> for a new line</span></div>
         </div>
 
         <div id="lpai-preview" style="display:none">
             <div id="lpai-preview-header">
-                <strong>Result Preview</strong>
+                <span class="lpai-preview-title">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>
+                    Result Preview
+                </span>
                 <span id="lpai-word-count"></span>
             </div>
             <div id="lpai-preview-content"></div>
@@ -2028,18 +2062,24 @@ Body:
 
         <div id="lpai-loading" style="display:none">
             <div class="lpai-spinner"></div>
-            <span>Gemini is thinking...</span>
+            <span>Gemini is generating response...</span>
         </div>
     </div>
 
     <div id="lpai-footer">
         <div id="lpai-footer-left">
-            <span id="lpai-token-cost"></span>
+            <span id="lpai-token-cost" class="lpai-cost-tag"></span>
         </div>
         <div id="lpai-footer-right">
             <button type="button" id="lpai-cancel" class="lpai-btn-secondary" style="display:none">Stop</button>
             <button type="button" id="lpai-copy" class="lpai-btn-secondary" style="display:none">Copy</button>
-            <button type="button" id="lpai-apply" class="lpai-btn-primary" style="display:none">Insert into Email</button>
+            <button type="button" id="lpai-apply" class="lpai-btn-apply" style="display:none">Insert into Email</button>
+            <button type="button" id="lpai-generate" class="lpai-btn-generate">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                    <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/>
+                </svg>
+                <span>Generate</span>
+            </button>
         </div>
     </div>
 </div>';

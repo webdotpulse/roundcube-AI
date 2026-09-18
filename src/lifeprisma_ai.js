@@ -293,6 +293,8 @@ function lpai_sync_message_row_label(uid, labelFlag) {
 // Sidebar Gemini Icon Button (#taskmenu)
 // ========================================
 function lpai_setup_sidebar_button() {
+    var svgIcon = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>';
+
     var docs = [document];
     try {
         if (window.parent && window.parent.document && window.parent.document !== document) {
@@ -308,13 +310,35 @@ function lpai_setup_sidebar_button() {
         var oldBtns = doc.querySelectorAll('.lpai-floating-btn');
         oldBtns.forEach(function(b) { b.remove(); });
 
+        // Replace any lingering [Gemini] or Gemini text spans anywhere in sidebar buttons
+        var innerSpans = doc.querySelectorAll('a.button-gemini-ai .inner, #taskmenu-gemini-btn .inner, a[href="#gemini"] .inner');
+        innerSpans.forEach(function(span) {
+            span.outerHTML = svgIcon;
+        });
+
+        var existingBtn = doc.getElementById('taskmenu-gemini-btn') || doc.querySelector('a.button-gemini-ai') || doc.querySelector('a[href="#gemini"]');
+        if (existingBtn) {
+            var innerSpan = existingBtn.querySelector('.inner');
+            if (innerSpan) {
+                innerSpan.outerHTML = svgIcon;
+            } else if (!existingBtn.querySelector('svg')) {
+                existingBtn.innerHTML = svgIcon;
+            }
+            existingBtn.onclick = function(e) {
+                e.preventDefault();
+                lpai_open_panel();
+                return false;
+            };
+            return;
+        }
+
         var taskmenu = doc.getElementById('taskmenu');
         if (!taskmenu) {
             var layoutMenu = doc.getElementById('layout-menu');
             if (layoutMenu) taskmenu = layoutMenu.querySelector('.menu') || layoutMenu;
         }
 
-        if (taskmenu && !doc.getElementById('taskmenu-gemini-btn')) {
+        if (taskmenu) {
             var a = doc.createElement('a');
             a.id = 'taskmenu-gemini-btn';
             a.className = 'button-gemini-ai';
@@ -323,12 +347,7 @@ function lpai_setup_sidebar_button() {
             a.setAttribute('tabindex', '0');
             a.setAttribute('aria-label', 'Gemini Assistant');
             a.title = 'Gemini Assistant (Alt+A)';
-            a.innerHTML = '<span class="button-inner">' +
-                '<svg class="lpai-sidebar-gemini-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">' +
-                '<path d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z"/>' +
-                '</svg>' +
-                '<span class="inner">Gemini</span>' +
-                '</span>';
+            a.innerHTML = svgIcon;
             a.onclick = function(e) {
                 e.preventDefault();
                 lpai_open_panel();
@@ -1191,22 +1210,41 @@ function lpai_stream_to_element(postData, targetEl, controller, onDone) {
 // ========================================
 // Modal Assistant Panel
 // ========================================
-function lpai_open_panel(context) {
+function lpai_get_modal_elements() {
     var panel = document.getElementById('lpai-panel');
     var overlay = document.getElementById('lpai-overlay');
+    try {
+        if (!panel && window.parent && window.parent.document) {
+            panel = window.parent.document.getElementById('lpai-panel');
+            overlay = window.parent.document.getElementById('lpai-overlay');
+        }
+        if (!panel && window.top && window.top.document) {
+            panel = window.top.document.getElementById('lpai-panel');
+            overlay = window.top.document.getElementById('lpai-overlay');
+        }
+    } catch (e) {}
+    return { panel: panel, overlay: overlay };
+}
+
+function lpai_open_panel(context) {
+    var els = lpai_get_modal_elements();
+    var panel = els.panel;
+    var overlay = els.overlay;
     if (!panel || !overlay) return;
 
     lpai_panel_context = context || 'compose';
     panel.style.display = 'flex';
     overlay.style.display = 'block';
 
-    var input = document.getElementById('lpai-input');
+    var doc = panel.ownerDocument || document;
+    var input = doc.getElementById('lpai-input');
     if (input) input.focus();
 }
 
 function lpai_close_panel() {
-    var panel = document.getElementById('lpai-panel');
-    var overlay = document.getElementById('lpai-overlay');
+    var els = lpai_get_modal_elements();
+    var panel = els.panel;
+    var overlay = els.overlay;
     if (panel) panel.style.display = 'none';
     if (overlay) overlay.style.display = 'none';
     if (lpai_stream_controller) {
@@ -1251,7 +1289,7 @@ function lpai_submit() {
     if (preview) preview.style.display = 'block';
     if (applyBtn) applyBtn.style.display = 'none';
     if (copyBtn) copyBtn.style.display = 'none';
-    if (cancelBtn) cancelBtn.style.display = 'inline-block';
+    if (cancelBtn) cancelBtn.style.display = 'inline-flex';
     if (generateBtn) generateBtn.style.display = 'none';
 
     var contextText = '';
@@ -1289,9 +1327,9 @@ function lpai_submit() {
     lpai_stream_to_element(postData, previewContent, lpai_stream_controller, function(fullText, tokens) {
         lpai_last_result = fullText;
         if (cancelBtn) cancelBtn.style.display = 'none';
-        if (generateBtn) generateBtn.style.display = 'inline-block';
-        if (applyBtn) applyBtn.style.display = 'inline-block';
-        if (copyBtn) copyBtn.style.display = 'inline-block';
+        if (generateBtn) generateBtn.style.display = 'inline-flex';
+        if (applyBtn) applyBtn.style.display = 'inline-flex';
+        if (copyBtn) copyBtn.style.display = 'inline-flex';
 
         var costSpan = document.getElementById('lpai-token-cost');
         if (costSpan) {
@@ -1340,22 +1378,27 @@ function lpai_estimate_cost(model, inpTokens, outTokens) {
 // ========================================
 function lpai_bind_events() {
     document.addEventListener('click', function(e) {
-        if (e.target.id === 'lpai-close' || e.target.id === 'lpai-overlay') {
+        if (e.target.id === 'lpai-close' || e.target.id === 'lpai-overlay' || (e.target.closest && e.target.closest('#lpai-close'))) {
             lpai_close_panel();
         }
-        if (e.target.classList.contains('lpai-action-btn')) {
-            lpai_select_action(e.target.dataset.action);
+        var actionBtn = e.target.closest ? e.target.closest('.lpai-action-btn') : null;
+        if (actionBtn) {
+            lpai_select_action(actionBtn.dataset.action);
         }
-        if (e.target.id === 'lpai-generate') {
+        var genBtn = e.target.closest ? e.target.closest('#lpai-generate') : null;
+        if (genBtn || e.target.id === 'lpai-generate') {
             lpai_submit();
         }
-        if (e.target.id === 'lpai-apply') {
+        var applyBtn = e.target.closest ? e.target.closest('#lpai-apply') : null;
+        if (applyBtn || e.target.id === 'lpai-apply') {
             lpai_apply_result();
         }
-        if (e.target.id === 'lpai-copy') {
+        var copyBtn = e.target.closest ? e.target.closest('#lpai-copy') : null;
+        if (copyBtn || e.target.id === 'lpai-copy') {
             lpai_copy_result();
         }
-        if (e.target.id === 'lpai-cancel') {
+        var cancelBtn = e.target.closest ? e.target.closest('#lpai-cancel') : null;
+        if (cancelBtn || e.target.id === 'lpai-cancel') {
             if (lpai_stream_controller) {
                 lpai_stream_controller.abort();
                 lpai_stream_controller = null;
