@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Gemini Executive Assistant (FYXER-style) for Roundcube
+ * Gemini Executive Assistant for Roundcube
  *
  * An autonomous, intelligent email assistant powered exclusively by Google Gemini.
  * Features automated email triage, executive briefings, extracted action items,
- * and zero-click pre-crafted draft replies.
+ * integration with message labels, persistent AI memory, and draft replies.
  *
  * Copy this file to config.inc.php and adjust the settings below.
  */
@@ -40,7 +40,7 @@ $config['lifeprisma_ai_gemini_models'] = [
 $config['lifeprisma_ai_api_url'] = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
 // ============================================================
-// Autonomous Executive Assistant Settings (FYXER Mode)
+// Autonomous Executive Assistant & Triage Settings
 // ============================================================
 // Controls proactive intelligence when emails are viewed or received.
 //
@@ -49,6 +49,49 @@ $config['lifeprisma_ai_api_url'] = 'https://generativelanguage.googleapis.com/v1
 //   'receive'  — Automatically triage and create background drafts when new emails land in INBOX
 //   'disabled' — Manual on-demand only (user must trigger via button)
 $config['lifeprisma_ai_auto_draft_mode'] = 'open';
+
+// ============================================================
+// Message Triage & Label Integration (roundcube-labels)
+// ============================================================
+// Automatically applies IMAP keywords/labels (compatible with roundcube-labels
+// and Thunderbird Labels) based on Gemini email classification and urgency.
+$config['lifeprisma_ai_triage_labels_enabled'] = true;
+
+// Mapping of triage category & urgency to IMAP label flags:
+//   $Label1 = Red    (Belangrijk / Important)
+//   $Label2 = Orange (Werk / Work)
+//   $Label3 = Green  (Persoonlijk / Personal)
+//   $Label4 = Blue   (Te doen / To Do)
+//   $Label5 = Violet (Later)
+$config['lifeprisma_ai_triage_label_map'] = [
+    'action_required_high' => '$Label1', // Belangrijk / Important (Red)
+    'action_required'      => '$Label4', // Te doen / To Do (Blue)
+    'meeting'              => '$Label2', // Werk / Work (Orange)
+    'follow_up'            => '$Label4', // Te doen / To Do (Blue)
+    'fyi'                  => '$Label5', // Later (Violet)
+    'scam'                 => '$Label1', // Belangrijk / Warning (Red)
+    'newsletter'           => '',        // Neutral (no label)
+];
+
+// ============================================================
+// AI Learning & Memory (Question-Answer Replication)
+// ============================================================
+// Enables persistent knowledge memory so the AI learns from past client replies.
+// When a client asks a question similar to an already answered question, the AI replicates
+// and adapts the verified answer consistently.
+$config['lifeprisma_ai_memory_enabled'] = true;
+
+// Auto-learn Q&A pairs from sent email replies
+$config['lifeprisma_ai_memory_auto_learn'] = true;
+
+// Maximum past answered questions injected into prompt context for replication
+$config['lifeprisma_ai_memory_max_items'] = 25;
+
+// ============================================================
+// Templates & Attachment Settings
+// ============================================================
+// Directory path for template attachments
+$config['lifeprisma_ai_template_attachments_dir'] = __DIR__ . '/attachments/templates';
 
 // Smart filter: only draft reply if the email asks questions, has deadlines, or expects action/response
 // Skips newsletters, marketing, bulk notifications, and auto-generated alerts

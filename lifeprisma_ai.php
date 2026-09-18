@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Gemini Executive Assistant for Roundcube (Fyxer Mode)
+ * Gemini Executive Assistant for Roundcube
  *
  * An autonomous, reliable, and secure email assistant powered exclusively by Google Gemini.
  * Provides executive email triage, briefings, action item extraction, and pre-crafted draft replies.
@@ -41,7 +41,9 @@ class lifeprisma_ai extends rcube_plugin
         $this->register_action('plugin.lifeprisma_ai_admin', [$this, 'handle_admin']);
         $this->register_action('plugin.lifeprisma_ai_admin_save', [$this, 'handle_admin_save']);
         $this->register_action('plugin.lifeprisma_ai_autodraft', [$this, 'handle_autodraft']);
-        $this->register_action('plugin.lifeprisma_ai_fyxer_triage', [$this, 'handle_fyxer_triage']);
+        $this->register_action('plugin.lifeprisma_ai_triage', [$this, 'handle_triage']);
+        $this->register_action('plugin.lifeprisma_ai_memory', [$this, 'handle_memory']);
+        $this->register_action('plugin.lifeprisma_ai_prepare_compose', [$this, 'handle_prepare_compose']);
 
         // Register hooks
         $this->add_hook('render_page', [$this, 'render_page']);
@@ -49,6 +51,20 @@ class lifeprisma_ai extends rcube_plugin
         $this->add_hook('preferences_list', [$this, 'preferences_list']);
         $this->add_hook('preferences_save', [$this, 'preferences_save']);
         $this->add_hook('new_messages', [$this, 'handle_new_messages']);
+        $this->add_hook('message_compose', [$this, 'handle_message_compose']);
+        $this->add_hook('message_sent', [$this, 'handle_message_sent']);
+
+        // Add taskbar button for sidebar menu (purple Gemini icon)
+        $this->add_button([
+            'type' => 'link',
+            'label' => 'Gemini',
+            'title' => 'Gemini Assistant (Alt+A)',
+            'class' => 'button-gemini-ai',
+            'id' => 'taskmenu-gemini-btn',
+            'href' => '#gemini',
+            'onclick' => 'if(window.lpai_open_panel){lpai_open_panel(); return false;}',
+            'innerclass' => 'inner',
+        ], 'taskbar');
     }
 
     public function render_page($args)
@@ -96,7 +112,16 @@ class lifeprisma_ai extends rcube_plugin
                 'auto_draft_mode' => $auto_draft_mode,
                 'auto_draft_filter' => $prefs['genia_auto_draft_filter'] ?? 1,
                 'followup_check' => $prefs['genia_followup_check'] ?? 1,
-                'fyxer_mode' => $auto_draft_mode,
+                'memory_enabled' => (bool) $rcmail->config->get('lifeprisma_ai_memory_enabled', true),
+                'triage_labels_enabled' => (bool) $rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true),
+                'triage_label_map' => $rcmail->config->get('lifeprisma_ai_triage_label_map', [
+                    'action_required_high' => '$Label1',
+                    'action_required'      => '$Label4',
+                    'meeting'              => '$Label2',
+                    'follow_up'            => '$Label4',
+                    'fyi'                  => '$Label5',
+                    'scam'                 => '$Label1',
+                ]),
             ]);
 
             // Pass admin status and feature toggles
@@ -198,11 +223,11 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
-     * Unified Autonomous Executive Assistant (FYXER-style) triage endpoint
+     * Unified Autonomous Executive Assistant triage endpoint
      * Analyzes email in a single shot: classification, summary, action items, deadlines,
      * security check, and pre-crafted draft reply.
      */
-    public function handle_fyxer_triage()
+    public function handle_triage()
     {
         if (!$this->check_csrf()) {
             header('Content-Type: application/json; charset=utf-8', true, 403);
@@ -210,7 +235,7 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
-        $action = 'fyxer_triage';
+        $action = 'triage';
         if (!$this->check_rate_limit($action)) {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['status' => 'error', 'message' => 'Please wait a moment between requests.']);
@@ -239,7 +264,7 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
-        $cache_key = $this->cache_user_prefix() . "fyxer:{$mbox}:{$uid}";
+        $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
         if (!$force) {
             $cached = $this->cache_get($cache_key);
             if ($cached !== null) {
@@ -315,6 +340,29 @@ class lifeprisma_ai extends rcube_plugin
         $model = $result['model'];
         $tokens = $result['tokens'];
 
+        // Assign IMAP label flag if triage labels are enabled (roundcube-labels integration)
+        if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
+            $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
+                'action_required_high' => '$Label1',
+                'action_required'      => '$Label4',
+                'meeting'              => '$Label2',
+                'follow_up'            => '$Label4',
+                'fyi'                  => '$Label5',
+                'scam'                 => '$Label1',
+            ]);
+            $cat = $analysis['category'] ?? 'fyi';
+            $urgency = $analysis['urgency'] ?? 'low';
+            $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
+            $flag = $label_map[$mapKey] ?? ($label_map[$cat] ?? null);
+            if ($flag) {
+                $storage = $rcmail->get_storage();
+                if ($storage) {
+                    $storage->set_flag($uid, $flag, $mbox);
+                }
+                $analysis['assigned_label'] = $flag;
+            }
+        }
+
         // Save to cache
         $cache_payload = [
             'status' => 'success',
@@ -376,7 +424,7 @@ class lifeprisma_ai extends rcube_plugin
         $date = $ctx['date'] ?? '';
         $body = mb_substr($ctx['body'] ?? '', 0, 4000);
 
-        $system_prompt = "You are an executive Chief of Staff and AI email assistant modeled after Fyxer.
+        $system_prompt = "You are an executive Chief of Staff and AI email assistant.
 Your goal is to provide an instant, high-level briefing of incoming emails, classify their urgency and category, extract concrete action items, detect meetings or scheduling requests, check for phishing/scams, and prepare a polished, contextual draft reply when appropriate.
 
 Return ONLY a JSON object with this exact structure (no markdown formatting, no code fences):
@@ -408,6 +456,25 @@ Rules:
 6. Draft reply must be contextually appropriate in {$language} with a {$tone} tone. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
 7. If needs_reply is false, set draft_reply to null.";
 
+        // Inject learned AI memory if enabled (answer replication)
+        $rcmail = rcmail::get_instance();
+        $memory_prompt = '';
+        if ($rcmail->config->get('lifeprisma_ai_memory_enabled', true)) {
+            $memories = $this->load_ai_memory();
+            if (!empty($memories)) {
+                $matches = $this->find_matching_memory($subject . ' ' . $body, $memories, 3);
+                if (!empty($matches)) {
+                    $memory_prompt = "\nVERIFIED PREVIOUS CLIENT ANSWERS (REPLICATE IF SIMILAR INQUIRY):\n";
+                    foreach ($matches as $m_item) {
+                        $q = $m_item['question'] ?? '';
+                        $a = $m_item['answer'] ?? '';
+                        $memory_prompt .= "- Previous Client Inquiry: {$q}\n  Verified Official Answer: {$a}\n";
+                    }
+                    $memory_prompt .= "\nCRITICAL MEMORY INSTRUCTION: If the incoming email asks a question similar to any of the verified Q&A pairs above, you MUST replicate the verified answer accurately and maintain the exact factual guidance, pricing, policies, or instructions provided previously.\n";
+                }
+            }
+        }
+
         $user_prompt = "Email to analyze:
 From: {$from}
 Date: {$date}
@@ -417,7 +484,7 @@ Language requested: {$language}
 Tone requested: {$tone}
 Bulk/Newsletter indicator: " . ($is_bulk ? 'YES' : 'NO') . "
 Self-sent indicator: " . ($is_self ? 'YES' : 'NO') . "
-
+{$memory_prompt}
 Body:
 {$body}";
 
@@ -438,7 +505,7 @@ Body:
         $api_key = $gemini['api_key'];
 
         if (!$this->validate_api_url($api_url)) {
-            $this->ai_log("[FYXER ERROR] Prohibited or invalid API URL: $api_url");
+            $this->ai_log("[TRIAGE ERROR] Prohibited or invalid API URL: $api_url");
             return null;
         }
 
@@ -461,7 +528,7 @@ Body:
         curl_close($ch);
 
         if ($http_code !== 200 || empty($response)) {
-            $this->ai_log("[FYXER ERROR] HTTP $http_code: " . substr((string)$response, 0, 300));
+            $this->ai_log("[TRIAGE ERROR] HTTP $http_code: " . substr((string)$response, 0, 300));
             return null;
         }
 
@@ -1238,7 +1305,7 @@ Body:
         foreach ($tones as $k => $v) $tone_select->add($v, $k);
 
         $auto_draft_mode_select = new html_select(['name' => '_genia_auto_draft_mode', 'id' => 'genia_auto_draft_mode']);
-        $auto_draft_mode_select->add('When opening/reading an email (Fyxer Mode)', 'open');
+        $auto_draft_mode_select->add('When opening/reading an email (Instant Triage & Draft)', 'open');
         $auto_draft_mode_select->add('On new incoming email (background triage)', 'receive');
         $auto_draft_mode_select->add('Disabled (manual trigger only)', 'disabled');
 
@@ -1250,7 +1317,7 @@ Body:
             'name' => 'Gemini Executive Assistant Preferences',
             'options' => [
                 'genia_auto_draft_mode' => [
-                    'title' => 'Autonomous Assistant Mode (Fyxer)',
+                    'title' => 'Autonomous Assistant Mode',
                     'content' => $auto_draft_mode_select->show($prefs['genia_auto_draft_mode'] ?? 'open'),
                 ],
                 'genia_language' => [
@@ -1349,7 +1416,7 @@ Body:
                     'rate_limit' => $admin['rate_limit'] ?? $rcmail->config->get('lifeprisma_ai_rate_limit', 2),
                     'default_language' => $admin['default_language'] ?? $rcmail->config->get('lifeprisma_ai_default_language', 'English'),
                     'default_tone' => $admin['default_tone'] ?? $rcmail->config->get('lifeprisma_ai_default_tone', 'professional'),
-                    'fyxer_mode' => $admin['fyxer_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open'),
+                    'auto_draft_mode' => $admin['auto_draft_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open'),
                 ],
                 'usage' => $this->get_usage_stats(),
             ]);
@@ -1452,7 +1519,7 @@ Body:
             if (isset($s['rate_limit'])) $config['rate_limit'] = (int) $s['rate_limit'];
             if (isset($s['default_language'])) $config['default_language'] = $s['default_language'];
             if (isset($s['default_tone'])) $config['default_tone'] = $s['default_tone'];
-            if (isset($s['fyxer_mode'])) $config['fyxer_mode'] = $s['fyxer_mode'];
+            if (isset($s['auto_draft_mode'])) $config['auto_draft_mode'] = $s['auto_draft_mode'];
         }
 
         $this->save_admin_config($config);
@@ -1582,7 +1649,7 @@ Body:
         if ($cooldown <= 0 && $max_per_min <= 0) return true;
 
         $now = microtime(true);
-        $is_bg = in_array($action, ['fyxer_triage', 'autocomplete', 'detect_tone'], true);
+        $is_bg = in_array($action, ['triage', 'autocomplete', 'detect_tone'], true);
         $session_key = $is_bg ? 'lpai_last_bg_req' : 'lpai_last_req';
         $effective_cooldown = $is_bg ? 0.3 : $cooldown;
 
@@ -1691,6 +1758,7 @@ Body:
         }
 
         if ($op === 'save') {
+            $id = trim(rcube_utils::get_input_string('id', rcube_utils::INPUT_POST));
             $name = trim(rcube_utils::get_input_string('name', rcube_utils::INPUT_POST));
             $instruction = trim(rcube_utils::get_input_string('instruction', rcube_utils::INPUT_POST));
             $action = rcube_utils::get_input_string('tpl_action', rcube_utils::INPUT_POST) ?: 'compose';
@@ -1700,20 +1768,117 @@ Body:
                 exit;
             }
 
-            if (count($templates) >= 50) {
+            if (empty($id) && count($templates) >= 50) {
                 echo json_encode(['status' => 'error', 'message' => 'Template limit reached (maximum 50)']);
                 exit;
             }
 
             $instruction = mb_substr($instruction, 0, 2000);
-            $templates[] = [
-                'id' => uniqid('tpl_'),
-                'name' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
-                'action' => $action,
-                'instruction' => $instruction,
-            ];
+
+            if (!empty($id)) {
+                $found = false;
+                foreach ($templates as &$t) {
+                    if (($t['id'] ?? '') === $id) {
+                        $t['name'] = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                        $t['action'] = $action;
+                        $t['instruction'] = $instruction;
+                        $found = true;
+                        break;
+                    }
+                }
+                if (!$found) {
+                    $templates[] = [
+                        'id' => $id,
+                        'name' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+                        'action' => $action,
+                        'instruction' => $instruction,
+                        'attachments' => [],
+                    ];
+                }
+            } else {
+                $templates[] = [
+                    'id' => uniqid('tpl_'),
+                    'name' => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+                    'action' => $action,
+                    'instruction' => $instruction,
+                    'attachments' => [],
+                ];
+            }
 
             if ($rcmail->user) $rcmail->user->save_prefs(['genia_templates' => $templates]);
+            echo json_encode(['status' => 'success', 'templates' => $templates]);
+            exit;
+        }
+
+        if ($op === 'upload_attachment') {
+            $tpl_id = rcube_utils::get_input_string('tpl_id', rcube_utils::INPUT_POST);
+            if (empty($tpl_id) || empty($_FILES['file'])) {
+                echo json_encode(['status' => 'error', 'message' => 'Missing file or template ID']);
+                exit;
+            }
+
+            $file = $_FILES['file'];
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                echo json_encode(['status' => 'error', 'message' => 'File upload error: ' . $file['error']]);
+                exit;
+            }
+
+            $clean_tpl_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $tpl_id);
+            $upload_dir = $this->home . '/data/attachments/templates/' . $clean_tpl_id;
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0755, true);
+            }
+
+            $safe_name = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
+            $target_path = $upload_dir . '/' . $safe_name;
+
+            if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to move uploaded file']);
+                exit;
+            }
+
+            $att_item = [
+                'id' => uniqid('att_'),
+                'name' => $file['name'],
+                'size' => filesize($target_path),
+                'mimetype' => mime_content_type($target_path) ?: 'application/octet-stream',
+                'path' => 'data/attachments/templates/' . $clean_tpl_id . '/' . $safe_name,
+            ];
+
+            foreach ($templates as &$t) {
+                if (($t['id'] ?? '') === $tpl_id) {
+                    if (!isset($t['attachments']) || !is_array($t['attachments'])) {
+                        $t['attachments'] = [];
+                    }
+                    $t['attachments'][] = $att_item;
+                    break;
+                }
+            }
+            if ($rcmail->user) $rcmail->user->save_prefs(['genia_templates' => $templates]);
+
+            echo json_encode(['status' => 'success', 'attachment' => $att_item, 'templates' => $templates]);
+            exit;
+        }
+
+        if ($op === 'delete_attachment') {
+            $tpl_id = rcube_utils::get_input_string('tpl_id', rcube_utils::INPUT_POST);
+            $att_id = rcube_utils::get_input_string('att_id', rcube_utils::INPUT_POST);
+
+            foreach ($templates as &$t) {
+                if (($t['id'] ?? '') === $tpl_id && !empty($t['attachments'])) {
+                    $t['attachments'] = array_values(array_filter($t['attachments'], function ($a) use ($att_id) {
+                        if (($a['id'] ?? '') === $att_id) {
+                            $path = $this->home . '/' . ($a['path'] ?? '');
+                            if (file_exists($path)) @unlink($path);
+                            return false;
+                        }
+                        return true;
+                    }));
+                    break;
+                }
+            }
+            if ($rcmail->user) $rcmail->user->save_prefs(['genia_templates' => $templates]);
+
             echo json_encode(['status' => 'success', 'templates' => $templates]);
             exit;
         }
@@ -1875,9 +2040,267 @@ Body:
             <button type="button" id="lpai-cancel" class="lpai-btn-secondary" style="display:none">Stop</button>
             <button type="button" id="lpai-copy" class="lpai-btn-secondary" style="display:none">Copy</button>
             <button type="button" id="lpai-apply" class="lpai-btn-primary" style="display:none">Insert into Email</button>
-            <button type="button" id="lpai-generate" class="lpai-btn-primary">Generate</button>
         </div>
     </div>
 </div>';
     }
+
+    /**
+     * AI Memory Helpers (Knowledge Base & Verified Answer Replication)
+     */
+    public function get_memory_file()
+    {
+        $dir = $this->home . '/data';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        return $dir . '/ai_memory.json';
+    }
+
+    public function load_ai_memory()
+    {
+        $file = $this->get_memory_file();
+        if (!file_exists($file)) {
+            return [];
+        }
+        $raw = @file_get_contents($file);
+        $data = json_decode((string)$raw, true);
+        return is_array($data) ? $data : [];
+    }
+
+    public function save_ai_memory(array $items)
+    {
+        $file = $this->get_memory_file();
+        $rcmail = rcmail::get_instance();
+        $max = (int) $rcmail->config->get('lifeprisma_ai_memory_max_items', 500);
+        if (count($items) > $max) {
+            $items = array_slice($items, -$max);
+        }
+        return @file_put_contents($file, json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+    }
+
+    public function find_matching_memory($query, array $memories, $limit = 3)
+    {
+        if (empty($memories) || empty($query)) return [];
+        $words = preg_split('/[\s,\.\?\!\:\;]+/', mb_strtolower($query));
+        $words = array_filter($words, function ($w) {
+            return mb_strlen($w) >= 3 && !in_array($w, ['the','and','for','with','this','that','from','have','your','will','what','when','where','how','can','you','our','are','het','een','van','voor','met','dat','die','wat','wie','hoe','zou','kun']);
+        });
+        if (empty($words)) return array_slice($memories, 0, $limit);
+
+        $scored = [];
+        foreach ($memories as $item) {
+            $text = mb_strtolower(($item['question'] ?? '') . ' ' . ($item['subject'] ?? '') . ' ' . ($item['answer'] ?? ''));
+            $score = 0;
+            foreach ($words as $w) {
+                if (mb_strpos($text, $w) !== false) {
+                    $score += 2;
+                }
+            }
+            if ($score > 0) {
+                $scored[] = ['score' => $score, 'item' => $item];
+            }
+        }
+
+        if (empty($scored)) {
+            return array_slice($memories, -($limit));
+        }
+
+        usort($scored, function ($a, $b) {
+            return $b['score'] <=> $a['score'];
+        });
+
+        $results = [];
+        foreach (array_slice($scored, 0, $limit) as $s) {
+            $results[] = $s['item'];
+        }
+        return $results;
+    }
+
+    public function add_ai_memory_item($question, $answer, $meta = [])
+    {
+        $question = trim($question);
+        $answer = trim($answer);
+        if (empty($question) || empty($answer)) return false;
+
+        $memories = $this->load_ai_memory();
+        $id = uniqid('mem_');
+        $item = [
+            'id' => $id,
+            'question' => $question,
+            'answer' => $answer,
+            'subject' => $meta['subject'] ?? '',
+            'client' => $meta['client'] ?? '',
+            'source' => $meta['source'] ?? 'user_action',
+            'created_at' => time(),
+            'updated_at' => time(),
+            'use_count' => 0,
+        ];
+
+        $found = false;
+        foreach ($memories as &$m) {
+            if (mb_strtolower(trim($m['question'])) === mb_strtolower($question)) {
+                $m['answer'] = $answer;
+                $m['updated_at'] = time();
+                $item = $m;
+                $found = true;
+                break;
+            }
+        }
+        if (!$found) {
+            $memories[] = $item;
+        }
+
+        $this->save_ai_memory($memories);
+        return $item;
+    }
+
+    public function handle_memory()
+    {
+        if (!$this->check_csrf()) {
+            header('Content-Type: application/json; charset=utf-8', true, 403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid or expired CSRF token']);
+            exit;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        $op = rcube_utils::get_input_string('op', rcube_utils::INPUT_POST);
+
+        if ($op === 'list') {
+            $memories = $this->load_ai_memory();
+            echo json_encode(['status' => 'success', 'memories' => $memories]);
+            exit;
+        }
+
+        if ($op === 'add') {
+            $question = rcube_utils::get_input_string('question', rcube_utils::INPUT_POST);
+            $answer = rcube_utils::get_input_string('answer', rcube_utils::INPUT_POST);
+            $subject = rcube_utils::get_input_string('subject', rcube_utils::INPUT_POST);
+            $client = rcube_utils::get_input_string('client', rcube_utils::INPUT_POST);
+
+            $item = $this->add_ai_memory_item($question, $answer, [
+                'subject' => $subject,
+                'client' => $client,
+                'source' => 'manual',
+            ]);
+
+            if ($item) {
+                echo json_encode(['status' => 'success', 'item' => $item]);
+            } else {
+                echo json_encode(['status' => 'error', 'message' => 'Question and answer cannot be empty']);
+            }
+            exit;
+        }
+
+        if ($op === 'delete') {
+            $id = rcube_utils::get_input_string('id', rcube_utils::INPUT_POST);
+            $memories = $this->load_ai_memory();
+            $memories = array_values(array_filter($memories, function ($m) use ($id) {
+                return ($m['id'] ?? '') !== $id;
+            }));
+            $this->save_ai_memory($memories);
+            echo json_encode(['status' => 'success', 'deleted' => $id]);
+            exit;
+        }
+
+        echo json_encode(['status' => 'error', 'message' => 'Invalid memory operation']);
+        exit;
+    }
+
+    public function handle_message_sent($args)
+    {
+        $rcmail = rcmail::get_instance();
+        if (!$rcmail->config->get('lifeprisma_ai_memory_enabled', true) ||
+            !$rcmail->config->get('lifeprisma_ai_memory_auto_learn', true)) {
+            return;
+        }
+
+        $body = $args['body'] ?? '';
+        $subject = $args['subject'] ?? '';
+        if (empty($body) || empty($subject)) return;
+
+        $lines = explode("\n", $body);
+        $reply_lines = [];
+        foreach ($lines as $line) {
+            $trimmed = trim($line);
+            if (strpos($trimmed, '>') === 0) continue;
+            if (preg_match('/^(On\s+.+wrote:|Op\s+.+schreef:)/i', $trimmed)) break;
+            if (preg_match('/^--\s*$/', $trimmed)) break;
+            $reply_lines[] = $line;
+        }
+        $clean_reply = trim(implode("\n", $reply_lines));
+        if (mb_strlen($clean_reply) < 20) return;
+
+        $clean_subj = preg_replace('/^(Re|Fwd|Aw|Antw):\s*/i', '', $subject);
+        $this->add_ai_memory_item(
+            $clean_subj,
+            $clean_reply,
+            [
+                'subject' => $subject,
+                'source' => 'auto_sent',
+            ]
+        );
+    }
+
+    /**
+     * Compose & Attachment helpers
+     */
+    public function handle_prepare_compose()
+    {
+        if (!$this->check_csrf()) {
+            header('Content-Type: application/json; charset=utf-8', true, 403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+            exit;
+        }
+
+        $reply = rcube_utils::get_input_string('reply', rcube_utils::INPUT_POST);
+        $subject = rcube_utils::get_input_string('subject', rcube_utils::INPUT_POST);
+        $attachments_raw = rcube_utils::get_input_string('attachments', rcube_utils::INPUT_POST);
+        $attachments = !empty($attachments_raw) ? json_decode($attachments_raw, true) : [];
+
+        $_SESSION['lpai_pending_compose'] = [
+            'reply' => $reply,
+            'subject' => $subject,
+            'attachments' => is_array($attachments) ? $attachments : [],
+        ];
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(['status' => 'success']);
+        exit;
+    }
+
+    public function handle_message_compose($args)
+    {
+        if (!empty($_SESSION['lpai_pending_compose'])) {
+            $data = $_SESSION['lpai_pending_compose'];
+            unset($_SESSION['lpai_pending_compose']);
+
+            if (!empty($data['reply']) && empty($args['param']['body'])) {
+                $args['param']['body'] = $data['reply'];
+            }
+            if (!empty($data['subject']) && empty($args['param']['subject'])) {
+                $args['param']['subject'] = $data['subject'];
+            }
+            if (!empty($data['attachments']) && is_array($data['attachments'])) {
+                if (!isset($args['attachments']) || !is_array($args['attachments'])) {
+                    $args['attachments'] = [];
+                }
+                foreach ($data['attachments'] as $att) {
+                    $full_path = $att['path'] ?? '';
+                    if (!empty($full_path) && strpos($full_path, '/') !== 0) {
+                        $full_path = $this->home . '/' . $full_path;
+                    }
+                    if (file_exists($full_path)) {
+                        $args['attachments'][] = [
+                            'path' => $full_path,
+                            'name' => $att['name'] ?? basename($full_path),
+                            'mimetype' => $att['mimetype'] ?? 'application/octet-stream',
+                        ];
+                    }
+                }
+            }
+        }
+        return $args;
+    }
 }
+

@@ -1,5 +1,5 @@
 [Unit]
-Description=Gemini Executive Assistant 24/7 Background Worker (FYXER Mode)
+Description=Gemini Executive Assistant 24/7 Background Worker (Autonomous Mode)
 After=network.target dovecot.service
 
 [Service]

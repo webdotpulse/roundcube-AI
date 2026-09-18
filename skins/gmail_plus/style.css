@@ -1,12 +1,12 @@
 /* ============================================================
-   Gemini Executive Assistant for Roundcube (Fyxer Mode)
+   Gemini Executive Assistant for Roundcube
    GMail+ Skin Theme (Roundcube Plus)
    Designed with Google Material Design, Roboto typography,
    Google Blue (#1a73e8) accents, and #layout-menu taskbar clearance.
    ============================================================ */
 
 /* Typography & Reset */
-.lpai-floating-btn,
+#taskmenu a.button-gemini-ai,
 #lpai-panel,
 #lpai-undo-bar,
 .lpai-qa-bar,
@@ -273,41 +273,123 @@
 }
 
 /* ============================================================
-   Floating Gemini FAB Button (GMail+ Skin Right-Bar Clearance)
+   Purple Gemini Sidebar Icon Button (#taskmenu)
    ============================================================ */
-.lpai-floating-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 88px !important; /* Clears #layout-menu at order: 4 */
-    width: auto;
-    padding: 10px 22px;
-    background: #1a73e8;
-    color: #ffffff !important;
-    border: none;
-    border-radius: 24px;
-    font-size: 14px;
-    font-weight: 500;
+#taskmenu a.button-gemini-ai,
+#layout-menu #taskmenu a.button-gemini-ai,
+.button-gemini-ai {
+    display: block;
+    text-align: center;
+    padding: 1rem 0;
+    color: #9333ea !important;
+    text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
-    z-index: 9990;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#taskmenu a.button-gemini-ai:before,
+#layout-menu #taskmenu a.button-gemini-ai:before {
+    display: none !important;
+}
+
+#taskmenu a.button-gemini-ai .button-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+#taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon {
+    width: 22px;
+    height: 22px;
+    color: #9333ea;
+    display: block;
+    margin: 0 auto;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(147, 51, 234, 0.25));
+}
+
+#taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon,
+#taskmenu a.button-gemini-ai.active svg.lpai-sidebar-gemini-icon {
+    color: #a855f7;
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.75));
+    transform: scale(1.15);
+}
+
+#taskmenu a.button-gemini-ai:hover {
+    background-color: rgba(147, 51, 234, 0.08) !important;
+}
+
+/* roundcube-labels integration badges */
+.lpai-label-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
     display: inline-flex;
     align-items: center;
+    gap: 4px;
+    letter-spacing: 0.02em;
+}
+
+.lpai-row-label-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+    vertical-align: middle;
+}
+
+/* AI Memory Button */
+.lpai-btn-memory {
+    background: #fdf4ff !important;
+    color: #9333ea !important;
+    border: 1px solid #f0abfc !important;
+}
+.lpai-btn-memory:hover {
+    background: #fae8ff !important;
+    color: #7e22ce !important;
+    border-color: #d946ef !important;
+}
+
+/* Reply Attachments Section */
+.lpai-draft-attachments-section {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+}
+.lpai-draft-attachments-list {
+    display: flex;
+    flex-wrap: wrap;
     gap: 8px;
+    margin-top: 6px;
 }
-
-.lpai-floating-btn:hover {
-    background: #1557b0;
-    box-shadow: 0 2px 6px 0 rgba(60,64,67,0.3), 0 6px 12px 4px rgba(60,64,67,0.15);
-    transform: translateY(-1px);
+.lpai-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 16px;
+    font-size: 12px;
+    color: #202124;
+    cursor: pointer;
 }
-
-.lpai-floating-btn:active {
-    transform: translateY(0);
+.lpai-attachment-chip input[type="checkbox"] {
+    accent-color: #9333ea;
 }
-
-.lpai-floating-btn svg {
-    color: #ffffff;
+.lpai-no-attachments-note {
+    font-size: 12px;
+    color: #80868b;
+    font-style: italic;
 }
 
 /* ============================================================
@@ -352,13 +434,6 @@
 
 /* Responsive adjustment for Mobile/Tablet (< 1024px) */
 @media (max-width: 1024px) {
-    .lpai-floating-btn,
-    body.skin-gmail_plus .lpai-floating-btn,
-    body.lpai-skin-gmail-plus .lpai-floating-btn {
-        right: 20px !important;
-        bottom: 20px;
-    }
-
     #lpai-undo-bar,
     body.skin-gmail_plus #lpai-undo-bar,
     body.lpai-skin-gmail-plus #lpai-undo-bar {
@@ -520,7 +595,7 @@
 }
 
 /* ============================================================
-   Gemini Executive Assistant Hub (FYXER Mode)
+   Gemini Executive Assistant Hub
    Google Material Card for GMail+
    ============================================================ */
 .lpai-executive-hub {
@@ -937,23 +1012,18 @@ body.dark-mode .lpai-select,
     color: #e8eaed;
 }
 
-html.dark-mode .lpai-floating-btn,
-body.dark-mode .lpai-floating-btn,
-.dark-mode .lpai-floating-btn {
-    background: #8ab4f8;
-    color: #202124 !important;
+html.dark-mode #taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon,
+body.dark-mode #taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon,
+.dark-mode #taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon {
+    color: #c084fc;
+    filter: drop-shadow(0 0 4px rgba(192, 132, 252, 0.4));
 }
 
-html.dark-mode .lpai-floating-btn:hover,
-body.dark-mode .lpai-floating-btn:hover,
-.dark-mode .lpai-floating-btn:hover {
-    background: #aecbfa;
-}
-
-html.dark-mode .lpai-floating-btn svg,
-body.dark-mode .lpai-floating-btn svg,
-.dark-mode .lpai-floating-btn svg {
-    color: #202124;
+html.dark-mode #taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon,
+body.dark-mode #taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon,
+.dark-mode #taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon {
+    color: #e9d5ff;
+    filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.85));
 }
 
 html.dark-mode .lpai-qa-bar,

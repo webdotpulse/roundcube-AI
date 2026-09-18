@@ -1,5 +1,5 @@
 /**
- * Gemini Executive Assistant for Roundcube (FYXER-style)
+ * Gemini Executive Assistant for Roundcube
  *
  * Exclusively powered by Google Gemini.
  * Features automated email triage, executive briefings, action items,
@@ -12,6 +12,9 @@ if (window.rcmail) {
         var task = rcmail.env.task;
         var action = rcmail.env.action;
 
+        // Ensure purple Gemini icon is installed in sidebar #taskmenu
+        lpai_setup_sidebar_button();
+
         if (task === 'mail' && action === 'compose') {
             lpai_add_compose_button();
             lpai_check_pending_reply();
@@ -20,8 +23,8 @@ if (window.rcmail) {
 
         if (task === 'mail' && (action === 'show' || action === 'preview' || action === '' || action === 'mail')) {
             lpai_add_message_button();
-            // Trigger Fyxer-style Autonomous Executive Triage
-            setTimeout(function() { lpai_init_fyxer_triage(); }, 350);
+            // Trigger Autonomous Executive Triage
+            setTimeout(function() { lpai_init_executive_triage(); }, 350);
         }
 
         if (task === 'settings') {
@@ -37,16 +40,18 @@ if (window.rcmail) {
     rcmail.addEventListener('message_load', function() {
         lpai_detect_skin();
         setTimeout(function() {
+            lpai_setup_sidebar_button();
             lpai_add_message_button();
-            lpai_init_fyxer_triage();
+            lpai_init_executive_triage();
         }, 200);
     });
 
     rcmail.addEventListener('responseafterpreview', function() {
         lpai_detect_skin();
         setTimeout(function() {
+            lpai_setup_sidebar_button();
             lpai_add_message_button();
-            lpai_init_fyxer_triage();
+            lpai_init_executive_triage();
         }, 200);
     });
 }
@@ -132,7 +137,7 @@ function lpai_apply_server_prefs() {
 
 function lpai_check_pending_reply() {
     try {
-        // Prefilled reply from Fyxer draft "Review & Send in Composer"
+        // Prefilled reply from draft "Review & Send in Composer"
         var prefilled = localStorage.getItem('lpai_prefilled_reply');
         if (prefilled) {
             localStorage.removeItem('lpai_prefilled_reply');
@@ -229,14 +234,127 @@ function lpai_get_message_text() {
 }
 
 // ========================================
-// AUTONOMOUS EXECUTIVE ASSISTANT (FYXER MODE)
+// Label Integration (roundcube-labels / Thunderbird Standard)
 // ========================================
-function lpai_init_fyxer_triage(force) {
+var LPAI_LABEL_DEF = {
+    '$Label1': { name: 'Belangrijk', color: '#d93025', bg: '#fce8e6', class: 'label-1' },
+    '$Label2': { name: 'Werk', color: '#e37400', bg: '#fef7e0', class: 'label-2' },
+    '$Label3': { name: 'Persoonlijk', color: '#188038', bg: '#e6f4ea', class: 'label-3' },
+    '$Label4': { name: 'Te doen', color: '#1a73e8', bg: '#e8f0fe', class: 'label-4' },
+    '$Label5': { name: 'Later', color: '#9333ea', bg: '#f3e8fd', class: 'label-5' }
+};
+
+function lpai_format_size(bytes) {
+    if (!bytes || isNaN(bytes)) return '0 B';
+    var k = 1024;
+    var sizes = ['B', 'KB', 'MB', 'GB'];
+    var i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function lpai_sync_message_row_label(uid, labelFlag) {
+    if (!uid || !labelFlag) return;
+    var info = LPAI_LABEL_DEF[labelFlag];
+    if (!info) return;
+
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
+        }
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    docs.forEach(function(doc) {
+        var row = doc.getElementById('rcmrow' + uid);
+        if (!row) return;
+
+        row.classList.add(info.class);
+
+        var subjectCell = row.querySelector('td.subject') || row.querySelector('.subject') || row;
+        if (subjectCell && !row.querySelector('.lpai-row-label-badge')) {
+            var badge = doc.createElement('span');
+            badge.className = 'lpai-row-label-badge ' + info.class;
+            badge.style.cssText = 'display:inline-block;padding:1px 6px;margin-right:6px;border-radius:4px;font-size:11px;font-weight:600;color:' + info.color + ';background:' + info.bg + ';line-height:14px;vertical-align:middle;';
+            badge.innerText = info.name;
+            var insertTarget = subjectCell.querySelector('a') || subjectCell.firstChild;
+            if (insertTarget) {
+                subjectCell.insertBefore(badge, insertTarget);
+            } else {
+                subjectCell.appendChild(badge);
+            }
+        }
+    });
+}
+
+// ========================================
+// Sidebar Gemini Icon Button (#taskmenu)
+// ========================================
+function lpai_setup_sidebar_button() {
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
+        }
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    docs.forEach(function(doc) {
+        // Remove any old floating button if present
+        var oldBtns = doc.querySelectorAll('.lpai-floating-btn');
+        oldBtns.forEach(function(b) { b.remove(); });
+
+        var taskmenu = doc.getElementById('taskmenu');
+        if (!taskmenu) {
+            var layoutMenu = doc.getElementById('layout-menu');
+            if (layoutMenu) taskmenu = layoutMenu.querySelector('.menu') || layoutMenu;
+        }
+
+        if (taskmenu && !doc.getElementById('taskmenu-gemini-btn')) {
+            var a = doc.createElement('a');
+            a.id = 'taskmenu-gemini-btn';
+            a.className = 'button-gemini-ai';
+            a.href = '#gemini';
+            a.setAttribute('role', 'button');
+            a.setAttribute('tabindex', '0');
+            a.setAttribute('aria-label', 'Gemini Assistant');
+            a.title = 'Gemini Assistant (Alt+A)';
+            a.innerHTML = '<span class="button-inner">' +
+                '<svg class="lpai-sidebar-gemini-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">' +
+                '<path d="M12 2C12 7.52285 7.52285 12 2 12C7.52285 12 12 16.4771 12 22C12 16.4771 16.4771 12 22 12C16.4771 12 12 7.52285 12 2Z"/>' +
+                '</svg>' +
+                '<span class="inner">Gemini</span>' +
+                '</span>';
+            a.onclick = function(e) {
+                e.preventDefault();
+                lpai_open_panel();
+                return false;
+            };
+
+            var specialBtns = taskmenu.querySelector('.special-buttons');
+            if (specialBtns) {
+                taskmenu.insertBefore(a, specialBtns);
+            } else {
+                taskmenu.appendChild(a);
+            }
+        }
+    });
+}
+
+// ========================================
+// AUTONOMOUS EXECUTIVE ASSISTANT
+// ========================================
+function lpai_init_executive_triage(force) {
     var target = lpai_get_message_container();
     if (!target) return;
 
     var prefs = rcmail.env.lpai_user_prefs || {};
-    if (prefs.fyxer_mode === 'disabled') return;
+    var mode = prefs.auto_draft_mode || 'open';
+    if (mode === 'disabled') return;
 
     var gemini = rcmail.env.lpai_gemini || {};
     if (!gemini.has_key) return;
@@ -245,7 +363,7 @@ function lpai_init_fyxer_triage(force) {
     var mbox = rcmail.env.mailbox || 'INBOX';
     if (!uid) return;
 
-    var cacheKey = 'lpai_fyxer_' + mbox + '_' + uid;
+    var cacheKey = 'lpai_triage_' + mbox + '_' + uid;
 
     // Check browser session cache
     if (!force) {
@@ -268,7 +386,7 @@ function lpai_init_fyxer_triage(force) {
         '&_token=' + encodeURIComponent(rcmail.env.request_token);
 
     var xhr = new XMLHttpRequest();
-    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_fyxer_triage'));
+    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_triage'));
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onreadystatechange = function() {
         if (xhr.readyState !== 4) return;
@@ -337,6 +455,7 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
     var draftReply = analysis.draft_reply || '';
     var isScam = analysis.is_scam;
     var scamReason = analysis.scam_reason || '';
+    var assignedLabel = analysis.assigned_label;
 
     var hub = document.createElement('div');
     hub.id = 'lpai-executive-hub';
@@ -345,15 +464,24 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
     var badgeClass = 'lpai-badge-' + category;
     var urgencyIcon = urgency === 'high' ? '&#9888;' : '&#9889;';
 
+    // Label badge (roundcube-labels sync)
+    var labelHtml = '';
+    if (assignedLabel && LPAI_LABEL_DEF[assignedLabel]) {
+        var lInfo = LPAI_LABEL_DEF[assignedLabel];
+        labelHtml = '<span class="lpai-category-badge lpai-label-badge" style="background:' + lInfo.bg + ';color:' + lInfo.color + ';border:1px solid ' + lInfo.color + '40;" title="Synced via roundcube-labels (' + assignedLabel + ')">&#127991; ' + lpai_escape_html(lInfo.name) + '</span>';
+        lpai_sync_message_row_label(rcmail.env.uid, assignedLabel);
+    }
+
     var html = '<div class="lpai-hub-header">';
     html += '<div class="lpai-hub-brand">';
     html += lpai_icon('sparkles');
     html += '<span class="lpai-hub-title">Gemini Assistant</span>';
     html += '<span class="lpai-category-badge ' + badgeClass + '">' + urgencyIcon + ' ' + lpai_escape_html(categoryLabel) + '</span>';
+    if (labelHtml) html += ' ' + labelHtml;
     html += '</div>';
 
     html += '<div class="lpai-hub-actions">';
-    html += '<button type="button" class="lpai-hub-btn-icon" title="Refresh Analysis" onclick="lpai_init_fyxer_triage(true)">' + lpai_icon('refresh') + '</button>';
+    html += '<button type="button" class="lpai-hub-btn-icon" title="Refresh Analysis" onclick="lpai_init_executive_triage(true)">' + lpai_icon('refresh') + '</button>';
     html += '<button type="button" class="lpai-hub-btn-icon lpai-hub-toggle" title="Toggle Briefing" onclick="lpai_toggle_hub_body()"><span id="lpai-hub-toggle-arrow">&#9650;</span></button>';
     html += '</div>';
     html += '</div>'; // header
@@ -396,7 +524,7 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
         html += '</div>';
     }
 
-    // Pre-crafted Draft Reply (Fyxer Draft)
+    // Pre-crafted Draft Reply
     if (needsReply && draftReply) {
         html += '<div class="lpai-hub-draft-section">';
         html += '<div class="lpai-draft-header">';
@@ -413,11 +541,27 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
         html += '<textarea id="lpai-hub-draft-text" class="lpai-draft-textarea" rows="4">' + lpai_escape_html(draftReply) + '</textarea>';
         html += '</div>';
 
+        // Attachments Picker for Reply
+        var attachments = rcmail.env.lpai_attachments || [];
+        if (attachments && attachments.length > 0) {
+            html += '<div class="lpai-draft-attachments-section">';
+            html += '<div class="lpai-section-title">&#128206; Attachments for Reply</div>';
+            html += '<div class="lpai-draft-attachments-list">';
+            for (var aIdx = 0; aIdx < attachments.length; aIdx++) {
+                var att = attachments[aIdx];
+                var attJson = lpai_escape_html(JSON.stringify(att));
+                html += '<label class="lpai-checkbox-label lpai-attachment-chip"><input type="checkbox" class="lpai-attachment-checkbox" data-attachment="' + attJson + '"> <span>' + lpai_escape_html(att.name) + ' (' + lpai_format_size(att.size) + ')</span></label>';
+            }
+            html += '</div>';
+            html += '</div>';
+        }
+
         html += '<div class="lpai-draft-footer">';
         html += '<button type="button" class="lpai-btn-composer" onclick="lpai_send_to_composer()">';
         html += '<span>&#9998; Review & Send in Composer</span>';
         html += '</button>';
         html += '<button type="button" class="lpai-btn-copy" onclick="lpai_copy_draft(this)">' + lpai_icon('copy') + ' Copy</button>';
+        html += '<button type="button" class="lpai-btn-copy lpai-btn-memory" onclick="lpai_remember_answer(this)" title="Save this Question & Answer into AI Memory so similar questions from other clients receive this verified answer">&#129504; Remember this Answer</button>';
         html += '</div>';
         html += '</div>';
     }
@@ -453,14 +597,39 @@ function lpai_toggle_hub_body() {
 
 function lpai_send_to_composer() {
     var draftText = document.getElementById('lpai-hub-draft-text');
-    var text = draftText ? draftText.value.trim() : '';
-    if (!text) return;
+    if (!draftText) return;
 
+    var text = draftText.value;
     try {
         localStorage.setItem('lpai_prefilled_reply', text);
     } catch (e) {}
 
-    rcmail.command('reply');
+    var selectedAtts = [];
+    var checkedBoxes = document.querySelectorAll('.lpai-attachment-checkbox:checked');
+    checkedBoxes.forEach(function(cb) {
+        try {
+            selectedAtts.push(JSON.parse(cb.getAttribute('data-attachment')));
+        } catch (e) {}
+    });
+
+    if (selectedAtts.length > 0) {
+        var postData = 'reply=' + encodeURIComponent(text) +
+            '&subject=' + encodeURIComponent(rcmail.env.subject ? ('Re: ' + rcmail.env.subject.replace(/^(Re:\s*)+/i, '')) : '') +
+            '&attachments=' + encodeURIComponent(JSON.stringify(selectedAtts)) +
+            '&_token=' + encodeURIComponent(rcmail.env.request_token);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_prepare_compose'));
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                rcmail.command('reply');
+            }
+        };
+        xhr.send(postData);
+    } else {
+        rcmail.command('reply');
+    }
 }
 
 function lpai_copy_draft(btn) {
@@ -472,6 +641,57 @@ function lpai_copy_draft(btn) {
         btn.innerHTML = lpai_icon('check') + ' Copied!';
         setTimeout(function() { btn.innerHTML = orig; }, 2000);
     });
+}
+
+function lpai_remember_answer(btn) {
+    var draftText = document.getElementById('lpai-hub-draft-text');
+    var summaryEl = document.querySelector('.lpai-summary-text');
+    var defaultQ = summaryEl ? summaryEl.innerText.trim() : (rcmail.env.subject || 'Client Inquiry');
+    var answer = draftText ? draftText.value.trim() : '';
+
+    if (!answer) {
+        if (rcmail.display_message) rcmail.display_message('No draft answer found to learn', 'warning');
+        return;
+    }
+
+    var question = prompt('Verify question or topic to remember for future clients:', defaultQ);
+    if (!question) return;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = 'Remembering...';
+    }
+
+    var postData = 'op=add' +
+        '&question=' + encodeURIComponent(question) +
+        '&answer=' + encodeURIComponent(answer) +
+        '&subject=' + encodeURIComponent(rcmail.env.subject || '') +
+        '&client=' + encodeURIComponent(rcmail.env.from || '') +
+        '&_token=' + encodeURIComponent(rcmail.env.request_token);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_memory'));
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '&#129504; Remember this Answer';
+        }
+        try {
+            var res = JSON.parse(xhr.responseText);
+            if (res.status === 'success') {
+                if (rcmail.display_message) {
+                    rcmail.display_message('AI learned this answer! Similar client questions will now replicate this answer.', 'confirmation');
+                }
+            } else {
+                if (rcmail.display_message) rcmail.display_message(res.message || 'Failed to remember answer', 'error');
+            }
+        } catch (e) {
+            if (rcmail.display_message) rcmail.display_message('Failed to save to memory', 'error');
+        }
+    };
+    xhr.send(postData);
 }
 
 function lpai_retune_draft(tone) {
@@ -519,16 +739,7 @@ function lpai_retune_draft(tone) {
 // Quick Actions Toolbar (Read View)
 // ========================================
 function lpai_add_message_button() {
-    if (!document.querySelector('.lpai-floating-btn')) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'lpai-floating-btn';
-        btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
-        btn.title = 'Gemini Assistant (Alt+A)';
-        btn.onclick = function() { lpai_open_panel('read'); };
-        document.body.appendChild(btn);
-    }
-
+    lpai_setup_sidebar_button();
     lpai_add_quick_actions();
 }
 
@@ -679,16 +890,7 @@ function lpai_translate_to(lang, btn) {
 // Compose View Enhancements
 // ========================================
 function lpai_add_compose_button() {
-    if (!document.querySelector('.lpai-floating-btn')) {
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'lpai-floating-btn';
-        btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
-        btn.title = 'Gemini Assistant (Alt+A)';
-        btn.onclick = function() { lpai_open_panel('compose'); };
-        document.body.appendChild(btn);
-    }
-
+    lpai_setup_sidebar_button();
     lpai_add_compose_quick_actions();
 }
 
@@ -1253,9 +1455,9 @@ function lpai_render_admin(root, data, urlSave, token, urlConfig) {
 
     // Autonomous Mode
     html += '<div class="lpai-form-group">';
-    html += '<label class="lpai-label">Autonomous Assistant Mode (FYXER)</label>';
+    html += '<label class="lpai-label">Autonomous Assistant Mode</label>';
     html += '<select id="lpai-admin-mode" class="lpai-admin-input">';
-    var currentMode = settings.fyxer_mode || 'open';
+    var currentMode = settings.auto_draft_mode || 'open';
     html += '<option value="open"' + (currentMode === 'open' ? ' selected' : '') + '>Active on Email Read (Auto-triage, briefing & draft reply)</option>';
     html += '<option value="receive"' + (currentMode === 'receive' ? ' selected' : '') + '>Background on Incoming Mail</option>';
     html += '<option value="disabled"' + (currentMode === 'disabled' ? ' selected' : '') + '>Disabled (Manual trigger only)</option>';
@@ -1353,7 +1555,7 @@ function lpai_render_admin(root, data, urlSave, token, urlConfig) {
                     model: modelSelect ? modelSelect.value : 'gemini-3.8-flash'
                 },
                 settings: {
-                    fyxer_mode: modeSelect ? modeSelect.value : 'open',
+                    auto_draft_mode: modeSelect ? modeSelect.value : 'open',
                     default_language: langSelect ? langSelect.value : 'English',
                     default_tone: toneSelect ? toneSelect.value : 'professional'
                 }

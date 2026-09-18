@@ -2,11 +2,11 @@
 <?php
 
 /**
- * Gemini Executive Assistant (FYXER Mode) — 24/7 CLI Background Worker
+ * Gemini Executive Assistant — 24/7 CLI Background Worker (Autonomous Mode)
  *
  * Runs autonomously in the background (via cron or systemd daemon) to monitor
- * incoming emails, run Gemini 3.8 Flash triage, and prepare draft replies in the
- * user's IMAP Drafts folder even when users are completely logged out of Roundcube.
+ * incoming emails, run Gemini 3.8 Flash triage, assign labels (roundcube-labels),
+ * and prepare draft replies in the user's IMAP Drafts folder with learned answer replication.
  *
  * Usage:
  *   php bin/worker.php                   # Single run pass (ideal for cron)
@@ -45,11 +45,11 @@ $options = getopt('hvd', [
 
 if (isset($options['h']) || isset($options['help'])) {
     echo <<<HELP
-Gemini Executive Assistant — 24/7 Background Worker (FYXER Mode)
+Gemini Executive Assistant — 24/7 Background Worker (Autonomous Mode)
 =================================================================
 
 Monitors mailboxes for unread emails, runs Google Gemini 3.8 Flash triage,
-and automatically writes pre-crafted replies to the IMAP Drafts folder.
+applies organizational labels, and writes pre-crafted replies to the IMAP Drafts folder.
 
 OPTIONS:
   -h, --help           Show this help message and exit
@@ -129,6 +129,24 @@ function lpai_worker_load_config($custom_config = null) {
     $config['lifeprisma_ai_worker_accounts'] = $config['lifeprisma_ai_worker_accounts'] ?? [];
 
     return $config;
+}
+
+// ============================================================
+// AI Learned Memory Loader
+// ============================================================
+function lpai_worker_load_memory($config) {
+    $candidates = [
+        dirname(__DIR__) . '/data/ai_memory.json',
+        dirname(__DIR__) . '/.ai_memory.json',
+    ];
+    foreach ($candidates as $file) {
+        if (file_exists($file)) {
+            $content = @file_get_contents($file);
+            $data = json_decode($content, true);
+            if (is_array($data)) return $data;
+        }
+    }
+    return [];
 }
 
 // ============================================================
@@ -293,6 +311,12 @@ class LpaiImapClient {
         fwrite($this->socket, $raw_email . "\r\n");
         $final_response = $this->read_response_until($tag);
         return $this->is_ok($final_response);
+    }
+
+    public function add_flags($uid, $flags) {
+        if (empty($flags)) return false;
+        $response = $this->send_command("UID STORE $uid +FLAGS ($flags)");
+        return $this->is_ok($response);
     }
 
     public function close() {
@@ -488,7 +512,7 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg_
     $headers[] = "Content-Type: text/plain; charset=utf-8";
     $headers[] = "Content-Transfer-Encoding: 8bit";
     $headers[] = "X-Unsent: 1";
-    $headers[] = "X-Mailer: Gemini Executive Assistant (FYXER Mode 24/7)";
+    $headers[] = "X-Mailer: Gemini Executive Assistant (Autonomous 24/7)";
 
     if (!empty($orig_msg_id)) {
         $headers[] = "In-Reply-To: $orig_msg_id";
@@ -608,16 +632,62 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     }
                 }
 
-                // 4. Generate Draft Reply with Gemini
+                // 4. Assign IMAP Label Flag (roundcube-labels integration)
+                if (!empty($config['lifeprisma_ai_triage_labels_enabled'])) {
+                    $label_map = $config['lifeprisma_ai_triage_label_map'] ?? [
+                        'action_required_high' => '$Label1',
+                        'action_required'      => '$Label4',
+                        'meeting'              => '$Label2',
+                        'follow_up'            => '$Label4',
+                        'fyi'                  => '$Label5',
+                        'scam'                 => '$Label1',
+                    ];
+
+                    $assigned_flag = '$Label4'; // Default to To Do
+                    $text_lower = strtolower($subject . ' ' . $body);
+                    if (preg_match('/\b(urgent|asap|critical|immediate|action required|important|belangrijk|spoed)\b/i', $text_lower)) {
+                        $assigned_flag = $label_map['action_required_high'] ?? '$Label1';
+                    } elseif (preg_match('/\b(meeting|zoom|google meet|teams|calendar|schedule|afspraak|overleg)\b/i', $text_lower)) {
+                        $assigned_flag = $label_map['meeting'] ?? '$Label2';
+                    } elseif (preg_match('/\b(follow up|checking in|status update|status)\b/i', $text_lower)) {
+                        $assigned_flag = $label_map['follow_up'] ?? '$Label4';
+                    }
+
+                    if (!$is_dry_run && !empty($assigned_flag)) {
+                        $client->add_flags($uid, $assigned_flag);
+                        echo "[$now] [LABEL] UID $uid '$subject' — Tagged with label flag $assigned_flag\n";
+                    }
+                }
+
+                // 5. Generate Draft Reply with Gemini (with AI Memory Replication)
                 echo "[$now] [AI] Generating Gemini ($model) draft reply for: '$subject' from $from...\n";
 
                 $language = $config['lifeprisma_ai_default_language'] ?? 'English';
                 $tone = $config['lifeprisma_ai_default_tone'] ?? 'professional';
 
-                $system_prompt = "You are an elite, discreet Executive AI Assistant modeled after FYXER. " .
+                // Load learned Q&A memory to replicate answers to similar client questions
+                $memories = lpai_worker_load_memory($config);
+                $memory_prompt = '';
+                if (!empty($memories)) {
+                    $memory_prompt .= "\n\nORGANIZATIONAL KNOWLEDGE & PAST VERIFIED CLIENT ANSWERS:\n";
+                    $count = 0;
+                    foreach ($memories as $mem) {
+                        if (!empty($mem['question']) && !empty($mem['answer'])) {
+                            $count++;
+                            $memory_prompt .= "--- [Memory Item #{$count}] ---\n";
+                            $memory_prompt .= "Client Question: " . substr($mem['question'], 0, 350) . "\n";
+                            $memory_prompt .= "Verified Answer: " . substr($mem['answer'], 0, 900) . "\n";
+                            if ($count >= 25) break;
+                        }
+                    }
+                    $memory_prompt .= "\nCRITICAL ANSWER REPLICATION INSTRUCTION: If the incoming email asks a question similar or equivalent to any question in your memory above, REPLICATE the verified answer accurately. Adapt salutations and specific context for the recipient, but preserve the exact factual answer, instructions, policy, and details.";
+                }
+
+                $system_prompt = "You are an elite, discreet Executive AI Assistant. " .
                     "Your role is to draft an exceptional, highly contextual executive email response. " .
                     "Maintain the user's authentic tone ($tone) in $language. " .
-                    "Directly address all questions and action items. Do not include placeholders like [Your Name].";
+                    "Directly address all questions and action items. Do not include placeholders like [Your Name]." .
+                    $memory_prompt;
 
                 $user_prompt = "Original Email Subject: $subject\n" .
                     "From: $from\n\n" .

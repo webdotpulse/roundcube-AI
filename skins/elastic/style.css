@@ -481,43 +481,126 @@
 }
 
 /* ============================
-   Floating GenIA button
+   Purple Gemini Sidebar Icon Button (#taskmenu)
    ============================ */
-.lpai-floating-btn {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: auto;
-    padding: 10px 20px;
-    background: #37beff;
-    color: #fff;
-    border: 1px solid #37beff;
-    border-radius: 0.25rem;
-    font-size: 14px;
-    font-weight: 600;
+#taskmenu a.button-gemini-ai,
+#layout-menu #taskmenu a.button-gemini-ai,
+.button-gemini-ai {
+    display: block;
+    text-align: center;
+    padding: 1rem 0;
+    color: #9333ea !important;
+    text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 9990;
-    transition: all 0.15s;
-    font-family: inherit;
+    position: relative;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.lpai-floating-btn:hover {
-    background: #1eb6ff;
-    border-color: #13b2ff;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+#taskmenu a.button-gemini-ai:before,
+#layout-menu #taskmenu a.button-gemini-ai:before {
+    display: none !important;
 }
 
-.lpai-btn-icon { margin-right: 4px; }
-
-/* GMail+ Right Taskbar Offset (Avoid overlapping #layout-menu at order: 4) */
-body.skin-gmail_plus .lpai-floating-btn,
-body.lpai-skin-gmail-plus .lpai-floating-btn,
-body.xelastic:not(.xskin) .lpai-floating-btn,
-body.xskin .lpai-floating-btn {
-    right: 88px !important;
+#taskmenu a.button-gemini-ai .button-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
 }
 
+#taskmenu a.button-gemini-ai svg.lpai-sidebar-gemini-icon {
+    width: 22px;
+    height: 22px;
+    color: #9333ea;
+    display: block;
+    margin: 0 auto;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(147, 51, 234, 0.25));
+}
+
+#taskmenu a.button-gemini-ai:hover svg.lpai-sidebar-gemini-icon,
+#taskmenu a.button-gemini-ai.active svg.lpai-sidebar-gemini-icon {
+    color: #a855f7;
+    filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.75));
+    transform: scale(1.15);
+}
+
+#taskmenu a.button-gemini-ai:hover {
+    background-color: rgba(147, 51, 234, 0.08) !important;
+}
+
+/* roundcube-labels integration badges */
+.lpai-label-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.02em;
+}
+
+.lpai-row-label-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 14px;
+    vertical-align: middle;
+}
+
+/* AI Memory Button */
+.lpai-btn-memory {
+    background: #fdf4ff !important;
+    color: #9333ea !important;
+    border: 1px solid #f0abfc !important;
+}
+.lpai-btn-memory:hover {
+    background: #fae8ff !important;
+    color: #7e22ce !important;
+    border-color: #d946ef !important;
+}
+
+/* Reply Attachments Section */
+.lpai-draft-attachments-section {
+    margin: 10px 0;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+.lpai-draft-attachments-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+}
+.lpai-attachment-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    font-size: 12px;
+    color: #1e293b;
+    cursor: pointer;
+}
+.lpai-attachment-chip input[type="checkbox"] {
+    accent-color: #9333ea;
+}
+.lpai-no-attachments-note {
+    font-size: 12px;
+    color: #94a3b8;
+    font-style: italic;
+}
+
+/* GMail+ Right Taskbar Clearance for Undo Bar */
 body.skin-gmail_plus #lpai-undo-bar,
 body.lpai-skin-gmail-plus #lpai-undo-bar,
 body.xelastic:not(.xskin) #lpai-undo-bar,
@@ -526,13 +609,6 @@ body.xskin #lpai-undo-bar {
 }
 
 @media (max-width: 1024px) {
-    body.skin-gmail_plus .lpai-floating-btn,
-    body.lpai-skin-gmail-plus .lpai-floating-btn,
-    body.xelastic:not(.xskin) .lpai-floating-btn,
-    body.xskin .lpai-floating-btn {
-        right: 20px !important;
-    }
-
     body.skin-gmail_plus #lpai-undo-bar,
     body.lpai-skin-gmail-plus #lpai-undo-bar,
     body.xelastic:not(.xskin) #lpai-undo-bar,
@@ -1983,7 +2059,7 @@ html.dark-mode .lpai-autodraft-info,
 }
 
 /* ============================================================
-   Gemini Executive Assistant Hub (FYXER Mode)
+   Gemini Executive Assistant Hub
    ============================================================ */
 .lpai-executive-hub {
     margin: 10px 14px;
@@ -2149,7 +2225,7 @@ html.dark-mode .lpai-autodraft-info,
     margin-top: 6px;
 }
 
-/* Fyxer Draft Reply Section */
+/* Pre-crafted Draft Reply Section */
 .lpai-hub-draft-section {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
