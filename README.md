@@ -1,105 +1,81 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/eduardostern/roundcube-genia/main/assets/banner.svg" alt="GenIA — AI Email Assistant for Roundcube" width="100%">
-</p>
-
-<h1 align="center">GenIA — AI Email Assistant for Roundcube</h1>
+# Gemini Executive Assistant for Roundcube (FYXER Mode)
 
 <p align="center">
-  <strong>The missing AI for your self-hosted email.</strong><br>
-  Compose, rewrite, reply, translate, summarize, scam check — works with OpenAI, Claude, Gemini, Grok, Ollama, or any local LLM.
+  <strong>The autonomous, executive AI assistant for Roundcube webmail — powered exclusively by Google Gemini.</strong><br>
+  Instant executive briefings, automated triage, action item checklists, and pre-crafted draft replies modeled after <a href="https://www.fyxer.com/">FYXER</a>.
 </p>
 
 <p align="center">
+  <a href="#why-fyxer-mode">Why FYXER Mode?</a> •
+  <a href="#latest-gemini-models">Latest Models</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
   <a href="#configuration">Configuration</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#faq">FAQ</a> •
-  <a href="#contributing">Contributing</a>
+  <a href="#security--stability">Security & Stability</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/github/v/release/eduardostern/roundcube-genia?style=flat-square&color=7c3aed" alt="Release">
-  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="License">
+  <img src="https://img.shields.io/badge/AI%20Engine-Google%20Gemini-4285F4?style=flat-square&logo=google" alt="Google Gemini">
+  <img src="https://img.shields.io/badge/Default%20Model-gemini--3.8--flash-34A853?style=flat-square" alt="gemini-3.8-flash">
+  <img src="https://img.shields.io/badge/Mode-Autonomous%20(FYXER)-7c3aed?style=flat-square" alt="FYXER Mode">
   <img src="https://img.shields.io/badge/Roundcube-1.5%2B-blue?style=flat-square" alt="Roundcube">
   <img src="https://img.shields.io/badge/PHP-8.0%2B-777BB4?style=flat-square" alt="PHP">
+  <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="License">
 </p>
 
 ---
 
-## Why?
+## Why FYXER Mode?
 
-Gmail has Gemini. Outlook has Copilot. **Your self-hosted Roundcube has... nothing. Until now.**
+Most email AI plugins are clunky: they require manual prompting, repetitive copy-pasting, and confusing provider selections.
 
-GenIA brings the same AI-powered email experience to your own mail server. No vendor lock-in. Point it at a local Ollama instance and **zero data leaves your network**. Or use cloud providers like OpenAI and Grok when convenience matters. Your server, your choice.
+Modeled after **[FYXER](https://www.fyxer.com/)** and powered exclusively by **Google Gemini**, this assistant acts as an autonomous Chief of Staff right in your Roundcube inbox. 
+
+When you open any email, Gemini has already:
+1. **Triaged the Message:** Categorized priority and intent (`Action Required`, `Meeting`, `Follow-up`, `FYI`, or `Security Warning`).
+2. **Prepared an Executive Briefing:** 1–2 crisp sentence synopsis plus an interactive action item checklist with deadline tracking.
+3. **Drafted Your Reply:** A context-aware draft reply is already prepared and waiting above the email. Click **"Review & Send in Composer"** or adjust the tone in one click (**Concise**, **Professional**, **Friendly**).
+
+---
+
+## Latest Gemini Models (2026 Roster)
+
+This plugin is engineered to harness Google's latest Gemini model family:
+
+| Model | Context Window | Max Output Tokens | Thinking Levels | Ideal Use Case |
+|---|---|---|---|---|
+| **`gemini-3.8-flash`** *(Default)* | 1,000,000 | 64,000 | Tunable (Low, Med, High) | **Flagship:** The newest and most intelligent Flash model. Instant email triage, executive summaries, and high-precision drafting. |
+| **`gemini-3.8-flash-cyber`** | 1,000,000 | 64,000 | Tunable | **Specialized Security:** Vulnerability management, phishing analysis, and fraud detection. |
+| **`gemini-3.7-flash`** | 1,000,000 | 64,000 | Standard | Previous iteration, fully supported for robust enterprise workflows. |
+| **`gemini-3.6-flash`** | 1,000,000 | 64,000 | Standard | High-efficiency model released earlier in 2026. |
+| **`gemini-3.5-flash`** | 1,000,000 | 64,000 | Standard | Optimized for scale, agentic workflows, and fast multimodal tasks. |
+| **`gemini-3.5-flash-lite`** | 1,000,000 | 64,000 | Fast | Ultra-fast and lightweight model for high-volume email processing at minimal cost. |
 
 ---
 
 ## Features
 
-### Seven Powerful Actions
+### 1. Zero-Click Executive Hub (Read View)
+- **Automatic Triage Badge:** Color-coded status (`Action Required` in amber/red, `Meeting` in blue, `Follow-up` in purple, `FYI` in emerald).
+- **Executive Synopsis:** High-level summary of sender intentions without reading paragraph walls.
+- **Action Item Checklist:** Check off action items as you review them; meeting times and calendar invites detected automatically.
+- **Pre-Crafted Draft Reply:** Gemini analyzes the thread and prepares an appropriate response.
+- **1-Click Review & Send in Composer:** Injects the AI draft cleanly into Roundcube's composer, preserving blockquotes and signatures.
+- **Instant Tone Tuning:** Retune the prepared draft instantly with pills (`Concise`, `Professional`, `Friendly`).
+- **Phishing & Scam Shield:** Flags suspicious requests, impersonation, or credential harvesting with a 1-click **Move to Spam** action.
 
-| Action | What it does |
-|--------|-------------|
-| **Compose** | Describe what you want, get a fully written email |
-| **Rewrite** | Change tone, rephrase, restructure your existing draft |
-| **Reply** | AI reads the conversation and drafts a contextual reply |
-| **Translate** | Translate between 6 languages preserving tone and structure |
-| **Summarize** | Extract key points and action items from long threads |
-| **Fix Grammar** | Correct spelling, grammar, and punctuation with minimal changes |
-| **Check Scam** | Analyze emails for phishing, fraud, and social engineering |
+### 2. Quick Actions Bar
+Directly above the message body for rapid on-demand commands:
+- **Translate:** One-click translation into English, Spanish, French, German, Italian, Portuguese, or Dutch.
+- **Summarize:** Streamlined point-by-point takeaway generation.
+- **Reply with Gemini:** Open full interactive composer assistant.
 
-### Quick Actions Toolbar (Read View)
-
-When reading an email, a toolbar appears above the message body with one-click actions:
-
-- **Translate** — dropdown with 7 languages, streams translation inline, "Show Original" to revert
-- **Summarize** — streams a summary in a result panel above the email
-- **Scam Check** — analyzes the email with color-coded verdict (green/yellow/red)
-- **Reply with AI** — opens the full GenIA panel in reply mode
-
-### Multi-Provider Support
-
-Switch between AI providers directly in the UI. Mix cloud and local:
-
-| Provider | Models | Data leaves network? | API Key |
-|----------|--------|---------------------|---------|
-| **Ollama** | Llama 3.1, Mistral, Qwen, Gemma, etc. | **No** — fully local | Not needed |
-| **LM Studio** | Any GGUF model | **No** — fully local | Not needed |
-| **LocalAI / vLLM** | Any supported model | **No** — fully local | Optional |
-| **OpenAI** | GPT-5.4, GPT-4.1, GPT-4o | Yes — sent to OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
-| **Anthropic (Claude)** | Sonnet 4.6, Haiku 4.5, Opus 4.6 | Yes — sent to Anthropic | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| **Google Gemini** | Gemini 3.6 Flash, Gemini 2.5 Flash | Yes — sent to Google | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
-| **xAI (Grok)** | Grok-4.1-fast, Grok-3 | Yes — sent to xAI | [console.x.ai](https://console.x.ai) |
-| **Any OpenAI-compatible API** | Custom | Depends on endpoint | Varies |
-
-### AI Controls
-
-- **Reasoning Effort** — None / Low / Medium / High
-- **Verbosity** — Concise / Balanced / Detailed
-- **Language** — Portuguese, English, Spanish, French, German, Italian, Dutch
-- **Tone** — Professional, Casual, Friendly, Formal, Urgent
-
-### Smart Features
-
-- **Auto-draft responses** — automatically generate draft replies on incoming mail or when opening an email
-- **Smart bulk filter** — skips newsletters, marketing lists, and automated emails (`List-Unsubscribe`, `Precedence: bulk`)
-- **Streaming responses** — see the AI write in real-time
-- **Conversation memory** — chain instructions: "make it shorter", "now translate it"
-- **Preview before applying** — review AI output before it touches your email
-- **Undo** — one-click revert after applying
-- **Copy to clipboard** — copy AI results with one click
-- **Persistent preferences** — provider, model, language, tone saved across sessions
-- **Keyboard shortcut** — `Alt+A` to toggle the GenIA panel
-- **Token counter** — see input/output token usage per request
-
-### UI
-
-- Floating GenIA button (bottom-right corner)
-- Quick actions toolbar in read view
-- Modal panel with backdrop blur
-- Dark mode support
-- Fully responsive on mobile
+### 3. Interactive Gemini Modal Panel (`Alt+A`)
+- **Compose:** Generate emails from quick bullet points or instructions.
+- **Rewrite:** Refactor existing drafts with selected tone and style.
+- **Fix Grammar:** Clean up syntax, typos, and style while preserving your authentic voice.
+- **Subject Generator:** Generates high-converting, relevant email subject lines.
+- **Real-Time Token & Cost Estimation:** Displays live cost estimates per request based on Google Gemini pricing.
 
 ---
 
@@ -114,13 +90,11 @@ cd lifeprisma_ai
 cp config.inc.php.dist config.inc.php
 ```
 
-Edit `config.inc.php` and add your API keys.
-
-Enable the plugin in Roundcube's `config/config.inc.php`:
+Enable the plugin in Roundcube's main configuration (`config/config.inc.php`):
 
 ```php
 $config['plugins'] = [
-    // ... your other plugins
+    // ... other plugins
     'lifeprisma_ai',
 ];
 ```
@@ -132,268 +106,66 @@ cd /path/to/roundcube/
 composer require lifeprisma/roundcube-genia
 ```
 
-### Option 3: Manual Download
-
-1. Download the [latest release](https://github.com/eduardostern/roundcube-genia/releases)
-2. Extract to `plugins/lifeprisma_ai/`
-3. Copy `config.inc.php.dist` to `config.inc.php`
-4. Add your API keys and enable the plugin
-
 ---
 
 ## Configuration
 
-### Ollama (Local — Zero Data Leaves Your Network)
+Copy `config.inc.php.dist` to `config.inc.php` and configure your Google Gemini API key:
 
 ```php
 <?php
-$config['lifeprisma_ai_providers'] = [
-    'ollama' => [
-        'label'    => 'Ollama',
-        'api_url'  => 'http://localhost:11434/v1/chat/completions',
-        'api_type' => 'chat_completions',
-        'api_key'  => '',
-        'model'    => 'llama3.1',
-        'models'   => ['llama3.1', 'mistral', 'qwen2.5'],
-        'supports_reasoning' => false,
-    ],
-];
-```
 
-> Install Ollama: `curl -fsSL https://ollama.com/install.sh | sh && ollama pull llama3.1`
+// 1. Your Google Gemini API Key (https://aistudio.google.com/apikey)
+$config['lifeprisma_ai_gemini_api_key'] = 'AIzaSy...';
 
-### Cloud Providers (OpenAI + Claude + Gemini + Grok)
+// 2. Default Gemini model (gemini-3.8-flash recommended)
+$config['lifeprisma_ai_gemini_model'] = 'gemini-3.8-flash';
 
-```php
-<?php
-$config['lifeprisma_ai_providers'] = [
-    'openai' => [
-        'label'    => 'GPT',
-        'api_url'  => 'https://api.openai.com/v1/responses',
-        'api_type' => 'responses',
-        'api_key'  => 'sk-proj-xxxxx',
-        'model'    => 'gpt-5.4',
-        'models'   => ['gpt-5.4', 'gpt-4.1'],
-    ],
-    'anthropic' => [
-        'label'    => 'Claude',
-        'api_url'  => 'https://api.anthropic.com/v1/messages',
-        'api_type' => 'anthropic',
-        'api_key'  => 'sk-ant-xxxxx',
-        'model'    => 'claude-sonnet-4-6',
-        'models'   => ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
-        'supports_reasoning' => false,
-    ],
-    'gemini' => [
-        'label'    => 'Gemini',
-        'api_url'  => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-        'api_type' => 'chat_completions',
-        'api_key'  => 'AIzaxxxxx',
-        'model'    => 'gemini-3.6-flash',
-        'models'   => ['gemini-3.6-flash', 'gemini-2.5-flash'],
-        'supports_reasoning' => false,
-    ],
-    'xai' => [
-        'label'    => 'Grok',
-        'api_url'  => 'https://api.x.ai/v1/responses',
-        'api_type' => 'responses',
-        'api_key'  => 'xai-xxxxx',
-        'model'    => 'grok-4.1-fast',
-        'models'   => ['grok-4.1-fast', 'grok-3'],
-    ],
-];
-```
+// 3. Autonomous Executive Assistant (FYXER Mode)
+//   'open'     — (Recommended) Auto-triage, briefing & draft reply on opening email
+//   'receive'  — Background triage & draft creation when mail lands in INBOX
+//   'disabled' — Manual on-demand only
+$config['lifeprisma_ai_auto_draft_mode'] = 'open';
 
-### Mix Local + Cloud (Best of Both Worlds)
+// 4. Smart filter (skips newsletters, bulk marketing, automated notifications)
+$config['lifeprisma_ai_auto_draft_filter'] = true;
 
-```php
-<?php
-$config['lifeprisma_ai_providers'] = [
-    'ollama' => [
-        'label'    => 'Local',
-        'api_url'  => 'http://localhost:11434/v1/chat/completions',
-        'api_type' => 'chat_completions',
-        'api_key'  => '',
-        'model'    => 'llama3.1',
-        'models'   => ['llama3.1', 'mistral'],
-        'supports_reasoning' => false,
-    ],
-    'openai' => [
-        'label'    => 'GPT',
-        'api_url'  => 'https://api.openai.com/v1/responses',
-        'api_type' => 'responses',
-        'api_key'  => 'sk-proj-xxxxx',
-        'model'    => 'gpt-5.4',
-        'models'   => ['gpt-5.4', 'gpt-4.1'],
-    ],
-];
-```
-
-> Users can switch between local and cloud in the UI. Use local for privacy, cloud for quality.
-
-### API Type Reference
-
-| `api_type` | Format | Used by |
-|------------|--------|---------|
-| `responses` | OpenAI Responses API (`/v1/responses`) | OpenAI, xAI |
-| `anthropic` | Anthropic Messages API (`/v1/messages`) | Claude (Sonnet, Haiku, Opus) |
-| `chat_completions` | Chat Completions API (`/v1/chat/completions`) | Ollama, LM Studio, LocalAI, vLLM, any OpenAI-compatible |
-
-### Global Settings
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `lifeprisma_ai_max_tokens` | `2000` | Maximum output tokens per request |
-| `lifeprisma_ai_temperature` | `0.5` | Creativity (0.0-1.0). Only when reasoning is "None" |
-
----
-
-## Usage
-
-1. Log into Roundcube webmail
-2. Open a compose window or view an email
-3. Click the **GenIA** button (bottom-right) or press `Alt+A`
-4. Choose an action, set your preferences, and generate
-
-### Keyboard Shortcuts
-
-| Key | Action |
-|-----|--------|
-| `Alt+A` | Toggle GenIA panel |
-| `Enter` | Submit (in the instruction field) |
-| `Shift+Enter` | New line in instruction |
-| `Escape` | Close the GenIA panel |
-
-### Automatic Draft Responses
-
-GenIA can automatically generate replies to incoming emails and save them directly into your **Drafts** folder:
-
-1. Go to **Settings → Preferences → AI Assistant** in Roundcube.
-2. In **Auto-generate draft replies for incoming emails**, select:
-   - **When opening/reading an email**: Prepares a draft in the background as you view an email, displaying an *AI Draft Ready* banner with a one-click "Review / Edit" button.
-   - **On new incoming email**: Background check automatically drafts responses for new incoming INBOX emails and places them in your `Drafts` folder with a notification.
-3. Keep **Smart filter** enabled (recommended) to automatically skip newsletters, marketing mail (`List-Unsubscribe`), automated notifications (`Auto-Submitted`), and emails that don't expect a response.
-
----
-
-## Compatibility
-
-| Roundcube | PHP | Browsers |
-|-----------|-----|----------|
-| 1.5.x, 1.6.x | 8.0+ | Chrome, Firefox, Safari, Edge, Mobile |
-
----
-
-## Privacy & Security
-
-GenIA is designed with privacy-conscious self-hosters in mind:
-
-- **Local LLM = zero data leaves your network.** Point GenIA at Ollama or any local model and your emails never touch an external server
-- **Cloud providers**: when using OpenAI/Grok, email content is sent to their API for processing. These providers have [data usage policies](https://openai.com/policies/api-data-usage-policies) — API data is **not** used for training by default
-- **API keys stay on your server** — never sent to the browser
-- **No telemetry, no tracking, no analytics** — the plugin makes zero external calls except to your configured AI endpoint
-- **No phone-home, no registration** — install and use, that's it
-- **Open source (MIT)** — audit every line of code yourself
-
-### Recommended Setup for Maximum Privacy
-
-Use Ollama with a local model. No API keys needed, no external calls, no data exposure:
-
-```php
-'ollama' => [
-    'label'    => 'Local',
-    'api_url'  => 'http://localhost:11434/v1/chat/completions',
-    'api_type' => 'chat_completions',
-    'api_key'  => '',
-    'model'    => 'llama3.1',
-    'models'   => ['llama3.1'],
-    'supports_reasoning' => false,
-],
+// 5. Default Language & Tone
+$config['lifeprisma_ai_default_language'] = 'English';
+$config['lifeprisma_ai_default_tone'] = 'professional';
 ```
 
 ---
 
-## FAQ
+## Security & Stability
 
-**Q: Which AI providers are supported?**
-A: OpenAI (GPT), Anthropic (Claude), xAI (Grok), Ollama, LM Studio, LocalAI, vLLM, and any OpenAI-compatible endpoint. Responses API, Anthropic Messages API, and Chat Completions API formats are all supported.
+Built specifically for high-reliability enterprise email environments:
 
-**Q: Does it send my emails to an external server?**
-A: **Only if you configure a cloud provider** (OpenAI, Grok). If you use Ollama or another local LLM, zero data leaves your network. You choose.
-
-**Q: Can I run it fully offline / air-gapped?**
-A: Yes. Use Ollama or any local model server. No internet connection needed after initial model download.
-
-**Q: How much does it cost?**
-A: The plugin is free (MIT). If using cloud providers, you pay for API usage (~$0.001-0.01 per email). Local models are completely free.
-
-**Q: I see "GenIA is not configured yet" — what do I do?**
-A: Your server admin needs to add API keys to the config file. See [Configuration](#configuration) above.
-
----
-
-## Troubleshooting
-
-### "GenIA is not configured yet"
-
-The plugin needs at least one AI provider with an API key. Create or edit your config file:
-
-```bash
-cp plugins/lifeprisma_ai/config.inc.php.dist plugins/lifeprisma_ai/config.inc.php
-```
-
-Then add your API keys:
-
-```php
-<?php
-$config['lifeprisma_ai_providers'] = [
-    'openai' => [
-        'label'   => 'GPT',
-        'api_url' => 'https://api.openai.com/v1/responses',
-        'api_key' => 'sk-proj-xxxxx',  // Get yours at platform.openai.com/api-keys
-        'model'   => 'gpt-5.4',
-        'models'  => ['gpt-5.4', 'gpt-4.1'],
-    ],
-];
-```
-
-Make sure the file is readable by your web server:
-
-```bash
-chown root:www-data plugins/lifeprisma_ai/config.inc.php
-chmod 640 plugins/lifeprisma_ai/config.inc.php
-```
-
-### "API key not configured"
-
-This means the provider you selected doesn't have an API key set. Check your `config.inc.php` and make sure the `api_key` field is filled for each provider.
+1. **No Session Lock Contention:**
+   - PHP sessions are immediately released via `session_write_close()` before initiating any Google Gemini cURL API calls. The Roundcube UI remains snappy and never freezes.
+2. **Strict SSRF Protection:**
+   - All external outbound requests are restricted to Google Gemini API hostnames (`generativelanguage.googleapis.com` / `*.googleapis.com`). RFC 1918 private IPs, AWS/GCP metadata endpoints (`169.254.169.254`), and loopback addresses (`127.0.0.1`) are hard-blocked.
+3. **CRLF & Header Injection Immune:**
+   - All email headers (`Subject`, `To`, `References`, `In-Reply-To`) created by auto-drafting are strictly sanitized with `rcube_mime::encode_header` and regex stripped of `\r` and `\n` to prevent SMTP header splitting.
+4. **CSRF & XSS Hardened:**
+   - Every AJAX and streaming endpoint verifies Roundcube's `_token` anti-CSRF token.
+   - All dynamic HTML in the executive hub is sanitized using `lpai_escape_html` before DOM insertion.
+5. **Type Safe with PHP 8.x:**
+   - Safely unwraps Roundcube `rcube_result_set` objects via `->get()` to prevent PHP 8 `TypeError` crashes during inbox scans.
 
 ---
 
-## Contributing
+## Keyboard Shortcuts
 
-Contributions welcome! Fork, branch, PR.
-
----
-
-## Support the Project
-
-This plugin is **100% free and open source**. If it helps you:
-
-- Try **[LifePrisma.ai](https://lifeprisma.ai)** — our AI platform
-- Star this repo on GitHub
-- Share feedback via [GitHub Issues](https://github.com/eduardostern/roundcube-genia/issues)
+| Shortcut | Action |
+|---|---|
+| `Alt+A` | Open / toggle Gemini Assistant panel |
+| `Enter` | Submit prompt / request |
+| `Shift+Enter` | New line in instruction area |
+| `Escape` | Close Gemini panel |
 
 ---
 
 ## License
 
-**MIT License** — Free to use, modify, and distribute.
-
-See [LICENSE](LICENSE) for full terms.
-
----
-
-<p align="center">
-  Built by <a href="https://lifeprisma.com">Eduardo Stern</a> / <a href="https://lifeprisma.ai">LifePrisma.ai</a>
-</p>
+MIT License — Free to use, modify, and distribute.

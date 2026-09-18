@@ -1,131 +1,83 @@
 <?php
 
 /**
- * GenIA — AI Email Assistant for Roundcube
+ * Gemini Executive Assistant (FYXER-style) for Roundcube
+ *
+ * An autonomous, intelligent email assistant powered exclusively by Google Gemini.
+ * Features automated email triage, executive briefings, extracted action items,
+ * and zero-click pre-crafted draft replies.
  *
  * Copy this file to config.inc.php and adjust the settings below.
- *
- * Supports multiple AI backends:
- * - OpenAI (GPT-4o, GPT-4.1, etc.) — Responses API
- * - Anthropic (Claude Sonnet, Haiku, Opus) — Messages API
- * - Google Gemini (Gemini 3.6 Flash) — Chat Completions API
- * - xAI (Grok-3, Grok-3-mini, etc.) — Responses API
- * - Ollama (Llama, Mistral, Qwen, etc.) — Chat Completions API (local, no API key)
- * - LM Studio, LocalAI, vLLM, text-generation-webui — Chat Completions API
- * - Any OpenAI-compatible endpoint
- *
- * API types:
- *   'responses'        — OpenAI Responses API (/v1/responses) — default
- *   'anthropic'        — Anthropic Messages API (/v1/messages) — Claude models
- *   'chat_completions' — OpenAI Chat Completions API (/v1/chat/completions) — Ollama, LM Studio, etc.
  */
 
 // ============================================================
-// OPTION 1: Multi-provider (recommended)
+// Google Gemini API Configuration (Required)
 // ============================================================
-// Configure one or more AI providers. Users can switch between them in the UI.
-// Only providers with a valid api_key (or local chat_completions providers) will appear.
+// Get your free or paid API key at: https://aistudio.google.com/apikey
+$config['lifeprisma_ai_gemini_api_key'] = '';
 
-$config['lifeprisma_ai_providers'] = [
-    'openai' => [
-        'label'    => 'GPT',                                    // Button label in UI
-        'api_url'  => 'https://api.openai.com/v1/responses',    // Responses API endpoint
-        'api_type' => 'responses',                               // 'responses' or 'chat_completions'
-        'api_key'  => '',                                        // Your OpenAI API key (https://platform.openai.com/api-keys)
-        'model'    => 'gpt-5.4',                                 // Default model
-        'models'   => ['gpt-5.4', 'gpt-4.1', 'gpt-4o'],        // Available models for this provider
-        // 'unsupported_params' => ['temperature', 'reasoning_none'],  // Params the model can't receive
-        //   temperature    — model doesn't accept temperature (e.g. reasoning-only models like gpt-5-nano)
-        //   reasoning_none — model doesn't accept reasoning.effort="none", uses "minimal" instead
-    ],
-    'xai' => [
-        'label'    => 'Grok',
-        'api_url'  => 'https://api.x.ai/v1/responses',
-        'api_type' => 'responses',
-        'api_key'  => '',                                        // Your xAI API key (https://console.x.ai)
-        'model'    => 'grok-4.1-fast',
-        'models'   => ['grok-4.1-fast', 'grok-3'],
-    ],
-    'anthropic' => [
-        'label'    => 'Claude',
-        'api_url'  => 'https://api.anthropic.com/v1/messages',
-        'api_type' => 'anthropic',                               // Required for Anthropic
-        'api_key'  => '',                                        // Your Anthropic API key (https://console.anthropic.com/settings/keys)
-        'model'    => 'claude-sonnet-4-6',
-        'models'   => ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
-        'supports_reasoning' => false,
-    ],
-    'gemini' => [
-        'label'    => 'Gemini',
-        'api_url'  => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-        'api_type' => 'chat_completions',
-        'api_key'  => '',                                        // Your Google Gemini API key (https://aistudio.google.com/apikey)
-        'model'    => 'gemini-3.6-flash',
-        'models'   => ['gemini-3.6-flash', 'gemini-2.5-flash'],
-        'supports_reasoning' => false,
-    ],
-    // ---- LOCAL / SELF-HOSTED PROVIDERS (no data leaves your network) ----
-    // 'ollama' => [
-    //     'label'    => 'Ollama',
-    //     'api_url'  => 'http://localhost:11434/v1/chat/completions',
-    //     'api_type' => 'chat_completions',                      // Required for Ollama
-    //     'api_key'  => '',                                      // Not needed for local Ollama
-    //     'model'    => 'llama3.1',
-    //     'models'   => ['llama3.1', 'mistral', 'qwen2.5'],
-    //     'supports_reasoning' => false,
-    // ],
-    // 'lmstudio' => [
-    //     'label'    => 'LM Studio',
-    //     'api_url'  => 'http://localhost:1234/v1/chat/completions',
-    //     'api_type' => 'chat_completions',
-    //     'api_key'  => '',
-    //     'model'    => 'local-model',
-    //     'models'   => ['local-model'],
-    //     'supports_reasoning' => false,
-    // ],
+// Default Gemini model to use
+// Available options:
+//   'gemini-3.8-flash'       — Newest, most intelligent Flash model (1M context, 64k output, tunable thinking) [Default]
+//   'gemini-3.8-flash-cyber' — Specialized model for vulnerability management and security analysis
+//   'gemini-3.7-flash'       — Previous iteration, fully supported
+//   'gemini-3.6-flash'       — High-efficiency model released earlier in 2026
+//   'gemini-3.5-flash'       — Optimized for scale, agentic workflows, and fast multimodal tasks
+//   'gemini-3.5-flash-lite'  — Ultra-fast, lightweight, highly cost-effective
+$config['lifeprisma_ai_gemini_model'] = 'gemini-3.8-flash';
+
+// Available Gemini models for users/admin
+$config['lifeprisma_ai_gemini_models'] = [
+    'gemini-3.8-flash',
+    'gemini-3.8-flash-cyber',
+    'gemini-3.7-flash',
+    'gemini-3.6-flash',
+    'gemini-3.5-flash',
+    'gemini-3.5-flash-lite',
 ];
 
-// ============================================================
-// OPTION 2: Simple single-provider (legacy, still works)
-// ============================================================
-// If you only need one provider, you can use the flat config instead.
-// The multi-provider config above takes priority if both are set.
-
-// $config['lifeprisma_ai_api_key'] = '';
-// $config['lifeprisma_ai_model'] = 'gpt-4o';
-// $config['lifeprisma_ai_api_url'] = 'https://api.openai.com/v1/responses';
+// Official Google Gemini OpenAI-compatible endpoint URL
+$config['lifeprisma_ai_api_url'] = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
 // ============================================================
-// Global settings (apply to all providers)
+// Autonomous Executive Assistant Settings (FYXER Mode)
 // ============================================================
+// Controls proactive intelligence when emails are viewed or received.
+//
+// Options:
+//   'open'     — (Recommended) Automatically triage, generate executive briefing & draft reply when opening an email
+//   'receive'  — Automatically triage and create background drafts when new emails land in INBOX
+//   'disabled' — Manual on-demand only (user must trigger via button)
+$config['lifeprisma_ai_auto_draft_mode'] = 'open';
 
-// Maximum output tokens per request (default: 2000)
-$config['lifeprisma_ai_max_tokens'] = 2000;
+// Smart filter: only draft reply if the email asks questions, has deadlines, or expects action/response
+// Skips newsletters, marketing, bulk notifications, and auto-generated alerts
+$config['lifeprisma_ai_auto_draft_filter'] = true;
 
-// Temperature for "None" reasoning mode (0.0 - 1.0, default: 0.5)
-$config['lifeprisma_ai_temperature'] = 0.5;
-
-// Default language for generated emails
+// Default language for summaries and generated drafts
+// Supported: 'English', 'Portuguese', 'Spanish', 'French', 'German', 'Italian', 'Dutch'
 $config['lifeprisma_ai_default_language'] = 'English';
 
-// Rate limit — minimum seconds between requests per user (default: 3)
-$config['lifeprisma_ai_rate_limit'] = 3;
+// Default tone for drafted replies
+// Supported: 'professional', 'concise', 'friendly', 'formal', 'direct'
+$config['lifeprisma_ai_default_tone'] = 'professional';
 
-// Admin users — list of email addresses that can access the GenIA Admin Panel
-// These users will see "GenIA Admin Panel" in Settings and can manage providers, features, etc.
+// Smart Compose: inline AI autocomplete while typing in compose window
+$config['lifeprisma_ai_smart_compose'] = true;
+
+// ============================================================
+// System & Operational Safeguards
+// ============================================================
+// Maximum tokens generated per response
+$config['lifeprisma_ai_max_tokens'] = 2048;
+
+// Generation temperature (0.0 to 1.0, default: 0.4 for reliable executive communication)
+$config['lifeprisma_ai_temperature'] = 0.4;
+
+// Minimum seconds between requests per user to prevent flooding (default: 2)
+$config['lifeprisma_ai_rate_limit'] = 2;
+
+// Admin users — list of email addresses or usernames with access to the Admin Panel in Settings
 $config['lifeprisma_ai_admins'] = [
     // 'admin@yourdomain.com',
 ];
-
-// ============================================================
-// Auto-Draft Responses for Incoming Emails
-// ============================================================
-// Automatic draft generation can also be configured per-user under Settings -> Preferences -> AI Assistant.
-// Options:
-//   'disabled' — Feature disabled by default
-//   'open'     — Auto-generate draft response in the background when viewing/reading an email
-//   'receive'  — Auto-generate draft response in the background when new mail arrives in INBOX
-// $config['lifeprisma_ai_auto_draft_mode'] = 'disabled';
-
-// Smart filter: only draft if email asks questions or expects a reply (skips newsletters/bulk mail)
-// $config['lifeprisma_ai_auto_draft_filter'] = true;

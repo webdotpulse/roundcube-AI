@@ -1,0 +1,520 @@
+2.0.2 (2026-09-09)
+==================
+- removed default plugin list from fix_plugins config option
+
+2.0.1 (2026-07-08)
+==================
+- fixed danger button colors in the mobile layout of elastic-based skins
+
+2.0 (2026-05-19)
+================
+- ensured compatibility with Roundcube 1.7
+- dropped support for Roundcube 1.5
+- fixed potential XSS vulnerabilities in skin preferences and mobile popups
+- fixed url encoding of mailbox names in mobile message list links
+- fixed string replacement error handling
+- fixed droid/droid+ wave effect functions
+- fixed switchbox duplication and id collisions
+- fixed iframe class sync crash when class attribute is missing
+- fixed system folder styling over-matching custom folder names
+- fixed icloud login icons not appearing if any icon fails to load
+- fixed toolbar overlap detection on larry-based desktop skins
+- throttled window resize handler for larry-based desktop skins
+- replaced inline onclick attributes with proper event handlers (CSP-friendly)
+- fixed xmultibox UI problems on larry-based skins
+- replaced deprecated jQuery bindings
+- extensive code cleanup
+- removed IE compatibility code
+- removed myroundcube compatibility code
+- removed ident_switch compatibility code
+- removed compatibility code for legacy Roundcube versions
+
+1.9.3 (2025-10-14)
+==================
+- added rel=noopener to external links to prevent reverse-tabnabbing
+- moved quick skin and language change functions from xskin to xframework
+- fixed link button colors in elastic-based skins
+
+1.9.2 (2024-11-08)
+==================
+- fixed colors on inputs with errors
+- fixed settings sections titles in larry-based skins
+- fixed settings input widths in larry-based skins
+- fixed settings error popups in larry-based skins
+- added Arabic translation
+- added Bulgarian translation
+- added Chinese (Simplified) translation
+- added Chinese (Traditional) translation
+- added Estonian translation
+- added Greek translation
+- added Hungarian translation
+- added Japanese translation
+- added Korean translation
+- added Latvian translation
+- added Portuguese (Portugal) translation
+- added Slovak translation
+- added Swedish translation
+- updated license agreement
+
+1.9.1 (2024-07-15)
+==================
+- updated larry-based skins UI
+
+1.9 (2024-01-31)
+================
+- fixed button colors
+- updated the icon system
+- added new element styles
+
+1.8.9 (2023-09-15)
+==================
+- fixed the light menu background highlight problem
+
+1.8.8 (2023-05-25)
+==================
+- improved the switchbox UI on larry-based skins
+- fixed the unreachable render page hook
+- fixed pager UI on mobile larry-based skins
+
+1.8.7 (2023-05-09)
+==================
+- added Norwegian translation
+
+1.8.6 (2023-03-14)
+==================
+- added a config option to disable remotely loaded fonts
+
+1.8.5 (2023-02-27)
+==================
+- fixed the elastic-based skin mobile layout
+- removed backward compatibility with RC <= 1.4
+
+1.8.4 (2023-02-15)
+==================
+- made the plugin fully compatible with PHP 8.2
+- removed code providing RC 1.3 compatibility
+- fixed the quick language change functionality
+- fixed the quick skin change functionality
+- added Czech translation
+- added Danish translation
+- added Dutch translation
+- added Finnish translation
+- added Indonesian translation
+- added Lithuanian translation
+- added Portuguese translation
+- added Romanian translation
+- added Russian translation
+- added Slovenian translation
+- added Spanish translation
+- added Turkish translation
+- added Ukrainian translation
+
+1.8.3 (2022-12-16)
+==================
+- fixed some small dark mode login UI issues on elastic-based skins
+
+1.8.2 (2022-06-20)
+==================
+- fixed icon positioning in the larry-based skins
+
+1.8.1 (2022-05-30)
+==================
+- UI improvements and fixes
+
+1.8 (2022-04-06)
+==================
+- fixed some potential html encoding problems
+- fixed some issues with litecube icons
+
+1.7.9 (2022-02-15)
+==================
+- fixed litecube skin icons on mobile
+
+1.7.8 (2022-01-31)
+==================
+- fixed a skin changing error under PHP 8
+- fixed PHP warnings in the Roundcube 1.5.2 about dialog
+
+1.7.7 (2022-01-11)
+==================
+- fixed datepicker UI
+- fixed the disablePluginsOnMobile warning
+- added the Italian translation
+- fixed some small css issues
+- upgraded the PHP code syntax
+- changed the minimum required Roundcube version to 1.4
+
+1.7.6 (2021-09-08)
+==================
+- fixed button borders in the litecube skin
+- fixed message footer UI in the larry-based skins
+- fixed group button borders in the larry-based skins
+
+1.7.5 (2021-09-01)
+==================
+- added Skin Look & Feel options to larry-based skins
+- removed skin-specific overwrite_css config options in favor of global overwrite_css
+- changed the font sources
+- removed Cairo font because of line spacing issues
+- added Noto Sans font
+- added Ubuntu font
+- fixed overflowing text in lists
+- fixed login UI issues
+- fixed html editor input border shadows
+- fixed table width on login page
+- fixed submenu arrow hover colors
+- made the RC 1.4 & 1.5 compose html editors compatible with elastic-based skins colors
+
+1.7.4 (2021-08-05)
+==================
+- enabled interface skin list code modifications
+
+1.7.3 (2021-07-21)
+==================
+- fixed popup menu UI problems
+- fixed input shadow UI problems
+- updated the Polish translation
+- updated the French translation
+
+1.7.2 (2021-06-02)
+==================
+- extended the functionality of hide_about_link to apply to all skins
+- fixed config docs
+
+1.7.1 (2021-05-25)
+==================
+- made the plugin compatible with RC 1.5
+- made the plugin compatible with the dark mode
+
+1.7 (2021-02-08)
+================
+- fixed issues with content replacement on the login page
+
+1.6.9 (2021-01-21)
+==================
+- updated the x2fa plugin UI
+
+1.6.8 (2020-10-28)
+==================
+- fixed skin logo warning
+- fixed the loader positioning on the login page of the larry-based skins
+
+1.6.7 (2020-10-19)
+==================
+- fixed problems with displaying default skin on the login/logout pages
+- fixed problems with displaying branding images on the login page
+
+1.6.6 (2020-10-06)
+==================
+- added the indent_switch plugin select element to larry-based mobile skins
+
+1.6.5 (2020-09-25)
+==================
+- added German translation
+
+1.6.4 (2020-08-18)
+==================
+- fixed favicon setting and display on larry-based skins
+- fixed logout skin problems when user config skin is larry-based and default config skin is elastic-based
+
+1.6.3 (2020-05-29)
+==================
+- fixed the loading of the Google fonts on WHM 88
+
+1.6.2 (2020-05-25)
+==================
+- fixed the issues with the dont_overwrite config setting on Roundcube 1.3 disabling the skins
+
+1.6.1 (2020-05-04)
+==================
+- added support for larry-style logo config options to elastic-based skins
+
+1.6 (2020-04-29)
+================
+- updated popup styles
+
+1.5.9 (2020-03-12)
+==================
+- updated UI styles
+
+1.5.8 (2020-02-14)
+==================
+- modified the overwrite_css config option to work on Elastic-based skins and on Elastic itself
+
+1.5.7 (2020-02-04)
+==================
+- added a system to prevent using elastic based skins on RC 1.3.x or below
+- changed the default value of the hide_about_link config option
+
+1.5.6 (2020-01-20)
+==================
+- fixed quick skin change when using larry-based skins
+
+1.5.5 (2020-01-08)
+==================
+- upgraded to work with cPanel 84
+
+1.5.4 (2019-12-19)
+==================
+- made the plugin compatible with ident_switch
+
+1.5.3 (2019-12-17)
+==================
+- fixed hiding the about link via config
+
+1.5.2 (2019-11-25)
+==================
+- updated the config file and changed some default values
+
+1.5.1 (2019-11-07)
+==================
+- fixed quick skin change functionality
+- added elastic to the quick skin change list
+- upgraded to be compatible with Roundcube 1.4 RC 2
+
+1.5 (2019-10-10)
+================
+- removed the skin html replacement error when displaying Roundcube error page
+
+1.4.9 (2019-09-24)
+==================
+- fixed box page navigation icons
+
+1.4.8 (2019-09-02)
+==================
+- fixed interface options label on mobile devices
+- added a config option to disable mobile interface on larry-based skins
+- updated the html replacement error message to make it more legible
+
+1.4.7 (2019-07-11)
+==================
+- translated to French
+
+1.4.6 (2019-06-05)
+==================
+- fixed mobile dialog formatting
+- fixed selectable list check mark positioning
+
+1.4.5 (2019-05-22)
+==================
+- added support for Roundcube 1.4 RC1 and elastic-based skins
+- removed separate skin selection for desktop, tablet, and phone
+- added an option to change larry-based skin icons in skin's settings.php
+
+1.4.4 (2019-03-04)
+==================
+- updated loader image to svg
+
+1.4.3 (2019-02-28)
+==================
+- fixed message highlighting colors in thread view
+
+1.4.2 (2018-07-03)
+==================
+- added styles for xemail_schedule on mobiles
+
+1.4.1 (2018-06-04)
+==================
+- added support for the thunderbird labels plugin
+
+1.4 (2018-03-19)
+================
+- fixed the compose field expanding height problems
+- restored dialog shadows to improve the UI
+
+1.3.9 (2018-02-27)
+==================
+- fixed login page blurred background icon display
+- made the skins compatible with the twofactor_gauthentictor plugin
+
+1.3.8 (2018-01-22)
+==================
+- added an option to disable/enable mobile skin on a specific device
+- removed the outlook hero image config options
+
+1.3.7 (2018-01-03)
+==================
+- fixed image paths
+
+1.3.6 (2017-12-06)
+==================
+- made the plugin compatible with xbackground login images
+- fixed the UI of some settings pages on mobile devices
+
+1.3.5 (2017-11-01)
+==================
+- upgrading skin loading and handling
+- enhanced the functionality of dontoverwrite config setting to force the default skins on all the user accounts
+- added config setting for including a global css overwrite file (overwrite_css)
+
+1.3.4 (2017-10-20)
+==================
+- fixed the problem with overwriting mobile css
+- made it possible to enforce a skin color in config
+
+1.3.3 (2017-09-04)
+==================
+- fixed javascript initialization problems on third-party, non-Roundcube Plus skins
+- added a class that disables converting checkboxes to switchboxes
+
+1.3.2 (2017-07-05)
+==================
+- added login body class to logout pages to fix styling
+- fixed mobile message view attachment download menu
+- fixed mobile compose attachment option buttons
+
+1.3.1 (2017-06-28)
+==================
+- implemented setting layout to list on mobile devices so widescreen layouts can be displayed properly on RC 1.3
+
+1.3 (2017-06-07)
+==================
+- fixed skin record focus color on RC 1.3
+- added config options to specify the skin-specific login hero images
+- added config options to specify the skin-specific login product name text
+- added config options for overwriting skin css files
+
+1.2.9 (2017-05-10)
+==================
+- fixed disabled listbox button colors
+- fixed mobile UI under Lumia
+
+1.2.8 (2017-04-11)
+==================
+- tweaked the icloud login screen design
+- fixed the settings / folders gear button popup on mobile devices
+
+1.2.7 (2017-03-08)
+==================
+- fixed problems with content scrolling on some mobile devices
+
+1.2.6 (2017-03-07)
+==================
+- added Polish translation
+
+1.2.5 (2017-03-01)
+==================
+- adjusted the main screen position under cPanel
+- removed the white top line on minimized screen in cPanel
+
+1.2.4 (2017-02-15)
+==================
+- fixed problems with adding mailbox item classes
+- fixed filter plugin settings display
+- added mobile quota display
+
+1.2.3 (2017-02-08)
+==================
+- fixed address book navigation issues on IE
+
+1.2.2 (2017-02-07)
+==================
+- added new icons to icon font
+- added classes to mailbox items
+- fixed cut font in toolbar
+- moved rc+ font to xframework
+- updated watermark image
+
+1.2.1 (2017-01-11)
+==================
+- added unit tests
+
+1.2 (2017-01-04)
+==================
+- added new protected properties to make the plugin compatible with upgraded xframework
+
+1.1.9 (2016-12-19)
+==================
+- fixed quick skin switching in larry on IE
+- fixed messagesieve settings page layout
+
+1.1.8 (2016-12-13)
+==================
+- fixed disappearing skin/language/color change menu in Firefox
+
+1.1.7 (2016-12-09)
+==================
+- made plugin compatible with xactivate
+- updated license agreement
+
+1.1.6 (2016-11-30)
+==================
+- fixed compose textarea height
+- corrected a typo in the localization file
+- made plugin compatible with the updated framework
+
+1.1.5 (2016-11-16)
+==================
+- removed references to legacy functions
+
+1.1.4 (2016-11-07)
+==================
+- added a config option to disable the menu skin selection
+- added a config option to disable the menu language selection
+- added a config option to change the message preview branding watermark image
+- added a config option to change the default skin colors
+- changed the delete icon to trash and junk icon to recycle
+- changed the vendor icon on the login page
+
+1.1.3 (2016-10-17)
+==================
+- added print logo config option
+- set the print background to white in all skins
+
+1.1.2 (2016-10-11)
+==================
+- made plugin compatible with the new way of including assets
+- made plugin compatible with xbackground
+
+1.1.1 (2016-10-04)
+==================
+- UI tweaks
+
+1.1 (2016-09-27)
+================
+- added quick skin selection box to the interface options popup
+- added support for interface options in Larry
+
+1.0.9 (2016-09-20)
+==================
+- improved the handling of skin logos
+
+1.0.8 (2016-09-06)
+==================
+- added a new mobile swipe gesture to mark messages as read/unread
+- minor changes to make the plugin compatible with upgraded xframework
+
+1.0.7 (2016-08-16)
+==================
+- fixed the color problems with mce dialog buttons on RC < 1.2.1
+
+1.0.6 (2016-08-15)
+==================
+- fixed the color problems with mce dialog buttons
+
+1.0.5 (2016-08-08)
+==================
+- upgraded to be compatible with RC 1.2.1
+
+1.0.4 (2016-07-04)
+==================
+- fixed disabled text color
+- fixed contextmenu popup icons display
+
+1.0.3 (2016-06-14)
+==================
+- hiding desktop filter and search controls if they overlay toolbar buttons
+
+1.0.2 (2016-06-06)
+==================
+- added folder actions to mobile options menu
+- added selection actions to mobile options menu
+- fixed the message pager mobile layout
+
+1.0.1 (2016-06-02)
+==================
+- added message list display and sorting options to mobile skins
+
+1.0 (2016-06-01)
+================
+- initial release

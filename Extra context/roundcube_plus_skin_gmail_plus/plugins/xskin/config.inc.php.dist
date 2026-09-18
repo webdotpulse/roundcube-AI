@@ -1,0 +1,88 @@
+<?php
+/**
+ * Roundcube Plus Skin plugin.
+ *
+ * Copyright 2019, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+// Message preview watermark image URL. Set this value to null to use the default watermark located at
+// [roundcube]/plugins/xskin/assets/images/watermark.png.
+//
+// Type: string or null
+// Example: 'http://yourdomain.com/images/watermark.png'
+// Default: null
+$config['preview_branding'] = null;
+
+// Custom CSS file URL loaded regardless of which skin is active.
+//
+// Type: string or null
+// Example: 'http://yourdomain.com/styles/custom.css'
+// Default: null
+$config['overwrite_css'] = null;
+
+// Whether skin selection is removed from the interface options menu.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['disable_menu_skins'] = false;
+
+// Whether language selection is removed from the interface options menu.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['disable_menu_languages'] = false;
+
+// Whether mobile detection is disabled and the desktop interface is forced on mobile devices. This setting applies to
+// Larry-based skins only and has no effect on Elastic-based skins.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['disable_mobile_interface'] = false;
+
+// Third-party plugins disabled on mobile devices. Use this setting for plugins that do not function properly on mobile.
+// This setting applies to Larry-based skins only.
+//
+// Type: array
+// Allowed: array of plugin names
+// Default: []
+$config['disable_plugins_on_mobile'] = [];
+
+// Whether HTML message composition is enabled on mobile devices. Disable this setting if the Roundcube HTML editor
+// causes problems on mobile. This setting applies to Larry-based skins only.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['allow_mobile_html_composing'] = true;
+
+// Whether the skin color selection menu is disabled. When disabled, the skin uses the color last selected by the user,
+// or the default color specified in [roundcube]/skins/[skin_name]/settings.php if the user has never selected a color.
+// This setting applies to Larry-based skins only.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['disable_menu_colors'] = false;
+
+// Whether remotely hosted skin fonts are disabled. When enabled, Elastic-based skins use the local copy of Roboto
+// included with Elastic, while Larry-based skins use a locally available sans-serif font with preference for Lucida
+// Grande or Verdana. Enabling this setting also disables font selection in the skins' Look & Feel settings.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['disable_remote_skin_fonts'] = false;
+
+// Plugins that do not properly support custom Roundcube skins. For these plugins, xskin can make the active skin appear
+// as elastic or larry so that plugins with hard-coded skin checks continue to work. For this functionality to work,
+// xskin must be included at the beginning of the plugin array in config/config.inc.php.
+//
+// Type: array
+// Allowed: array of plugin names
+// Default: []
+$config['fix_plugins'] = [];

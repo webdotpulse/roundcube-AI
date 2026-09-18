@@ -1,0 +1,9 @@
+// This file adds classes that correspond to icons glyphs.
+
+@use "sass:meta";
+@use "icons";
+@use "icons_map";
+
+@each $name, $glyph in meta.module-variables("icons_map") {
+    .xi-#{$name}:before { @include icons.icon($glyph, true); }
+}

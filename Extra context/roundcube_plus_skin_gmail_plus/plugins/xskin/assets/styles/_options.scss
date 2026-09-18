@@ -1,0 +1,214 @@
+@use "../../../xframework/assets/styles/colors";
+
+@mixin font-family($font) {
+    body, button, input, optgroup, select, textarea, .popover {
+        font-family: $font;
+    }
+}
+
+// user option: font family
+html.xfont-family-arial { @include font-family((Arial, Helvetica, sans-serif)); }
+html.xfont-family-courier { @include font-family(("Courier New", Courier, monospace)); }
+html.xfont-family-merienda { @include font-family(('Merienda', cursive)); }
+html.xfont-family-montserrat { @include font-family(('Montserrat Alternates', sans-serif)); }
+html.xfont-family-noto-sans { @include font-family(('Noto Sans', sans-serif)); }
+html.xfont-family-quattrocento { @include font-family(('Quattrocento', serif)); }
+html.xfont-family-roboto { @include font-family(("Roboto", sans-serif)); }
+html.xfont-family-sarala { @include font-family(('Sarala', sans-serif)); }
+html.xfont-family-times { @include font-family(("Times New Roman", Times, serif)); }
+html.xfont-family-ubuntu { @include font-family(('Ubuntu', sans-serif)); }
+
+// user option: font thickness
+html.xthick-font-yes body * {
+    font-weight: bold !important;
+}
+
+// user option: font size
+html, body {
+    font-size: 14px;
+}
+
+html.xfont-size-xs {
+    &, body { font-size: 12px; }
+}
+
+html.xfont-size-s {
+    &, body { font-size: 13px; }
+
+}
+html.xfont-size-l {
+    &, body { font-size: 15px; }
+}
+
+html.xfont-size-xl {
+    &, body { font-size: 16px; }
+}
+
+// user option: icons in lists
+body.xlist-icons-no {
+    .scroller .listing.iconized li > a:before,
+    .scroller .listing.iconized tr > td.section:before,
+    .scroller .listing.iconized tr.contact > td:before,
+    .scroller .folderlist li > a:before,
+    .popupmenu:not(#spell-menu) .listing a:before {
+        display: none !important;
+    }
+}
+
+// user option: icons on buttons
+body.xbutton-icons-no button.btn {
+    &:not(.ui-dialog-titlebar-close):not(.icon-only):not(.preserve-icon):before {
+        display: none !important;
+    }
+}
+
+// skin option: normal (not bold) header font
+body.xnormal-header-font {
+    #layout > div > .header,
+    #layout > div > .footer,
+    .folderlist li.mailbox .unreadcount,
+    #sidebar-calendar .ui-datepicker select {
+        font-weight: normal;
+    }
+}
+
+// skin option: inverted colors on header
+body.xinverted-header-colors {
+    &.xsidebar-mobile-visible #xsidebar #xsidebar-mobile-header a {
+        color: #fff;
+    }
+
+    #messagelist-header,
+    #layout > div > .header,
+    #xcalendar-toolbar,
+    #xcalendar-app .calendar-content-header {
+        border-bottom: none;
+    }
+}
+
+// skin option: no icons on taskbar
+@media screen and (min-width: 480px) {
+    body.xno-taskbar-icons {
+        #taskmenu a {
+            padding: 0;
+            height: 36px;
+            font-size: 1rem;
+
+            &:before {
+                line-height: 36px;
+            }
+
+            span.inner {
+                display: none;
+            }
+        }
+    }
+}
+
+// skin option: no border radius
+body.xno-border-radius {
+    * :not(.spinner) {
+        border-radius: 0 !important;
+    }
+}
+
+// skin option: inverted menu
+body.xinverted-menu {
+    #sidebar-calendar .ui-datepicker {
+        border-left: 1px solid !important;
+        border-right: 1px solid !important;
+        @include colors.border-color(true);
+    }
+
+    #layout>div>.header {
+        background: #ddd;
+
+
+        &,
+        .menu.toolbar a,
+        a.button,
+        select {
+            color: #fff;
+        }
+
+
+    }
+
+    .header {
+        .listing li {
+            border: none;
+        }
+    }
+
+    #layout-sidebar,
+    #layout-list,
+    #layout-content {
+        border: none !important;
+
+        .iframe-wrapper,
+        .searchbar,
+        .footer,
+        .scroller {
+            border-left: 1px solid;
+            @include colors.border-color;
+        }
+
+        #calendar-list-container {
+            border-right: 1px solid;
+            @include colors.border-color;
+        }
+
+        // fix for rc 1.5 vs 1.4
+        #compose-content {
+            border-left: 1px solid;
+            @include colors.border-color;
+
+            .scroller {
+                border: none;
+            }
+        }
+    }
+
+    #layout > div.sidebar {
+        .pagenav,
+        .scroller,
+        .footer {
+            border-left: 1px solid;
+            @include colors.border-color;
+        }
+    }
+
+    #layout > #layout-menu {
+        border-right: none;
+
+        &,
+        #taskmenu .action-buttons a {
+            background-color: #F4F4F4 !important;
+        }
+
+        #taskmenu a {
+            @include colors.text-color(true);
+            background-color: transparent !important;
+
+            &.selected,
+            &.selected:hover,
+            &:hover {
+                @include colors.background-highlight-color(10, true);
+            }
+        }
+    }
+}
+
+html.dark-mode body.xinverted-menu {
+    #layout > #layout-menu {
+        background-color: #21292c !important;
+
+        #taskmenu .action-buttons a {
+            background-color: transparent !important;
+        }
+    }
+
+    .floating-action-buttons a {
+        color: #fff;
+    }
+}

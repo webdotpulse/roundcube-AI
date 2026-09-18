@@ -1,0 +1,257 @@
+// This file provides mixins and functions that can be used to manipulate colors for dark/light modes.
+
+@use "sass:string";
+@use "sass:color";
+@use "sass:list";
+@use "sass:math";
+
+body.xelastic:not(.xskin) {
+    --xc-text: #0b7baf;
+    --xc-border: #0b7baf;
+
+    .dark-mode & {
+        --xc-text: #38b2ed;
+        --xc-border: #1d9bd8;
+    }
+}
+
+body.xlarry:not(.xskin) {
+    --xc-text: #0b7baf;
+    --xc-border: #0b7baf;
+}
+
+.xc-text { color: var(--xc-text) }
+.xc-border { border-color: var(--xc-border) }
+
+@mixin text-color($important: false) {
+    & { color: #333 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #c5d1d3 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin text-highlight-color($important: false) {
+    & { color: #141414 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #e5f1f3 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin text-dim-color($important: false) {
+    & { color: #777 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #6b787a string.unquote(if($important, "!important", "")); }
+}
+
+@mixin text-button-color($important: false) {
+    & { color: #fff string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #e2e8e9 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin border-color($important: false) {
+    & { border-color: #ddd string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { border-color: #4d6066 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin border-strong-color($important: false) {
+    & { border-color: #b2b2b2 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { border-color: #8da4aa string.unquote(if($important, "!important", "")); }
+}
+
+@mixin border-highlight-color($important: false) {
+    & { border-color: #aaa string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { border-color: #e5f1f3 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin background-color($important: false) {
+    & { background-color: #fff string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { background-color: #21292c string.unquote(if($important, "!important", "")); }
+}
+
+@mixin background-highlight-color($percent: 5, $important: false) {
+    & { background-color: rgba(0, 0, 0, calc($percent / 100)) string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { background-color: rgba(255, 255, 255, calc($percent / 100)) string.unquote(if($important, "!important", "")); }
+}
+
+@mixin background-error-color($important: false) {
+    & { background-color: #ffcccc string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { background-color: #60252a string.unquote(if($important, "!important", "")); }
+}
+
+@mixin background-badge-color($important: false) {
+    & { background-color: #a7411f string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { background-color: #802824 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin background-button-color($important: false) {
+    & { background-color: #37beff string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { background-color: #006a9d string.unquote(if($important, "!important", "")); }
+}
+
+@mixin error-text-color($important: false) {
+    & { color: #7e1c16 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #d57a70 string.unquote(if($important, "!important", "")); }
+}
+
+@mixin success-text-color($important: false) {
+    & { color: #006600 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #82d57f string.unquote(if($important, "!important", "")); }
+}
+
+@mixin warning-text-color($important: false) {
+    & { color: #7f6000 string.unquote(if($important, "!important", "")); }
+    html.dark-mode & { color: #d5bd96 string.unquote(if($important, "!important", "")); }
+}
+
+
+@mixin page-mask {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.7);
+}
+
+@mixin popup {
+    background-color: #fff;
+    border: 1px solid #d4dbde;
+    box-shadow: 3px 3px 5px #dcdedf;
+
+    html.dark-mode & {
+        background-color: #161b1d;
+        border-color: #4d6066;
+        box-shadow: none;
+    }
+}
+
+@mixin generic-box-settings {
+    border: 1px solid;
+    border-radius: 3px;
+    @include border-color;
+
+    html.dark-mode & {
+        &,
+        .icon:before {
+            color: #fff;
+        }
+    }
+}
+
+// success: green
+@mixin success-box {
+    @include generic-box-settings;
+    background-color: #E0F2F1;
+    border-color: #b0e3ca;
+    color: #006053;
+
+    html.dark-mode & {
+        background-color: #00553f;
+    }
+}
+
+// error: red
+@mixin error-box {
+    @include generic-box-settings;
+    background-color: #ffe5e5;
+    color: #7e1c16;
+    border-color: #fcc3bb;
+
+    html.dark-mode & {
+        background-color: #5a2417;
+    }
+}
+
+// warning: orange/brown
+@mixin warning-box {
+    @include generic-box-settings;
+    background-color: #FFE0B2;
+    color: #935b00;
+    border-color: #ffc367;
+
+    html.dark-mode & {
+        background-color: #654f00;
+    }
+}
+
+// info: blue
+@mixin info-box {
+    @include generic-box-settings;
+    background-color: #d9f3ff !important;
+    border-color: #b4e8ff !important;
+
+    &,
+    .icon:before {
+        color: #2c363a;
+    }
+
+    html.dark-mode & {
+        background-color: #216e93 !important;
+    }
+}
+
+// note: gray
+@mixin note-box {
+    @include generic-box-settings;
+    background-color: #f6f6f6;
+    border-color: #ced4da;
+    color: #434343;
+
+    html.dark-mode & {
+        background-color: rgba(255, 255, 255, .1);
+
+        &,
+        .icon:before {
+            color: #ddd;
+        }
+    }
+}
+
+@function hex-to-dec($string) {
+    $hex: "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f";
+    $string: to-lower-case($string);
+    $length: str-length($string);
+
+    $dec: 0;
+    @for $i from 1 through $length {
+        $factor: 1 + (15 * ($length - $i));
+        $index: index($hex, str-slice($string, $i, $i));
+        $dec: $dec + $factor * ($index - 1);
+    }
+
+    @return $dec;
+}
+
+@function dec-to-hex($d) {
+    $hexVals: "a" "b" "c" "d" "e" "f";
+    $base: 16;
+    $quotient: $d;
+    $result: "";
+    @if $d == 0 {
+        $result: "00";
+    }
+    @while $quotient != 0 {
+        $mod: $quotient % $base;
+        $quotient: math.floor(calc($quotient / $base));
+        @if $mod > 9 {
+            $mod: list.nth($hexVals, $mod - 9);
+        }
+        @if $d < $base {
+            $result: "0" + $mod;
+        } @else {
+            $result: $mod + $result;
+        }
+    }
+    @return $result;
+}
+
+@function hex-to-color($string) {
+    @return rgb(
+            hex-to-dec(str-slice($string, 1, 2)),
+            hex-to-dec(str-slice($string, 3, 4)),
+            hex-to-dec(str-slice($string, 5, 6))
+    );
+}
+
+@function color-to-hex($color) {
+    @return dec-to-hex(color.channel($color, "red", $space: rgb)) +
+        dec-to-hex(color.channel($color, "green", $space: rgb)) +
+        dec-to-hex(color.channel($color, "blue", $space: rgb));
+
+}

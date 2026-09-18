@@ -1,0 +1,60 @@
+@use "icons";
+
+@keyframes spin {
+    to { transform: rotate(1turn) }
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    25%, 75% { opacity: 0; }
+}
+
+@mixin spinner {
+    display: inline-block;
+    content: "";
+    width: 1em;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: .2em solid;
+    border-left-color: rgba(255, 255, 255, .2);
+    border-bottom-color: rgba(255, 255, 255, .2);
+    animation: spin 1s infinite;
+}
+
+@mixin blinker {
+    display: inline-block;
+    animation: blink 2s infinite linear;
+}
+
+button.busy {
+    position: relative;
+
+    &:before,
+    span {
+        visibility: hidden;
+    }
+
+    &:after {
+        @include spinner;
+        visibility: visible;
+        position: absolute !important;
+        top: 50%;
+        left: 50%;
+        margin: -.5em 0 0 -.5em;
+    }
+}
+
+.xspinner:before {
+    @include spinner;
+}
+
+.animate-fade {
+    opacity: 1;
+    -moz-transition: opacity .25s ease-in-out;
+    -webkit-transition: opacity .25s ease-in-out;
+    transition: opacity .25s ease-in-out;
+}
+
+.animate-fade.ng-hide {
+    opacity: 0;
+}

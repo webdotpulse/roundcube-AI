@@ -1,0 +1,371 @@
+@use "colors" as skin_colors;
+@use "../../../../plugins/xframework/assets/styles/colors";
+@use "../../../../plugins/xskin/assets/styles/elastic_skins_commons";
+
+@include elastic_skins_commons.basic-styles;
+@include elastic_skins_commons.secondary-button-styles;
+@include elastic_skins_commons.anchor-colors(#0076c6);
+
+body.xelastic.login-page {
+    background: #fff;
+
+    #layout-content {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+
+    html.dark-mode & #layout-content {
+        border-color: #7c949c;
+    }
+}
+
+.menu li {
+    border-bottom: none;
+}
+
+.floating-action-buttons a.button:before {
+    color: #fff;
+}
+
+// force background colors to ensure correct colors in when used with xbackground
+#layout-menu,
+#layout div > .header {
+    background-color: #fff !important;
+}
+
+html.dark-mode  {
+    #layout-menu,
+    #layout div > .header {
+        background-color: #21292c !important;
+    }
+}
+
+// popup headers
+#layout-menu .popover-header,
+.popover-header {
+    background: transparent !important;
+    border-bottom: 1px solid;
+    color: #333 !important;
+    @include colors.border-color(true);
+}
+
+// fix the tooltips and prevent them from being cut
+.header .toolbar a,
+.header ul.listing li,
+#taskmenu a {
+    overflow: initial;
+}
+
+// gmail compose button (displayed only if screen >= 1200px)
+#compose-plus {
+    display: none;
+    text-align: center;
+    border-radius: 2em;
+    margin: 1rem 1rem 0 1rem;
+    padding: 0 1.5rem 0 3rem;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.302), 0 1px 3px 1px rgba(60, 64, 67, 0.149);
+    transition: box-shadow .08s linear, min-width .15s cubic-bezier(0.4, 0.0, 0.2, 1);
+    background: url("../images/compose_plus.png") no-repeat 1rem center;
+
+    &:hover {
+        text-decoration: none;
+        box-shadow: 0 1px 3px 0 rgba(60, 64, 67, 0.302), 0 4px 8px 3px rgba(60, 64, 67, 0.149);
+    }
+
+    span {
+        display: block;
+        position: relative;
+        top: 1px;
+        line-height: 3.3rem;
+        padding-left: 1rem;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #7c7c7c;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+    }
+
+    html.dark-mode & {
+        background-color: #2e3638;
+        box-shadow: none;
+
+        span {
+            color: #ddd;
+        }
+    }
+}
+
+.folderlist li.mailbox .unreadcount {
+    font-size: 0.9rem;
+}
+
+@media screen and (max-width: 1024px) {
+    #taskmenu.menu a {
+        &:before {
+            position: relative;
+            top: -.1rem !important;
+            font-size: 1.3em !important;
+        }
+    }
+}
+
+@media screen and (min-width: 481px) {
+    .popupmenu .listing li.selected,
+    .popupmenu .listing li>a:not(.disabled):hover {
+        @include colors.background-highlight-color(7, true);
+    }
+
+    ul.menu.toolbar:not(.popupmenu) > li a,
+    #messagelist-header a,
+    #taskmenu a {
+        position: relative;
+        transition: 0.3s;
+
+        &:before {
+            position: relative;
+            top: 0.6rem;
+            font-size: 1.5em !important;
+        }
+
+        &:hover {
+            @include colors.background-highlight-color(7, true);
+        }
+
+        span.inner {
+            position: absolute;
+            left: 50%;
+            top: 3.6rem;
+            background: #4b4b4b;
+            border-radius: 4px;
+            z-index: 999;
+            color: #fff;
+            padding: 3px 5px !important;
+            line-height: 1rem !important;
+            display: none !important;
+            font-size: .9rem !important;
+        }
+
+        &:hover span.inner {
+            display: block !important;
+        }
+    }
+
+    #taskmenu {
+        a span.inner {
+            top: 3.7rem;
+            left: auto;
+            right: 30%;
+        }
+
+        .special-buttons{
+            left: auto;
+            right: 0;
+
+            a span.inner {
+                top: auto;
+                bottom: 3.5rem;
+            }
+        }
+    }
+
+    .footer.toolbar a,
+    .footer.toolbar a.icon.toolbar-button,
+    .header a.sidebar-menu,
+    .toolbar a.dropdown {
+        &:before {
+            top: 3px;
+        }
+    }
+
+    // remove the colored left border from selected items
+    html:not(.touch) .listing li > a:focus,
+    html:not(.touch) .listing.focus tbody tr.focused > td:first-child,
+    html:not(.touch) .listing.focus:not(.withselection) tbody tr.focused > td.selection + td {
+        border-left-color: transparent;
+    }
+
+    // move taskbar to the right
+    .iframe-wrapper {
+        border-right: 1px solid;
+        @include colors.border-color;
+    }
+
+    #layout-menu {
+        order: 4;
+        border-right: none !important;
+
+        #taskmenu {
+            a {
+                padding: 1rem 0;
+
+                &:before {
+                    line-height: 1em;
+                }
+
+                &:hover,
+                &.selected {
+                    background-color: transparent;
+                }
+
+                @include colors.text-color(true);
+            }
+        }
+    }
+
+    // header and footer
+    #layout div > .header,
+    #layout div > .footer {
+        font-weight: normal;
+        overflow: initial;
+        @include colors.border-color;
+    }
+
+    // move borders from left to right
+    .listbox,
+    #xsidebar {
+        border: none !important;
+    }
+
+    #xsidebar-inner {
+        border-right: 1px solid;
+        @include colors.border-color(true);
+    }
+
+    #layout .scroller,
+    #sidebar-calendar,
+    #calendar-list-container,
+    #main-calendar-container,
+    .footer,
+    .searchbar {
+        border-right: 1px solid !important;
+        @include colors.border-color(true);
+    }
+
+    #compose-content {
+        &.scroller,
+        form.scroller {
+            border-right: none !important;
+        }
+    }
+
+    .action-compose #layout-sidebar .scroller {
+        border-left: 1px solid !important;
+        @include colors.border-color(true);
+    }
+
+    // lists and items with rounded corners
+    #layout-sidebar .scroller,
+    #layout-list .scroller {
+        padding-right: 1rem;
+    }
+
+    .treelist.listing,
+    #settings-menu.listing,
+    .task-addressbook table.listing,
+    .task-settings table.listing {
+        margin-top: 1rem;
+
+        ul, li, td {
+            border: none;
+        }
+
+        li.selected,
+        li.selected > a,
+        tr.selected td {
+            border-top-right-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+        }
+    }
+
+    #layout-list #messagelist-content,
+    #layout-sidebar #calendar-list-container {
+        padding-right: 0;
+    }
+
+    // adjust the message list
+    #messagelist {
+        .listing tbody td,
+        .listing li {
+            border-bottom: none;
+        }
+
+        tr {
+            border-bottom: 1px solid;
+            @include colors.border-color;
+        }
+
+        tr:hover {
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.302), 0 1px 3px 1px rgba(60, 64, 67, 0.149);
+        }
+    }
+}
+
+// add padding to the special buttons
+@media screen and (max-width: 1025px) {
+    .special-buttons {
+        padding-bottom: 10px;
+    }
+}
+
+// popup boxes with shadow only if larger than this
+@media screen and (min-width: 768px) {
+    .popover-body {
+      //  box-shadow: 0 8px 10px 1px rgba(0,0,0,0.14), 0 3px 14px 2px rgba(0,0,0,0.12), 0 5px 5px -3px rgba(0,0,0,0.2);
+    }
+}
+
+// display the gmail compose button only if larger than this
+@media screen and (min-width: 1200px) {
+    a.compose {
+        display: none !important;
+    }
+
+    #compose-plus {
+        display: block;
+    }
+}
+@media screen and (max-width: 1200px) {
+    #layout-list .header a:before,
+    .header-links a:before {
+        top: 0;
+    }
+}
+
+// xcalendar
+body.xcalendar-page.xelastic {
+    #layout-content {
+        border: none;
+
+        .ui-datepicker-header {
+            background: transparent !important;
+            border-bottom: none;
+        }
+    }
+
+    #calendar-list-container {
+        .header {
+            .new-calendar:before {
+                position: relative;
+                top: 0px;
+            }
+        }
+    }
+}
+
+// plugin: ident_switch
+#plugin-ident_switch-account {
+    margin-right: 4px;
+    padding: 0 4px !important;
+}
+
+// cpanel
+#taskmenu a.button-cpwebmail {
+    background-position-y: 50%;
+}
+
+// plugin: xai
+#xai-assistant-floating-button {
+    right: 85px !important;
+}

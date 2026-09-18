@@ -1,0 +1,518 @@
+* {
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -o-box-shadow: none !important;
+    -webkit-box-shadow: none !important;
+    -moz-box-shadow: none !important;
+}
+
+.ui-dialog {
+    box-shadow: 1px 1px 18px #666 !important;
+}
+
+*:focus { /* remove chrome border around active fields */
+    outline: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    color: #333;
+    background: #fff;
+}
+
+body,
+#login-form .box-inner,
+#login-form .box-bottom {
+    background-image: none;
+}
+
+a {
+    outline: none;
+}
+
+/* buttons */
+
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+button,
+button.ui-button,
+a.button,
+input.button {
+
+    &,
+    .formbuttons & {
+        border: 1px solid #adadad;
+        color: #212121;
+        background: #fff;
+        font-weight: normal;
+        cursor: pointer;
+    }
+
+    &:hover,
+    &:active,
+    &:focus,
+    .formbuttons &:hover {
+        border-color: #949494;
+        color: #212121;
+        background: #efefef;
+    }
+}
+
+body:not(.skin-litecube) {
+    .prevpage,
+    .nextpage {
+        background: transparent !important;
+    }
+}
+
+.buttongroup a.button {
+    background: #fff !important;
+
+    &.selected {
+        background: #aaa !important;
+    }
+}
+
+#look-and-feel-shortcut a.btn {
+    display: block;
+    text-align: center;
+    margin-top: 8px;
+    text-decoration: none;
+    padding: 3px;
+    border-radius: 3px;
+}
+
+ul.toolbarmenu li a.icon {
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+#login-form input[type="text"],
+#login-form input[type="password"],
+input[type=text],
+input[type=email],
+input[type=password],
+textarea {
+    margin-bottom: 0;
+    padding: 5px;
+    border: 1px solid #ccc !important;
+    background: #fff;
+    border-radius: 0;
+}
+
+textarea:focus,
+textarea:hover,
+input[type=text]:focus,
+input[type=text]:hover,
+input[type=password]:focus,
+input[type=password]:hover,
+select:focus,
+select:hover {
+    border-color: #8f8f8f;
+}
+
+.propform {
+    fieldset > legend {
+        font-weight: bold !important;
+    }
+
+    input[type=text],
+    input[type=password],
+    input[type=email],
+    select {
+        width: 100%;
+        max-width: 600px;
+        margin-right: 0;
+        margin-left: 0;
+        box-sizing: border-box;
+
+        &.error {
+            border-color: #d30000 !important;
+        }
+    }
+}
+
+select {
+    /*margin-bottom: 8px;*/
+    margin-right: 4px;
+    border: 1px solid #ccc;
+    padding: 5px;
+    background: #fff;
+    border-radius: 0 !important;
+    color: #333;
+    height: auto;
+}
+
+select.decorated option {
+    background: #fff;
+    color: #333;
+}
+
+fieldset {
+    border-radius: 0 !important;
+    border: 1px solid #ddd;
+}
+
+legend {
+    font-weight: normal !important;
+    font-style: normal !important;
+    color: #333;
+}
+
+.messagelist tr>.flag span,
+.messagelist tr>.status span,
+.messagelist tr>.attachment span,
+.messagelist tr>.priority span {
+    text-indent: 0;
+}
+
+#interface-options span.tooltip {
+    display: none;
+}
+
+#messagestack div:after {
+    position: absolute !important;
+}
+
+.formbuttons {
+    text-align: right;
+    padding-right: 10px;
+}
+
+.ui-dialog-titlebar {
+    display: flex;
+    align-items: center;
+
+    button {
+        border: none;
+    }
+}
+
+body.iframe .footerleft.floating,
+#composeview-bottom .formbuttons.floating {
+    right: 0;
+    width: auto;
+}
+
+body.print-message,
+#printmessageframe {
+    background: #fff !important;
+}
+
+.minicolors-swatch .minicolors-swatch-color {
+    border-radius: 5px;
+}
+
+/* iehacks */
+
+input.button,
+.formbuttons input.button,
+.formbuttons input.button:active,
+input.button.mainaction,
+input.button.mainaction:active,
+a.button,
+a.button.pressed,
+a.button:active,
+input.button:active,
+.pagenav.dark a.button,
+.pagenav.dark a.button.pressed,
+#message.statusbar,
+.ui-dialog.popupmessage .ui-dialog-titlebar,
+.ui-dialog.popupmessage .ui-widget-content,
+#topnav,
+.records-table tr.selected td,
+.contentbox .boxtitle,
+body.iframe .boxtitle,
+#login-form input.button,
+#login-form input.button:active,
+.toolbar a.button,
+a.menuselector,
+a.menuselector:active,
+.googie_list td.googie_list_onhover,
+ul.toolbarmenu li a.active:hover,
+#rcmKSearchpane ul li.selected,
+.tabsbar .tablink,
+.tabsbar .selected a,
+.contactfieldgroup,
+.contactfieldgroup legend,
+#messagelistfooter,
+#mailboxlist li.mailbox .unreadcount,
+#mailboxlist li.mailbox.selected > a .unreadcount,
+#messageheader, #partheader, #composeheaders,
+#previewheaderstoggle {
+    filter: none;
+}
+
+/* login */
+
+#login-form td.title {
+    color: #333;
+}
+
+#login-form input[type="text"],
+#login-form input[type="password"] {
+    border: 1px solid #ddd;
+    background: #fff;
+}
+
+#ifplcontainer div label {
+    color: #333;
+}
+
+#login-form {
+    select#_language {
+        width: 100% !important;
+    }
+}
+
+/* switch checkboxes */
+
+input.switchbox-input {
+    opacity: 0 !important;
+    position: absolute !important;
+}
+
+label.switchbox {
+    font-size: 1em;
+    position: relative;
+    display: inline-block !important;
+    padding: 0 !important;
+    width: 2em !important;
+    height: 1.1em !important;
+    background: #a5a5a5 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 1em !important;
+    vertical-align: -0.15em !important;
+    transition: all 0.5s cubic-bezier(.17,.67,.43,.98);
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
+}
+
+label.switchbox:hover  {
+    background: #ddd !important;
+}
+
+label.switchbox:after {
+    position: absolute !important;
+    display: block !important;
+    content: '' !important;
+    top: 1px !important;
+    left: 1px !important;
+    bottom: 1px !important;
+    width: 1em !important;
+    border-radius: 50% !important;
+    background: #fff !important;
+    box-shadow: 0 0 0.1em 0 #aaa !important;
+}
+
+input.switchbox-input:checked + label.switchbox {
+    background: #4cd964 !important;
+    border-color: #4cd964 !important;
+}
+
+input.switchbox-input:checked + label.switchbox:hover {
+    background: #41c658 !important;
+}
+
+input.switchbox-input:checked + label.switchbox:after {
+    left: auto !important;
+    right: 1px !important;
+    box-shadow: 0 0 0.1em 0 #aaa !important;
+}
+
+body.xskin input.switchbox-input:disabled + label.switchbox,
+body.xskin input.switchbox-input:checked:disabled + label.switchbox {
+    background: #ddd !important;
+    border-color: #ddd !important;
+    cursor:not-allowed;
+}
+
+input.switchbox-input:disabled + label.switchbox:after,
+input.switchbox-input:checked:disabled + label.switchbox:after {
+    background: #eee !important;
+}
+
+// fix positioning
+#subscription-table label.switchbox,
+#subscription-table label.material.checkbox {
+    left: auto !important;
+}
+
+/* compose */
+
+.mce-btn,
+.mce-btn button,
+button.mce-close {
+    background: transparent !important;
+    border: none !important;
+    margin-right: 2px !important;
+}
+
+.mce-btn .mce-txt,
+.mce-btn button {
+    color: #333 !important;
+}
+
+.mce-colorbutton:hover .mce-open {
+    border-color: transparent !important;
+}
+
+i.mce-i-backcolor {
+    background-color: transparent !important;
+}
+
+.mce-widget button {
+    text-transform: none;
+}
+
+#composeoptions {
+    border: none;
+}
+
+#composeheaders .moreheaderstoggle {
+    border: none !important;
+    background: transparent !important;
+}
+
+.moreheaderstoggle .iconlink {
+    top: auto;
+    bottom: 2px;
+}
+
+.moreheaderstoggle.remove .iconlink {
+    bottom: 2px;
+}
+
+#composebodycontainer .mce-tinymce {
+    margin-top: 0;
+}
+
+#compose-attachments {
+    top: 0;
+    border: 0;
+    border-left: 1px solid #DFDFDF;
+}
+
+#composebodycontainer .mce-edit-area {
+    border-top: 1px solid #DFDFDF !important;
+}
+
+// html editor buttons
+
+button.tox-tbtn,
+button.tox-button,
+button.mce-close {
+    color: #222f3e !important;
+    background: transparent !important;
+
+    &:hover {
+        background: #dee0e2 !important;
+    }
+}
+
+.tox-dialog {
+    border: 1px solid #bbbbbb;
+}
+
+.tox-dialog__footer {
+    button.tox-button {
+        background: #fff;
+        border: 1px solid #aaa;
+        font-weight: normal;
+    }
+
+    button.tox-button--secondary {
+        border: 1px solid #ddd;
+    }
+}
+
+
+/* plugin: treecol */
+
+#mailview-tc-mid,
+#mailview-tc-right {
+    top: 0;
+}
+
+/* plugin: xcalendar */
+
+.xcalendar .fc-state-default, .xcalendar .boxtitle button {
+    color: #333;
+}
+
+/* plugin: help */
+
+#helptoolbar a.button.help {
+    display: none; // this button doesn't do anything
+}
+
+/* plugin: rcguard */
+
+#recaptcha_area {
+    padding: 0 !important;
+}
+
+/* plugin managesieve */
+
+#filter-form {
+    select,
+    input,
+    textarea {
+        font-size: 1em;
+        padding: 4px;
+    }
+
+    .rulerow .listarea {
+        padding: 0;
+        border: 1px solid #ddd;
+        background: transparent;
+
+        .listelement {
+            height: auto;
+
+            .reset {
+                margin-top: 3px;
+                background-color: transparent;
+            }
+
+            input {
+                padding: 4px !important;
+                background: transparent;
+                border: none !important;
+                line-height: normal;
+                margin-left: 5px;
+                font-size: 1.2em;
+            }
+        }
+    }
+}
+
+/* plugin: filters */
+
+.xskin #pluginbody #filters-form {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+
+    .uibox.listbox.scroller {
+        position: static;
+        margin-top: 0 !important;
+        border: none;
+        box-shadow: none !important;
+    }
+
+    .boxcontent {
+        border: none;
+        box-shadow: none;
+    }
+}

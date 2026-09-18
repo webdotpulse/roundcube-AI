@@ -1,0 +1,1041 @@
+@use "larry_common";
+@use "larry_desktop_light";
+@use "larry_desktop_square";
+
+body.xlarry-light-ui {
+    @include larry_desktop_light.larry-desktop-light;
+}
+
+body.xlarry-square-ui {
+    @include larry_desktop_square.larry-desktop-square;
+}
+
+#main-menu,
+.popup-box {
+    display: none;
+}
+
+body.settings-page #mainscreen {
+    top: 80px;
+}
+
+body.settings-page.minimal #mainscreen {
+    top: 60px;
+}
+
+#pluginbody .boxcontent {
+    border: 1px solid #ddd;
+    border-top: none;
+}
+
+#header {
+    overflow-y: hidden;
+}
+
+#topline,
+.minimal #topline {
+    background: #aaa;
+    border: none;
+    color: #fff;
+    font-size: 12px !important;
+    padding-top: 0;
+    overflow: hidden;
+}
+
+#topline {
+    .topleft,
+    .topright {
+        margin-top: 2px;
+        line-height: 1em;
+    }
+
+    .topleft a {
+        color: #fff;
+        padding-top: 0;
+    }
+
+    a.button-logout {
+        background-position-y: -194px;
+    }
+}
+
+#login-form .box-bottom,
+#topnav {
+    background-image: none;
+}
+
+.searchbox input,
+#quicksearchbar input {
+    background: #fff;
+}
+
+#rcs-logo {
+    cursor: pointer;
+}
+
+/* taskbar */
+
+#taskbar a {
+    display: block;
+    float: left;
+    margin-right: 4px;
+}
+
+#taskbar a.button-selected {
+    background-color: #888;
+    color: #fff;
+}
+
+#taskbar a:hover {
+    background-color: #888;
+}
+
+.minimal #taskbar .tooltip {
+    background: #fff;
+    color: #333 !important;
+    font-weight: normal;
+    border: 1px solid #999;
+}
+
+#taskbar a.button-xresell:before {
+    top: 1px;
+}
+
+#xsidebar-button {
+    border: none !important;
+    background: transparent !important;
+}
+
+.popupmenu li,
+.popupmenu a {
+    border: none !important;
+}
+
+/* folder list */
+
+#quotadisplay {
+    top: 12px;
+    padding-left: 60px;
+    background-image: url(../images/quota.png);
+}
+
+/* list highlights */
+
+.listbox {
+    background: #F3F3F3;
+}
+
+.listbox .listitem,
+.listbox .tablink,
+.listing tbody td,
+.listing li {
+    border: none !important;
+    border-bottom: 1px solid #ddd;
+}
+
+.listbox .listitem a,
+.listbox .tablink a,
+.listing tbody td,
+.listing li a {
+    color: #333;
+}
+
+.listbox .listitem.selected,
+.listbox .tablink.selected,
+.listbox .listitem.selected > a,
+.listbox .tablink.selected > a,
+.listing tbody tr.unfocused td,
+.listing tbody tr.selected td,
+.listing li.selected,
+.listing li.selected > a {
+    background-color: #e1e1e1;
+    color: #333;
+}
+
+ul.treelist li a:focus,
+ul.listing .listitem a:focus,
+ul.listing .listitem span:focus,
+ul.listing.focus .listitem.focused span {
+    background-color: transparent;
+    color: #333 !important;
+}
+
+ul.listing li {
+    background-color: #F3F3F3;
+}
+
+ul.listing li a,
+.boxfooter .countdisplay {
+    color: #333;
+}
+
+.listbox .boxfooter {
+    border-top: 1px solid #ddd;
+}
+
+.listbox table.listing {
+    background: transparent;
+}
+
+.listbox .boxfooter,
+.boxfooter .listbutton {
+    background: transparent;
+}
+
+.boxfooter .listbutton.disabled {
+    color: #d0d0d0 !important;
+}
+
+.boxfooter .listbutton.addto,
+.boxfooter .listbutton.addcc,
+.boxfooter .listbutton.addbcc {
+    border: none;
+    padding: 0;
+}
+
+.boxfooter .listbutton.addto .inner,
+.boxfooter .listbutton.addcc .inner,
+.boxfooter .listbutton.addbcc .inner {
+    background: none;
+    text-indent: 0;
+    font-weight: bold;
+    border: none;
+    color: #333;
+}
+
+.iframebox {
+    border: 1px solid #ddd;
+}
+
+.contentbox .boxtitle,
+body.iframe .boxtitle,
+.contactfieldgroup legend {
+    background: #ddd;
+    color: #333;
+}
+
+body.iframe .footerleft.floating:before,
+#composeview-bottom .formbuttons.floating:before {
+    background: none;
+    border-bottom: 1px solid #ddd;
+}
+
+.boxfooter a.listbutton:focus {
+    background-color: transparent;
+}
+
+#compose-contacts #directorylist {
+    border-bottom: none;
+}
+
+.compose-headers .iconbutton.cancel:before {
+    color: #aaa !important;
+}
+
+/* tabs */
+
+.tabsbar {
+    border-bottom: 1px solid #ddd;
+    overflow: hidden;
+}
+
+.tabsbar .tablink {
+    background: transparent;
+}
+
+.tabsbar .tablink a {
+    display: inline-block;
+    background: transparent;
+    padding: 5px 15px;
+    min-height: 30px;
+}
+
+.tabsbar .tablink.selected a {
+    border: 1px solid #ddd;
+}
+
+.tabsbar .tablink.selected {
+    background: transparent;
+}
+
+.tabsbar .tablink.selected a {
+    background: #ddd;
+    color: #333;
+}
+
+.ui-tabs .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor {
+    color: #333 !important;
+}
+
+/* mail list */
+
+table.records-table {
+    border: 1px solid #ddd;
+}
+
+.records-table thead td,
+.records-table thead th {
+    background: #aaa;
+    border-color: transparent;
+    color: #fff;
+}
+
+.records-table tbody td {
+    border-left: 1px dotted #ddd;
+}
+
+.records-table thead td a,
+.records-table thead th a,
+.records-table thead td span,
+.records-table thead th span,
+.records-table thead tr td.sortedASC a,
+.records-table thead tr td.sortedDESC a {
+    color: #fff !important;
+    background-image: none !important;
+}
+
+#messagelistfooter {
+    background: #F3F3F3;
+    border: none;
+    border-top: 1px solid #ddd;
+    overflow: hidden;
+    white-space: nowrap;
+    min-height: 20px;
+    padding: 4px 6px;
+    font-size: .9em;
+
+    .listmode.selected,
+    .threadmode.selected {
+        border: 1px solid #ccc !important;
+    }
+
+    #pagejumper {
+        padding: 1px;
+    }
+}
+
+#mailpreviewtoggle {
+    /* let's make sure it covers the controls underneath */
+    right: 0;
+    top: 0;
+    padding: 7px 4px 4px 0;
+    background: #F3F3F3;
+}
+
+.pagenav .countdisplay {
+    min-width: 0;
+}
+
+#mailview-top {
+    border: 1px solid #ddd;
+}
+
+.messagelist tr.thread.expanded:not(.selected) td {
+    background-color: transparent;
+}
+
+.records-table.focus tr.selected td {
+    background: #e1e1e1 !important;
+}
+
+.records-table tr.selected,
+.records-table tr.unfocused,
+.records-table tr.selected td,
+.records-table tr.unfocused td {
+    background: #f3f3f3 !important;
+    color: #333 !important;
+}
+
+.records-table tr.selected td a,
+.records-table tr.selected td span,
+.records-table tr.unfocused td a,
+.records-table tr.unfocused td span {
+    color: #333 !important;
+}
+
+.pagenav.dark a.button {
+    background: transparent;
+    border: none;
+    padding-top: 3px;
+}
+
+.pagenav .pagejumper {
+    background: #fff;
+}
+
+#mailview-bottom,
+#messageheader  {
+    border: 1px solid #ddd;
+}
+
+#messageheader.previewheader {
+    border-top: none;
+    border-left: none;
+    border-right: none;
+}
+
+#mailview-right #messageheader {
+    background: #F3F3F3;
+    padding-left: 60px;
+}
+
+#messageheader #contactphoto {
+    left: 10px;
+}
+
+#messageheader .moreheaderstoggle {
+    background-color: transparent !important;
+}
+
+#mailview-bottom .iframebox {
+    border: none;
+}
+
+#mailpreviewtoggle {
+    text-decoration: none;
+}
+
+.records-table.focus tbody tr.focused > td:first-child,
+.listing.focus tbody tr.focused > td:first-child {
+    border-left-color: transparent;
+}
+
+#messagelist :before {
+    position: relative !important;
+    top: 3px !important;
+}
+
+.messagelist tr th.threads .listmenu {
+    margin-top: 0;
+}
+
+#messagelist tr td.status span.unread:before {
+    color: #333 !important;
+}
+
+.messagelist tr.flagged td,
+.messagelist tr.flagged td a,
+.messagelist tr.flagged td a span,
+.messagelist tr.flagged td span,
+#messagelist tr td .flag span.flagged:before {
+    color: #c30606 !important;
+}
+
+#messagelistcontainer .messagelist {
+    thead tr th > span,
+    th.threads a {
+        height: auto;
+        padding: 7px 0;
+        margin: 0;
+    }
+
+    th:first-child {
+        border-left: none;
+    }
+
+    th.threads {
+        text-overflow: unset;
+
+        a {
+            padding: 7px 0;
+            margin: 0;
+        }
+    }
+}
+
+ul.toolbarmenu li label.switchbox {
+    display: inline-block;
+}
+
+.contextmenu span.icon {
+    background-image: none !important;
+}
+
+.splitter {
+    background: none;
+}
+
+/* compose */
+
+#composebody {
+    border: none !important;
+}
+
+#compose-content {
+    border: 1px solid #ddd;
+}
+
+.moreheaderstoggle,
+.moreheaderstoggle:focus {
+    background: transparent;
+    border: none;
+}
+
+#composeheaders {
+    background: #f3f3f3;
+}
+
+#composequicksearch,
+.listsearchbox {
+    background: transparent;
+}
+
+#compose-attachments {
+    background: #fff;
+
+    a.button {
+        min-width: 60%;
+    }
+}
+
+#compose-contacts #directorylist {
+    border-bottom-color: #ddd;
+}
+
+#contactsearchbox {
+    padding-left: 35px;
+    background: #fff;
+}
+
+.composeoption select {
+    margin-bottom: 0;
+}
+
+.composeoption label.switchbox {
+    top: 4px;
+}
+
+.compose-headers {
+    .editfield textarea {
+        min-height: 1.2em !important;
+    }
+}
+
+#composebuttons a {
+    background: transparent !important;
+}
+
+/* settings */
+
+ul.proplist li,
+table.propform td {
+    background-color: transparent;
+}
+
+#rcmrowidentitieslink,
+#rcmrowfolderslink {
+    display: none;
+}
+
+/* popup menus */
+
+#skin-color-select {
+    .color-box {
+        display: inline-block;
+        height: 20px;
+        width: 20px;
+        margin: 0 4px 4px 0;
+        cursor: pointer;
+    }
+}
+
+#enable-mobile-skin input {
+    width: 100%;
+    padding: 8px 5px;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+/* message stack */
+
+#message.statusbar { /* roundcube 0.9 */
+    background: #F3F3F3;
+}
+
+#messagestack div {
+    border: 2px solid #999;
+    color: #333;
+    background: #fff;
+}
+
+#messagestack div a,
+#messagestack div.loading,
+#messagestack div.error,
+#messagestack div.warning,
+#messagestack div.confirmation {
+    color: #333;
+    font-weight: normal;
+}
+
+#messagestack div a {
+    text-decoration: underline;
+}
+
+/* **************** */
+/* apply font icons */
+/* **************** */
+
+.xlarry-font-icons {
+    a.menuselector span.handle,
+    .boxpagenav a.icon,
+    #taskbar .minmodetoggle,
+    a.iconbutton,
+    #mailpreviewtoggle,
+    .messagelist tr td span,
+    .messagelist tr th span,
+    #messagestack div:after,
+    #rss a,
+    #messagelist .expanded,
+    #messagelist .collapsed,
+    .records-table thead div,
+    .records-table thead a,
+    ul.toolbarmenu li span.icon.taskadd {
+        background-image: none !important;
+    }
+}
+
+.messagelist thead tr .listmenu,
+.messagelist thead tr span {
+    text-indent: 0 !important;
+    text-overflow: clip !important;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.messagelist thead tr :before {
+    padding-right: 100px;
+}
+
+a.menuselector:after {
+    padding-right: 5px;
+}
+
+#taskbar .minmodetoggle,
+a.iconbutton,
+#mailpreviewtoggle {
+    text-indent: 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+#maillistmode,
+#mailthreadmode {
+    height: 18px;
+    padding-top: 1px;
+    border: 1px solid transparent;
+}
+
+#maillistmode.selected,
+#mailthreadmode.selected {
+    border: none !important;
+}
+
+.boxpagenav {
+    top: 8px;
+
+    a {
+        text-decoration: none;
+        color: #fff;
+
+        &.icon {
+            display: block;
+            visibility: hidden;
+            width: 20px;
+            padding: 3px 5px;
+            float: left;
+            text-align: center;
+
+            &:before {
+                display: block;
+                visibility: visible;
+            }
+        }
+    }
+}
+
+.messagelist tr td.priority span.prio4:before,
+.messagelist tr td.priority span.prio5:before {
+    color: #bbb;
+}
+
+.records-table thead tr td.sortedASC a:after,
+.records-table thead tr th.sortedASC a:after,
+.records-table thead tr td.sortedDESC a:after,
+.records-table thead tr th.sortedDESC a:after {
+    float: right;
+    padding-top: 2px;
+}
+
+#messagestack div:after {
+    padding-top: 10px;
+    padding-left: 4px;
+    color: #333;
+}
+
+.xdesktop #messagestack div.loading:after {
+   background-image: url(../images/loader.svg) !important;
+   content: "" !important;
+}
+
+#interface-options {
+    min-width: 240px;
+}
+
+/* login page */
+
+#login-form #logo {
+    width: auto;
+    margin: auto;
+    padding: 0;
+}
+
+.login-page #topline {
+    display: none;
+}
+
+#login-form .box-inner {
+    background: none;
+    border-radius: 0;
+    border: none;
+    padding: 20px;
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#login-form table td {
+    padding: 5px;
+}
+
+#login-form table td input[type='text'],
+#login-form table td input[type='email'],
+#login-form table td input[type='password'],
+#login-form table td select {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 4px;
+    margin: 0;
+}
+
+#login-form #message div {
+    font-weight: normal;
+
+    &.loading {
+        background: url(../images/loader.svg) no-repeat left center;
+        padding-left: 25px !important;
+    }
+}
+
+#login-form .box-bottom {
+    background: none;
+}
+
+body.login-page #header {
+    overflow: hidden;
+}
+
+body.login-page #topnav {
+    position: static;
+    height: 0;
+    padding: 0;
+    margin: 0;
+}
+
+body.login-page #taskbar {
+    margin: 0 !important;
+    padding: 0;
+    position: absolute;
+    top: 3px;
+    right: 10px;
+}
+
+body.login-page #taskbar a {
+    padding: 0 0 0 10px;
+}
+
+#login-form td.title,
+#ifplcontainer {
+    color: #333;
+}
+
+#login-form form table {
+    width: 100%;
+}
+
+#login-form td[colspan='2'] {
+    white-space: normal;
+}
+
+/**************************************
+    Replace toolbar images with icons.
+***************************************/
+
+body.xlarry-font-icons.minimal #taskbar {
+    a.button-mail span.button-inner,
+    a.button-addressbook span.button-inner,
+    a.button-xresell span.button-inner,
+    a.button-help span.button-inner,
+    a.button-nabble span.button-inner,
+    a.button-jappix4roundcube span.button-inner,
+    a.button-calendar span.button-inner,
+    a.button-tasklist span.button-inner,
+    a.button-planner span.button-inner,
+    a.button-sticky_notes span.button-inner,
+    a.button-settings span.button-inner,
+    a.button-logout span.button-inner,
+    a.button-apps span.button-inner {
+        display: none;
+    }
+}
+
+body.xlarry-font-icons {
+
+    #taskbar .minmodetoggle {
+        background-image: none;
+        padding: 5px 10px 10px 5px;
+        width: auto;
+        height: auto;
+    }
+
+    #taskbar a,
+    #taskbar a span,
+    #taskbar .minmodetoggle {
+        color: #fff;
+    }
+
+    #taskbar a.button-mail,
+    #taskbar a.button-addressbook,
+    #taskbar a.button-xresell,
+    #taskbar a.button-help,
+    #taskbar a.button-nabble,
+    #taskbar a.button-jappix4roundcube,
+    #taskbar a.button-calendar,
+    #taskbar a.button-tasklist,
+    #taskbar a.button-planner,
+    #taskbar a.button-sticky_notes,
+    #taskbar a.button-settings,
+    #taskbar a.button-logout,
+    #taskbar a.button-interface-options {
+        padding-left: 10px;
+        padding-right: 10px;
+        background-image: none !important;
+    }
+
+    #taskbar a.button-sticky_notes:hover:before {
+        position: relative !important;
+    }
+
+    #taskbar a.button :before {
+        color: #fff;
+    }
+
+    #taskbar a span.button-inner {
+        padding-top: 2px;
+    }
+
+    #taskbar a.button-interface-options span.button-inner {
+        display: none;
+    }
+
+    #taskbar a span.button-inner {
+        background: none !important;
+        padding-left: 8px;
+    }
+
+    /** toolbar **/
+
+    .toolbar .spacer {
+        display: none;
+    }
+
+    .toolbar a.button:hover {
+       // background-color: transparent !important;
+       // color: #555;
+    }
+
+    .toolbar a.button,
+    #tb_label_popuplink /* thunderbird_labels plugin */
+    {
+        height: 42px;
+        background-image: none !important;
+        background-color: transparent;
+        padding-top: 0;
+    }
+
+    .toolbar a.button:before,
+    #calendar .fc-button-inner:before {
+        display: block;
+        padding-bottom: 2px;
+        text-align: center;
+    }
+
+    .dropbutton .dropbuttontip {
+        background: none !important;
+        padding: 8px 4px;
+        height: auto;
+        width: auto;
+        text-indent: 0;
+        font-size: 0;
+        text-decoration: none;
+    }
+
+    .toolbarmenu.selectable li a.selected {
+        padding-left: 17px;
+
+        &:before {
+            position: absolute;
+            left: -8px;
+            padding-top: 3px;
+        }
+    }
+
+    .dropbutton .dropbuttontip:before {
+        font-size: 14px;
+    }
+
+    .dropbutton .dropbuttontip:focus,
+    .toolbar a.button:focus {
+        color: #333;
+    }
+
+    .toolbar a.button.spellcheck.selected {
+        background: #eee !important;
+    }
+
+    #calendar .fc-button-inner {
+        padding-top: 0;
+    }
+
+    .calendarmain .fc-state-default .fc-button-inner,
+    .calendarmain .fc-state-hover .fc-button-inner {
+        background: none !important;
+        height: auto !important;
+        border: none;
+    }
+
+    #calendar .fc-state-active .fc-button-inner,
+    .calendarmain .fc-header-left .fc-state-active .fc-button-content {
+        color: #8a8a8a !important;
+    }
+
+    /* box footer */
+
+    .boxfooter .listbutton.groupactions .inner,
+    .boxfooter .listbutton.add .inner,
+    .boxfooter .listbutton.delete .inner,
+    .boxfooter .listbutton.removegroup .inner {
+        display: none;
+    }
+
+    .boxfooter a.listbutton {
+        float: left;
+        padding: 10px 8px 0 8px;
+        height: auto;
+        width: auto;
+        color: #777;
+        border: none;
+    }
+
+    /* folder list */
+
+    div.treetoggle.expanded,
+    div.treetoggle.collapsed {
+        left: 5px !important;
+        top: 5px !important;
+        background: none !important;
+    }
+
+    ul.treelist li div.expanded,
+    ul.treelist li div.collapsed {
+        background: none !important;
+        left: 0;
+    }
+
+    /* remove background images from elements replaced with font icons */
+
+    ul.toolbarmenu li span.icon,
+    div.contextmenu ul li a span.cmicon {
+        background-image: none;
+        padding-left: 5px;
+    }
+
+    #mailboxlist li.mailbox a {
+        background-image: none;
+    }
+
+    .folderlist li.mailbox a {
+        padding-left: 24px;
+    }
+
+    .folderlist li.mailbox ul li a {
+        padding-left: 40px;
+    }
+
+    .folderlist li.mailbox ul ul li.mailbox a {
+        padding-left: 56px;
+    }
+
+    .folderlist li.mailbox ul ul ul li.mailbox a {
+        padding-left: 72px;
+    }
+
+    .folderlist li.mailbox ul ul ul ul li.mailbox a {
+        padding-left: 88px;
+    }
+
+    #mailboxlist li.mailbox .unreadcount {
+        background: transparent !important;
+        color: #333;
+        padding: 4px 4px 0 4px;
+    }
+
+    #directorylist li a,
+    #contacts-table .contact td.name {
+        background-image: none;
+        padding-left: 24px !important;
+        border-left: none !important;
+    }
+
+    #directorylist li.contactgroup a {
+        padding-left: 40px !important;
+    }
+
+    #sections-table tbody td.section,
+    #settings-sections span.listitem a,
+    #settings-sections li.listitem a,
+    #settings-sections span.tablink a {
+        background-image: none !important;
+        padding-left: 10px;
+    }
+
+    .listing.iconized a:before,
+    #sections-table td.section:before {
+        position: relative;
+        top: 2px;
+        display: inline-block;
+        font-size: 1.2em;
+        min-width: 1.2em;
+    }
+
+    .listing .listitem a {
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+    }
+
+    #subscription-table li a {
+        background-image: none !important;
+    }
+
+    #compose-content .formlinks a {
+        background: transparent;
+        padding-left: 0;
+    }
+
+    #compose-contacts li a,
+    #contacts-table td {
+        background-image: none;
+        padding-left: 20px;
+    }
+
+}

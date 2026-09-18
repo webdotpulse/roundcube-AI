@@ -1,0 +1,19 @@
+{
+  "name": "xframework",
+  "version": "1.0.0",
+  "authors": [],
+  "license": "Commercial",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery-form": "~3.46.0",
+    "moment": "~2.29",
+    "howler.js": "howler#^2.0.2",
+    "js-cookie": "~2.2"
+  }
+}

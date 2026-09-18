@@ -1,0 +1,48 @@
+ROUNDCUBE PLUS SKIN PLUGIN
+==========================
+
+This plugin is required to use the Roundcube Plus skins.
+
+REQUIREMENTS
+------------
+- Roundcube: 1.6, 1.7
+- PHP: 8.0 or higher
+
+INSTALLATION
+------------
+1. Copy the directories xskin and xframework included in this package to the 'plugins' directory of your Roundcube
+installation.
+
+2. Edit the file <roundcube>/config/config.inc.php, and add 'xskin' to the plugins array, like this:
+
+$config['plugins'] = array('xskin');
+
+If you already have other plugins in the plugins array, add 'xskin' at the begining, like this:
+
+$config['plugins'] = array('xskin', 'other_plugin', 'one_more_plugin');
+
+3. Add the license key to <roundcube>/config.config.inc.php, like this:
+
+$config['license_key'] = 'your-license-key-here';
+
+4. Rename the file <roundcube>/plugins/xskin/config.inc.php.dist to config.inc.php, edit the file and configure the
+plugin according to your needs following the instructions included before the config options.
+
+For more information on installing Roundcube Plus plugins see:
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=29
+
+COMPATIBILITY
+-------------
+This plugin has been created for the standard version of Roundcube as provided on the Roundcube website:
+https://roundcube.net. It might not work properly with customized versions of Roundcube including the version provided
+as part of the Kolab system. Please note that we cannot provide any technical support for the plugin deployed on a
+non-standard version of Roundcube.
+
+LICENSE
+-------
+This plugin is distributed under a commercial license. In order to use the plugin, you must purchase the license
+from Tecorama LLC. See the LICENSE file for details.
+
+COPYRIGHT
+---------
+Copyright (c) 2026, Tecorama LLC

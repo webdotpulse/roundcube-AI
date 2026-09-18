@@ -1,0 +1,740 @@
+// This file provides styles for common elements used in all skins.
+
+@use "colors";
+@use "icons";
+@use "animations";
+@use "icons_map";
+
+@font-face {
+    font-family: 'RcpIconFont';
+    src: url('../../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff2') format('woff2'),
+    url('../../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff') format('woff'),
+    url('../../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+// boxes
+.success-box,
+.warning-box,
+.error-box,
+.info-box,
+.note-box {
+    display: flex;
+    padding: .5rem .8rem !important;
+    margin: 0 0 1.5em 0;
+    border-radius: 3px;
+    text-align: left;
+    align-items: center;
+
+    & > i.icon,
+    & > span.icon {
+        position: relative;
+        top: 0.1rem;
+        font-style: normal;
+
+        &:before {
+            width: auto !important;
+            float: none !important;
+            line-height: 1em !important;
+            padding-right: .8rem !important;
+            margin: 0 !important;
+            font-size: 1.8em !important;
+        }
+    }
+
+    .text {
+        flex: 1 1 auto;
+        display: inline-block;
+        position: relative;
+    }
+}
+
+.success-box { @include colors.success-box; }
+.warning-box { @include colors.warning-box; }
+.error-box { @include colors.error-box; }
+.info-box { @include colors.info-box; }
+.note-box { @include colors.note-box; }
+
+// buttons
+.button-bar {
+    button, .btn {
+        margin: .2em .2em .2em 0;
+    }
+
+    &.text-right {
+        button, .btn {
+            margin: .2em 0 .2em .2em;
+        }
+    }
+}
+
+.btn-xs {
+    padding: 2px 4px;
+}
+
+// cpanel workaround for the jquery ui color picker that doesn't work
+.cpanel {
+    .minicolors-sprite {
+        background-image: url(../images/cpanel-minicolors-sprite.png) !important;
+    }
+}
+
+.xpref-label-container {
+    display: flex;
+    align-items: center;
+
+    label.col-form-label,
+    span.col-form-label {
+        padding: 5px 5px 5px 0;
+    }
+
+    .xlarry & .xinfo {
+        margin-left: 5px;
+    }
+}
+
+.xpref-content {
+    min-height: 28px;
+}
+
+// turn a button into an anchor--in elastic we can't put anchors into popups because it disables the popup trigger button if there are anchors (!)
+html body button.xanchor {
+    display: inline-block;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: auto !important;
+    line-height: normal !important;
+    font-weight: normal !important;
+    font-size: 1rem;
+    text-align: left;
+    color: #00acff;
+    -webkit-appearance: none;
+
+    &:hover {
+        color: #008acc;
+        text-decoration: underline;
+    }
+}
+
+// password input with a hide/show button
+.password-toggle-container {
+    display: flex;
+    align-items: center;
+
+    .password-toggle-button {
+        position: relative;
+        cursor: pointer;
+        margin-left: .8rem;
+
+        &:before {
+            @include icons.icon(icons_map.$eye);
+        }
+    }
+
+    input[type="text"] + .password-toggle-button:after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1.5em;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        transform-origin: center;
+        border-top: 1px solid;
+    }
+}
+
+// xsidebar
+
+#xsidebar {
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    div.ui-sortable-helper {
+        -ms-transform: scale(0.8, 0.8);
+        -webkit-transform: scale(0.8, 0.8);
+        transform: scale(0.8, 0.8);
+        border: 1px solid;
+        @include colors.border-color;
+        @include colors.background-color;
+    }
+
+    .placeholder {
+        height: 3px;
+        background: #990033;
+    }
+
+    h2.boxtitle {
+        position: relative;
+        cursor: pointer;
+        font-size: 1em;
+        padding: 5px 8px;
+
+        &:first-child {
+            border-top: none;
+        }
+
+        .sidebar-title-button {
+            float: right;
+            padding-left: 5px;
+            padding-top: 1px;
+            @include colors.text-color;
+
+            &:hover {
+                @include colors.text-highlight-color;
+            }
+        }
+
+        span.sidebar-title-text {
+            display: block;
+            margin-right: 2.5em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    }
+
+    .box-content {
+        position: relative;
+        padding: 8px;
+        line-height: unset;
+    }
+
+    .collapsed .box-content {
+        display: none;
+    }
+
+    .bottom-links {
+        margin-top: 7px;
+
+        a {
+            display: inline-block;
+            margin-right: 10px;
+        }
+    }
+}
+
+#xsidebar-order-note {
+    padding: 20px 0;
+
+    &:before {
+        padding-right: 10px;
+    }
+}
+
+#xsidebar-order-table {
+    .placeholder {
+        @include colors.background-highlight-color;
+    }
+
+    tr.ui-sortable-helper {
+        max-width: 300px !important;
+        border: 1px solid;
+        @include colors.border-color;
+        @include colors.background-highlight-color;
+    }
+
+    tr.ui-sortable-handle {
+        margin: 0;
+    }
+
+    td {
+        &.title {
+            width: 30%;
+
+            label {
+
+                &:before {
+                    font-size: 0.9em !important;
+                    padding-right: 15px;
+                }
+            }
+        }
+    }
+}
+
+// information popups
+
+.touch .xinfo {
+    display: none;
+}
+
+.xinfo {
+    display: inline-block;
+    position: relative;
+
+    &.right div {
+        right: auto;
+    }
+
+    &.top div {
+        top: auto;
+        bottom: 20px;
+    }
+
+    &:hover div {
+        display: block;
+    }
+
+    div {
+        position: absolute;
+        display: none;
+        right: 0;
+        text-align: left;
+        min-width: 200px;
+        max-width: 300px;
+        font-weight: normal;
+        top: 20px;
+        padding: 8px;
+        border-radius: 5px;
+        z-index: 99999;
+        white-space: normal;
+        @include colors.popup;
+    }
+}
+
+// badges (small red elements indicating numbers)
+
+.xbadge {
+    display: inline-block;
+    position: relative;
+    top: -.9em;
+    left: -.5em;
+    z-index: 888;
+    color: #fff !important;
+    @include colors.background-badge-color(true);
+    margin: 0;
+    line-height: 1em;
+    padding: 3px 4px 2px 4px !important;
+    border-radius: 5px !important;
+    font-size: 0.8em !important;
+    font-weight: normal;
+    font-family: sans-serif !important;
+    text-align: center;
+}
+
+// tabs
+
+.xtabs.ui-tabs {
+    border: none;
+    background: transparent;
+
+    .ui-tabs-nav {
+        height: auto;
+        background: transparent;
+        margin-bottom: 15px;
+        padding-left: 0;
+        padding-right: 0;
+        border-bottom: 1px solid;
+        @include colors.border-color;
+    }
+
+    .ui-tabs-nav li {
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        float: left;
+        border: none;
+
+        .xbadge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: auto;
+        }
+    }
+
+    .ui-tabs-nav .ui-tabs-anchor {
+        padding: 15px;
+        font-weight: normal;
+        background: transparent;
+        border: none;
+        @include colors.text-color;
+    }
+
+    .ui-tabs-nav li.ui-tabs-active .ui-tabs-anchor {
+        position: relative;
+        display: block;
+        padding-bottom: 12px;
+        font-weight: bold;
+        border-bottom: 3px solid;
+        @include colors.border-highlight-color;
+    }
+
+    .ui-tabs-panel {
+        padding: 0;
+        background: transparent;
+    }
+}
+
+// flatpickr
+
+.flatpickr-calendar {
+    box-shadow: 1px 0 0 #e6e6e6, -1px 0 0 #e6e6e6, 0 1px 0 #e6e6e6, 0 -1px 0 #e6e6e6, 0 3px 13px rgba(0,0,0,0.08) !important;
+
+    .flatpickr-months {
+        border-bottom: 1px solid #e6e6e6;
+
+        .flatpickr-prev-month,
+        .flatpickr-next-month {
+            line-height: 1.1rem;
+
+            &:hover svg {
+                fill: #000;
+            }
+        }
+    }
+
+    .flatpickr-current-month {
+        input.cur-year {
+            height: 1.4rem;
+        }
+
+        span.cur-month {
+            font-weight: normal;
+            padding-right: 3px;
+
+            &:hover {
+                background: transparent !important;
+            }
+        }
+    }
+
+    .flatpickr-day.selected {
+        border-color: transparent !important;
+    }
+
+    .numInputWrapper:hover {
+        background: transparent !important;
+    }
+
+    &.hasTime .flatpickr-time {
+        border-bottom: 1px solid #e6e6e6;
+
+        input:hover,
+        input:focus,
+        .flatpickr-am-pm:hover,
+        .flatpickr-am-pm:focus {
+            background: transparent !important;
+        }
+    }
+
+    .flatpickr-confirm {
+        margin: 5px 10px;
+        border-radius: 3px;
+        height: auto;
+        padding: 1px;
+        color: #fff;
+    }
+}
+
+.xelastic .flatpickr-calendar {
+    .flatpickr-current-month input.cur-year,
+    .flatpickr-current-month span.cur-month {
+        font-size: 1.4rem;
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-confirm {
+        background: #6e8791;
+        color: #fff;
+    }
+}
+
+.xlarry .flatpickr-calendar {
+    .flatpickr-current-month input.cur-year,
+    .flatpickr-current-month span.cur-month {
+        font-size: 1.2rem;
+    }
+
+    .flatpickr-day.selected,
+    .flatpickr-confirm {
+        background: #2c2f33;
+
+        svg {
+            fill: #fff;
+        }
+    }
+}
+
+// responsive modal dialog; set display: none on the mask in the instance css
+
+.dark-mode .xdialog-mask {
+    background: rgba(0, 0, 0, .7);
+}
+
+.xdialog-mask {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, .5);
+    z-index: 999;
+
+    .xdialog-box {
+        display: flex;
+        flex-direction: column;
+        margin: 20% auto 0 auto;
+        max-width: 460px;
+        max-height: 90%;
+        box-sizing: border-box;
+        text-align: center;
+        border: 1px solid;
+        @include colors.border-color;
+        @include colors.background-color;
+
+        &.full-screen {
+            position: fixed;
+            max-width: None;
+            margin: 0;
+            max-height: none;
+            top: 5%;
+            left: 5%;
+            right: 5%;
+            bottom: 5%;
+
+            .layout-phone & {
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                border: none;
+            }
+        }
+
+        .xdialog-title {
+            flex: 0 0 auto;
+            position: relative;
+            padding: 1rem;
+            text-align: left;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border-bottom: 1px solid;
+            @include colors.border-color;
+
+            .xdialog-close {
+                position: absolute;
+                right: 1rem;
+                border: none !important;
+                font-size: 2rem;
+                padding: 0;
+                margin: 0;
+                line-height: 2rem;
+                background: transparent !important;
+                box-shadow: none !important;
+            }
+        }
+
+        .xdialog-contents {
+            position: relative;
+            flex: 1 1 auto;
+            padding: 1rem;
+            text-align: left;
+
+            .xdialog-error {
+                @include colors.error-box;
+                margin-bottom: 1rem;
+                padding: 1rem;
+            }
+
+            .xdialog-progress {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 9999;
+                background-color: rgba(255, 255, 255, 0.4);
+
+                .dark-mode & {
+                    background-color: rgba(0, 0, 0, 0.4);
+                }
+
+                &:before {
+                    position: absolute;
+                    font-size: 3rem;
+                    left: 50%;
+                    top: 50%;
+                    margin-left: -1.5rem;
+                    margin-top: -1.5rem;
+                    @include animations.spinner;
+                }
+            }
+
+            .xbreadcrumbs {
+                display: flex;
+                padding-bottom: 1rem;
+                margin-bottom: 1rem;
+                border-bottom: 1px solid;
+                @include colors.border-color;
+
+                > div {
+                    display: flex;
+                    align-items: center;
+
+                    &:last-child {
+                        a {
+                            text-decoration: none;
+                            cursor: default;
+                            color: inherit;
+                            font-weight: bold;
+                        }
+
+                        .xseparator {
+                            display: none;
+                        }
+                    }
+                }
+
+                .xseparator {
+                    padding: 0 6px;
+
+                    &::before {
+                        content: "/";
+                    }
+                }
+            }
+        }
+
+        .xdialog-buttons {
+            flex: 0 0 auto;
+            padding: 1rem;
+            text-align: right;
+            border-top: 1px solid;
+            @include colors.border-color;
+
+            button {
+                margin-left: 5px;
+            }
+        }
+    }
+}
+
+// the elastic skin adds margin, top, and left css styles to ui-datepicker to make sure that it always gets displayed in the middle of the
+// screen; we can't remove those styles, so instead, if we want to display the datepicker right under the text input, we remove the
+// ui-datepicker class and add the xdatepicker class, then we style the datepicker here
+.xdatepicker {
+    min-width: 20rem;
+
+    .ui-datepicker-header {
+        display: flex;
+        padding: .6rem;
+        align-items: center;
+        margin-bottom: .8rem;
+        font-size: 1.2em;
+        border-bottom: 1px solid;
+        @include colors.border-color;
+
+        .ui-datepicker-title {
+            flex: 1;
+            text-align: center;
+
+            select {
+                background: transparent;
+                border: none;
+                text-decoration: underline;
+                cursor: pointer;
+                outline: none;
+                padding: 0 5px;
+                width: auto;
+                appearance: none;
+                -moz-appearance: none;
+                -webkit-appearance: none;
+                box-shadow: none !important;
+
+                option {
+                    @include colors.background-color;
+                    @include colors.text-color;
+                }
+            }
+        }
+
+        .ui-datepicker-prev,
+        .ui-datepicker-next {
+            @include colors.text-color;
+            text-decoration: none !important;
+            cursor: pointer;
+            padding: .3rem;
+
+            span {
+                display: none;
+            }
+        }
+
+        .ui-datepicker-prev:before {
+            @include icons.icon(icons_map.$chevron-left);
+        }
+
+        .ui-datepicker-next {
+            order: 2;
+
+            &:before {
+                @include icons.icon(icons_map.$chevron-right);
+            }
+        }
+    }
+
+    table {
+        width: 100%;
+
+        td {
+            text-align: center;
+
+            span {
+                display: block;
+                padding: .2rem 0;
+            }
+
+            a {
+                display: block;
+                background: transparent !important;
+                border: none !important;
+                padding: .2rem 0;
+                @include colors.text-color;
+
+                &:hover {
+                    text-decoration: none;
+                }
+
+                &.ui-state-highlight {
+                    @include colors.text-highlight-color;
+                    @include colors.background-highlight-color(10, true);
+                }
+
+                &.ui-state-active {
+                    @include colors.text-highlight-color;
+                    @include colors.background-highlight-color(30, true);
+                }
+            }
+        }
+    }
+
+    th {
+        text-align: center;
+        font-size: .8em;
+        @include colors.text-dim-color;
+    }
+}
+
+span.xclipboard {
+    display: inline-block;
+    margin-left: 1rem;
+    cursor: pointer;
+
+    &:before {
+        opacity: 0.6;
+        @include icons.icon(icons_map.$copy);
+    }
+
+    &:hover:before {
+        opacity: 1;
+    }
+}

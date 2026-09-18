@@ -1,0 +1,4 @@
+This directory is not managed by bower. There's no bower version of flatpickr that we can use directly, so these files
+are downloaded from the CDN and placed here manually.
+
+https://cdnjs.com/libraries/flatpickr

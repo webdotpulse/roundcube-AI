@@ -1,0 +1,56 @@
+@use "sass:list";
+@use "../../../../plugins/xframework/assets/styles/colors";
+@use "../../../../plugins/xskin/assets/styles/elastic_skins_commons";
+
+$map: (
+    (#df5aad, #1a73e8, #1868d2, #df3ba3, #edb2d6, #eda7d0, #ffe9f6),
+    (#b0263b, #1a73e8, #1868d2, #8d1a30, #ef939a, #d28f98, #ffe9ec),
+    (#d74c1b, #1a73e8, #176cd7, #d73a0a, #f5a98e, #e38e70, #ffeee8),
+    (#ff9022, #1a73e8, #176cd7, #ff7810, #febe79, #efac77, #fff2e5),
+    (#83b600, #b0263b, #a21432, #6d9e00, #bae064, #b4c777, #f9ffe9),
+    (#00860e, #b0263b, #a21432, #006e0e, #91d094, #7aad76, #eeffef),
+    (#00b2b3, #b0263b, #a21432, #009b9c, #90f5f1, #6cc4c1, #ebfeff),
+    (#00829a, #b0263b, #a21432, #006b81, #90cadc, #6b99a9, #ebfbff),
+    (#47b4ff, #b0263b, #a21432, #2da3ff, #9fd5ff, #9ed0ff, #e8f5ff),
+    (#0075c8, #b0263b, #a21432, #0063b5, #88c0f4, #75abe1, #e8f5ff),
+    (#3c2cb6, #8d2297, #800c91, #301c7a, #a098ed, #7c7ac4, #ece9ff),
+    (#8d2297, #b0263b, #a21432, #740a82, #e39ceb, #b085b6, #fdecff),
+    (#004e8d, #b0263b, #a21432, #003f7c, #81aee1, #7a99c1, #e8f5ff),
+    (#001b41, #b0263b, #a21432, #001a34, #6587c0, #718196, #e9f2ff),
+    (#5a0600, #1a73e8, #176cd7, #3d0600, #d58988, #a36e6e, #ffe8e7),
+    (#3a0300, #1a73e8, #176cd7, #3a0300, #d07f79, #b57678, #ffeae9),
+    (#585858, #585858, #474747, #414141, #868686, #a4a4a4, #f0f0f0),
+    (#000000, #1a73e8, #176cd7, #000000, #7a7a7a, #929292, #f0f0f0)
+);
+
+@each $row in $map {
+    $base: list.nth($row, 1);
+    $accent: list.nth($row, 2);
+    $accent-dark: list.nth($row, 3);
+    $dark: list.nth($row, 4);
+    $light: list.nth($row, 5);
+    $lighter: list.nth($row, 6);
+    $lightest: list.nth($row, 7);
+    $key: colors.color-to-hex($base);
+
+    .xcolor-#{$key} {
+        --xc-text: #{$base};
+        --xc-border: #{$base};
+
+        .dark-mode & {
+            --xc-text: #{$lighter};
+            --xc-border: #{$light};
+        }
+
+        @include elastic_skins_commons.primary-button-colors($accent);
+        @include elastic_skins_commons.switchbox-colors($accent);
+        @include elastic_skins_commons.input-colors($light);
+        @include elastic_skins_commons.listing-colors($lightest, false, $base, $light);
+        @include elastic_skins_commons.unread-count-colors(transparent, false, $base, $light);
+        @include elastic_skins_commons.datepicker-colors($light);
+    }
+
+    html.dark-mode:not(.touch) .xcolor-#{$key} ::-webkit-scrollbar-thumb {
+        background-color: $base;
+    }
+}

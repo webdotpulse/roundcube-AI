@@ -1,0 +1,22 @@
+{
+    "name": "roundcubeplus/xframework",
+    "type": "roundcube-plugin",
+    "description": "Provides a framework for the Roundcube Plus plugins.",
+    "license": "Commercial",
+
+    "homepage": "https://roundcubeplus.com",
+    "authors": [
+        {
+            "name": "Roundcube Plus",
+            "email": "contact@roundcubeplus.com"
+        }
+    ],
+    "require": {
+        "maxmind-db/reader": "^1.11",
+        "maxmind/web-service-common": "^0.9",
+        "geoip2/geoip2": "2.13",
+        "mobiledetect/mobiledetectlib": "^2.8",
+        "enshrined/svg-sanitize": "^0.22.0",
+        "s1lentium/iptools": "1.1.1"
+    }
+}

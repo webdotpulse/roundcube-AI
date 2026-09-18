@@ -1,0 +1,216 @@
+@use "../../../xframework/assets/styles/colors";
+
+@mixin basic-styles() {
+    :not(.flatpickr-calendar *, .error) {
+        @include colors.border-color;
+    }
+
+    body #layout > #layout-menu .special-buttons {
+        &, a {
+            background-color: transparent !important;
+        }
+    }
+
+    .popupmenu .listing li.selected,
+    .popupmenu .listing li>a:not(.disabled):hover,
+    .popover .menu li a:not(.disabled):hover,
+    {
+        @include colors.background-highlight-color(5, true);
+        @include colors.text-color(true);
+    }
+
+    html.dark-mode {
+        .messagelist tr:not(.flagged):not(.deleted).selected td.subject {
+            a,
+            span.msgicon.status {
+                color: #fff;
+            }
+        }
+    }
+
+    #layout #xsidebar {
+        border: none;
+    }
+}
+
+@mixin secondary-button-styles() {
+    div.tox .tox-button.tox-button--secondary, // html editor
+    .mce-window .mce-foot .mce-btn,
+    .btn.btn-secondary:not(.btn.btn-danger):not(.xanchor),
+    .btn.btn-link {
+        //color: #fff;
+        border: none;
+
+        html.dark-mode & {
+            //background-color: #6c797e;
+        }
+
+        &:hover {
+            filter: brightness(1.15);
+        }
+
+        &.ui-dialog-titlebar-close {
+            border: none !important;
+        }
+    }
+
+    .mce-window .mce-foot .mce-btn button {
+        @include colors.text-color(true);
+    }
+}
+
+@mixin primary-button-colors($background) {
+    .btn.btn-primary:not(.btn.btn-danger),
+    .btn.btn-success:not(.btn.btn-danger),
+    div.tox .tox-dialog__footer .tox-button, // html editor
+    .mce-window .mce-foot .mce-btn.mce-primary,
+    .floating-action-buttons a.button {
+        background-color: $background !important;
+        color: #fff !important;
+        border: none;
+
+        &:hover {
+            filter: brightness(1.15);
+        }
+    }
+
+    .btn.disabled,
+    .btn:disabled {
+        &, &:hover {
+            background-color: #777 !important;
+        }
+    }
+
+    .mce-window .mce-foot .mce-btn.mce-primary button {
+        color: #fff !important;
+    }
+}
+
+@mixin switchbox-colors($color) {
+    .custom-switch .custom-control-input:checked ~ .custom-control-label {
+        &:before {
+            background-color: $color !important;
+            border: 1px solid $color !important;
+        }
+
+        &:hover:before {
+            filter: brightness(1.15);
+        }
+    }
+
+    .mce-window .mce-checkbox i.mce-i-checkbox {
+        color: #c0c0c0;
+    }
+
+    .mce-window .mce-checkbox.mce-checked i.mce-i-checkbox {
+        color: $color !important;
+    }
+}
+
+@mixin input-colors($borderColor) {
+    .custom-file-label:focus:not(.is-invalid),
+    .form-control:focus:not(.is-invalid),
+    .recipient-input.focus,
+    .mce-tinymce.focused,
+    div.tox.focused {
+        border-color: $borderColor !important;
+    }
+}
+
+@mixin anchor-colors($color) {
+    a,
+    button.xanchor,
+    div.tox .tox-dialog .tox-dialog__body-nav-item--active,
+    input.icon-checkbox + label:before,
+    input.icon-checkbox:checked + label:before {
+        color: $color;
+    }
+}
+
+@mixin listing-colors($background: false, $dmBackground: false, $text: false,  $dmText: false) {
+    #settings-menu li.selected,
+    .listing tr.selected td,
+    .listing li.selected > a,
+    ul.treelist li.selected > div > a,
+    ul.treelist li.selected > a,
+    .toolbarmenu.listing li:hover a.active {
+        @if $background {
+            background-color: $background;
+        }
+
+        @if $text {
+            color: $text;
+        } @else {
+            @include colors.text-color;
+        }
+
+        html.dark-mode & {
+            @if $dmBackground {
+                background-color: $dmBackground;
+            }
+
+            @if $dmText {
+                color: $dmText;
+            } @else {
+                @include colors.text-color;
+            }
+        }
+    }
+}
+
+@mixin unread-count-colors($background, $dmBackground: false, $text: false, $dmText: false) {
+    .folderlist li.mailbox .unreadcount {
+        @if $background {
+            background-color: $background !important;
+        }
+
+        @if $text {
+            color: $text;
+        } @else {
+            @include colors.text-color;
+        }
+
+        html.dark-mode & {
+            @if $dmBackground {
+                background-color: $dmBackground !important;
+            }
+
+            @if $dmText {
+                color: $dmText;
+            } @else {
+                @include colors.text-color;
+            }
+        }
+    }
+}
+
+@mixin logo-background-color($background: false, $dmBackground: false) {
+    #layout-menu .popover-header {
+        @if $background {
+            background-color: $background !important;
+        }
+
+        html.dark-mode & {
+            @if $dmBackground {
+                background-color: $dmBackground !important;
+            }
+        }
+    }
+}
+
+@mixin datepicker-colors($background: false, $dmBackground: false) {
+    .ui-datepicker {
+        a.ui-state-active {
+            @if $background {
+                background-color: $background !important;
+            }
+
+            html.dark-mode & {
+                @if $dmBackground {
+                    background-color: $dmBackground !important;
+                }
+            }
+        }
+    }
+}
+

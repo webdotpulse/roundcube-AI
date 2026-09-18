@@ -1,0 +1,99 @@
+
+@mixin larry-desktop-light {
+    .uibox .boxtitle,
+    .uibox .listing thead td,
+    .uibox .listing thead th {
+        background: #aaa;
+        color: #fff !important;
+    }
+
+    a.menuselector {
+        color: #333 !important;
+        border: 1px solid #ccc;
+        background: #fff;
+    }
+
+    #mailboxlist li.mailbox ul {
+        border-top-color: #ddd;
+    }
+
+    .toolbar a.button,
+    .pagenavbuttons a.button {
+        background-color: transparent !important;
+    }
+
+    .popupmenu,
+    #rcmKSearchpane {
+        border-color: #999;
+        border-width: 2px !important;
+        border-style: solid !important;
+        background: #fff;
+        color: #333;
+        padding: 0;
+    }
+
+    .popupmenu li,
+    .popupmenu a {
+        background-image: none !important;
+    }
+
+    .popupmenu a,
+    .googie_list td span,
+    ul.toolbarmenu li a {
+        color: #aaa;
+
+        &.active {
+            color: #333;
+        }
+    }
+
+    #enigmamenu {
+        overflow-y: hidden;
+
+        label {
+            color: #333;
+        }
+    }
+
+    .googie_list td,
+    ul.toolbarmenu li,
+    ul.toolbarmenu li label,
+    ul.toolbarmenu li a.icon,
+    #rcmKSearchpane ul li {
+        color: #333;
+    }
+
+    .googie_list td.googie_list_onhover,
+    ul.toolbarmenu li a.active:hover,
+    ul.toolbarmenu li a.active:focus,
+    #rcmKSearchpane ul li.selected,
+    select.decorated option:hover,
+    select.decorated option[selected='selected'] {
+        background: #e9e9e9 !important;
+    }
+
+    .googie_list td span, ul.toolbarmenu li a.active {
+        cursor: pointer;
+    }
+
+    .popupmenu a:hover {
+        cursor: pointer;
+    }
+
+    #background-more-actions a {
+        color: #333;
+    }
+
+    #interface-options {
+        color: #333;
+    }
+
+    // plugin: primitivenotes
+    #newmenu.popupmenu a {
+        color: #333 !important;
+
+        &:hover {
+            background: #e9e9e9;
+        }
+    }
+}

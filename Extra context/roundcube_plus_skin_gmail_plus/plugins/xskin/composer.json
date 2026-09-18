@@ -1,0 +1,16 @@
+{
+    "name": "roundcubeplus/xskin",
+    "type": "roundcube-plugin",
+    "description": "Enables Roundcube Plus interface skin and mobile functionality. This plugin must be added to the plugin array for the Roundcube Plus skins to work.",
+    "license": "Commercial",
+    "version": "2.0.2",
+    "homepage": "https://roundcubeplus.com",
+    "authors": [
+        {
+            "name": "Roundcube Plus",
+            "email": "contact@roundcubeplus.com"
+        }
+    ],
+    "repositories": [],
+    "require": {}
+}

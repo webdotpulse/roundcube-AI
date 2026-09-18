@@ -1950,3 +1950,531 @@ html.dark-mode .lpai-autodraft-info,
         color: #c5d1d3;
     }
 }
+
+/* ============================================================
+   Gemini Executive Assistant Hub (FYXER Mode)
+   ============================================================ */
+.lpai-executive-hub {
+    margin: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #2563eb;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1e293b;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    animation: lpai-slide-down 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes lpai-slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.lpai-executive-hub.lpai-cat-action_required { border-left-color: #f59e0b; }
+.lpai-executive-hub.lpai-cat-action_required.lpai-urgency-high { border-left-color: #ef4444; }
+.lpai-executive-hub.lpai-cat-meeting { border-left-color: #2563eb; }
+.lpai-executive-hub.lpai-cat-follow_up { border-left-color: #8b5cf6; }
+.lpai-executive-hub.lpai-cat-fyi { border-left-color: #10b981; }
+.lpai-executive-hub.lpai-cat-newsletter { border-left-color: #94a3b8; }
+.lpai-executive-hub.lpai-cat-scam { border-left-color: #dc2626; background: #fef2f2; }
+
+.lpai-hub-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.lpai-hub-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.lpai-hub-brand svg {
+    color: #2563eb;
+    flex-shrink: 0;
+}
+
+.lpai-hub-title {
+    font-weight: 600;
+    color: #0f172a;
+}
+
+.lpai-category-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.lpai-badge-action_required { background: #fef3c7; color: #b45309; }
+.lpai-urgency-high .lpai-badge-action_required { background: #fee2e2; color: #b91c1c; }
+.lpai-badge-meeting { background: #dbeafe; color: #1d4ed8; }
+.lpai-badge-follow_up { background: #ede9fe; color: #6d28d9; }
+.lpai-badge-fyi { background: #d1fae5; color: #047857; }
+.lpai-badge-newsletter { background: #f1f5f9; color: #475569; }
+.lpai-badge-scam { background: #fecaca; color: #991b1b; }
+
+.lpai-hub-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lpai-hub-btn-icon {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.lpai-hub-btn-icon:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.lpai-hub-body {
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lpai-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.lpai-summary-text {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #1e293b;
+}
+
+.lpai-action-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.lpai-action-list li {
+    font-size: 13px;
+}
+
+.lpai-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.lpai-checkbox-label input[type="checkbox"] {
+    margin-top: 3px;
+    cursor: pointer;
+}
+
+.lpai-checkbox-label.checked span {
+    text-decoration: line-through;
+    color: #94a3b8;
+}
+
+.lpai-meeting-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #1e40af;
+    margin-top: 6px;
+}
+
+/* Fyxer Draft Reply Section */
+.lpai-hub-draft-section {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 4px;
+}
+
+.lpai-draft-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.lpai-tone-chips {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lpai-tone-label {
+    font-size: 11px;
+    color: #64748b;
+}
+
+.lpai-tone-pill {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.lpai-tone-pill:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: #eff6ff;
+}
+
+.lpai-draft-box {
+    margin-bottom: 10px;
+}
+
+.lpai-draft-textarea {
+    width: 100%;
+    min-height: 85px;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+    background: #ffffff;
+    color: #0f172a;
+    resize: vertical;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.lpai-draft-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.lpai-draft-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.lpai-btn-composer {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2563eb;
+    color: #ffffff;
+    border: 1px solid #1d4ed8;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.lpai-btn-composer:hover {
+    background: #1d4ed8;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.lpai-btn-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.lpai-btn-copy:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+.lpai-scam-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: #991b1b;
+    font-size: 12.5px;
+}
+
+.lpai-btn-junk {
+    margin-left: auto;
+    background: #dc2626;
+    color: #ffffff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.lpai-hub-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    font-size: 11px;
+    color: #94a3b8;
+    padding-top: 4px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.lpai-hub-status-loading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.lpai-spinner-sm {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #cbd5e1;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: lpai-spin 0.6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes lpai-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Gemini Admin Styles */
+.lpai-admin-container {
+    max-width: 680px;
+    margin: 16px auto;
+}
+.lpai-admin-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.lpai-admin-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+}
+.lpai-admin-card-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #0f172a;
+}
+.lpai-admin-card-header svg {
+    color: #2563eb;
+}
+.lpai-admin-subtitle {
+    margin: 0 0 20px 0;
+    font-size: 13px;
+    color: #64748b;
+}
+.lpai-form-group {
+    margin-bottom: 16px;
+}
+.lpai-form-row {
+    display: flex;
+    gap: 16px;
+}
+.lpai-half {
+    flex: 1;
+}
+.lpai-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+.lpai-admin-input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 13.5px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
+}
+.lpai-admin-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.lpai-input-with-action {
+    display: flex;
+    gap: 8px;
+}
+.lpai-input-with-action .lpai-admin-input {
+    flex: 1;
+}
+.lpai-help {
+    display: block;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 4px;
+}
+.lpai-test-status {
+    margin-top: 6px;
+    font-size: 12px;
+    min-height: 18px;
+}
+.lpai-admin-stats-card {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+    padding: 14px;
+    background: #f8fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+.lpai-stat-box {
+    flex: 1;
+    text-align: center;
+}
+.lpai-stat-num {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2563eb;
+}
+.lpai-stat-label {
+    font-size: 11.5px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.lpai-admin-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+}
+.lpai-save-status {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark), (html.dark-mode) {
+    .lpai-executive-hub {
+        background: #1e293b;
+        border-color: #334155;
+        color: #f1f5f9;
+    }
+    .lpai-hub-header {
+        background: #0f172a;
+        border-bottom-color: #334155;
+    }
+    .lpai-hub-title {
+        color: #f8fafc;
+    }
+    .lpai-summary-text {
+        color: #e2e8f0;
+    }
+    .lpai-hub-draft-section {
+        background: #0f172a;
+        border-color: #334155;
+    }
+    .lpai-draft-textarea {
+        background: #1e293b;
+        border-color: #475569;
+        color: #f8fafc;
+    }
+    .lpai-tone-pill {
+        background: #1e293b;
+        border-color: #475569;
+        color: #cbd5e1;
+    }
+    .lpai-btn-copy {
+        background: #1e293b;
+        border-color: #475569;
+        color: #cbd5e1;
+    }
+    .lpai-hub-footer {
+        border-top-color: #334155;
+        color: #64748b;
+    }
+    .lpai-meeting-chip {
+        background: #1e3a8a;
+        border-color: #2563eb;
+        color: #bfdbfe;
+    }
+    .lpai-admin-card {
+        background: #1e293b;
+        border-color: #334155;
+    }
+    .lpai-admin-card-header h3 {
+        color: #f8fafc;
+    }
+    .lpai-label {
+        color: #cbd5e1;
+    }
+    .lpai-admin-input {
+        background: #0f172a;
+        border-color: #475569;
+        color: #f8fafc;
+    }
+    .lpai-admin-stats-card {
+        background: #0f172a;
+        border-color: #334155;
+    }
+    .lpai-admin-footer {
+        border-top-color: #334155;
+    }
+}
+

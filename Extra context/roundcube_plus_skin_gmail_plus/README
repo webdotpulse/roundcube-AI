@@ -1,0 +1,51 @@
+ROUNDCUBE PLUS SKIN
+===================
+
+Roundcube Plus skins give Roundcube a new look and extend its functionality.
+
+REQUIREMENTS
+------------
+- Roundcube: 1.6, 1.7
+- PHP: 8.0 or higher
+
+INSTALLATION
+------------
+1. Copy the contents of the 'plugins' directory included in this package to the 'plugins' directory of your Roundcube
+installation.
+
+2. Follow the instructions in plugins/xskin/README to install and configure the xskin plugin. As explained there, you'll
+need to edit the Roundcube config file to add 'xskin' to the plugins array and specify your license key. There are no
+special steps needed to install xframework. It doesn't need to be added to the plugins array.
+
+3. Copy the contents of the 'skins' directory included in this package to the 'skins' directory of your Roundcube
+installation.
+
+4. If you'd like to use GMail+ on the Roundcube login screen and as the default skin for newly created user
+accounts, edit the file [roundcube]/config/config.inc.php, find the line that begins with $config['skin'], and set it to
+'gmail_plus'. If this line doesn't exist, add it at the end of the file, like this:
+
+$config['skin'] = 'gmail_plus';
+
+5. If you'd like to edit the skin's default configuration, edit this file:
+
+skins/gmail_plus/config.inc.php
+
+If the config file doesn't exist, rename skins/gmail_plus/config.inc.php.sample to skins/gmail_plus/config.inc.php.
+
+For more information on installing Roundcube Plus plugins, see:
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=29
+
+COMPATIBILITY
+-------------
+These skins and plugins have been created for the standard version of Roundcube available from the Roundcube website:
+https://roundcube.net. They might not work properly with customized versions of Roundcube. Please note that we cannot
+provide technical support for skins or plugins deployed on non-standard versions of Roundcube.
+
+LICENSE
+-------
+The Roundcube Plus skins are covered by a commercial license agreement (see the LICENSE file for details). To use the
+skins, you must purchase a license from Tecorama (https://roundcubeplus.com).
+
+COPYRIGHT
+---------
+Copyright (c) 2011-2026, Tecorama LLC (https://roundcubeplus.com)

@@ -1,0 +1,21 @@
+<div id='[~plugin~]-compose-button' class='xcloud-compose-button'>
+    [~button~]
+    <div id='[~plugin~]-compose-menu' class='popupmenu'>
+        <ul class='toolbarmenu listing' role='menu'>
+            <roundcube:if condition="env:insertLabel" />
+            <li role='menuitem' class="insert-action">
+                <a href='javascript:void(0)' id='[~plugin~]-compose-insert' class='active' role='button'>
+                    [~insertLabel~]
+                </a>
+            </li>
+            <roundcube:endif />
+            <roundcube:if condition="env:attachLabel" />
+            <li role='menuitem' class="attach-action">
+                <a href='javascript:void(0)' id='[~plugin~]-compose-attach' class='active' role='button'>
+                    [~attachLabel~]
+                </a>
+            </li>
+            <roundcube:endif />
+        </ul>
+    </div>
+</div>

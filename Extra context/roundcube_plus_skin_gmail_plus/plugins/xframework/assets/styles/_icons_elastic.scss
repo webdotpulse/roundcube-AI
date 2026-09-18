@@ -1,0 +1,388 @@
+// This file adds icons to RC+ skins only (body class .xskin)
+// It does not apply to Elastic itself.
+
+@use "icons";
+@use "icons_map";
+
+.xskin {
+    #taskmenu a {
+        &.mail:before { @include icons.icon(icons_map.$mail); }
+        &.contacts:before { @include icons.icon(icons_map.$user); }
+        &.options:before { @include icons.icon(icons_map.$wrench); }
+        &.help:before { @include icons.icon(icons_map.$help); }
+        &.logout:before { @include icons.icon(icons_map.$logout); }
+        &.about:before { @include icons.icon(icons_map.$information); }
+        &.refresh:before { @include icons.icon(icons_map.$refresh); }
+        &.compose:before { @include icons.icon(icons_map.$create); }
+        &.calendar:before { @include icons.icon(icons_map.$calendar); }
+        &.tasklist:before { @include icons.icon(icons_map.$list); }
+        &.files:before { @include icons.icon(icons_map.$text-file); }
+        &.notes:before { @include icons.icon(icons_map.$text-file); }
+    }
+
+    .menu a {
+        &.reply:before { @include icons.icon(icons_map.$reply); }
+        &.reply-all:before { @include icons.icon(icons_map.$reply-all); }
+        &.forward:before { @include icons.icon(icons_map.$forward); }
+        &.delete:before { @include icons.icon(icons_map.$trash); }
+        &.markmessage:before { @include icons.icon(icons_map.$tag); }
+        &.more:before { @include icons.icon(icons_map.$more); }
+        &.read:before { @include icons.icon(icons_map.$envelope-open); }
+        &.unread:before,
+        &.expand.unread:before,
+        &.select.unread:before{ @include icons.icon(icons_map.$envelope-closed); }
+        &.flag:before { @include icons.icon(icons_map.$flag); }
+        &.unflag:before { @include icons.icon(icons_map.$flag-empty); }
+        &.dropdown:before { @include icons.icon(icons_map.$chevron-down); }
+        &.options:before { @include icons.icon(icons_map.$wrench); }
+        &.settings:before { @include icons.icon(icons_map.$gear); }
+        &.create:before { @include icons.icon(icons_map.$create); }
+        &.move:before { @include icons.icon(icons_map.$move); }
+        &.purge:before { @include icons.icon(icons_map.$eraser); }
+        &.print:before { @include icons.icon(icons_map.$print); }
+        &.search:before { @include icons.icon(icons_map.$search); }
+        &.folders:before { @include icons.icon(icons_map.$folder); }
+        &.upload:before,
+        &.import:before { @include icons.icon(icons_map.$import); }
+        &.download:before,
+        &.export:before { @include icons.icon(icons_map.$export); }
+        &.compose:before { @include icons.icon(icons_map.$create); }
+        &.archive:before { @include icons.icon(icons_map.$archive); }
+        &.junk:before { @include icons.icon(icons_map.$junk); }
+        &.expunge:before { @include icons.icon(icons_map.$compress); }
+        &.enigma:before,
+        &.encrypt:before { @include icons.icon(icons_map.$lock); }
+        &.firstpage:before { @include icons.icon(icons_map.$first-page); }
+        &.prev:before { @include icons.icon(icons_map.$prev-page); }
+        &.next:before { @include icons.icon(icons_map.$next-page); }
+        &.prevpage:before { @include icons.icon(icons_map.$prev-page); }
+        &.nextpage:before { @include icons.icon(icons_map.$next-page); }
+        &.lastpage:before { @include icons.icon(icons_map.$last-page); }
+        &.send:before { @include icons.icon(icons_map.$send); }
+        &.send.schedule:before { @include icons.icon(icons_map.$email-schedule); }
+        &.scheduled:before { @include icons.icon(icons_map.$schedule-list); }
+        &.back:before { @include icons.icon(icons_map.$arrow-left-circle); }
+        &.closewin:before { @include icons.icon(icons_map.$times); }
+        &.save:before { @include icons.icon(icons_map.$save); }
+        &.vcard:before,
+        &.attach:before { @include icons.icon(icons_map.$attachment); }
+        &.spellcheck:before { @include icons.icon(icons_map.$spellcheck); }
+        &.signature:before { @include icons.icon(icons_map.$signature); }
+        &.responses:before { @include icons.icon(icons_map.$bookmark); }
+        &.select:before { @include icons.icon(icons_map.$check-square); }
+        &.threads:before { @include icons.icon(icons_map.$speech-bubble); }
+        &.actions:before { @include icons.icon(icons_map.$gear); }
+        &.refresh:before { @include icons.icon(icons_map.$refresh); }
+        &.addto:before { @include icons.icon(icons_map.$add-user); }
+        &.addcc:before { @include icons.icon(icons_map.$add-user); }
+        &.addbcc:before { @include icons.icon(icons_map.$add-user); }
+        &.addressbook:before { @include icons.icon(icons_map.$addressbook); }
+        &.expand:before { @include icons.icon(icons_map.$caret-down); }
+        &.collapse:before { @include icons.icon(icons_map.$caret-up); }
+        &.submit:before { @include icons.icon(icons_map.$check); }
+        &.edit:before { @include icons.icon(icons_map.$edit); }
+        &.qrcode:before { @include icons.icon(icons_map.$qrcode); }
+        &.properties:before { @include icons.icon(icons_map.$text-file); }
+        &.zoomin:before { @include icons.icon(icons_map.$zoom-in); }
+        &.zoomout:before { @include icons.icon(icons_map.$zoom-out); }
+        &.rotate:before { @include icons.icon(icons_map.$refresh); }
+        &.markasjunk2:before { @include icons.icon(icons_map.$junk); }
+        &.markasjunk2Sel:before { @include icons.icon(icons_map.$junk); }
+        &.markasnotjunk2:before { @include icons.icon(icons_map.$not-junk); }
+        &#tb_label_popuplink:before { @include icons.icon(icons_map.$label-dots); }
+        &.source:before { @include icons.icon(icons_map.$code); }
+        &.copy:before { @include icons.icon(icons_map.$copy); }
+        &.extwin:before { @include icons.icon(icons_map.$new-window); }
+        &.selection:before { @include icons.icon(icons_map.$check-square, true); }
+        &.select.all:before { @include icons.icon(icons_map.$grid-small); }
+        &.select.none:before { @include icons.icon(icons_map.$times); }
+        &.select.page:before { @include icons.icon(icons_map.$bars); }
+        &.select.flagged:before { @include icons.icon(icons_map.$flag); }
+        &.select.unread:before { @include icons.icon(icons_map.$envelope-closed); }
+        &.select.invert:before { @include icons.icon(icons_map.$circle-empty); }
+        &.recipient:before { @include icons.icon(icons_map.$envelope-closed); }
+    }
+
+    .toolbarmenu li {
+        a.print:before { @include icons.icon(icons_map.$print); }
+        a.move:before { @include icons.icon(icons_map.$move); }
+        a.purge:before { @include icons.icon(icons_map.$trash); }
+        a.download:before { @include icons.icon(icons_map.$download); }
+        a.create:before { @include icons.icon(icons_map.$create); }
+        a.edit:before { @include icons.icon(icons_map.$edit); }
+        a.edit.asnew:before { @include icons.icon(icons_map.$edit); }
+        a.rename:before { @include icons.icon(icons_map.$edit); }
+        a.filterlink:before { @include icons.icon(icons_map.$filter); }
+        a.reply.list:before,
+        a.reply.all:before { @include icons.icon(icons_map.$reply-all); }
+        a.forward:before,
+        a.forward.bounce:before,
+        a.forward.attachment:before,
+        a.forward.inline:before { @include icons.icon(icons_map.$forward); }
+        a.download.mbox:before,
+        a.download.eml:before,
+        a.download.maildir:before { @include icons.icon(icons_map.$download); }
+        a.export.selection:before,
+        a.export.all:before { @include icons.icon(icons_map.$download); }
+        a.expand.all:before,
+        a.expand.unread:before,
+        a.expand.none:before { @include icons.icon(icons_map.$speech-bubble); }
+        a.search:before { @include icons.icon(icons_map.$search); }
+        a.delete:before { @include icons.icon(icons_map.$trash); }
+        a.import:before { @include icons.icon(icons_map.$import); }
+        a.settings:before { @include icons.icon(icons_map.$wrench); }
+        a.insertresponse:before { @include icons.icon(icons_map.$speech-bubble); }
+        a.compose:before { @include icons.icon(icons_map.$create); }
+        a.addressbook:before { @include icons.icon(icons_map.$user); }
+        a.status:before { @include icons.icon(icons_map.$lightbulb); }
+        a.remove:before { @include icons.icon(icons_map.$times); }
+        a.showurl:before { @include icons.icon(icons_map.$link); }
+        a.qrcode:before { @include icons.icon(icons_map.$qrcode); }
+        a.assigngroup:before { @include icons.icon(icons_map.$add-user); }
+        a.removegroup:before { @include icons.icon(icons_map.$remove-user); }
+        a.vcard:before { @include icons.icon(icons_map.$attachment); }
+        a.encrypt:before { @include icons.icon(icons_map.$lock); }
+        a.encrypt.sign:before { @include icons.icon(icons_map.$lock); }
+    }
+
+    #message-header {
+        .subject a.extwin:before { @include icons.icon(icons_map.$new-window); }
+        .short-header div.header-links a {
+            &.envelope:before { @include icons.icon(icons_map.$envelope-closed); }
+            &.html:before { @include icons.icon(icons_map.$code); }
+            &.plain:before { @include icons.icon(icons_map.$bars); }
+            &.zipdownload:before { @include icons.icon(icons_map.$download); }
+        }
+    }
+
+    .toolbar a.button.search:before { @include icons.icon(icons_map.$search); }
+
+    .header a {
+        &.refresh:before { @include icons.icon(icons_map.$refresh); }
+        &.sidebar-menu,
+        &.toolbar-list-button {
+            &:before { @include icons.icon(icons_map.$vertical-menu); }
+        }
+    }
+
+    .messagelist {
+        tr.thread td.threads div:before { @include icons.icon(icons_map.$chevron-right); }
+        tr.thread.expanded td.threads div:before  { @include icons.icon(icons_map.$chevron-down); }
+        //td.subject span.msgicon.status:before  { @include icons.icon(icons_map.$circleEmpty); }
+        //td.subject span.msgicon.status.unread:before  { @include icons.icon(icons_map.$star); }
+        td.subject span.msgicon.status.unreadchildren:before  { @include icons.icon(icons_map.$star); }
+        td.subject span.msgicon.status.replied:before  { @include icons.icon(icons_map.$reply); }
+        td.subject span.msgicon.status.forwarded:before  { @include icons.icon(icons_map.$forward); }
+        td.subject span.msgicon.status.replied.forwarded:before  { @include icons.icon(icons_map.$replied-forwarded); }
+        tr.deleted td.subject span.msgicon.status:before  { @include icons.icon(icons_map.$forbidden); }
+
+        span.attachment span {
+            &:before { @include icons.icon(icons_map.$attachment); }
+            &.report:before { @include icons.icon(icons_map.$text-file); }
+            &.encrypted:before { @include icons.icon(icons_map.$lock); }
+            &.vcard:before { @include icons.icon(icons_map.$user); }
+        }
+
+        span.flagged:before { @include icons.icon(icons_map.$flag); }
+        tr:hover span.unflagged:before { @include icons.icon(icons_map.$flag); }
+    }
+
+    .folderlist li a:before,
+    .listing.iconized li a:before,
+    .listing.iconized tr td:before {
+        margin-top: 1px;
+    }
+
+    .settings-default-icon li>a:before,
+    .settings-default-icon tr>td.section::before {
+        @include icons.icon(icons_map.$gear);
+    }
+
+    .input-group .icon {
+        &.user:before { @include icons.icon(icons_map.$user); }
+        &.pass:before { @include icons.icon(icons_map.$lock); }
+        &.host:before { @include icons.icon(icons_map.$home); }
+        &.cancel:before { @include icons.icon(icons_map.$times); }
+        &.delete:before { @include icons.icon(icons_map.$trash); }
+        &.edit:before { @include icons.icon(icons_map.$edit); }
+        &.add:before { @include icons.icon(icons_map.$plus); }
+        &.add.recipient:before { @include icons.icon(icons_map.$users); }
+        &.search:before { @include icons.icon(icons_map.$search); }
+        &.filter:before { @include icons.icon(icons_map.$filter); }
+        &.key:before { @include icons.icon(icons_map.$lock); }
+    }
+
+    .contactlist {
+        td.contact:before { @include icons.icon(icons_map.$user); }
+        td.contactgroup:before { @include icons.icon(icons_map.$users); }
+
+        li {
+            a.addressbook::before { @include icons.icon(icons_map.$addressbook); }
+            a.contactgroup::before { @include icons.icon(icons_map.$users); }
+        }
+    }
+
+    .searchbar {
+        form:before { @include icons.icon(icons_map.$search); position: relative; top: 3px; }
+        a.unread:before { @include icons.icon(icons_map.$envelope-closed); }
+        a.options:before { @include icons.icon(icons_map.$chevron-down); }
+        &.open a.options:before { @include icons.icon(icons_map.$chevron-up); }
+        a.reset:before { @include icons.icon(icons_map.$times); }
+    }
+
+    ul.treelist li div.treetoggle {
+        &:before { @include icons.icon(icons_map.$chevron-right); }
+        &.expanded:before { @include icons.icon(icons_map.$chevron-down); }
+    }
+
+    .folderlist li {
+        a:before { @include icons.icon(icons_map.$folder); }
+        &.inbox > a:before { @include icons.icon(icons_map.$inbox); }
+        &.trash a:before { @include icons.icon(icons_map.$trash); }
+        &.trash.empty > a:before { @include icons.icon(icons_map.$trash); }
+        &.drafts a:before { @include icons.icon(icons_map.$edit); }
+        &.sent a:before { @include icons.icon(icons_map.$send); }
+        &.junk a:before { @include icons.icon(icons_map.$junk); }
+        &.archive > a:before { @include icons.icon(icons_map.$archive); }
+        &.type-event > a:before { @include icons.icon(icons_map.$calendar); }
+        &.type-task > a:before { @include icons.icon(icons_map.$calendar-short); }
+        &.type-journal > a:before { @include icons.icon(icons_map.$calendar); }
+        &.type-contact > a:before { @include icons.icon(icons_map.$addressbook); }
+        &.type-note > a:before { @include icons.icon(icons_map.$text-file); }
+        &.type-configuration > a:before { @include icons.icon(icons_map.$gear); }
+        &.type-freebusy > a:before { @include icons.icon(icons_map.$calendar); }
+        &.type-file > a:before { @include icons.icon(icons_map.$text-file); }
+    }
+
+    a.button.icon,
+    button.btn {
+        &.toolbar-menu-button:before { @include icons.icon(icons_map.$vertical-menu); }
+        &.task-menu-button:before { @include icons.icon(icons_map.$bars); }
+        &.back-sidebar-button:before,
+        &.back-content-button:before,
+        &.back-list-button:before { @include icons.icon(icons_map.$chevron-left); }
+        &.generate:before,
+        &.yes:before,
+        &.submit:before,
+        &.continue:before,
+        &.save:before { @include icons.icon(icons_map.$check); }
+        &.create:before { @include icons.icon(icons_map.$create); }
+        &.edit:before { @include icons.icon(icons_map.$edit); }
+        &.qrcode:before { @include icons.icon(icons_map.$qrcode); }
+        &.search:before { @include icons.icon(icons_map.$search); }
+        &.filter:before { @include icons.icon(icons_map.$filter); }
+        &.import:before { @include icons.icon(icons_map.$import); }
+        &.export:before { @include icons.icon(icons_map.$export); }
+        &.discard:before,
+        &.delete:before { @include icons.icon(icons_map.$trash); }
+        &.next:before { @include icons.icon(icons_map.$next-page); }
+        &.restore:before { @include icons.icon(icons_map.$undo); }
+        &.send:before,
+        &.bounce:before { @include icons.icon(icons_map.$send); }
+        &.attach:before { @include icons.icon(icons_map.$attachment); }
+        &.no:before,
+        &.close:before,
+        &.cancel:before { @include icons.icon(icons_map.$times); }
+        &.mark:before { @include icons.icon(icons_map.$star); }
+        &.back:before { @include icons.icon(icons_map.$chevron-left); }
+        &.remove:before { @include icons.icon(icons_map.$times); }
+        &.unlock:before { @include icons.icon(icons_map.$lock); }
+        &.help:before { @include icons.icon(icons_map.$help); }
+        &.toggleselect:before { @include icons.icon(icons_map.$check); }
+        &.folders:before { @include icons.icon(icons_map.$folder); }
+        &.tools:before,
+        &.settings:before { @include icons.icon(icons_map.$wrench); }
+        &.dropdown:before { @include icons.icon(icons_map.$caret-down); }
+        &.insert.recipient:before { @include icons.icon(icons_map.$add-user); }
+    }
+
+    .multi-input a.icon.reset:before { @include icons.icon(icons_map.$trash); }
+    .tagedit-list li.tagedit-listelement-old {
+        a:before { @include icons.icon(icons_map.$times); }
+    }
+
+    .googie_list td {
+        .googie_list_revert:before { @include icons.icon(icons_map.$plus); }
+        .googie_add_to_dict:before { @include icons.icon(icons_map.$plus); }
+    }
+
+    #identities-table td.mail:before { @include icons.icon(icons_map.$vcard); }
+    #responses-table td.name:before { @include icons.icon(icons_map.$speech-bubble); }
+    #filterslist td.name:before { @include icons.icon(icons_map.$filter); }
+    #filtersetslist td.name:before { @include icons.icon(icons_map.$text-file); }
+
+    .attachmentslist li {
+        a.cancelupload:before,
+        a.delete:before { @include icons.icon(icons_map.$times); }
+    }
+
+    .message-part,
+    .message-htmlpart {
+        blockquote span.blockquote-link {
+            &:after { @include icons.icon(icons_map.$chevron-down); }
+            &.collapsed:after { @include icons.icon(icons_map.$chevron-up); }
+        }
+    }
+
+    .ui-dialog .ui-dialog-titlebar-close:before { @include icons.icon(icons_map.$times); }
+
+    .image-tools .open a.button.icon.tools:before { @include icons.icon(icons_map.$chevron-left); }
+
+    .listing td.action a.pushgroup:before { @include icons.icon(icons_map.$chevron-right); }
+
+    .popupmenu.toolbar.listing {
+        .dropbutton a.button.dropdown:before { @include icons.icon(icons_map.$chevron-right); }
+    }
+
+    .pgpkeyimport {
+        div.key label.keyid + a:before { @include icons.icon(icons_map.$key); }
+        li.uid:before { @include icons.icon(icons_map.$user); }
+    }
+
+    .floating-action-buttons a.button:before { @include icons.icon(icons_map.$plus, 2); }
+
+    p.image-attachment .attachment-links {
+        a.open:before { @include icons.icon(icons_map.$new-window); }
+        a.download:before { @include icons.icon(icons_map.$download); }
+    }
+
+    .table-widget table.options-table {
+        td.enabled span:before { @include icons.icon(icons_map.$check); }
+        td.partial span:before { @include icons.icon(icons_map.$check); }
+    }
+
+    table.table th.checkbox-cell {
+        &.subscription:before { @include icons.icon(icons_map.$rss); }
+        &.alarm:before { @include icons.icon(icons_map.$bell); }
+        &.read:before { @include icons.icon(icons_map.$eye); }
+        &.write:before { @include icons.icon(icons_map.$edit); }
+    }
+
+    .special-buttons {
+        a.theme.light:before { @include icons.icon(icons_map.$light-mode); }
+        a.theme.dark:before { @include icons.icon(icons_map.$dark-mode); }
+    }
+
+    a.button.icon.extwin:before,
+    button.btn.extwin:before {
+        @include icons.icon(icons_map.$new-window);
+    }
+
+    // html editor
+    div.tox {
+        :before { margin-top: 3px;}
+        .tox-dialog__header .tox-button:before { @include icons.icon(icons_map.$times); }
+        .tox-dialog__footer .tox-button:before { @include icons.icon(icons_map.$check); }
+        .tox-dialog__footer .tox-button.tox-button--secondary:before { @include icons.icon(icons_map.$times); }
+        .tox-search-dialog .tox-dialog__footer-end button:before { @include icons.icon(icons_map.$signature, true); }
+        .tox-search-dialog .tox-dialog__footer-end button:nth-of-type(1):before { @include icons.icon(icons_map.$search, true); }
+
+        .tox-dialog__footer .tox-tbtn.tox-tbtn--select {
+            .tox-icon.tox-tbtn__icon-wrap {
+                display: none;
+            }
+        }
+
+        .tox-dialog__footer .tox-tbtn.tox-tbtn--select:before { @include icons.icon(icons_map.$gear, 1.5); }
+    }
+}

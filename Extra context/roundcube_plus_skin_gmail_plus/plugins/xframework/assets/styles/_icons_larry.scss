@@ -1,0 +1,237 @@
+// This file adds icons to RC+ skins only (body class .xskin)
+// It does not apply to Larry itself.
+
+@use "icons";
+@use "icons_map";
+
+.xskin {
+    &.xdesktop {
+        #taskbar{
+            a:before { @include icons.icon(icons_map.$generic); font-size: 1.5em; } // default icon and size for taskbar
+            a.button-mail:before { @include icons.icon(icons_map.$mail); }
+            a.button-addressbook:before { @include icons.icon(icons_map.$user); }
+            a.button-calendar:before { @include icons.icon(icons_map.$calendar); }
+            a.button-help:before { @include icons.icon(icons_map.$help); }
+            a.button-xresell:before { @include icons.icon(icons_map.$plus-square); }
+            a.button-apps:before { @include icons.icon(icons_map.$plus-square); }
+            a.button-settings:before { @include icons.icon(icons_map.$wrench); }
+            a.button-logout:before { @include icons.icon(icons_map.$logout); }
+            .minmodetoggle:before { @include icons.icon(icons_map.$caret-up); }
+        }
+
+        #topnav a.button-interface-options:before { @include icons.icon(icons_map.$monitor); }
+        #topnav a.button-cloud:before { @include icons.icon(icons_map.$cloud); }
+        #topnav a.button-tasklist:before { @include icons.icon(icons_map.$spellcheck); }
+        #topnav a.button-cpwebmail:before { @include icons.icon(icons_map.$cpanel); }
+
+        .toolbar a.button:before { @include icons.icon(icons_map.$generic); } // default icon and size for toolbar
+        .toolbar a.button.checkmail:before { @include icons.icon(icons_map.$refresh); }
+        .toolbar a.button.compose:before { @include icons.icon(icons_map.$create); }
+        .toolbar a.button.reply:before { @include icons.icon(icons_map.$reply); }
+        .toolbar a.button.reply-all:before { @include icons.icon(icons_map.$reply-all); }
+        .toolbar a.button.forward:before { @include icons.icon(icons_map.$forward); }
+        .toolbar a.button.delete:before { @include icons.icon(icons_map.$trash); }
+        .toolbar a.button.archive:before { @include icons.icon(icons_map.$archive); }
+        .toolbar a.button.junk:before { @include icons.icon(icons_map.$junk); }
+        .toolbar a.button.markmessage:before { @include icons.icon(icons_map.$tag); }
+        .toolbar a.button.more:before { @include icons.icon(icons_map.$more); }
+        .toolbar a.button.back:before { @include icons.icon(icons_map.$arrow-left-circle); }
+        .toolbar a.button.close:before { @include icons.icon(icons_map.$arrow-left-circle); }
+        .toolbar a.button.download:before { @include icons.icon(icons_map.$download); }
+        .toolbar a.button.move:before { @include icons.icon(icons_map.$folder); }
+        .toolbar a.button.print:before { @include icons.icon(icons_map.$print); }
+        .toolbar a.button.send:before { @include icons.icon(icons_map.$send); }
+        .toolbar a.button.send.schedule:before { @include icons.icon(icons_map.$email-schedule); }
+        .toolbar a.button.scheduled:before { @include icons.icon(icons_map.$schedule-list); }
+        .toolbar a.button.savedraft:before { @include icons.icon(icons_map.$save); }
+        .toolbar a.button.spellcheck:before { @include icons.icon(icons_map.$spellcheck); }
+        .toolbar a.button.attach:before { @include icons.icon(icons_map.$attachment); }
+        .toolbar a.button.insertsig:before { @include icons.icon(icons_map.$signature); }
+        .toolbar a.button.responses:before { @include icons.icon(icons_map.$bookmark); }
+        .toolbar a.button.vcard_send:before { @include icons.icon(icons_map.$vcard); }
+        .toolbar a.button.import:before { @include icons.icon(icons_map.$import); }
+        .toolbar a.button.export:before { @include icons.icon(icons_map.$export); }
+        .toolbar a.button.search:before { @include icons.icon(icons_map.$search); }
+        .toolbar a.button.markasjunk2:before { @include icons.icon(icons_map.$junk); }
+        .toolbar a.button.markasjunk2Sel:before { @include icons.icon(icons_map.$junk); }
+        .toolbar a.button.markasnotjunk2:before { @include icons.icon(icons_map.$not-junk); }
+        .toolbar a.button.enigma:before { @include icons.icon(icons_map.$lock); }
+        .toolbar a.button.encrypt:before { @include icons.icon(icons_map.$lock); }
+        .toolbar a.button.message-list-sort:before { @include icons.icon(icons_map.$sort-asc); }
+        .toolbar a#tb_label_popuplink:before { @include icons.icon(icons_map.$label-dots); }
+
+        .toolbarmenu.selectable li a.selected:before { @include icons.icon(icons_map.$check); }
+        .dropbutton .dropbuttontip:before { @include icons.icon(icons_map.$caret-down); }
+        div.expanded:before { @include icons.icon(icons_map.$minus); }
+        div.collapsed:before { @include icons.icon(icons_map.$plus); }
+        a.menuselector:after { @include icons.icon(icons_map.$caret-down); }
+
+        .boxfooter .listbutton.groupactions:before { @include icons.icon(icons_map.$gear); font-size: 1.6em; }
+        .boxfooter .listbutton.add:before { @include icons.icon(icons_map.$plus); font-size: 1.6em; }
+        .boxfooter .listbutton.delete:before { @include icons.icon(icons_map.$times); font-size: 1.6em; }
+        .boxfooter .listbutton.removegroup:before { @include icons.icon(icons_map.$unlink); font-size: 1.6em; }
+
+        .boxpagenav a.icon.firstpage:before { @include icons.icon(icons_map.$first-page); }
+        .boxpagenav a.icon.lastpage:before { @include icons.icon(icons_map.$last-page); }
+        .boxpagenav a.icon.prevpage:before { @include icons.icon(icons_map.$prev-page); }
+        .boxpagenav a.icon.nextpage:before { @include icons.icon(icons_map.$next-page); }
+        .compose-headers .iconbutton.cancel:before { @include icons.icon(icons_map.$times); }
+        .records-table tr td.threads div.listmenu:before,
+        .records-table tr th.threads a.listmenu:before { @include icons.icon(icons_map.$gear); }
+        .records-table thead tr .status span.status:before { @include icons.icon(icons_map.$star); }
+        .records-table thead tr .priority span.priority:before { @include icons.icon(icons_map.$exclamation); }
+        .messagelist tr:hover td.status span:before { @include icons.icon(icons_map.$star); color: #bbb !important; }
+        .messagelist tr:hover .flag span:before { @include icons.icon(icons_map.$flag); color: #bbb; }
+        .messagelist tr .status span.unread:before { @include icons.icon(icons_map.$star); }
+        .messagelist tr .flag span.flagged:before { @include icons.icon(icons_map.$flag); }
+        .messagelist tr .attachment span.attachment:before { @include icons.icon(icons_map.$attachment); }
+        .messagelist tr .attachment span.report:before { @include icons.icon(icons_map.$text-file); }
+        .messagelist tr .priority span.prio1:before { @include icons.icon(icons_map.$arrow-up-circle); }
+        .messagelist tr .priority span.prio2:before { @include icons.icon(icons_map.$arrow-up-circle); }
+        .messagelist tr .priority span.prio4:before { @include icons.icon(icons_map.$arrow-down-circle); }
+        .messagelist tr .priority span.prio5:before { @include icons.icon(icons_map.$arrow-down-circle); }
+        .messagelist tr td.status span.deleted:before { @include icons.icon(icons_map.$times); }
+        .messagelist tr td.status span.unreadchildren:before { @include icons.icon(icons_map.$star); }
+        .messagelist tr td.subject span.deleted:before { @include icons.icon(icons_map.$times); }
+        .messagelist tr td.subject span.unread:before { @include icons.icon(icons_map.$star); }
+        .messagelist tr td.subject span.replied:before { @include icons.icon(icons_map.$reply); }
+        .messagelist tr td.subject span.forwarded:before { @include icons.icon(icons_map.$forward); }
+        .messagelist tr td.subject span.replied.forwarded:before { @include icons.icon(icons_map.$replied-forwarded); }
+        .messagelist tr td.subject span.unreadchildren:before { @include icons.icon(icons_map.$star); }
+        .records-table thead tr .sortedASC a:after { @include icons.icon(icons_map.$sort-asc); }
+        .records-table thead tr .sortedDESC a:after { @include icons.icon(icons_map.$sort-desc); }
+        #messagestack div:after { @include icons.icon(icons_map.$exclamation); }
+        #messagestack div.error:after { @include icons.icon(icons_map.$times); }
+        #messagestack div.warning:after { @include icons.icon(icons_map.$exclamation); }
+        #messagestack div.confirmation:after { @include icons.icon(icons_map.$check); }
+        #searchmenulink:before { @include icons.icon(icons_map.$search); }
+        #quicksearchbar #searchmenulink:before { @include icons.icon(icons_map.$search); white-space: nowrap; }
+        #searchreset:before { @include icons.icon(icons_map.$times); }
+        #maillistmode:before { @include icons.icon(icons_map.$bars); }
+        #mailthreadmode:before { @include icons.icon(icons_map.$speech-bubble); }
+        .fullheight #mailpreviewtoggle:before { @include icons.icon(icons_map.$arrow-up); }
+        #mailpreviewtoggle:before { @include icons.icon(icons_map.$arrow-down); }
+        #custom-login-submit:before { @include icons.icon(icons_map.$arrow-right-circle); }
+
+        #xsidebar-button:before { @include icons.icon(icons_map.$caret-right); }
+        &.xsidebar-visible #xsidebar-button:before { @include icons.icon(icons_map.$caret-left); }
+
+        .mailbox > a:before { @include icons.icon(icons_map.$folder); }
+        .mailbox.inbox > a:before { @include icons.icon(icons_map.$inbox); }
+        .mailbox.sent > a:before { @include icons.icon(icons_map.$folder); }
+        .mailbox.drafts > a:before { @include icons.icon(icons_map.$create); }
+        .mailbox.trash > a:before { @include icons.icon(icons_map.$trash); }
+        .mailbox.archive > a:before { @include icons.icon(icons_map.$archive); }
+        .mailbox.junk > a:before { @include icons.icon(icons_map.$junk); }
+        .mailbox.spam > a:before { @include icons.icon(icons_map.$junk); }
+
+        // plugins
+        #helptoolbar a.button.help:before { @include icons.icon(icons_map.$help); }
+        #helptoolbar a.button.about:before { @include icons.icon(icons_map.$question); }
+        #helptoolbar a.button.license:before { @include icons.icon(icons_map.$list); }
+        #notestoolbar a.button#newnote:before { @include icons.icon(icons_map.$create); }
+        #notestoolbar a.button#addnote:before { @include icons.icon(icons_map.$export); }
+        .edit-alarm-buttons a.add-alarm:before { @include icons.icon(icons_map.$plus-circle); }
+        .edit-alarm-buttons a.delete-alarm:before { @include icons.icon(icons_map.$minus-circle); }
+    }
+
+    &.xdesktop.minimal #taskbar .minmodetoggle:before { @include icons.icon(icons_map.$caret-down); }
+
+    &.xdesktop.xvertical-preview {
+        .fullheight #mailpreviewtoggle:before { @include icons.icon(icons_map.$arrow-left); }
+        #mailpreviewtoggle:before { @include icons.icon(icons_map.$arrow-right); }
+    }
+
+    &.skin-icloud #login-form {
+        .box-bottom #message div.warning:before { @include icons.icon(icons_map.$exclamation); }
+        .box-bottom #message div.error:before { @include icons.icon(icons_map.$exclamation); }
+        .box-bottom #message div.loading:before { @include icons.icon(icons_map.$information); }
+        .box-bottom #message div.notice:before { @include icons.icon(icons_map.$information); }
+    }
+
+    &.xmobile {
+        #main-menu a span:before { @include icons.icon(icons_map.$generic); font-size: 2em; }
+        #main-menu #button-taskbar span:before { @include icons.icon(icons_map.$bars); }
+        #main-menu #button-mail-back span:before { @include icons.icon(icons_map.$arrow-left-circle); }
+        #main-menu #button-compose-settings span:before { @include icons.icon(icons_map.$gear); }
+        #main-menu #button-send span:before { @include icons.icon(icons_map.$send); }
+        #main-menu #button-reply span:before { @include icons.icon(icons_map.$reply); }
+        #main-menu #button-toolbar span:before { @include icons.icon(icons_map.$options); }
+        #main-menu #button-format span:before { @include icons.icon(icons_map.$code); }
+        #main-menu #button-compose span:before { @include icons.icon(icons_map.$create); }
+        #main-menu #button-users span:before { @include icons.icon(icons_map.$user); }
+        #main-menu #button-folders span:before { @include icons.icon(icons_map.$folder); }
+        #main-menu #button-mail span:before { @include icons.icon(icons_map.$options); }
+        #main-menu #button-funnel span:before { @include icons.icon(icons_map.$gear); }
+        .popup-close a:before  { @include icons.icon(icons_map.$chevron-left-circle); font-size: 2em; }
+        .toolbarmenu.selectable li a.selected:before { @include icons.icon(icons_map.$check); }
+
+        #mailboxlist li div.collapsed:before,
+        #directorylist li.addressbook div.collapsed:before,
+        div.collapsed:before { @include icons.icon(icons_map.$caret-right); font-size: 2em; }
+
+        #mailboxlist li div.expanded:before,
+        #directorylist li.addressbook div.expanded:before,
+        div.expanded:before { @include icons.icon(icons_map.$caret-down); font-size: 2em; }
+
+        #messagelist td.subject:before { @include icons.icon(icons_map.$check); }
+        #messagelist td.flag span.flagged:before { @include icons.icon(icons_map.$flag); }
+        #messagelist td.status span.unread:before { @include icons.icon(icons_map.$star); }
+        #messagelist td.attachment span.attachment:before { @include icons.icon(icons_map.$attachment); }
+        #messagelist td.attachment span.report:before { @include icons.icon(icons_map.$text-file); }
+        #messagelist td.subject span.msgicon.replied:before { @include icons.icon(icons_map.$reply); }
+        #messagelist td.subject span.msgicon.forwarded:before { @include icons.icon(icons_map.$forward); }
+        #messagelist td.subject span.msgicon.replied.forwarded:before { @include icons.icon(icons_map.$replied-forwarded); }
+        .moreheaderstoggle.remove .iconlink:before { @include icons.icon(icons_map.$chevron-up); }
+        .moreheaderstoggle .iconlink:before { @include icons.icon(icons_map.$chevron-down); }
+        #full-headers .more-headers.show-headers:before { @include icons.icon(icons_map.$chevron-down-circle); }
+        #full-headers .more-headers.hide-headers:before { @include icons.icon(icons_map.$chevron-up-circle); }
+        #attachment-list .delete:before { @include icons.icon(icons_map.$times); }
+        #attachment-list .drop:before { @include icons.icon(icons_map.$chevron-down-circle); }
+        .rcmaddcontact:before { @include icons.icon(icons_map.$user); }
+        .settings-button:nth-child(3) span:before  { @include icons.icon(icons_map.$wrench); }
+        .settings-button:nth-child(4) span:before  { @include icons.icon(icons_map.$grid-large); }
+        #messagestack div:after { @include icons.icon(icons_map.$exclamation); }
+        #messagestack div.error:after { @include icons.icon(icons_map.$times); }
+        #messagestack div.warning:after { @include icons.icon(icons_map.$exclamation); }
+        #messagestack div.confirmation:after { @include icons.icon(icons_map.$check); }
+        #messagestack div.loading:after { content: ""; }
+        a.firstpage:before { @include icons.icon(icons_map.$first-page); }
+        a.prevpage:before { @include icons.icon(icons_map.$prev-page); }
+        a.nextpage:before { @include icons.icon(icons_map.$next-page); }
+        a.lastpage:before { @include icons.icon(icons_map.$last-page); }
+        #messageheader .pagenav a.prevpage:before { @include icons.icon(icons_map.$arrow-up); }
+        #messageheader .pagenav a.nextpage:before { @include icons.icon(icons_map.$arrow-down); }
+        #login-menu-button:before { @include icons.icon(icons_map.$bars); }
+        #custom-login-submit:before { @include icons.icon(icons_map.$arrow-right-circle); }
+
+        #groupoptionslink span.inner:before  { @include icons.icon(icons_map.$gear); }
+        #keyoptionslink span.inner:before  { @include icons.icon(icons_map.$gear); }
+        a.listbutton.add span.inner:before { @include icons.icon(icons_map.$plus); }
+        a.listbutton.delete span.inner:before { @include icons.icon(icons_map.$minus); }
+        a.listbutton.removegroup span.inner:before { @include icons.icon(icons_map.$unlink); }
+
+        #quotadisplay:before { @include icons.icon(icons_map.$disk); }
+
+        // gestures
+        .message-action-links a.mal-flag:before { @include icons.icon(icons_map.$flag-empty); }
+        .message-action-links a.mal-unflag:before { @include icons.icon(icons_map.$flag); }
+        .message-action-links a.mal-more:before { @include icons.icon(icons_map.$bars); }
+        .message-action-links a.mal-delete:before { @include icons.icon(icons_map.$times); }
+        .message-action-read:before { @include icons.icon(icons_map.$envelope-closed); }
+        .message-action-read.unread:before { @include icons.icon(icons_map.$envelope-open); }
+        #mainscreen.refresh:before { @include icons.icon(icons_map.$refresh); }
+        #mainscreen.progress:before { @include icons.icon(icons_map.$refresh); }
+        #mailview-right.gesture-pan.prev:before  { @include icons.icon(icons_map.$arrow-left); }
+        #mailview-right.gesture-pan.next:before  { @include icons.icon(icons_map.$arrow-right); }
+        #mailview-right.gesture-pan.disabled:before  { @include icons.icon(icons_map.$forbidden); }
+
+        // plugins
+        #filtersetmenulink:before,
+        #filtermenulink:before { @include icons.icon(icons_map.$gear); }
+
+        #helptoolbar a.button.help:before  { @include icons.icon(icons_map.$help); }
+        #helptoolbar a.button.about:before  { @include icons.icon(icons_map.$question); }
+        #helptoolbar a.button.license:before  { @include icons.icon(icons_map.$list); }
+    }
+}

@@ -1,25 +1,22 @@
 {
     "name": "lifeprisma/roundcube-genia",
     "type": "roundcube-plugin",
-    "description": "GenIA — AI-powered email assistant for Roundcube. Multi-provider (OpenAI, Grok), streaming, inline translate, scam detection, smart reply, summarize, and more.",
+    "description": "Gemini Executive Assistant (FYXER Mode) for Roundcube. Autonomous email triage, executive briefings, action item checklists, and draft replies powered exclusively by Google Gemini.",
     "license": "MIT",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "keywords": [
         "roundcube",
         "plugin",
         "ai",
-        "openai",
         "gemini",
-        "claude",
-        "grok",
-        "xai",
-        "gpt",
+        "google-gemini",
+        "fyxer",
+        "executive-assistant",
+        "email-triage",
+        "auto-draft",
         "email",
         "assistant",
-        "translate",
-        "scam",
-        "lifeprisma",
-        "genia"
+        "lifeprisma"
     ],
     "authors": [
         {

@@ -1,0 +1,134 @@
+ROUNDCUBE PLUS FRAMEWORK PLUGIN
+===============================
+
+This plugin provides a common framework for all the Roundcube Plus plugins.
+
+REQUIREMENTS
+------------
+- Roundcube: 1.6, 1.7
+- PHP: 8.0 or higher
+- PHP Extensions: bcmath (for Geo IP to country functions)
+
+INSTALLATION
+------------
+This plugin does not need to be installed. It simply needs to be present in the <roundcube>/plugins directory.
+Don't add this plugin to the plugins array in the Roundcube config file.
+
+COMPATIBILITY
+-------------
+This plugin has been created for the standard version of Roundcube as provided on the Roundcube website:
+https://roundcube.net. It might not work properly with customized versions of Roundcube including the version
+provided as part of the Kolab system. Please note that we cannot provide any technical support for the plugin
+deployed on a non-standard version of Roundcube.
+
+CONFIGURATION
+-------------
+This plugin does not have its own configuration file. But it offers some configuration options that can be added to
+the main Roundcube config file: <roundcube>/config/config.inc.php.
+
+**** LICENSE KEY (REQUIRED)
+
+This option is required for the plugins and skins to function. The license key can be obtained from the customer area
+of the website where you purchased the skins or plugins. Add the license key to the config file this way:
+
+$config['license_key'] = 'your_license_key';
+
+**** SHOW/HIDE SIDEBAR
+
+Some Roundcube Plus plugins (for example, xcalendar, xlast_login, xnews_feed) add content to the sidebar that appears on
+the left side of the screen. The sidebar will be visible by default; if you want to change this behavior and hide the
+sidebar to begin with, add this to the config file:
+
+$config['xsidebar_visible'] = false;
+
+**** COLLAPSE/EXPAND SIDEBAR ITEMS
+
+By default, all the items in the sidebar are expanded. If you want to change this default and collapse some items
+to begin with, use this config option:
+
+$config['xsidebar_collapsed'] = array('xcalendar', 'xquote');
+
+In the example above, the items added by the calendar and the quote plugins will be collapsed while all the other items
+will be expanded.
+
+**** REORDER SIDEBAR
+
+The items are added to the sidebar following the order in which the plugins are added to the plugins array. If you want
+to change the default order of the sidebar items, change the order of the plugins in the plugins array.
+
+**** ADD TO APPS MENU
+
+Using this setting you can add your own, personalized items to the Apps menu. The items should be in the format:
+
+url => array(title, image)
+
+For example:
+
+$config['add_to_apps_menu'] = array(
+    "?_task=your_plugin" => array("title" => "Your plugin", "image" => "http://path_to_image.png"),
+);
+
+**** REMOVE FROM APPS MENU
+
+Using this setting you can remove items from the Apps menu. Reference the items by their url, for example:
+
+$config['remove_from_apps_menu'] = array(
+    '?_task=settings&_action=preferences&_section=xcalendar',
+);
+
+**** DISABLE APPS MENU
+
+If you'd like to remove the Apps button from the Roundcube header menu, use this setting:
+
+$config['disable_apps_menu'] = true;
+
+**** REMOVE VENDOR BRANDING
+
+If you'd like to remove the Roundcube Plus branding from the login screen, add this to the config file:
+
+$config['remove_vendor_branding'] = true;
+
+**** CHANGE $_SERVER['REMOTE_ADDR']
+
+If the user IP on your server is not stored under $_SERVER['REMOTE_ADDR'], you can use this setting to tell the
+xframework plugin which $_SERVER variable to retrieve it from. For example:
+
+$config['remote_addr_key'] = 'HTTP_CLIENT_IP';
+
+In this case, the plugin will retrieve the user IP from $_SERVER['HTTP_CLIENT_IP'].
+
+The user IP is used by some plugins that rely on xframework, for example xlast_login.
+
+**** OVERWRITE ROUNDCUBE URL
+
+The Roundcube Plus plugins use the variables from the $_SERVER array to construct the URL through which Roundcube can be
+accessed. In some cases, the $_SERVER variables don't provide the right values and the constructed URL is incorrect.
+If this is true in your case, you can bypass the xframework functions that construct the URL from the $_SERVER variables
+and specify the Roundcube URL directly using this setting:
+
+$config['overwrite_roundcube_url'] = "https://my-roundcube-is-here.com";
+
+**** USE CUSTOM MAXMIND DATABASE
+
+The xframework plugin provides IP-to-country resolution using the free MaxMind database. If you'd like to use your own,
+more accurate MaxMind database, specify the path to the database file using the maxmind_database config option. For
+example:
+
+$config['maxmind_database'] = '/home/username/GeoLite2-Country.mmdb';
+
+If the file you're pointing to is a city database, also set the maxmind_city option to true:
+
+$config['maxmind_city'] = true;
+
+ATTRIBUTION
+-----------
+This product includes GeoLite2 data created by MaxMind, available from http://www.maxmind.com.
+
+LICENSE
+-------
+This plugin is distributed under a commercial license. In order to use the plugin, you must purchase the license
+from Tecorama LLC. See the LICENSE file for details.
+
+COPYRIGHT
+---------
+Copyright (c) 2026, Tecorama LLC

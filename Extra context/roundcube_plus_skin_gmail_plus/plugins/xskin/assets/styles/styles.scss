@@ -1,0 +1,360 @@
+@use "options";
+@use "../../../xframework/assets/styles/colors";
+
+.btn {
+   // border: none !important;
+    box-shadow: none !important;
+}
+
+// gray out disabled dialog buttons
+.xelastic div.ui-dialog-buttonset button.btn:disabled {
+    background-color: #aaa !important;
+}
+
+.form-control:focus,
+.recipient-input.focus,
+.mce-tinymce.focused, // rc 1.4 html editor
+div.tox.focused, // rc 1.5 html editor
+div.tox .tox-color-input>input:focus,
+div.tox .tox-selectfield select:focus,
+div.tox .tox-textarea:focus,
+div.tox .tox-textfield:focus {
+    box-shadow: none !important;
+}
+
+body .ui-dialog .ui-dialog-titlebar .ui-dialog-titlebar-close {
+    &, &:hover {
+        @include colors.text-color(true);
+        background: transparent !important;
+    }
+}
+
+body.xelastic {
+    .menu a:not(.disabled),
+    .menu.toolbar .dropbutton:not(.disabled),
+    .header a.button.icon:not(.disabled),
+    .menu.toolbar .dropbutton a.dropdown,
+    .menu.toolbar .menuitem:not(.select) {
+        &:hover,
+        &:focus {
+            background-color: rgba(255, 255, 255, .15);
+        }
+    }
+
+    .menu span.dropbutton a {
+        &:hover,
+        &:focus {
+            background-color: transparent !important;
+        }
+    }
+}
+
+html.dark-mode {
+    #settings-menu li.selected,
+    .listing tr.selected td,
+    .listing li.selected,
+    ul.treelist li.selected,
+    ul.treelist li.selected,
+    .toolbar a.button:not(.disabled):focus,
+    .toolbar a.button:not(.disabled):hover,
+    .toolbarmenu.listing li:hover a.active,
+    .menu.toolbar .dropbutton:not(.disabled):hover,
+    .popupmenu .listing li > a:not(.disabled):hover,
+    #taskmenu a:hover,
+    .header a.button.icon:not(.disabled):focus,
+    .header a.button.icon:not(.disabled):hover,
+    .menu a:not(.disabled):focus,
+    .menu a:not(.disabled):hover {
+        background-color: rgba(255, 255, 255, .06);
+    }
+
+    .listing li.selected > a,
+    ul.treelist li.selected > div > a,
+    ul.treelist li.selected > a {
+        background-color: transparent;
+    }
+}
+
+.popover {
+    font-size: 1rem;
+
+    .menu li a[aria-haspopup]:hover:after {
+        @include colors.text-color;
+    }
+}
+
+// login page (both elastic and larry)
+
+body.xskin.login-page {
+    #login-title {
+        display: block;
+        margin: 0 0 20px 0;
+        text-align: center;
+        font-size: 1.8em;
+    }
+
+    #logo {
+        position: static;
+        display: block;
+        box-sizing: border-box;
+        max-width: 100%;
+        margin: auto;
+        padding-bottom: 10px;
+    }
+
+    #login-footer,
+    #bottomline {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.4);
+        text-align: left;
+        color: #fff;
+        font-size: 0.8em;
+
+        a {
+            color: #fff;
+            text-decoration: none;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    #vendor-branding {
+        position: fixed;
+        bottom: 3px;
+        right: 8px;
+        display: block;
+        width: 20px;
+        height: 20px;
+        z-index: 1;
+        background: rgba(0, 0, 0, .2);
+        border-radius: 5px !important;
+        text-decoration: none;
+        color: #fff;
+        font-weight: bold;
+        font-size: 18px;
+        text-align: center;
+        line-height: 1em;
+
+        &:hover {
+            background: #cc0000;
+        }
+    }
+}
+
+// login page (elastic only)
+
+body.xelastic.login-page {
+    background: #f0f0f0;
+
+    #layout {
+        display: block !important;
+    }
+
+    #layout-content {
+        overflow: visible;
+        margin: 20vh auto 0 auto !important;
+        color: #333;
+        max-width: 100%;
+        width: 420px;
+        background: #fff !important;
+        padding: 35px;
+        flex: none;
+
+        #login-form {
+            position: static;
+            max-width: 100%;
+            width: 100%;
+            box-sizing: border-box;
+
+            table {
+                width: 100% !important;
+                border-collapse: collapse;
+
+                tr.row {
+                    max-width: 100%;
+
+                    td {
+                        display: block;
+                        padding-bottom: 5px;
+
+                        &.title {
+                            display: block !important;
+                            line-height: 1.1em;
+                            padding-top: 4px;
+                        }
+                    }
+                }
+            }
+
+            input[type='text'],
+            input[type='password'],
+            select {
+                width: 100%;
+                font-size: 1.2rem;
+            }
+        }
+
+        .input-group-prepend {
+            display: none;
+        }
+
+        .formbuttons {
+            margin: 20px 0 0 0;
+
+            button {
+                margin: 0;
+                padding: 0.6rem;
+            }
+        }
+    }
+
+    &:not(.xbackground-login-image) #login-footer {
+        background: transparent;
+
+        &, a {
+            color: #717171;
+        }
+    }
+
+    html.dark-mode & {
+        background: #21292c;
+
+        #layout-content {
+            color: #f4f4f4;
+            background-color: #313c40 !important;
+        }
+
+        &:not(.xbackground-login-image) #login-footer {
+            background: transparent;
+
+            &, a {
+                color: #eee;
+            }
+        }
+    }
+}
+
+// skin look and feel
+
+.xskin-settings-color-box {
+    display: inline-block;
+    height: 20px;
+    width: 20px;
+    margin: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+.xskin-settings-save-hint {
+    display: none;
+
+    &:before {
+        margin-right: 6px;
+    }
+}
+
+
+// remove right border from lists
+html:not(.touch) .listing li>a:focus,
+html:not(.touch) .listing.focus tbody tr.focused>td:first-child,
+html:not(.touch) .listing.focus:not(.withselection) tbody tr.focused>td.selection+td {
+    border-left-color: transparent;
+}
+
+// correct icon positions and colors
+.popover-body :before {
+    position: relative;
+    top: 1px;
+}
+
+.input-group-text.icon:before {
+    @include colors.text-color;
+}
+
+.xicons-outlined {
+    .input-group-text.icon:before,
+    .popover-body :before {
+        top: 2px;
+    }
+
+    .popover-header a.icon:before {
+        position: relative;
+        top: 2px;
+    }
+}
+
+// checkboxes
+.custom-switch .custom-control-input {
+    &:focus:not(:checked) ~ .custom-control-label::before {
+        border-color: #adb5bd;
+    }
+
+    &:focus ~ .custom-control-label::before {
+        box-shadow: none !important;
+    }
+
+    &:checked~.custom-control-label::before { // overwrite this in skin colors
+        border-color: #888;
+        background-color: #888;
+    }
+}
+
+// popupmenu
+@media screen and (min-width: 768px) {
+    .popupmenu:not(#listoptions-menu) {
+        @include colors.border-color;
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+
+            li {
+                border-bottom: 1px solid;
+                @include colors.border-color;
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                a {
+                    display: block;
+                    @include colors.text-color;
+
+                    &:hover {
+                        text-decoration: none;
+                    }
+
+                    span {
+                        padding: 0;
+                        height: auto;
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+@media screen and (max-width: 480px) {
+    #button-apps span.inner {
+        display: inline;
+    }
+
+    // reset button settings on smallest screens
+    body.xelastic .ui-dialog-buttonpane .ui-dialog-buttonset .btn {
+        background: transparent !important;
+        border: none !important;
+    }
+}
+
+@media screen and (min-width: 1025px) {
+    #taskmenu a:focus {
+        background-color: transparent !important;
+    }
+}

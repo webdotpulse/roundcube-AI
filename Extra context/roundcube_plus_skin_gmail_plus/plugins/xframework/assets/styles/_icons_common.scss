@@ -1,0 +1,135 @@
+// This file adds RC+ icons to various common areas created by the RC+ plugins, like the sidebar, apps, menu, etc.
+// Applied to all skins, including elastic and larry.
+@use "icons";
+@use "icons_map";
+
+// list of plugins and their icons
+// (we can't have the individual plugins add these, because a number of plugins only adds stylesheets to specific pages, like
+// settings, or mail, and the apps menu appears on all pages)
+$plugins: (
+    xbackground: icons_map.$picture,
+    xcalendar: icons_map.$calendar,
+    xquote: icons_map.$speech-bubble,
+    xdropbox: icons_map.$dropbox,
+    xgoogle_drive: icons_map.$google,
+    xlast_login: icons_map.$user-circle,
+    xmultibox: icons_map.$envelope-open,
+    xnews_feed: icons_map.$newspaper,
+    xsidebar: icons_map.$sidebar,
+    xsignature: icons_map.$signature,
+    xskin: icons_map.$skin,
+    xvertical_preview: icons_map.$columns,
+    xweather: icons_map.$sun,
+    xtag: icons_map.$code,
+    xemail_schedule: icons_map.$email-schedule,
+    x2fa: icons_map.$lock,
+    xai: icons_map.$ai,
+    xais: icons_map.$ai,
+    xwebdav: icons_map.$cloud,
+);
+
+// information boxes and popups
+.xinfo:before,
+.xsave-hint:before{
+    @include icons.icon(icons_map.$information);
+}
+
+// RC+ sidebar
+#show-mobile-xsidebar:before { @include icons.icon(icons_map.$sidebar); }
+#xsidebar-menu a.hide:before { @include icons.icon(icons_map.$chevron-right); }
+#show-xsidebar:before { @include icons.icon(icons_map.$chevron-left); }
+#xsidebar-order-table td.title label:before { @include icons.icon(icons_map.$bars); }
+#xsidebar-order-note:before { @include icons.icon(icons_map.$information); }
+#xsidebar .sidebar-settings-url:before { @include icons.icon(icons_map.$gear); }
+#xsidebar .sidebar-toggle:before { @include icons.icon(icons_map.$chevron-up); }
+#xsidebar .collapsed .sidebar-toggle:before { @include icons.icon(icons_map.$chevron-down); }
+
+// RC+ apps menu
+#button-apps:before { @include icons.icon(icons_map.$grid-small); }
+
+@each $plugin, $icon in $plugins {
+    #apps-menu a.app-item-#{$plugin} div.icon:before { @include icons.icon($icon); }
+}
+
+// RC+ plugins in settings list
+#settings-menu,
+#settings-tabs {
+    a.x2fa:before { @include icons.icon(icons_map.$lock); }
+    a.xcpanel-settings:before { @include icons.icon(icons_map.$envelope-closed); }
+}
+
+// RC+ plugins in apps menu and settings / preferences list
+@each $plugin, $icon in $plugins {
+    #sections-table tr.#{$plugin} > td.section:before { @include icons.icon($icon); }
+}
+
+// icons in lists
+
+.listing.iconized.selectable li a:before { content: ""; }
+.listing.iconized.selectable li a.selected:before { @include icons.icon(icons_map.$check); }
+
+.listing.iconized li {
+    &.preferences > a:before { @include icons.icon(icons_map.$wrench); }
+    &.folders > a:before { @include icons.icon(icons_map.$folder); }
+    &.responses > a:before { @include icons.icon(icons_map.$bookmark); }
+    &.identities > a:before { @include icons.icon(icons_map.$vcard); }
+    &.password > a:before { @include icons.icon(icons_map.$key); }
+    &.addressbook a:before { @include icons.icon(icons_map.$addressbook); }
+    &.contactgroup a:before { @include icons.icon(icons_map.$users); }
+    &.contactsearch a:before { @include icons.icon(icons_map.$search); }
+    &.filter > a:before { @include icons.icon(icons_map.$filter); }
+    &.vacation > a:before { @include icons.icon(icons_map.$clock); }
+    &.forward > a:before { @include icons.icon(icons_map.$forward); }
+    &.enigma.keys > a:before { @include icons.icon(icons_map.$key); }
+    &.userinfo > a:before { @include icons.icon(icons_map.$user-circle); }
+    &.twofactorauth > a:before { @include icons.icon(icons_map.$login); }
+    &.cd_preferences > a:before { @include icons.icon(icons_map.$users); }
+    a.help:before { @include icons.icon(icons_map.$help); }
+    a.about:before { @include icons.icon(icons_map.$information); }
+    a.license:before { @include icons.icon(icons_map.$shield); }
+    & > i:before { @include icons.icon(icons_map.$user); }
+    &.group > i:before { @include icons.icon(icons_map.$users); }
+}
+
+.listing.iconized tr {
+    &.contact.person td.name:before { @include icons.icon(icons_map.$user); }
+    &.contact.group td.name:before { @include icons.icon(icons_map.$users); }
+    &.general > td.section:before { @include icons.icon(icons_map.$monitor); }
+    &.mailbox > td.section:before { @include icons.icon(icons_map.$envelope-closed); }
+    &.mailview > td.section:before { @include icons.icon(icons_map.$inbox); }
+    &.compose > td.section:before { @include icons.icon(icons_map.$edit); }
+    &.addressbook > td.section:before { @include icons.icon(icons_map.$addressbook); }
+    &.folders > td.section:before { @include icons.icon(icons_map.$folder); }
+    &.server > td.section:before { @include icons.icon(icons_map.$disk); }
+    &.enigma > td.section:before { @include icons.icon(icons_map.$lock); }
+    &.encryption > td.section:before { @include icons.icon(icons_map.$lock); }
+    &.calendar > td.section:before { @include icons.icon(icons_map.$calendar); }
+}
+
+// ****************** third-party plugins ******************
+
+// managesieve
+.menu a {
+    &.filterlink:before { @include icons.icon(icons_map.$filter); }
+    &.status:before { @include icons.icon(icons_map.$lightbulb); }
+}
+
+.action-plugin-managesieve-action {
+    .propform td.rowbuttons a.advanced:before { @include icons.icon(icons_map.$gear); }
+    .propform td.rowbuttons a:before { @include icons.icon(icons_map.$plus); }
+    .propform td.rowbuttons a.delete:before { @include icons.icon(icons_map.$trash); }
+}
+
+// tasks
+.menu a.taskaddlink:before { @include icons.icon(icons_map.$save); }
+
+// thunderbird labels
+#sections-table tbody tr#rcmrowthunderbird_labels td.section:before { @include icons.icon(icons_map.$label-dots); }
+
+// carddav
+#sections-table tbody tr#rcmrowcd_preferences td.section:before { @include icons.icon(icons_map.$user-circle); }
+
+// twofactor_gauthenticator
+#settingstabplugintwofactor_gauthenticator a:before { @include icons.icon(icons_map.$user); }
+#twofactor_gauthenticator-form .show-codes:before { @include icons.icon(icons_map.$eye); }
+

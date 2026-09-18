@@ -1,0 +1,28 @@
+@mixin larry-desktop-square {
+    a.button,
+    .uibox,
+    .uibox .boxtitle,
+    .uibox .listing thead td,
+    .uibox .listing thead th,
+    a.menuselector,
+    #messagestack .notice,
+    input.button,
+    .formbuttons input.button,
+    input.button.mainaction,
+    input.button.mainaction:active,
+    #login-form input.button,
+    #mailboxlist li,
+    .listbox .boxfooter,
+    .contentbox .boxtitle,
+    body.iframe .boxtitle,
+    .contactfieldgroup legend,
+    .records-table thead td,
+    .records-table thead th,
+    #messagelistfooter,
+    .popupmenu,
+    #rcmKSearchpane,
+    body.xlarry-font-icons #mailboxlist li.mailbox .unreadcount,
+    .minicolors-swatch .minicolors-swatch-color {
+        border-radius: 0 !important;
+    }
+}

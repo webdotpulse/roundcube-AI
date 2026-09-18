@@ -1,0 +1,68 @@
+// includes style for both larry and elastic
+@use "icons";
+@use "icons_map";
+
+// change the layout of images displayed under the message: normally the display/download links have position: absolute
+// and are displayed at the bottom, but if we want to add cloud save icons, we need to change the image boxes to have
+// variable height
+
+.xcloud-save-button-container {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin: .5rem;
+}
+
+.xcloud-compose-button {
+    margin-top: 0.3rem;
+}
+
+.xelastic {
+    p.image-attachment {
+        flex-direction: column;
+
+        a.image-link {
+            margin-bottom: .5rem;
+        }
+
+        span.attachment-links {
+            white-space: normal;
+            position: relative;
+
+            a.xcloud-save-link {
+                display: flex;
+                justify-content: center;
+                white-space: nowrap;
+            }
+        }
+
+        br {
+            display: none;
+        }
+    }
+
+    .xcloud-save-button-container {
+        justify-content: center;
+
+        button.btn.xcloud-save-button {
+            padding: .2rem .4rem;
+            font-size: 90%;
+
+            &:before {
+                margin-right: .3rem;
+            }
+        }
+    }
+
+    .xdropbox-icon-button:before      { @include icons.icon(icons_map.$dropbox, true); }
+    .xgoogle_drive-icon-button:before { @include icons.icon(icons_map.$google-drive, true); }
+    .xwebdav-icon-button:before       { @include icons.icon(icons_map.$nextcloud, true); }
+}
+
+.xlarry {
+    .xcloud-save-button-container {
+        button.btn.xcloud-save-button {
+            margin: 0;
+        }
+    }
+}
