@@ -1,0 +1,23 @@
+[Unit]
+Description=Gemini Executive Assistant 24/7 Background Worker (FYXER Mode)
+After=network.target dovecot.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/lib/roundcube/plugins/lifeprisma_ai
+ExecStart=/usr/bin/php /var/lib/roundcube/plugins/lifeprisma_ai/bin/worker.php --daemon --interval=60
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lifeprisma-ai-worker
+
+# Security Sandboxing
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

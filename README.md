@@ -150,6 +150,48 @@ The plugin includes native support and dedicated assets for both default Roundcu
 
 ---
 
+## 24/7 Offline Background Worker (CLI / Cron / Systemd)
+
+Want Gemini to triage emails and prepare draft replies **around the clock even when you are completely logged out of Roundcube and your computer is turned off**?
+
+The plugin includes a dedicated standalone CLI worker (`bin/worker.php`). When an email lands in your mailbox, the worker immediately calls **Gemini 3.8 Flash**, runs the triage filter, and saves the pre-crafted reply into your IMAP `Drafts` folder. When you open your webmail, iPhone Mail, or Thunderbird, the draft is already waiting for you.
+
+### Option A: Linux Cron (Recommended for most setups)
+
+Add the worker to your crontab (`crontab -e`) to run every 3 minutes:
+
+```bash
+*/3 * * * * php /path/to/roundcube/plugins/lifeprisma_ai/bin/worker.php >> /var/log/lifeprisma_ai_worker.log 2>&1
+```
+
+### Option B: 24/7 Persistent Daemon (Systemd)
+
+1. Copy the included systemd unit template to `/etc/systemd/system/`:
+   ```bash
+   sudo cp bin/lifeprisma-ai-worker.service /etc/systemd/system/
+   ```
+2. Adjust the `WorkingDirectory` and `ExecStart` paths in `/etc/systemd/system/lifeprisma-ai-worker.service` to match your Roundcube installation.
+3. Enable and start the service:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now lifeprisma-ai-worker
+   sudo systemctl status lifeprisma-ai-worker
+   ```
+
+### CLI Command Reference
+
+```bash
+php bin/worker.php --help           # Show command reference
+php bin/worker.php                  # Run a single pass across configured accounts
+php bin/worker.php --daemon         # Run continuously in background
+php bin/worker.php --interval=30    # Custom poll interval (e.g. 30 seconds)
+php bin/worker.php --dry-run        # Test triage without saving to IMAP
+php bin/worker.php --account=user   # Process a specific email account only
+php bin/worker.php --verbose        # Extra debug output
+```
+
+---
+
 ## Security & Stability
 
 Built specifically for high-reliability enterprise email environments:

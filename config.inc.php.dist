@@ -81,3 +81,32 @@ $config['lifeprisma_ai_rate_limit'] = 2;
 $config['lifeprisma_ai_admins'] = [
     // 'admin@yourdomain.com',
 ];
+
+// ============================================================
+// 24/7 Offline Background Worker (CLI / Cron / Systemd)
+// ============================================================
+// Allows Gemini to monitor emails and prepare draft replies even when users
+// are completely logged out of Roundcube.
+// Run via CLI: php bin/worker.php (cron) or php bin/worker.php --daemon (systemd)
+
+// Default IMAP server for the worker
+$config['lifeprisma_ai_worker_imap_host'] = 'ssl://localhost:993';
+
+// List of email accounts to monitor in background
+$config['lifeprisma_ai_worker_accounts'] = [
+    /*
+    [
+        'email' => 'ceo@yourdomain.com',
+        'password' => 'secret_app_password', // or left empty if using Dovecot master user
+        'imap_host' => 'ssl://localhost:993', // optional override
+        'drafts_folder' => 'Drafts',
+    ],
+    */
+];
+
+// Dovecot Master User Support (Optional, recommended for multi-user servers)
+// Allows the background worker to access all accounts on your server using a single
+// Dovecot master login, eliminating the need to store individual user passwords.
+$config['lifeprisma_ai_worker_dovecot_master_user'] = '';
+$config['lifeprisma_ai_worker_dovecot_master_password'] = '';
+
