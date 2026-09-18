@@ -587,32 +587,56 @@
 }
 
 /* ============================
-   Quick Actions Toolbar
+   Quick Actions Toolbar (Elastic Theme Adaptation)
    ============================ */
+.lpai-icon {
+    display: inline-block;
+    vertical-align: -2px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    stroke: currentColor;
+    fill: none;
+}
+
 .lpai-qa-bar {
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 10px;
-    margin: 6px 10px;
-    background: #f4f4f4;
-    border: 1px solid #ddd;
-    border-radius: 0.25rem;
+    padding: 6px 12px;
+    margin: 8px 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     flex-wrap: wrap;
     font-family: inherit;
+    font-size: 13px;
+    transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .lpai-qa-bar-compose {
-    margin: 0 0 2px 0;
-    border-radius: 0.25rem;
-    padding: 5px 8px;
+    margin: 0 0 6px 0;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #fbfcfd;
+    border: 1px solid #e2e8f0;
+    box-shadow: none;
 }
 
 .lpai-qa-label {
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
     font-weight: 700;
-    color: #37beff;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #0284c7;
     margin-right: 4px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: rgba(2, 132, 199, 0.08);
     white-space: nowrap;
 }
 
@@ -623,30 +647,39 @@
 .lpai-qa-btn {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: 5px;
     padding: 4px 10px;
     font-size: 12px;
     font-weight: 500;
-    border: 1px solid #ced4da;
-    border-radius: 0.25rem;
-    background: #fff;
-    color: #555;
+    line-height: 1.4;
+    border: 1px solid #d0d7de;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #374151;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease-in-out;
     white-space: nowrap;
     font-family: inherit;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
 }
 
 .lpai-qa-btn:hover {
-    background: #f8f9fa;
-    border-color: #37beff;
-    color: #37beff;
+    background: #f9fafb;
+    border-color: #38bdf8;
+    color: #0284c7;
+    box-shadow: 0 1px 3px rgba(2, 132, 199, 0.12);
 }
 
 .lpai-qa-btn.translated {
-    background: #e8f5e9;
-    border-color: #41b849;
-    color: #2e7d32;
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #166534;
+}
+
+.lpai-qa-btn.translated:hover {
+    background: #dcfce7;
+    border-color: #4ade80;
+    color: #14532d;
 }
 
 .lpai-qa-btn:disabled {
@@ -655,27 +688,72 @@
 }
 
 .lpai-qa-scam {
-    border-color: #e0c349;
-    color: #856404;
-    background: #fff9e6;
+    border-color: #fde68a;
+    color: #92400e;
+    background: #fffbeb;
 }
 
 .lpai-qa-scam:hover {
-    border-color: #d4a90a;
-    color: #856404;
-    background: #fff3cd;
+    border-color: #fcd34d;
+    color: #78350f;
+    background: #fef3c7;
 }
 
 .lpai-qa-reply {
-    border-color: #37beff;
-    color: #37beff;
+    border-color: #bae6fd;
+    color: #0369a1;
     background: #f0f9ff;
+    font-weight: 600;
 }
 
 .lpai-qa-reply:hover {
-    background: #e0f3ff;
-    border-color: #1eb6ff;
+    background: #e0f2fe;
+    border-color: #38bdf8;
+    color: #0284c7;
 }
+
+/* Spam Score Badge */
+.lpai-spam-score {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    border: 1px solid #d1d5db;
+    background: #f3f4f6;
+    color: #4b5563;
+    line-height: 1;
+}
+
+.lpai-spam-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.lpai-spam-low {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #166534;
+}
+.lpai-spam-low .lpai-spam-dot { background: #22c55e; }
+
+.lpai-spam-med {
+    background: #fffbeb;
+    border-color: #fef08a;
+    color: #854d0e;
+}
+.lpai-spam-med .lpai-spam-dot { background: #eab308; }
+
+.lpai-spam-high {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #991b1b;
+}
+.lpai-spam-high .lpai-spam-dot { background: #ef4444; }
 
 /* Quick Actions Dropdown Menu */
 .lpai-qa-menu {
@@ -683,13 +761,13 @@
     position: absolute;
     top: 100%;
     left: 0;
-    margin-top: 2px;
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 0.25rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    margin-top: 4px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     z-index: 1000;
-    min-width: 150px;
+    min-width: 160px;
     padding: 4px;
     overflow: hidden;
 }
@@ -697,37 +775,39 @@
 .lpai-qa-menu.open { display: block; }
 
 .lpai-qa-menu-item {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     width: 100%;
-    padding: 6px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
+    font-size: 12px;
     font-weight: 500;
     border: none;
-    border-radius: 0.2rem;
+    border-radius: 4px;
     background: transparent;
-    color: #2c363a;
+    color: #374151;
     cursor: pointer;
     text-align: left;
-    transition: all 0.1s;
+    transition: all 0.1s ease;
     font-family: inherit;
 }
 
 .lpai-qa-menu-item:hover {
-    background: #37beff;
-    color: #fff;
+    background: #f0f9ff;
+    color: #0284c7;
 }
 
 .lpai-qa-menu-orig {
-    border-top: 1px solid #eee;
+    border-top: 1px solid #f1f5f9;
     margin-top: 4px;
     padding-top: 6px;
-    border-radius: 0 0 0.2rem 0.2rem;
-    color: #8b9fa7;
+    border-radius: 0 0 4px 4px;
+    color: #64748b;
 }
 
 .lpai-qa-menu-orig:hover {
-    background: #ff5552;
-    color: #fff;
+    background: #fef2f2;
+    color: #dc2626;
 }
 
 /* ============================
@@ -967,66 +1047,127 @@ html.dark-mode .lpai-template-select,
 html.dark-mode #lpai-draft,
 .dark-mode #lpai-draft { background: #4d6066; border-color: #4d6066; }
 
-/* Quick Actions dark mode */
+/* Quick Actions dark mode (Elastic Theme Adaptation) */
 html.dark-mode .lpai-qa-bar,
 .dark-mode .lpai-qa-bar {
-    background: #2c373a;
-    border-color: #4d6066;
+    background: #20292c;
+    border-color: #374549;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+html.dark-mode .lpai-qa-label,
+.dark-mode .lpai-qa-label {
+    background: rgba(56, 189, 248, 0.12);
+    color: #38bdf8;
 }
 
 html.dark-mode .lpai-qa-btn,
 .dark-mode .lpai-qa-btn {
-    background: #21292c;
-    border-color: #4d6066;
-    color: #8b9fa7;
+    background: #283337;
+    border-color: #3f5055;
+    color: #d1d5db;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 html.dark-mode .lpai-qa-btn:hover,
 .dark-mode .lpai-qa-btn:hover {
-    background: #374549;
-    border-color: #37beff;
-    color: #37beff;
+    background: #313f43;
+    border-color: #38bdf8;
+    color: #38bdf8;
 }
 
 html.dark-mode .lpai-qa-btn.translated,
 .dark-mode .lpai-qa-btn.translated {
-    background: #1b3a1b;
-    border-color: #41b849;
-    color: #66bb6a;
+    background: #143320;
+    border-color: #225e36;
+    color: #86efac;
+}
+
+html.dark-mode .lpai-qa-btn.translated:hover,
+.dark-mode .lpai-qa-btn.translated:hover {
+    background: #1b452b;
+    border-color: #2e7d48;
+    color: #bbf7d0;
 }
 
 html.dark-mode .lpai-qa-scam,
 .dark-mode .lpai-qa-scam {
-    background: #3d3200;
-    border-color: #665200;
-    color: #ffd452;
+    background: #392b0c;
+    border-color: #5c430e;
+    color: #fde68a;
+}
+
+html.dark-mode .lpai-qa-scam:hover,
+.dark-mode .lpai-qa-scam:hover {
+    background: #4a370e;
+    border-color: #856404;
+    color: #fef08a;
 }
 
 html.dark-mode .lpai-qa-reply,
 .dark-mode .lpai-qa-reply {
-    background: #1a2e38;
-    border-color: #37beff;
-    color: #37beff;
+    background: #132a38;
+    border-color: #0284c7;
+    color: #38bdf8;
+}
+
+html.dark-mode .lpai-qa-reply:hover,
+.dark-mode .lpai-qa-reply:hover {
+    background: #1a3c50;
+    border-color: #38bdf8;
+    color: #7dd3fc;
+}
+
+html.dark-mode .lpai-spam-low,
+.dark-mode .lpai-spam-low {
+    background: #143320;
+    border-color: #225e36;
+    color: #86efac;
+}
+
+html.dark-mode .lpai-spam-med,
+.dark-mode .lpai-spam-med {
+    background: #392b0c;
+    border-color: #5c430e;
+    color: #fde68a;
+}
+
+html.dark-mode .lpai-spam-high,
+.dark-mode .lpai-spam-high {
+    background: #381616;
+    border-color: #632222;
+    color: #fca5a5;
 }
 
 html.dark-mode .lpai-qa-menu,
 .dark-mode .lpai-qa-menu {
-    background: #21292c;
-    border-color: #4d6066;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    background: #242f33;
+    border-color: #3c4b50;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
 }
 
 html.dark-mode .lpai-qa-menu-item,
-.dark-mode .lpai-qa-menu-item { color: #c5d1d3; }
+.dark-mode .lpai-qa-menu-item {
+    color: #c5d1d3;
+}
 
 html.dark-mode .lpai-qa-menu-item:hover,
-.dark-mode .lpai-qa-menu-item:hover { background: #37beff; color: #fff; }
+.dark-mode .lpai-qa-menu-item:hover {
+    background: #1a3a4b;
+    color: #38bdf8;
+}
 
 html.dark-mode .lpai-qa-menu-orig,
-.dark-mode .lpai-qa-menu-orig { border-top-color: #4d6066; color: #7c949c; }
+.dark-mode .lpai-qa-menu-orig {
+    border-top-color: #374549;
+    color: #7c949c;
+}
 
 html.dark-mode .lpai-qa-menu-orig:hover,
-.dark-mode .lpai-qa-menu-orig:hover { background: #ff5552; color: #fff; }
+.dark-mode .lpai-qa-menu-orig:hover {
+    background: #3e1b1b;
+    color: #fca5a5;
+}
 
 html.dark-mode .lpai-qa-result,
 .dark-mode .lpai-qa-result { border-color: #4d6066; }

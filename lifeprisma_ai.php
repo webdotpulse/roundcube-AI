@@ -440,6 +440,71 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
+     * Check CSRF request token
+     */
+    private function check_csrf($token_override = null)
+    {
+        $rcmail = rcmail::get_instance();
+        if ($token_override !== null && method_exists($rcmail, 'get_request_token')) {
+            $valid_token = $rcmail->get_request_token();
+            return hash_equals((string) $valid_token, (string) $token_override);
+        }
+        if (method_exists($rcmail, 'check_request_token')) {
+            return (bool) ($rcmail->check_request_token(rcube_utils::INPUT_POST) || $rcmail->check_request_token(rcube_utils::INPUT_GET));
+        }
+        return true;
+    }
+
+    /**
+     * Validate external API URL to prevent SSRF and internal network exposure
+     */
+    private function validate_api_url($url, $allow_local = false)
+    {
+        if (empty($url) || !is_string($url)) return false;
+        $parts = parse_url($url);
+        if (!$parts || !isset($parts['scheme'], $parts['host'])) return false;
+        $scheme = strtolower($parts['scheme']);
+        if ($scheme !== 'http' && $scheme !== 'https') return false;
+
+        $host = strtolower($parts['host']);
+        if ($allow_local && ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1')) {
+            return true;
+        }
+
+        if ($host === 'localhost' || $host === '127.0.0.1' || $host === '::1') {
+            return false;
+        }
+
+        $ips = [];
+        if (filter_var($host, FILTER_VALIDATE_IP)) {
+            $ips[] = $host;
+        } else {
+            $records = @dns_get_record($host, DNS_A + DNS_AAAA);
+            if (!empty($records)) {
+                foreach ($records as $r) {
+                    if (isset($r['ip'])) $ips[] = $r['ip'];
+                    if (isset($r['ipv6'])) $ips[] = $r['ipv6'];
+                }
+            } else {
+                $resolved = @gethostbyname($host);
+                if ($resolved && $resolved !== $host) {
+                    $ips[] = $resolved;
+                }
+            }
+        }
+
+        if (empty($ips)) return false;
+
+        foreach ($ips as $ip) {
+            if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Get unsupported params for a specific model.
      * Supports both per-model map and legacy flat array format.
      */
@@ -447,11 +512,12 @@ class lifeprisma_ai extends rcube_plugin
     {
         $raw = $provider['unsupported_params'] ?? [];
         if (empty($raw)) return [];
-        // Per-model map: { "gpt-5-nano": ["temperature", "reasoning_none"] }
-        if (is_array($raw) && !isset($raw[0])) {
+        $is_list = function_exists('array_is_list')
+            ? array_is_list($raw)
+            : (array_keys($raw) === range(0, count($raw) - 1));
+        if (is_array($raw) && !$is_list) {
             return $raw[$model] ?? [];
         }
-        // Legacy flat array: ["temperature", "reasoning_none"] — applies to all models
         return $raw;
     }
 
@@ -541,18 +607,41 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
+        $token = $data['_token'] ?? rcube_utils::get_input_string('_token', rcube_utils::INPUT_GET) ?? rcube_utils::get_input_string('_token', rcube_utils::INPUT_POST);
+        if (!$this->check_csrf($token)) {
+            header('Content-Type: application/json; charset=utf-8', true, 403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+            exit;
+        }
+
         $config = $this->get_admin_config();
 
-        if (isset($data['providers'])) {
-            // Merge API keys — if masked/empty, keep existing
+        if (isset($data['providers']) && is_array($data['providers'])) {
             $existing = $config['providers'] ?? $rcmail->config->get('lifeprisma_ai_providers', []);
-            foreach ($data['providers'] as $id => &$p) {
+            $clean_providers = [];
+            foreach ($data['providers'] as $id => $p) {
+                if (!is_array($p)) continue;
+                $id = preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $id);
+                if (empty($id)) continue;
+
+                $url = trim($p['api_url'] ?? '');
+                $api_type = $p['api_type'] ?? 'responses';
+                $is_local = $api_type === 'chat_completions' && (strpos($url, 'localhost') !== false || strpos($url, '127.0.0.1') !== false);
+                if (!empty($url) && !$this->validate_api_url($url, $is_local)) {
+                    echo json_encode(['status' => 'error', 'message' => "Invalid or prohibited API URL for provider '{$id}'"]);
+                    exit;
+                }
+
                 if (empty($p['api_key']) && isset($existing[$id])) {
                     $p['api_key'] = $existing[$id]['api_key'] ?? '';
                 }
+
+                $p['label'] = htmlspecialchars(strip_tags((string) ($p['label'] ?? $id)), ENT_QUOTES, 'UTF-8');
+                $p['model'] = strip_tags((string) ($p['model'] ?? ''));
+
+                $clean_providers[$id] = $p;
             }
-            unset($p);
-            $config['providers'] = $data['providers'];
+            $config['providers'] = $clean_providers;
         }
 
         if (isset($data['settings'])) {
@@ -586,8 +675,8 @@ class lifeprisma_ai extends rcube_plugin
         $result = $db->query("SELECT preferences FROM users WHERE username = ?", '__genia_admin__');
         $row = $db->fetch_assoc($result);
         if ($row && !empty($row['preferences'])) {
-            $data = unserialize($row['preferences']);
-            return $data['genia_admin'] ?? [];
+            $data = @unserialize($row['preferences'], ['allowed_classes' => false]);
+            return is_array($data) ? ($data['genia_admin'] ?? []) : [];
         }
         return [];
     }
@@ -605,7 +694,8 @@ class lifeprisma_ai extends rcube_plugin
         if ($row) {
             $db->query("UPDATE users SET preferences = ? WHERE username = ?", $prefs, '__genia_admin__');
         } else {
-            $db->query("INSERT INTO users (username, mail_host, preferences, created) VALUES (?, ?, ?, now())",
+            $now_expr = method_exists($db, 'now') ? $db->now() : 'CURRENT_TIMESTAMP';
+            $db->query("INSERT INTO users (username, mail_host, preferences, created) VALUES (?, ?, ?, " . $now_expr . ")",
                 '__genia_admin__', 'localhost', $prefs);
         }
     }
@@ -648,7 +738,8 @@ class lifeprisma_ai extends rcube_plugin
 
         $users = [];
         while ($row = $db->fetch_assoc($result)) {
-            $prefs = unserialize($row['preferences']);
+            $prefs = @unserialize($row['preferences'], ['allowed_classes' => false]);
+            if (!is_array($prefs)) $prefs = [];
             $users[] = [
                 'username' => $row['username'],
                 'language' => $prefs['genia_language'] ?? 'default',
@@ -698,14 +789,28 @@ class lifeprisma_ai extends rcube_plugin
         }
 
         if ($op === 'save') {
-            $name = rcube_utils::get_input_string('name', rcube_utils::INPUT_POST);
+            if (!$this->check_csrf()) {
+                header('Content-Type: application/json; charset=utf-8', true, 403);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+                exit;
+            }
+
+            $name = trim(rcube_utils::get_input_string('name', rcube_utils::INPUT_POST));
             $action = rcube_utils::get_input_string('tpl_action', rcube_utils::INPUT_POST);
-            $instruction = rcube_utils::get_input_string('instruction', rcube_utils::INPUT_POST);
+            $instruction = trim(rcube_utils::get_input_string('instruction', rcube_utils::INPUT_POST));
 
             if (empty($name)) {
                 echo json_encode(['status' => 'error', 'message' => 'Template name is required']);
                 exit;
             }
+
+            if (count($templates) >= 50) {
+                echo json_encode(['status' => 'error', 'message' => 'Template limit reached (maximum 50)']);
+                exit;
+            }
+
+            $name = mb_substr($name, 0, 100);
+            $instruction = mb_substr($instruction, 0, 2000);
 
             $templates[] = [
                 'id' => uniqid('tpl_'),
@@ -720,6 +825,12 @@ class lifeprisma_ai extends rcube_plugin
         }
 
         if ($op === 'delete') {
+            if (!$this->check_csrf()) {
+                header('Content-Type: application/json; charset=utf-8', true, 403);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
+                exit;
+            }
+
             $id = rcube_utils::get_input_string('id', rcube_utils::INPUT_POST);
             $templates = array_values(array_filter($templates, function ($t) use ($id) {
                 return $t['id'] !== $id;
@@ -744,23 +855,38 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
-     * Rate limiting — per-user cooldown
+     * Rate limiting — per-user cooldown and sliding window
      */
     private function check_rate_limit()
     {
         $rcmail = rcmail::get_instance();
         $cooldown = (int) $rcmail->config->get('lifeprisma_ai_rate_limit', 3);
-        if ($cooldown <= 0) return true;
+        $max_per_min = (int) $rcmail->config->get('lifeprisma_ai_rate_limit_per_min', 20);
 
-        $session_key = 'lpai_last_request';
-        $last = $_SESSION[$session_key] ?? 0;
         $now = microtime(true);
 
-        if ($now - $last < $cooldown) {
-            return false;
+        if ($cooldown > 0) {
+            $last = $_SESSION['lpai_last_request'] ?? 0;
+            if ($now - $last < $cooldown) {
+                return false;
+            }
         }
 
-        $_SESSION[$session_key] = $now;
+        if ($max_per_min > 0) {
+            $window = 60.0;
+            $history = $_SESSION['lpai_req_history'] ?? [];
+            if (!is_array($history)) $history = [];
+            $history = array_values(array_filter($history, function ($t) use ($now, $window) {
+                return ($now - $t) < $window;
+            }));
+            if (count($history) >= $max_per_min) {
+                return false;
+            }
+            $history[] = $now;
+            $_SESSION['lpai_req_history'] = $history;
+        }
+
+        $_SESSION['lpai_last_request'] = $now;
         return true;
     }
 
@@ -814,6 +940,12 @@ class lifeprisma_ai extends rcube_plugin
      */
     public function handle_stream()
     {
+        if (!$this->check_csrf()) {
+            header('Content-Type: text/event-stream', true, 403);
+            echo "data: " . json_encode(['type' => 'error', 'message' => 'Invalid or expired CSRF token']) . "\n\n";
+            exit;
+        }
+
         if (!$this->check_rate_limit()) {
             header('Content-Type: text/event-stream');
             echo "data: " . json_encode(['type' => 'error', 'message' => 'Please wait a few seconds between requests.']) . "\n\n";
@@ -866,10 +998,16 @@ class lifeprisma_ai extends rcube_plugin
             }
         }
 
-        $is_local = $api_type === 'chat_completions' && strpos($api_url, 'localhost') !== false;
+        $is_local = $api_type === 'chat_completions' && (strpos($api_url, 'localhost') !== false || strpos($api_url, '127.0.0.1') !== false);
         if (empty($api_key) && !$is_local) {
             header('Content-Type: text/event-stream');
             echo "data: " . json_encode(['type' => 'error', 'message' => 'API key not configured. Your server admin needs to edit plugins/lifeprisma_ai/config.inc.php — see github.com/eduardostern/roundcube-genia#configuration']) . "\n\n";
+            exit;
+        }
+
+        if (!$this->validate_api_url($api_url, $is_local)) {
+            header('Content-Type: text/event-stream', true, 400);
+            echo "data: " . json_encode(['type' => 'error', 'message' => 'Invalid or prohibited API endpoint URL.']) . "\n\n";
             exit;
         }
 
@@ -1021,6 +1159,7 @@ class lifeprisma_ai extends rcube_plugin
         $stream_first_chunk = true;
         $stream_full_text = '';
         $stream_tokens = ['input' => 0, 'output' => 0];
+        $stream_error = false;
         $log_fn = function($msg) { rcube::write_log('genia', $msg); };
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
@@ -1029,7 +1168,8 @@ class lifeprisma_ai extends rcube_plugin
             CURLOPT_RETURNTRANSFER => false,
             CURLOPT_TIMEOUT => 120,
             CURLOPT_SSL_VERIFYPEER => !$is_local,
-            CURLOPT_WRITEFUNCTION => function ($ch, $data) use ($stream_api_type, &$stream_buffer, &$stream_first_chunk, $stream_model, $stream_action, $log_fn, &$stream_full_text, &$stream_tokens) {
+            CURLOPT_PROTOCOLS_ALLOWED => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_WRITEFUNCTION => function ($ch, $data) use ($stream_api_type, &$stream_buffer, &$stream_first_chunk, $stream_model, $stream_action, $log_fn, &$stream_full_text, &$stream_tokens, &$stream_error) {
                 // Detect non-SSE error response (e.g. API returns plain JSON error)
                 if ($stream_first_chunk) {
                     $stream_first_chunk = false;
@@ -1037,15 +1177,22 @@ class lifeprisma_ai extends rcube_plugin
                     if (!empty($trimmed) && $trimmed[0] === '{') {
                         $err = json_decode($trimmed, true);
                         if (isset($err['error'])) {
+                            $stream_error = true;
                             $msg = $err['error']['message'] ?? 'Unknown API error';
                             $log_fn("[STREAM API ERROR] model=$stream_model action=$stream_action error=$msg");
                             echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
                             flush();
-                            return strlen($data);
+                            return 0; // Abort cURL transfer immediately
                         }
                     }
                 }
                 $stream_buffer .= $data;
+                // Bounded buffer check to prevent memory exhaustion from non-SSE payloads
+                if (strlen($stream_buffer) > 262144) {
+                    $stream_error = true;
+                    return 0;
+                }
+
                 $lines = explode("\n", $stream_buffer);
                 // Keep the last (possibly incomplete) line in the buffer
                 $stream_buffer = array_pop($lines);
@@ -1084,6 +1231,7 @@ class lifeprisma_ai extends rcube_plugin
                                 flush();
                             }
                         } elseif ($type === 'error') {
+                            $stream_error = true;
                             $msg = $event['error']['message'] ?? 'Unknown error';
                             $log_fn("[STREAM API ERROR] anthropic model=$stream_model error=$msg");
                             echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
@@ -1098,6 +1246,7 @@ class lifeprisma_ai extends rcube_plugin
                             flush();
                         }
                         if (isset($event['error'])) {
+                            $stream_error = true;
                             $msg = $event['error']['message'] ?? 'Unknown error';
                             $log_fn("[STREAM API ERROR] chat_completions model=$stream_model error=$msg");
                             echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
@@ -1130,6 +1279,7 @@ class lifeprisma_ai extends rcube_plugin
                             ]) . "\n\n";
                             flush();
                         } elseif ($type === 'error') {
+                            $stream_error = true;
                             $msg = $event['message'] ?? 'Unknown error';
                             $log_fn("[STREAM API ERROR] responses model=$stream_model error=$msg");
                             echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
@@ -1145,18 +1295,22 @@ class lifeprisma_ai extends rcube_plugin
 
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if (curl_error($ch)) {
+            $stream_error = true;
             $err = curl_error($ch);
-            $this->ai_log("[STREAM ERROR] curl_error=$err http=$http_code model=$model");
-            echo "data: " . json_encode(['type' => 'error', 'message' => $err]) . "\n\n";
-            flush();
+            if (curl_errno($ch) !== CURLE_WRITE_ERROR) {
+                $this->ai_log("[STREAM ERROR] curl_error=$err http=$http_code model=$model");
+                echo "data: " . json_encode(['type' => 'error', 'message' => $err]) . "\n\n";
+                flush();
+            }
         } elseif ($http_code !== 200) {
+            $stream_error = true;
             $this->ai_log("[STREAM ERROR] http=$http_code model=$model action=$action");
         }
 
         curl_close($ch);
 
         // Cache streaming result in Redis (1h for read-view actions)
-        if ($stream_cache_key && !empty($stream_full_text)) {
+        if (!$stream_error && $stream_cache_key && !empty($stream_full_text)) {
             $this->cache_set($stream_cache_key, [
                 'result' => $stream_full_text,
                 'model' => $model,
@@ -1164,8 +1318,10 @@ class lifeprisma_ai extends rcube_plugin
             ], 3600);
         }
 
-        echo "data: [DONE]\n\n";
-        flush();
+        if (!$stream_error) {
+            echo "data: [DONE]\n\n";
+            flush();
+        }
         exit;
     }
 
@@ -1174,6 +1330,12 @@ class lifeprisma_ai extends rcube_plugin
      */
     public function handle_request()
     {
+        if (!$this->check_csrf()) {
+            header('Content-Type: application/json; charset=utf-8', true, 403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid or expired CSRF token']);
+            exit;
+        }
+
         if (!$this->check_rate_limit()) {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['status' => 'error', 'message' => 'Please wait a few seconds between requests.']);
@@ -1219,9 +1381,14 @@ class lifeprisma_ai extends rcube_plugin
             }
         }
 
-        $is_local = $api_type === 'chat_completions' && strpos($api_url, 'localhost') !== false;
+        $is_local = $api_type === 'chat_completions' && (strpos($api_url, 'localhost') !== false || strpos($api_url, '127.0.0.1') !== false);
         if (empty($api_key) && !$is_local) {
             echo json_encode(['status' => 'error', 'message' => 'API key not configured. Your server admin needs to edit plugins/lifeprisma_ai/config.inc.php — see github.com/eduardostern/roundcube-genia#configuration']);
+            exit;
+        }
+
+        if (!$this->validate_api_url($api_url, $is_local)) {
+            echo json_encode(['status' => 'error', 'message' => 'Invalid or prohibited API endpoint URL.']);
             exit;
         }
 
@@ -1325,6 +1492,9 @@ class lifeprisma_ai extends rcube_plugin
 
         $this->ai_log("[REQUEST] action=$action model=$model provider=$provider_id api_type=$api_type user=" . ($rcmail->user->get_username() ?? 'unknown'));
 
+        // Close session before long synchronous cURL request to prevent session locking
+        session_write_close();
+
         $ch = curl_init($api_url);
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
@@ -1333,6 +1503,7 @@ class lifeprisma_ai extends rcube_plugin
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 120,
             CURLOPT_SSL_VERIFYPEER => !$is_local,
+            CURLOPT_PROTOCOLS_ALLOWED => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
         $response = curl_exec($ch);
@@ -1447,7 +1618,7 @@ class lifeprisma_ai extends rcube_plugin
             $spam_score = null;
             $spam_header = $msg->headers->others['x-spam-status'] ?? '';
             if (is_array($spam_header)) $spam_header = end($spam_header);
-            if ($spam_header && preg_match('/\bscore=(-?[0-9.]+)/i', $spam_header, $m)) {
+            if ($spam_header && preg_match('/\bscore=(-?[0-9]+(?:\.[0-9]+)?)/i', $spam_header, $m)) {
                 $spam_score = (float) $m[1];
             }
             // Fallback: X-Spamd-Bar (+ = positive, - = negative)
@@ -1457,7 +1628,9 @@ class lifeprisma_ai extends rcube_plugin
                 if ($bar) {
                     $plus = substr_count($bar, '+');
                     $minus = substr_count($bar, '-');
-                    $spam_score = $plus > 0 ? (float) $plus : -1.0 * $minus;
+                    if ($plus > 0 || $minus > 0) {
+                        $spam_score = (float) ($plus - $minus);
+                    }
                 }
             }
 
@@ -1804,7 +1977,11 @@ class lifeprisma_ai extends rcube_plugin
             $uids = $storage->search($mbox, 'UNSEEN');
         }
 
-        if (empty($uids)) {
+        if (is_object($uids) && method_exists($uids, 'get')) {
+            $uids = $uids->get();
+        }
+
+        if (!is_array($uids) || empty($uids)) {
             return;
         }
 
@@ -1833,6 +2010,12 @@ class lifeprisma_ai extends rcube_plugin
      */
     public function handle_autodraft()
     {
+        if (!$this->check_csrf()) {
+            header('Content-Type: application/json; charset=utf-8', true, 403);
+            echo json_encode(['status' => 'error', 'message' => 'Invalid or expired CSRF token']);
+            exit;
+        }
+
         $rcmail = rcmail::get_instance();
         header('Content-Type: application/json; charset=utf-8');
 
@@ -1852,6 +2035,9 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
+        // Close session before triggering AI generation to prevent webmail lockup
+        session_write_close();
+
         $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
 
         if ($subj) {
@@ -1863,15 +2049,67 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
+     * Cache & offline state deduplication helpers for auto-drafting
+     */
+    private function is_autodraft_done($uid, $mbox)
+    {
+        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+        $cached = $this->cache_get($cache_key);
+        if ($cached !== null) {
+            return true;
+        }
+
+        // Fallback when Redis is not available: check user preferences log
+        $rcmail = rcmail::get_instance();
+        if ($rcmail->user) {
+            $prefs = $rcmail->user->get_prefs();
+            $log = $prefs['genia_autodraft_log'] ?? [];
+            $item_key = "{$mbox}:{$uid}";
+            if (isset($log[$item_key])) {
+                if (time() - ($log[$item_key]['time'] ?? 0) < 86400 * 7) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private function mark_autodraft_done($uid, $mbox, $status, $extra = [])
+    {
+        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+        $data = array_merge(['status' => $status, 'time' => time()], $extra);
+        $this->cache_set($cache_key, $data, 86400 * 7);
+
+        // Fallback storage in user preferences
+        $rcmail = rcmail::get_instance();
+        if ($rcmail->user) {
+            $prefs = $rcmail->user->get_prefs();
+            $log = $prefs['genia_autodraft_log'] ?? [];
+            $item_key = "{$mbox}:{$uid}";
+            $log[$item_key] = ['status' => $status, 'time' => time()];
+
+            if (count($log) > 200) {
+                $cutoff = time() - (86400 * 7);
+                $log = array_filter($log, function ($entry) use ($cutoff) {
+                    return ($entry['time'] ?? 0) > $cutoff;
+                });
+                if (count($log) > 150) {
+                    $log = array_slice($log, -150, null, true);
+                }
+            }
+            $rcmail->user->save_prefs(['genia_autodraft_log' => $log]);
+        }
+    }
+
+    /**
      * Check if a message is suitable for auto-drafting and not already processed
      */
     private function should_auto_draft($uid, $mbox, $prefs)
     {
         $rcmail = rcmail::get_instance();
 
-        // Check if already processed
-        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
-        if ($this->cache_get($cache_key) !== null) {
+        // Check if already processed (via Redis or user preferences fallback)
+        if ($this->is_autodraft_done($uid, $mbox)) {
             return false;
         }
 
@@ -1879,15 +2117,15 @@ class lifeprisma_ai extends rcube_plugin
         if (!empty($raw_headers)) {
             // Check for bulk / newsletter / automated headers
             if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers)) {
-                $this->cache_set($cache_key, ['status' => 'skipped_bulk'], 86400 * 7);
+                $this->mark_autodraft_done($uid, $mbox, 'skipped_bulk');
                 return false;
             }
             if (preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers)) {
-                $this->cache_set($cache_key, ['status' => 'skipped_bulk'], 86400 * 7);
+                $this->mark_autodraft_done($uid, $mbox, 'skipped_bulk');
                 return false;
             }
             if (preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
-                $this->cache_set($cache_key, ['status' => 'skipped_auto'], 86400 * 7);
+                $this->mark_autodraft_done($uid, $mbox, 'skipped_auto');
                 return false;
             }
         }
@@ -1908,7 +2146,7 @@ class lifeprisma_ai extends rcube_plugin
         $from_email = strtolower($ctx['from']);
         foreach ($user_emails as $ue) {
             if ($ue && strpos($from_email, $ue) !== false) {
-                $this->cache_set($cache_key, ['status' => 'skipped_self'], 86400 * 7);
+                $this->mark_autodraft_done($uid, $mbox, 'skipped_self');
                 return false;
             }
         }
@@ -1924,7 +2162,7 @@ class lifeprisma_ai extends rcube_plugin
             $has_request = (bool) preg_match('/\b(please|could you|can you|let me know|what do you think|your thoughts|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|update me)\b/i', $text);
 
             if (!$has_question && !$has_request) {
-                $this->cache_set($cache_key, ['status' => 'skipped_no_action'], 86400 * 7);
+                $this->mark_autodraft_done($uid, $mbox, 'skipped_no_action');
                 return false;
             }
         }
@@ -1938,7 +2176,6 @@ class lifeprisma_ai extends rcube_plugin
     public function generate_autodraft_for_message($uid, $mbox, $prefs)
     {
         $rcmail = rcmail::get_instance();
-        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
 
         if (!$this->should_auto_draft($uid, $mbox, $prefs)) {
             return false;
@@ -1985,11 +2222,7 @@ class lifeprisma_ai extends rcube_plugin
         $saved = $this->create_imap_draft($from, $subject, $reply_result, $orig_msg_id, $date, $from, $body);
 
         if ($saved) {
-            $this->cache_set($cache_key, [
-                'status' => 'draft_created',
-                'subject' => $subject,
-                'time' => time(),
-            ], 86400 * 7);
+            $this->mark_autodraft_done($uid, $mbox, 'draft_created', ['subject' => $subject]);
             return $subject;
         }
 
@@ -2009,8 +2242,13 @@ class lifeprisma_ai extends rcube_plugin
         $max_tokens = (int) $rcmail->config->get('lifeprisma_ai_max_tokens', 2000);
         $temperature = (float) $rcmail->config->get('lifeprisma_ai_temperature', 0.5);
 
-        $is_local = $api_type === 'chat_completions' && strpos($api_url, 'localhost') !== false;
+        $is_local = $api_type === 'chat_completions' && (strpos($api_url, 'localhost') !== false || strpos($api_url, '127.0.0.1') !== false);
         if (empty($api_key) && !$is_local) {
+            return false;
+        }
+
+        if (!$this->validate_api_url($api_url, $is_local)) {
+            $this->ai_log("[AUTODRAFT] Prohibited or invalid API URL: $api_url");
             return false;
         }
 
@@ -2062,6 +2300,7 @@ class lifeprisma_ai extends rcube_plugin
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => 60,
             CURLOPT_SSL_VERIFYPEER => !$is_local,
+            CURLOPT_PROTOCOLS_ALLOWED => CURLPROTO_HTTP | CURLPROTO_HTTPS,
         ]);
 
         $response = curl_exec($ch);
@@ -2098,7 +2337,7 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
-     * Save message to Drafts IMAP mailbox
+     * Save message to Drafts IMAP mailbox with RFC 2047 encoding and CRLF protection
      */
     private function create_imap_draft($to, $subject, $reply_body, $orig_msg_id = '', $orig_date = '', $orig_from = '', $orig_body = '')
     {
@@ -2131,12 +2370,23 @@ class lifeprisma_ai extends rcube_plugin
             $domain = $rcmail->config->mail_domain() ?: 'localhost';
             $msg_id = '<' . md5(uniqid(microtime(), true)) . '@' . $domain . '>';
 
+            // Sanitize headers against CRLF injection
+            $clean_to = preg_replace('/[\r\n]+/', ' ', trim($to));
+            $clean_subject = preg_replace('/[\r\n]+/', ' ', trim($re_subject));
+            $clean_from = preg_replace('/[\r\n]+/', ' ', trim($from_str));
+            $clean_msg_id = preg_replace('/[\r\n]+/', '', trim($msg_id));
+            $clean_orig_id = preg_replace('/[\r\n]+/', '', trim($orig_msg_id));
+
+            $encoded_subject = class_exists('rcube_mime')
+                ? rcube_mime::encode_header('Subject', $clean_subject)
+                : 'Subject: ' . $clean_subject;
+
             $headers = [
                 'Date: ' . date('r'),
-                'From: ' . $from_str,
-                'To: ' . $to,
-                'Subject: ' . $re_subject,
-                'Message-ID: ' . $msg_id,
+                'From: ' . $clean_from,
+                'To: ' . $clean_to,
+                $encoded_subject,
+                'Message-ID: ' . $clean_msg_id,
                 'X-Mailer: GenIA AI Assistant',
                 'X-GenIA-AutoDraft: 1',
                 'MIME-Version: 1.0',
@@ -2144,9 +2394,9 @@ class lifeprisma_ai extends rcube_plugin
                 'Content-Transfer-Encoding: 8bit',
             ];
 
-            if (!empty($orig_msg_id)) {
-                $headers[] = 'In-Reply-To: ' . $orig_msg_id;
-                $headers[] = 'References: ' . $orig_msg_id;
+            if (!empty($clean_orig_id)) {
+                $headers[] = 'In-Reply-To: ' . $clean_orig_id;
+                $headers[] = 'References: ' . $clean_orig_id;
             }
 
             $raw_message = implode("\r\n", $headers) . "\r\n\r\n" . $full_body;

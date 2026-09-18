@@ -214,6 +214,43 @@ function lpai_init_provider() {
 }
 
 // ========================================
+// Security & HTML Sanitization
+// ========================================
+function lpai_escape_html(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// ========================================
+// Inline SVG Icons (Elastic Theme Cohesion)
+// ========================================
+function lpai_icon(name) {
+    var icons = {
+        'sparkles': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M7 5H3"/><path d="M19 17v4"/><path d="M21 19h-4"/></svg>',
+        'translate': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>',
+        'fix': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        'rewrite': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+        'subject': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h6"/><path d="M8 11h8"/></svg>',
+        'summarize': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/></svg>',
+        'thread': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        'scam': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
+        'reply': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
+        'chevron': '<svg class="lpai-icon" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+        'actions': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+        'dates': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>',
+        'contacts': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+        'copy': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
+        'check': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+    };
+    return icons[name] || '';
+}
+
+// ========================================
 // Markdown to HTML
 // ========================================
 function lpai_md_to_html(text) {
@@ -300,7 +337,7 @@ function lpai_add_compose_quick_actions() {
     // Label
     var label = document.createElement('span');
     label.className = 'lpai-qa-label';
-    label.innerHTML = '&#9733; GenIA';
+    label.innerHTML = lpai_icon('sparkles') + ' <span>GenIA</span>';
     bar.appendChild(label);
 
     // --- Translate dropdown ---
@@ -310,7 +347,7 @@ function lpai_add_compose_quick_actions() {
     var trBtn = document.createElement('button');
     trBtn.type = 'button';
     trBtn.className = 'lpai-qa-btn';
-    trBtn.innerHTML = '&#127760; Translate &#9662;';
+    trBtn.innerHTML = lpai_icon('translate') + ' <span>Translate</span> ' + lpai_icon('chevron');
     trBtn.onclick = function(e) {
         e.stopPropagation();
         var menu = document.getElementById('lpai-compose-tr-menu');
@@ -340,7 +377,7 @@ function lpai_add_compose_quick_actions() {
             var item = document.createElement('button');
             item.type = 'button';
             item.className = 'lpai-qa-menu-item';
-            item.innerHTML = lang.flag + ' ' + lang.value;
+            item.innerHTML = '<span>' + lang.flag + '</span> <span>' + lang.value + '</span>';
             item.onclick = function() {
                 trMenu.classList.remove('open');
                 lpai_compose_quick('translate', lang.value, trBtn);
@@ -356,7 +393,7 @@ function lpai_add_compose_quick_actions() {
     var fixBtn = document.createElement('button');
     fixBtn.type = 'button';
     fixBtn.className = 'lpai-qa-btn';
-    fixBtn.innerHTML = '&#128295; Fix Grammar';
+    fixBtn.innerHTML = lpai_icon('fix') + ' <span>Fix Grammar</span>';
     fixBtn.onclick = function() { lpai_compose_quick('fix', '', fixBtn); };
     bar.appendChild(fixBtn);
 
@@ -364,7 +401,7 @@ function lpai_add_compose_quick_actions() {
     var rewriteBtn = document.createElement('button');
     rewriteBtn.type = 'button';
     rewriteBtn.className = 'lpai-qa-btn';
-    rewriteBtn.innerHTML = '&#9998; Rewrite';
+    rewriteBtn.innerHTML = lpai_icon('rewrite') + ' <span>Rewrite</span>';
     rewriteBtn.onclick = function() { lpai_open_panel('compose'); lpai_select_action('rewrite'); };
     bar.appendChild(rewriteBtn);
 
@@ -372,7 +409,7 @@ function lpai_add_compose_quick_actions() {
     var subjectBtn = document.createElement('button');
     subjectBtn.type = 'button';
     subjectBtn.className = 'lpai-qa-btn';
-    subjectBtn.innerHTML = '&#128221; Subject';
+    subjectBtn.innerHTML = lpai_icon('subject') + ' <span>Subject</span>';
     subjectBtn.onclick = function() { lpai_suggest_subject(subjectBtn); };
     bar.appendChild(subjectBtn);
 
@@ -380,7 +417,7 @@ function lpai_add_compose_quick_actions() {
     var composeBtn = document.createElement('button');
     composeBtn.type = 'button';
     composeBtn.className = 'lpai-qa-btn lpai-qa-reply';
-    composeBtn.innerHTML = '&#10024; Compose with AI';
+    composeBtn.innerHTML = lpai_icon('sparkles') + ' <span>Compose with AI</span>';
     composeBtn.onclick = function() { lpai_open_panel('compose'); };
     bar.appendChild(composeBtn);
 
@@ -513,7 +550,7 @@ function lpai_add_quick_actions() {
     // Label
     var label = document.createElement('span');
     label.className = 'lpai-qa-label';
-    label.innerHTML = '&#9733; GenIA';
+    label.innerHTML = lpai_icon('sparkles') + ' <span>GenIA</span>';
     bar.appendChild(label);
 
     // Spam score badge
@@ -527,7 +564,7 @@ function lpai_add_quick_actions() {
         else scoreClass += ' lpai-spam-low';
         scoreBadge.className = scoreClass;
         scoreBadge.title = 'Rspamd spam score (threshold: 4)';
-        scoreBadge.textContent = 'Spam: ' + spamScore.toFixed(1);
+        scoreBadge.innerHTML = '<span class="lpai-spam-dot"></span>Spam ' + spamScore.toFixed(1);
         bar.appendChild(scoreBadge);
     }
 
@@ -539,7 +576,7 @@ function lpai_add_quick_actions() {
     trBtn.type = 'button';
     trBtn.className = 'lpai-qa-btn';
     trBtn.id = 'lpai-qa-translate';
-    trBtn.innerHTML = '&#127760; Translate &#9662;';
+    trBtn.innerHTML = lpai_icon('translate') + ' <span>Translate</span> ' + lpai_icon('chevron');
     trBtn.onclick = function(e) {
         e.stopPropagation();
         var menu = document.getElementById('lpai-tr-menu');
@@ -570,7 +607,7 @@ function lpai_add_quick_actions() {
             var item = document.createElement('button');
             item.type = 'button';
             item.className = 'lpai-qa-menu-item';
-            item.innerHTML = lang.flag + ' ' + lang.value;
+            item.innerHTML = '<span>' + lang.flag + '</span> <span>' + lang.value + '</span>';
             item.onclick = function() {
                 trMenu.classList.remove('open');
                 lpai_translate_to(lang.value, trBtn);
@@ -586,7 +623,7 @@ function lpai_add_quick_actions() {
     var sumBtn = document.createElement('button');
     sumBtn.type = 'button';
     sumBtn.className = 'lpai-qa-btn';
-    sumBtn.innerHTML = '&#128203; Summarize';
+    sumBtn.innerHTML = lpai_icon('summarize') + ' <span>Summarize</span>';
     sumBtn.onclick = function() { lpai_quick_action('summarize', sumBtn); };
     bar.appendChild(sumBtn);
 
@@ -594,7 +631,7 @@ function lpai_add_quick_actions() {
     var threadBtn = document.createElement('button');
     threadBtn.type = 'button';
     threadBtn.className = 'lpai-qa-btn';
-    threadBtn.innerHTML = '&#128209; Thread Summary';
+    threadBtn.innerHTML = lpai_icon('thread') + ' <span>Thread Summary</span>';
     threadBtn.onclick = function() { lpai_quick_action('thread_summarize', threadBtn); };
     bar.appendChild(threadBtn);
 
@@ -602,7 +639,7 @@ function lpai_add_quick_actions() {
     var scamBtn = document.createElement('button');
     scamBtn.type = 'button';
     scamBtn.className = 'lpai-qa-btn lpai-qa-scam';
-    scamBtn.innerHTML = '&#128737; Scam Check';
+    scamBtn.innerHTML = lpai_icon('scam') + ' <span>Scam Check</span>';
     scamBtn.onclick = function() { lpai_quick_action('scam', scamBtn); };
     bar.appendChild(scamBtn);
 
@@ -610,7 +647,7 @@ function lpai_add_quick_actions() {
     var replyBtn = document.createElement('button');
     replyBtn.type = 'button';
     replyBtn.className = 'lpai-qa-btn lpai-qa-reply';
-    replyBtn.innerHTML = '&#10024; Reply with AI';
+    replyBtn.innerHTML = lpai_icon('reply') + ' <span>Reply with AI</span>';
     replyBtn.onclick = function() {
         // Navigate to compose reply and auto-open GenIA there
         try { localStorage.setItem('lpai_pending_reply', '1'); } catch (e) {}
@@ -641,13 +678,13 @@ function lpai_add_quick_actions() {
     var resultCopy = document.createElement('button');
     resultCopy.type = 'button';
     resultCopy.className = 'lpai-qa-result-copy';
-    resultCopy.innerHTML = '&#128203; Copy';
+    resultCopy.innerHTML = lpai_icon('copy') + ' <span>Copy</span>';
     resultCopy.onclick = function() {
         var text = document.getElementById('lpai-qa-result-text');
         if (text) {
             navigator.clipboard.writeText(text.innerText || text.textContent).then(function() {
-                resultCopy.innerHTML = '&#10003; Copied';
-                setTimeout(function() { resultCopy.innerHTML = '&#128203; Copy'; }, 2000);
+                resultCopy.innerHTML = lpai_icon('check') + ' <span>Copied</span>';
+                setTimeout(function() { resultCopy.innerHTML = lpai_icon('copy') + ' <span>Copy</span>'; }, 2000);
             });
         }
     };
@@ -874,7 +911,7 @@ function lpai_stream_to_element(postData, targetEl, controller, onDone, onError)
                         } else if (event.type === 'done') {
                             streamTokens = event.tokens || null;
                         } else if (event.type === 'error') {
-                            targetEl.innerHTML = '<span style="color:#ef4444">Error: ' + (event.message || 'Unknown') + '</span>';
+                            targetEl.innerHTML = '<span style="color:#ef4444">Error: ' + lpai_escape_html(event.message || 'Unknown') + '</span>';
                         }
                     } catch (e) {}
                 }
@@ -884,7 +921,7 @@ function lpai_stream_to_element(postData, targetEl, controller, onDone, onError)
         return readChunk();
     }).catch(function(err) {
         if (err.name === 'AbortError') return;
-        targetEl.innerHTML = '<span style="color:#ef4444">Error: ' + err.message + '</span>';
+        targetEl.innerHTML = '<span style="color:#ef4444">Error: ' + lpai_escape_html(err.message) + '</span>';
         if (onError) onError(err);
     });
 }
@@ -2198,6 +2235,8 @@ var lpai_pricing = {
     'claude-sonnet-4-6':        [3.00, 15.00],
     'claude-haiku-4-5-20251001': [0.80, 4.00],
     'claude-opus-4-6':  [15.00, 75.00],
+    'gemini-3.6-flash': [0.30, 2.50],
+    'gemini-2.5-flash': [0.30, 2.50],
 };
 
 function lpai_estimate_cost(model, inputTokens, outputTokens) {
@@ -2209,15 +2248,18 @@ function lpai_estimate_cost(model, inputTokens, outputTokens) {
         var p = providers[pids[i]];
         var pricing = p.pricing || {};
         var mp = pricing[model];
-        if (mp && mp.input && mp.output) {
-            rates = [mp.input, mp.output];
+        if (mp && typeof mp.input !== 'undefined' && typeof mp.output !== 'undefined') {
+            rates = [Number(mp.input) || 0, Number(mp.output) || 0];
             break;
         }
     }
     // Fallback to hardcoded pricing
     if (!rates) rates = lpai_pricing[model];
     if (!rates) return null;
-    var cost = (inputTokens * rates[0] + outputTokens * rates[1]) / 1000000;
+    var inp = Number(inputTokens) || 0;
+    var out = Number(outputTokens) || 0;
+    var cost = (inp * rates[0] + out * rates[1]) / 1000000;
+    if (cost === 0) return '$0.00';
     if (cost < 0.0001) return '$' + cost.toFixed(6);
     return '$' + cost.toFixed(4);
 }
@@ -2310,9 +2352,9 @@ function lpai_add_snippet_buttons(bar) {
     if (features.snippet_extract === false) return;
 
     var snippets = [
-        { action: 'extract_actions', label: '&#9745; Actions', title: 'Extract action items' },
-        { action: 'extract_dates', label: '&#128197; Dates', title: 'Extract dates & deadlines' },
-        { action: 'extract_contacts', label: '&#128101; Contacts', title: 'Extract contact info' }
+        { action: 'extract_actions', icon: 'actions', label: 'Actions', title: 'Extract action items' },
+        { action: 'extract_dates', icon: 'dates', label: 'Dates', title: 'Extract dates & deadlines' },
+        { action: 'extract_contacts', icon: 'contacts', label: 'Contacts', title: 'Extract contact info' }
     ];
 
     for (var i = 0; i < snippets.length; i++) {
@@ -2320,7 +2362,7 @@ function lpai_add_snippet_buttons(bar) {
             var btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'lpai-qa-btn';
-            btn.innerHTML = s.label;
+            btn.innerHTML = lpai_icon(s.icon) + ' <span>' + s.label + '</span>';
             btn.title = s.title;
             btn.onclick = function() { lpai_quick_action(s.action, btn); };
             bar.appendChild(btn);
@@ -2426,7 +2468,7 @@ function lpai_render_prompt_history() {
             btn.className = 'lpai-qa-btn lpai-history-item';
             btn.style.cssText = 'display:block;width:100%;text-align:left;margin:2px 0;padding:4px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px';
             var label = item.action.charAt(0).toUpperCase() + item.action.slice(1);
-            btn.innerHTML = '<strong>' + label + ':</strong> ' + item.instruction.substring(0, 60) + (item.instruction.length > 60 ? '...' : '');
+            btn.innerHTML = '<strong>' + lpai_escape_html(label) + ':</strong> ' + lpai_escape_html(item.instruction.substring(0, 60)) + (item.instruction.length > 60 ? '...' : '');
             btn.onclick = function() {
                 lpai_select_action(item.action);
                 var input = document.getElementById('lpai-input');
@@ -2479,26 +2521,33 @@ function lpai_admin_provider_html(pid, p) {
         { value: 'chat_completions', label: 'Chat Completions (Ollama, LM Studio, etc.)' },
     ];
     var apiTypeVal = p.api_type || 'responses';
-    var html = '<div class="lpai-admin-provider" data-pid="' + pid + '">';
+    var safePid = lpai_escape_html(pid);
+    var safeLabel = lpai_escape_html(p.label || pid);
+    var safeApiUrl = lpai_escape_html(p.api_url || '');
+    var safeApiKeyMasked = lpai_escape_html(p.api_key_masked || 'Enter API key...');
+    var safeModel = lpai_escape_html(p.model || '');
+    var safeModels = lpai_escape_html((p.models || []).join(', '));
+
+    var html = '<div class="lpai-admin-provider" data-pid="' + safePid + '">';
     html += '<div class="lpai-admin-provider-header">';
-    html += '<strong>' + (p.label || pid) + '</strong>';
+    html += '<strong>' + safeLabel + '</strong>';
     html += '<span class="lpai-admin-key-status ' + (p.has_key ? 'lpai-admin-key-ok' : 'lpai-admin-key-missing') + '">' + (p.has_key ? 'Key configured' : 'No API key') + '</span>';
-    html += '<button type="button" class="lpai-admin-remove-btn" data-pid="' + pid + '" title="Remove provider">&times;</button>';
+    html += '<button type="button" class="lpai-admin-remove-btn" data-pid="' + safePid + '" title="Remove provider">&times;</button>';
     html += '</div>';
     html += '<div class="lpai-admin-field-row">';
-    html += '<div class="lpai-admin-field lpai-admin-field-half"><label>Provider ID</label><input type="text" class="lpai-admin-input lpai-admin-pid" value="' + pid + '" readonly></div>';
-    html += '<div class="lpai-admin-field lpai-admin-field-half"><label>Display Label</label><input type="text" class="lpai-admin-input lpai-admin-label" data-pid="' + pid + '" value="' + (p.label || '') + '"></div>';
+    html += '<div class="lpai-admin-field lpai-admin-field-half"><label>Provider ID</label><input type="text" class="lpai-admin-input lpai-admin-pid" value="' + safePid + '" readonly></div>';
+    html += '<div class="lpai-admin-field lpai-admin-field-half"><label>Display Label</label><input type="text" class="lpai-admin-input lpai-admin-label" data-pid="' + safePid + '" value="' + lpai_escape_html(p.label || '') + '"></div>';
     html += '</div>';
-    html += '<div class="lpai-admin-field"><label>API Protocol</label><select class="lpai-admin-input lpai-admin-apitype" data-pid="' + pid + '">';
+    html += '<div class="lpai-admin-field"><label>API Protocol</label><select class="lpai-admin-input lpai-admin-apitype" data-pid="' + safePid + '">';
     for (var t = 0; t < apiTypes.length; t++) {
         html += '<option value="' + apiTypes[t].value + '"' + (apiTypeVal === apiTypes[t].value ? ' selected' : '') + '>' + apiTypes[t].label + '</option>';
     }
     html += '</select></div>';
-    html += '<div class="lpai-admin-field"><label>API Endpoint URL</label><input type="text" class="lpai-admin-input lpai-admin-apiurl" data-pid="' + pid + '" value="' + (p.api_url || '') + '" placeholder="https://api.openai.com/v1/responses"></div>';
-    html += '<div class="lpai-admin-field"><label>API Key</label><input type="password" class="lpai-admin-input lpai-admin-apikey" data-pid="' + pid + '" placeholder="' + (p.api_key_masked || 'Enter API key...') + '"></div>';
-    html += '<div class="lpai-admin-field"><label>Default Model</label><input type="text" class="lpai-admin-input lpai-admin-model" data-pid="' + pid + '" value="' + (p.model || '') + '"></div>';
-    html += '<div class="lpai-admin-field"><label>Available Models (comma-separated)</label><input type="text" class="lpai-admin-input lpai-admin-models" data-pid="' + pid + '" value="' + ((p.models || []).join(', ')) + '"></div>';
-    html += '<div class="lpai-admin-field"><label><input type="checkbox" class="lpai-admin-reasoning-cb" data-pid="' + pid + '"' + (p.supports_reasoning !== false ? ' checked' : '') + '> Supports reasoning/verbosity controls</label></div>';
+    html += '<div class="lpai-admin-field"><label>API Endpoint URL</label><input type="text" class="lpai-admin-input lpai-admin-apiurl" data-pid="' + safePid + '" value="' + safeApiUrl + '" placeholder="https://api.openai.com/v1/responses"></div>';
+    html += '<div class="lpai-admin-field"><label>API Key</label><input type="password" class="lpai-admin-input lpai-admin-apikey" data-pid="' + safePid + '" placeholder="' + safeApiKeyMasked + '"></div>';
+    html += '<div class="lpai-admin-field"><label>Default Model</label><input type="text" class="lpai-admin-input lpai-admin-model" data-pid="' + safePid + '" value="' + safeModel + '"></div>';
+    html += '<div class="lpai-admin-field"><label>Available Models (comma-separated)</label><input type="text" class="lpai-admin-input lpai-admin-models" data-pid="' + safePid + '" value="' + safeModels + '"></div>';
+    html += '<div class="lpai-admin-field"><label><input type="checkbox" class="lpai-admin-reasoning-cb" data-pid="' + safePid + '"' + (p.supports_reasoning !== false ? ' checked' : '') + '> Supports reasoning/verbosity controls</label></div>';
     var unsupRaw = p.unsupported_params || {};
     // Normalize: legacy flat array → apply to all models
     var unsupMap = {};
@@ -2510,11 +2559,12 @@ function lpai_admin_provider_html(pid, p) {
     }
     var models = p.models || [p.model || ''];
     html += '<div class="lpai-admin-field"><label>Unsupported parameters (per model):</label>';
-    html += '<div class="lpai-admin-unsup-models" data-pid="' + pid + '">';
+    html += '<div class="lpai-admin-unsup-models" data-pid="' + safePid + '">';
     for (var mi = 0; mi < models.length; mi++) {
         var m = models[mi]; if (!m) continue;
+        var safeM = lpai_escape_html(m);
         var mu = unsupMap[m] || [];
-        html += '<div class="lpai-admin-unsup-row" data-model="' + m + '"><span class="lpai-admin-unsup-model">' + m + '</span>';
+        html += '<div class="lpai-admin-unsup-row" data-model="' + safeM + '"><span class="lpai-admin-unsup-model">' + safeM + '</span>';
         html += ' <label class="lpai-admin-unsup"><input type="checkbox" class="lpai-admin-unsup-cb" data-param="temperature"' + (mu.indexOf('temperature') >= 0 ? ' checked' : '') + '> temperature</label>';
         html += ' <label class="lpai-admin-unsup"><input type="checkbox" class="lpai-admin-unsup-cb" data-param="reasoning_none"' + (mu.indexOf('reasoning_none') >= 0 ? ' checked' : '') + '> reasoning=none</label>';
         html += '</div>';
@@ -2522,15 +2572,18 @@ function lpai_admin_provider_html(pid, p) {
     html += '</div></div>';
     var pricing = p.pricing || {};
     html += '<div class="lpai-admin-field"><label>Token Pricing (USD per 1M tokens)</label>';
-    html += '<div class="lpai-admin-pricing-models" data-pid="' + pid + '">';
+    html += '<div class="lpai-admin-pricing-models" data-pid="' + safePid + '">';
     for (var pi = 0; pi < models.length; pi++) {
         var pm = models[pi]; if (!pm) continue;
+        var safePm = lpai_escape_html(pm);
         var mp = pricing[pm] || {};
-        html += '<div class="lpai-admin-pricing-row" data-model="' + pm + '">';
-        html += '<span class="lpai-admin-unsup-model">' + pm + '</span>';
+        var safeIn = lpai_escape_html(typeof mp.input !== 'undefined' ? mp.input : '');
+        var safeOut = lpai_escape_html(typeof mp.output !== 'undefined' ? mp.output : '');
+        html += '<div class="lpai-admin-pricing-row" data-model="' + safePm + '">';
+        html += '<span class="lpai-admin-unsup-model">' + safePm + '</span>';
         html += '<div class="lpai-admin-field-row" style="flex:1">';
-        html += '<div class="lpai-admin-field-half"><input type="text" class="lpai-admin-input lpai-admin-price-in" value="' + (mp.input || '') + '" placeholder="Input"></div>';
-        html += '<div class="lpai-admin-field-half"><input type="text" class="lpai-admin-input lpai-admin-price-out" value="' + (mp.output || '') + '" placeholder="Output"></div>';
+        html += '<div class="lpai-admin-field-half"><input type="text" class="lpai-admin-input lpai-admin-price-in" value="' + safeIn + '" placeholder="Input"></div>';
+        html += '<div class="lpai-admin-field-half"><input type="text" class="lpai-admin-input lpai-admin-price-out" value="' + safeOut + '" placeholder="Output"></div>';
         html += '</div></div>';
     }
     html += '</div></div>';
@@ -2790,6 +2843,7 @@ function lpai_render_admin(root, data, urlSave, token) {
         document.querySelectorAll('.lpai-admin-feature-cb').forEach(function(cb) {
             saveData.features[cb.dataset.feature] = cb.checked;
         });
+        saveData._token = token;
 
         var status = document.getElementById('lpai-admin-status');
         status.textContent = 'Saving...';
