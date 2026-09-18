@@ -510,6 +510,37 @@
 
 .lpai-btn-icon { margin-right: 4px; }
 
+/* GMail+ Right Taskbar Offset (Avoid overlapping #layout-menu at order: 4) */
+body.skin-gmail_plus .lpai-floating-btn,
+body.lpai-skin-gmail-plus .lpai-floating-btn,
+body.xelastic:not(.xskin) .lpai-floating-btn,
+body.xskin .lpai-floating-btn {
+    right: 88px !important;
+}
+
+body.skin-gmail_plus #lpai-undo-bar,
+body.lpai-skin-gmail-plus #lpai-undo-bar,
+body.xelastic:not(.xskin) #lpai-undo-bar,
+body.xskin #lpai-undo-bar {
+    right: 88px !important;
+}
+
+@media (max-width: 1024px) {
+    body.skin-gmail_plus .lpai-floating-btn,
+    body.lpai-skin-gmail-plus .lpai-floating-btn,
+    body.xelastic:not(.xskin) .lpai-floating-btn,
+    body.xskin .lpai-floating-btn {
+        right: 20px !important;
+    }
+
+    body.skin-gmail_plus #lpai-undo-bar,
+    body.lpai-skin-gmail-plus #lpai-undo-bar,
+    body.xelastic:not(.xskin) #lpai-undo-bar,
+    body.xskin #lpai-undo-bar {
+        right: 20px !important;
+    }
+}
+
 /* ============================
    Footer / Powered by
    ============================ */

@@ -137,6 +137,19 @@ $config['lifeprisma_ai_default_tone'] = 'professional';
 
 ---
 
+## Skin Compatibility
+
+The plugin includes native support and dedicated assets for both default Roundcube and Roundcube Plus commercial skins:
+
+- **Elastic (Default):** Seamlessly integrates with standard Roundcube layout and responsive CSS.
+- **GMail+ (`roundcube_plus_skin_gmail_plus`):** 
+  - Dedicated Google Material Design styling matching modern Gmail web interfaces.
+  - **Right-hand Taskmenu Clearance:** Automatically offsets floating buttons (`.lpai-floating-btn` and `#lpai-undo-bar`) to `right: 88px` on desktop, preventing any overlap with the right-side `#layout-menu` (`order: 4`). Responsive fallback to `right: 20px` on mobile/tablet devices.
+  - **Widescreen 3-Pane Triage:** Automatically detects message preview switches in widescreen layouts and re-triages/briefs in real time without requiring a full page refresh.
+  - Full support for **Dark Mode** and custom color schemes.
+
+---
+
 ## Security & Stability
 
 Built specifically for high-reliability enterprise email environments:

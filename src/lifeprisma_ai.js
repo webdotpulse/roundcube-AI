@@ -8,6 +8,7 @@
 
 if (window.rcmail) {
     rcmail.addEventListener('init', function() {
+        lpai_detect_skin();
         var task = rcmail.env.task;
         var action = rcmail.env.action;
 
@@ -17,7 +18,7 @@ if (window.rcmail) {
             lpai_init_smart_compose();
         }
 
-        if (task === 'mail' && (action === 'show' || action === 'preview' || action === '')) {
+        if (task === 'mail' && (action === 'show' || action === 'preview' || action === '' || action === 'mail')) {
             lpai_add_message_button();
             // Trigger Fyxer-style Autonomous Executive Triage
             setTimeout(function() { lpai_init_fyxer_triage(); }, 350);
@@ -30,6 +31,23 @@ if (window.rcmail) {
         lpai_apply_server_prefs();
         lpai_restore_prefs();
         lpai_bind_events();
+    });
+
+    // In widescreen 3-pane mode (e.g. gmail_plus), listen for dynamic message preview loads
+    rcmail.addEventListener('message_load', function() {
+        lpai_detect_skin();
+        setTimeout(function() {
+            lpai_add_message_button();
+            lpai_init_fyxer_triage();
+        }, 200);
+    });
+
+    rcmail.addEventListener('responseafterpreview', function() {
+        lpai_detect_skin();
+        setTimeout(function() {
+            lpai_add_message_button();
+            lpai_init_fyxer_triage();
+        }, 200);
     });
 }
 
@@ -167,11 +185,55 @@ function lpai_md_to_html(text) {
 }
 
 // ========================================
+// Skin Adaptation & Container Helpers
+// ========================================
+function lpai_detect_skin() {
+    if (typeof rcmail === 'undefined') return false;
+    var skin = (rcmail.env.lpai_skin || rcmail.env.skin || rcmail.env.rcp_skin || '').toLowerCase();
+    var isGmailPlus = (skin.indexOf('gmail') !== -1) ||
+                      document.body.classList.contains('skin-gmail_plus') ||
+                      document.body.classList.contains('xelastic') ||
+                      document.body.classList.contains('xskin') ||
+                      !!document.getElementById('compose-plus') ||
+                      (document.getElementById('layout-menu') && window.getComputedStyle(document.getElementById('layout-menu')).order === '4');
+
+    if (isGmailPlus) {
+        document.body.classList.add('lpai-skin-gmail-plus');
+    }
+    return isGmailPlus;
+}
+
+function lpai_get_message_container() {
+    return document.getElementById('messagebody') ||
+           document.getElementById('messagepreview') ||
+           document.getElementById('messagecontent');
+}
+
+function lpai_get_message_text() {
+    var msgPart = document.querySelector('#messagebody .message-part, #messagebody .message-htmlpart, #messagebody, #messagepreview, #messagecontent');
+    if (msgPart) {
+        var text = msgPart.innerText || msgPart.textContent || '';
+        if (text && text.trim()) return text;
+    }
+    var iframe = document.getElementById('messagecontframe');
+    if (iframe && iframe.contentDocument) {
+        try {
+            var iframePart = iframe.contentDocument.querySelector('#messagebody, .message-part, .message-htmlpart, body');
+            if (iframePart) {
+                var iText = iframePart.innerText || iframePart.textContent || '';
+                if (iText && iText.trim()) return iText;
+            }
+        } catch (e) {}
+    }
+    return '';
+}
+
+// ========================================
 // AUTONOMOUS EXECUTIVE ASSISTANT (FYXER MODE)
 // ========================================
 function lpai_init_fyxer_triage(force) {
-    var msgBody = document.getElementById('messagebody');
-    if (!msgBody) return;
+    var target = lpai_get_message_container();
+    if (!target) return;
 
     var prefs = rcmail.env.lpai_user_prefs || {};
     if (prefs.fyxer_mode === 'disabled') return;
@@ -253,8 +315,10 @@ function lpai_render_executive_hub_loading() {
             '</div>' +
         '</div>';
 
-    var msgBody = document.getElementById('messagebody');
-    if (msgBody) msgBody.parentNode.insertBefore(hub, msgBody);
+    var target = lpai_get_message_container();
+    if (target && target.parentNode) {
+        target.parentNode.insertBefore(hub, target);
+    }
 }
 
 function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
@@ -368,8 +432,10 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
 
     hub.innerHTML = html;
 
-    var msgBody = document.getElementById('messagebody');
-    if (msgBody) msgBody.parentNode.insertBefore(hub, msgBody);
+    var target = lpai_get_message_container();
+    if (target && target.parentNode) {
+        target.parentNode.insertBefore(hub, target);
+    }
 }
 
 function lpai_toggle_hub_body() {
@@ -453,20 +519,25 @@ function lpai_retune_draft(tone) {
 // Quick Actions Toolbar (Read View)
 // ========================================
 function lpai_add_message_button() {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'lpai-floating-btn';
-    btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
-    btn.title = 'Gemini Assistant (Alt+A)';
-    btn.onclick = function() { lpai_open_panel('read'); };
-    document.body.appendChild(btn);
+    if (!document.querySelector('.lpai-floating-btn')) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lpai-floating-btn';
+        btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
+        btn.title = 'Gemini Assistant (Alt+A)';
+        btn.onclick = function() { lpai_open_panel('read'); };
+        document.body.appendChild(btn);
+    }
 
     lpai_add_quick_actions();
 }
 
 function lpai_add_quick_actions() {
-    var msgBody = document.getElementById('messagebody');
-    if (!msgBody) return;
+    var target = lpai_get_message_container();
+    if (!target) return;
+
+    var existingBar = document.getElementById('lpai-qa-bar');
+    if (existingBar) existingBar.remove();
 
     var bar = document.createElement('div');
     bar.className = 'lpai-qa-bar';
@@ -528,7 +599,7 @@ function lpai_add_quick_actions() {
     replyBtn.onclick = function() { lpai_open_panel('read'); lpai_select_action('reply'); };
     bar.appendChild(replyBtn);
 
-    msgBody.parentNode.insertBefore(bar, msgBody);
+    target.parentNode.insertBefore(bar, target);
 
     document.addEventListener('click', function() {
         var menu = document.getElementById('lpai-tr-menu');
@@ -537,9 +608,7 @@ function lpai_add_quick_actions() {
 }
 
 function lpai_quick_action(action, clickedBtn) {
-    var msgPart = document.querySelector('#messagebody .message-part, #messagebody .message-htmlpart, #messagebody');
-    if (!msgPart) return;
-    var text = msgPart.innerText || msgPart.textContent || '';
+    var text = lpai_get_message_text();
     if (!text.trim()) return;
 
     var panel = document.getElementById('lpai-qa-result-panel');
@@ -573,9 +642,7 @@ function lpai_quick_action(action, clickedBtn) {
 }
 
 function lpai_translate_to(lang, btn) {
-    var msgPart = document.querySelector('#messagebody .message-part, #messagebody .message-htmlpart, #messagebody');
-    if (!msgPart) return;
-    var text = msgPart.innerText || msgPart.textContent || '';
+    var text = lpai_get_message_text();
     if (!text.trim()) return;
 
     var panel = document.getElementById('lpai-qa-result-panel');
@@ -612,20 +679,25 @@ function lpai_translate_to(lang, btn) {
 // Compose View Enhancements
 // ========================================
 function lpai_add_compose_button() {
-    var btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'lpai-floating-btn';
-    btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
-    btn.title = 'Gemini Assistant (Alt+A)';
-    btn.onclick = function() { lpai_open_panel('compose'); };
-    document.body.appendChild(btn);
+    if (!document.querySelector('.lpai-floating-btn')) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'lpai-floating-btn';
+        btn.innerHTML = lpai_icon('sparkles') + ' <span>Gemini</span>';
+        btn.title = 'Gemini Assistant (Alt+A)';
+        btn.onclick = function() { lpai_open_panel('compose'); };
+        document.body.appendChild(btn);
+    }
 
     lpai_add_compose_quick_actions();
 }
 
 function lpai_add_compose_quick_actions() {
-    var container = document.getElementById('composebodycontainer');
+    var container = document.getElementById('composebodycontainer') || document.getElementById('compose-content');
     if (!container) return;
+
+    var existingBar = document.getElementById('lpai-qa-bar-compose');
+    if (existingBar) existingBar.remove();
 
     var bar = document.createElement('div');
     bar.className = 'lpai-qa-bar lpai-qa-bar-compose';
@@ -984,8 +1056,7 @@ function lpai_submit() {
     if (lpai_panel_context === 'compose') {
         contextText = lpai_get_editor_content();
     } else {
-        var msgPart = document.querySelector('#messagebody .message-part, #messagebody .message-htmlpart, #messagebody');
-        if (msgPart) contextText = msgPart.innerText || msgPart.textContent || '';
+        contextText = lpai_get_message_text();
     }
 
     var modelSelect = document.getElementById('lpai-model-select');

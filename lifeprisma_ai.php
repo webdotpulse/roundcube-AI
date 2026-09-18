@@ -16,7 +16,12 @@ class lifeprisma_ai extends rcube_plugin
     public function init()
     {
         $this->load_config();
+        $rcmail = rcmail::get_instance();
+        $active_skin = $rcmail->config->get('skin', 'elastic');
         $skin_path = $this->local_skin_path();
+        if (($active_skin === 'gmail_plus' || strpos($active_skin, 'gmail') !== false) && is_dir($this->home . '/skins/gmail_plus')) {
+            $skin_path = 'skins/gmail_plus';
+        }
         if (file_exists($this->home . "/{$skin_path}/style.min.css")) {
             $this->include_stylesheet("{$skin_path}/style.min.css");
         } else {
@@ -55,6 +60,10 @@ class lifeprisma_ai extends rcube_plugin
         if ($is_compose || $is_read) {
             $rcmail = rcmail::get_instance();
             $gemini = $this->get_gemini_config();
+            $active_skin = $rcmail->config->get('skin', 'elastic');
+
+            // Pass active skin environment
+            $rcmail->output->set_env('lpai_skin', $active_skin);
 
             // Pass Gemini configuration and pricing
             $rcmail->output->set_env('lpai_gemini', [
