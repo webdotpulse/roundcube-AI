@@ -857,36 +857,65 @@ class lifeprisma_ai extends rcube_plugin
     /**
      * Rate limiting — per-user cooldown and sliding window
      */
-    private function check_rate_limit()
+    private function check_rate_limit($action = '')
     {
         $rcmail = rcmail::get_instance();
-        $cooldown = (int) $rcmail->config->get('lifeprisma_ai_rate_limit', 3);
-        $max_per_min = (int) $rcmail->config->get('lifeprisma_ai_rate_limit_per_min', 20);
+
+        // Check if admin has configured rate_limit in DB config
+        $admin_config = $this->get_admin_config();
+        $admin_settings = $admin_config['settings'] ?? $admin_config;
+        $cooldown = isset($admin_settings['rate_limit'])
+            ? (int) $admin_settings['rate_limit']
+            : (int) $rcmail->config->get('lifeprisma_ai_rate_limit', 3);
+
+        $max_per_min = (int) $rcmail->config->get('lifeprisma_ai_rate_limit_per_min', 60);
+
+        if ($cooldown <= 0 && $max_per_min <= 0) {
+            return true;
+        }
 
         $now = microtime(true);
 
-        if ($cooldown > 0) {
-            $last = $_SESSION['lpai_last_request'] ?? 0;
-            if ($now - $last < $cooldown) {
-                return false;
+        // Passive background analysis tasks do not block user manual actions and have negligible cooldown
+        $is_background = in_array($action, ['detect_followup', 'detect_tone', 'autocomplete']);
+        $session_key = $is_background ? 'lpai_last_bg_request' : 'lpai_last_request';
+
+        // Background tasks use a minimal 0.5s debounce, not the user-facing cooldown
+        $effective_cooldown = $is_background ? 0.5 : $cooldown;
+
+        if ($effective_cooldown > 0) {
+            $last = isset($_SESSION[$session_key]) ? (float) $_SESSION[$session_key] : 0.0;
+            if ($last > 0) {
+                $elapsed = $now - $last;
+                // Only block if strictly non-negative and within cooldown window.
+                // If elapsed < 0 (clock drift, NTP step, or multi-worker race), do not block.
+                if ($elapsed >= 0 && $elapsed < $effective_cooldown) {
+                    return false;
+                }
             }
         }
 
-        if ($max_per_min > 0) {
+        // Sliding window quota (only track user-initiated requests against the per-minute quota)
+        if (!$is_background && $max_per_min > 0) {
             $window = 60.0;
             $history = $_SESSION['lpai_req_history'] ?? [];
             if (!is_array($history)) $history = [];
+
+            // Strictly retain timestamps within [now - window, now]
             $history = array_values(array_filter($history, function ($t) use ($now, $window) {
-                return ($now - $t) < $window;
+                $age = $now - (float) $t;
+                return $age >= 0 && $age < $window;
             }));
+
             if (count($history) >= $max_per_min) {
                 return false;
             }
+
             $history[] = $now;
             $_SESSION['lpai_req_history'] = $history;
         }
 
-        $_SESSION['lpai_last_request'] = $now;
+        $_SESSION[$session_key] = $now;
         return true;
     }
 
@@ -946,7 +975,9 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
-        if (!$this->check_rate_limit()) {
+        $action = rcube_utils::get_input_string('ai_action', rcube_utils::INPUT_POST);
+
+        if (!$this->check_rate_limit($action)) {
             header('Content-Type: text/event-stream');
             echo "data: " . json_encode(['type' => 'error', 'message' => 'Please wait a few seconds between requests.']) . "\n\n";
             exit;
@@ -954,7 +985,6 @@ class lifeprisma_ai extends rcube_plugin
 
         $rcmail = rcmail::get_instance();
 
-        $action = rcube_utils::get_input_string('ai_action', rcube_utils::INPUT_POST);
         $instruction = rcube_utils::get_input_string('instruction', rcube_utils::INPUT_POST);
         $email_body = rcube_utils::get_input_string('email_body', rcube_utils::INPUT_POST);
         $reply_text = rcube_utils::get_input_string('reply_text', rcube_utils::INPUT_POST);
@@ -1336,7 +1366,9 @@ class lifeprisma_ai extends rcube_plugin
             exit;
         }
 
-        if (!$this->check_rate_limit()) {
+        $action = rcube_utils::get_input_string('ai_action', rcube_utils::INPUT_POST);
+
+        if (!$this->check_rate_limit($action)) {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['status' => 'error', 'message' => 'Please wait a few seconds between requests.']);
             exit;
@@ -1345,7 +1377,6 @@ class lifeprisma_ai extends rcube_plugin
         $rcmail = rcmail::get_instance();
         header('Content-Type: application/json; charset=utf-8');
 
-        $action = rcube_utils::get_input_string('ai_action', rcube_utils::INPUT_POST);
         $instruction = rcube_utils::get_input_string('instruction', rcube_utils::INPUT_POST);
         $email_body = rcube_utils::get_input_string('email_body', rcube_utils::INPUT_POST);
         $reply_text = rcube_utils::get_input_string('reply_text', rcube_utils::INPUT_POST);
