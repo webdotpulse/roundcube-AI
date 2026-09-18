@@ -1,6 +1,6 @@
 /**
  * LifePrisma AI Assistant Plugin for Roundcube
- * Multi-provider support (OpenAI, xAI/Grok, etc.) with streaming, reasoning & verbosity controls
+ * Multi-provider support (OpenAI, Claude, Gemini, xAI/Grok, etc.) with streaming, reasoning & verbosity controls
  */
 if (window.rcmail) {
     rcmail.addEventListener('init', function() {
@@ -1245,7 +1245,7 @@ function lpai_show_setup_message(container) {
         'Your server admin needs to add API keys to the plugin config file:<br>' +
         '<code style="background:#f1f5f9;padding:2px 8px;border-radius:4px;font-size:12px;display:inline-block;margin:8px 0">' +
         'plugins/lifeprisma_ai/config.inc.php</code><br>' +
-        'Supports <strong>OpenAI</strong> (GPT) and <strong>xAI</strong> (Grok).<br>' +
+        'Supports <strong>OpenAI</strong>, <strong>Claude</strong>, <strong>Gemini</strong>, and <strong>xAI</strong>.<br>' +
         '<a href="https://github.com/eduardostern/roundcube-genia#configuration" target="_blank" ' +
         'style="color:#6366f1;text-decoration:underline;margin-top:8px;display:inline-block">Setup guide &rarr;</a>' +
         '</div></div>';
@@ -2466,6 +2466,7 @@ var lpai_admin_api_presets = {
     'openai_responses': { api_type: 'responses', api_url: 'https://api.openai.com/v1/responses', label: 'GPT', model: 'gpt-5.4', models: ['gpt-5.4', 'gpt-4.1', 'gpt-4o'], pricing: { 'gpt-5.4': { input: 2.50, output: 10.00 }, 'gpt-4.1': { input: 2.00, output: 8.00 }, 'gpt-4o': { input: 2.50, output: 10.00 } } },
     'xai_responses': { api_type: 'responses', api_url: 'https://api.x.ai/v1/responses', label: 'Grok', model: 'grok-4.1-fast', models: ['grok-4.1-fast', 'grok-3'], pricing: { 'grok-4.1-fast': { input: 3.00, output: 15.00 }, 'grok-3': { input: 3.00, output: 15.00 } } },
     'anthropic': { api_type: 'anthropic', api_url: 'https://api.anthropic.com/v1/messages', label: 'Claude', model: 'claude-sonnet-4-6', models: ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'], supports_reasoning: false, pricing: { 'claude-sonnet-4-6': { input: 3.00, output: 15.00 }, 'claude-haiku-4-5-20251001': { input: 0.80, output: 4.00 } } },
+    'gemini': { api_type: 'chat_completions', api_url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', label: 'Gemini', model: 'gemini-3.6-flash', models: ['gemini-3.6-flash', 'gemini-2.5-flash'], supports_reasoning: false, pricing: { 'gemini-3.6-flash': { input: 0.30, output: 2.50 }, 'gemini-2.5-flash': { input: 0.30, output: 2.50 } } },
     'ollama': { api_type: 'chat_completions', api_url: 'http://localhost:11434/v1/chat/completions', label: 'Ollama', model: 'llama3.1', models: ['llama3.1'], supports_reasoning: false },
     'custom': { api_type: 'chat_completions', api_url: '', label: 'Custom', model: '', models: [] },
 };
@@ -2643,6 +2644,7 @@ function lpai_render_admin(root, data, urlSave, token) {
             { key: 'openai_responses', label: 'OpenAI (Responses API)' },
             { key: 'xai_responses', label: 'xAI / Grok (Responses API)' },
             { key: 'anthropic', label: 'Anthropic / Claude' },
+            { key: 'gemini', label: 'Google Gemini' },
             { key: 'ollama', label: 'Ollama (Local)' },
             { key: 'custom', label: 'Custom Provider' },
         ];

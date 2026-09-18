@@ -8,6 +8,7 @@
  * Supports multiple AI backends:
  * - OpenAI (GPT-4o, GPT-4.1, etc.) — Responses API
  * - Anthropic (Claude Sonnet, Haiku, Opus) — Messages API
+ * - Google Gemini (Gemini 3.6 Flash) — Chat Completions API
  * - xAI (Grok-3, Grok-3-mini, etc.) — Responses API
  * - Ollama (Llama, Mistral, Qwen, etc.) — Chat Completions API (local, no API key)
  * - LM Studio, LocalAI, vLLM, text-generation-webui — Chat Completions API
@@ -52,6 +53,15 @@ $config['lifeprisma_ai_providers'] = [
         'api_key'  => '',                                        // Your Anthropic API key (https://console.anthropic.com/settings/keys)
         'model'    => 'claude-sonnet-4-6',
         'models'   => ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+        'supports_reasoning' => false,
+    ],
+    'gemini' => [
+        'label'    => 'Gemini',
+        'api_url'  => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        'api_type' => 'chat_completions',
+        'api_key'  => '',                                        // Your Google Gemini API key (https://aistudio.google.com/apikey)
+        'model'    => 'gemini-3.6-flash',
+        'models'   => ['gemini-3.6-flash', 'gemini-2.5-flash'],
         'supports_reasoning' => false,
     ],
     // ---- LOCAL / SELF-HOSTED PROVIDERS (no data leaves your network) ----

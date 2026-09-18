@@ -185,6 +185,7 @@ class lifeprisma_ai extends rcube_plugin
             'openai' => '<svg class="lpai-provider-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M22.28 9.37a5.93 5.93 0 00-.51-4.88 6.01 6.01 0 00-6.47-2.91A5.93 5.93 0 0010.84.02a6.01 6.01 0 00-5.73 3.93 5.93 5.93 0 00-3.97 2.88 6.01 6.01 0 00.74 7.05 5.93 5.93 0 00.51 4.88 6.01 6.01 0 006.47 2.91 5.93 5.93 0 004.46 1.56 6.01 6.01 0 005.73-3.93 5.93 5.93 0 003.97-2.88 6.01 6.01 0 00-.74-7.05zM13.3 21.54a4.5 4.5 0 01-2.89-1.05l.14-.08 4.8-2.77a.78.78 0 00.39-.68v-6.77l2.03 1.17a.07.07 0 01.04.06v5.6a4.51 4.51 0 01-4.51 4.52zM3.6 17.6a4.49 4.49 0 01-.54-3.02l.14.09 4.8 2.77a.78.78 0 00.78 0l5.86-3.38v2.34a.07.07 0 01-.03.06l-4.85 2.8A4.51 4.51 0 013.6 17.6zM2.34 7.87A4.49 4.49 0 014.7 5.9v5.7a.78.78 0 00.39.68l5.86 3.38-2.03 1.17a.07.07 0 01-.07 0L4 14.03a4.51 4.51 0 01-1.66-6.16zm17.17 4l-5.86-3.38 2.03-1.17a.07.07 0 01.07 0l4.85 2.8a4.51 4.51 0 01-.7 8.13v-5.7a.78.78 0 00-.39-.68zm2.02-3.03l-.14-.09-4.8-2.77a.78.78 0 00-.78 0L9.95 9.36V7.02a.07.07 0 01.03-.06l4.85-2.8a4.51 4.51 0 016.7 4.68zM8.83 12.68L6.8 11.51a.07.07 0 01-.04-.06V5.85a4.51 4.51 0 017.4-3.47l-.14.08-4.8 2.77a.78.78 0 00-.39.68v6.77zm1.1-2.37L12 9.06l2.07 1.19v2.38L12 13.82l-2.07-1.19v-2.38z"/></svg>',
             'xai' => '<svg class="lpai-provider-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13.98 10.93L21.39 2h-1.75l-6.43 7.76L7.95 2H2l7.77 11.72L2 23h1.75l6.8-8.2L17.05 23H23l-9.02-12.07zM11.54 13.6l-.79-1.17L4.45 3.41h2.7l5.07 7.53.79 1.17 6.59 9.78h-2.7l-5.36-7.29z"/></svg>',
             'anthropic' => '<svg class="lpai-provider-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M13.83 2 22 22h-4.2l-1.67-4.2H9.55L14 6.5l2.91 7.3H13.1L11.44 18h5.73L18.83 22H22L13.83 2ZM8.6 2H4.43L2 8.25 6.17 22h4.17L2 2h6.6Z"/></svg>',
+            'gemini' => '<svg class="lpai-provider-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>',
         ];
 
         // Build provider card buttons
@@ -1075,8 +1076,14 @@ class lifeprisma_ai extends rcube_plugin
                             echo "data: " . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
                             flush();
                         }
-                        $finish = $event['choices'][0]['finish_reason'] ?? null;
-                        if ($finish === 'stop') {
+                        if (isset($event['error'])) {
+                            $msg = $event['error']['message'] ?? 'Unknown error';
+                            $log_fn("[STREAM API ERROR] chat_completions model=$stream_model error=$msg");
+                            echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
+                            flush();
+                        }
+                        $finish = isset($event['choices'][0]['finish_reason']) ? strtolower($event['choices'][0]['finish_reason']) : null;
+                        if ($finish === 'stop' || $finish === 'length' || (!empty($event['usage']) && $delta === '')) {
                             $usage = $event['usage'] ?? [];
                             $stream_tokens = ['input' => $usage['prompt_tokens'] ?? 0, 'output' => $usage['completion_tokens'] ?? 0];
                             echo "data: " . json_encode([

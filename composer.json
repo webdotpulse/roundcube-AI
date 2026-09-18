@@ -9,6 +9,8 @@
         "plugin",
         "ai",
         "openai",
+        "gemini",
+        "claude",
         "grok",
         "xai",
         "gpt",

@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>The missing AI for your self-hosted email.</strong><br>
-  Compose, rewrite, reply, translate, summarize, scam check — works with OpenAI, Claude, Grok, Ollama, or any local LLM.
+  Compose, rewrite, reply, translate, summarize, scam check — works with OpenAI, Claude, Gemini, Grok, Ollama, or any local LLM.
 </p>
 
 <p align="center">
@@ -69,6 +69,7 @@ Switch between AI providers directly in the UI. Mix cloud and local:
 | **LocalAI / vLLM** | Any supported model | **No** — fully local | Optional |
 | **OpenAI** | GPT-5.4, GPT-4.1, GPT-4o | Yes — sent to OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
 | **Anthropic (Claude)** | Sonnet 4.6, Haiku 4.5, Opus 4.6 | Yes — sent to Anthropic | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| **Google Gemini** | Gemini 3.6 Flash, Gemini 2.5 Flash | Yes — sent to Google | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | **xAI (Grok)** | Grok-4.1-fast, Grok-3 | Yes — sent to xAI | [console.x.ai](https://console.x.ai) |
 | **Any OpenAI-compatible API** | Custom | Depends on endpoint | Varies |
 
@@ -159,7 +160,7 @@ $config['lifeprisma_ai_providers'] = [
 
 > Install Ollama: `curl -fsSL https://ollama.com/install.sh | sh && ollama pull llama3.1`
 
-### Cloud Providers (OpenAI + Claude + Grok)
+### Cloud Providers (OpenAI + Claude + Gemini + Grok)
 
 ```php
 <?php
@@ -179,6 +180,15 @@ $config['lifeprisma_ai_providers'] = [
         'api_key'  => 'sk-ant-xxxxx',
         'model'    => 'claude-sonnet-4-6',
         'models'   => ['claude-sonnet-4-6', 'claude-haiku-4-5-20251001'],
+        'supports_reasoning' => false,
+    ],
+    'gemini' => [
+        'label'    => 'Gemini',
+        'api_url'  => 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+        'api_type' => 'chat_completions',
+        'api_key'  => 'AIzaxxxxx',
+        'model'    => 'gemini-3.6-flash',
+        'models'   => ['gemini-3.6-flash', 'gemini-2.5-flash'],
         'supports_reasoning' => false,
     ],
     'xai' => [

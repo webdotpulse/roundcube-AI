@@ -132,6 +132,8 @@
 .lpai-provider-btn[data-provider-id="xai"].active .lpai-provider-icon { color: #2c363a; }
 .lpai-provider-btn[data-provider-id="anthropic"] .lpai-provider-icon { color: #d4a574; }
 .lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon { color: #c96442; }
+.lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon { color: #1a73e8; }
+.lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon { color: #1a73e8; }
 
 .lpai-provider-name {
     font-size: 13px;
@@ -886,6 +888,12 @@ html.dark-mode .lpai-provider-btn[data-provider-id="anthropic"] .lpai-provider-i
 
 html.dark-mode .lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon,
 .dark-mode .lpai-provider-btn[data-provider-id="anthropic"].active .lpai-provider-icon { color: #e8a06a; }
+
+html.dark-mode .lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon,
+.dark-mode .lpai-provider-btn[data-provider-id="gemini"] .lpai-provider-icon { color: #8ab4f8; }
+
+html.dark-mode .lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon,
+.dark-mode .lpai-provider-btn[data-provider-id="gemini"].active .lpai-provider-icon { color: #8ab4f8; }
 
 html.dark-mode .lpai-action-btn,
 .dark-mode .lpai-action-btn { background: #2c373a; border-color: #4d6066; color: #8b9fa7; }
