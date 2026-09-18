@@ -18,6 +18,7 @@ if (window.rcmail) {
             lpai_add_message_button();
             // Delayed follow-up detection (don't slow down page load)
             setTimeout(function() { lpai_init_followup_detection(); }, 1000);
+            setTimeout(function() { lpai_init_autodraft_read(); }, 1500);
         }
 
         if (task === 'settings') {
@@ -3359,6 +3360,56 @@ function lpai_show_followup_banner(info, model, tokens, fromCache) {
     if (usageLabel) {
         html += '<div class="lpai-usage-footer">' + usageLabel + '</div>';
     }
+
+    banner.innerHTML = html;
+
+    var msgBody = document.getElementById('messagebody');
+    if (msgBody) {
+        msgBody.parentNode.insertBefore(banner, msgBody);
+    }
+}
+
+function lpai_init_autodraft_read() {
+    var sp = rcmail.env.lpai_user_prefs || {};
+    if (sp.auto_draft_mode !== 'open') return;
+
+    var uid = rcmail.env.uid;
+    var mbox = rcmail.env.mailbox || '';
+    if (!uid) return;
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_autodraft'));
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+        try {
+            var data = JSON.parse(xhr.responseText);
+            if (data.status === 'success' && data.created) {
+                lpai_show_autodraft_banner(data.subject || '');
+            }
+        } catch (e) {}
+    };
+    xhr.send('msg_uid=' + encodeURIComponent(uid) + '&mbox=' + encodeURIComponent(mbox) + '&_token=' + encodeURIComponent(rcmail.env.request_token));
+}
+
+function lpai_show_autodraft_banner(subject) {
+    var existing = document.getElementById('lpai-autodraft-banner');
+    if (existing) existing.remove();
+
+    var banner = document.createElement('div');
+    banner.id = 'lpai-autodraft-banner';
+    banner.className = 'lpai-autodraft-banner';
+
+    var html = '<div class="lpai-autodraft-content">';
+    html += '<span class="lpai-autodraft-icon">&#10024;</span>';
+    html += '<div class="lpai-autodraft-info">';
+    html += '<strong>AI Draft Ready:</strong> A draft reply has been generated and saved to your Drafts folder.';
+    html += '</div>';
+    html += '</div>';
+    html += '<div class="lpai-autodraft-actions">';
+    html += '<button type="button" class="lpai-autodraft-btn" onclick="try{localStorage.setItem(\'lpai_pending_reply\',\'1\')}catch(e){}rcmail.command(\'reply\')">Review / Edit</button>';
+    html += '<button type="button" class="lpai-autodraft-dismiss" onclick="this.closest(\'.lpai-autodraft-banner\').remove()">&times;</button>';
+    html += '</div>';
 
     banner.innerHTML = html;
 

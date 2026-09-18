@@ -82,6 +82,8 @@ Switch between AI providers directly in the UI. Mix cloud and local:
 
 ### Smart Features
 
+- **Auto-draft responses** — automatically generate draft replies on incoming mail or when opening an email
+- **Smart bulk filter** — skips newsletters, marketing lists, and automated emails (`List-Unsubscribe`, `Precedence: bulk`)
 - **Streaming responses** — see the AI write in real-time
 - **Conversation memory** — chain instructions: "make it shorter", "now translate it"
 - **Preview before applying** — review AI output before it touches your email
@@ -262,12 +264,15 @@ $config['lifeprisma_ai_providers'] = [
 | `Shift+Enter` | New line in instruction |
 | `Escape` | Close the GenIA panel |
 
-### Tips
+### Automatic Draft Responses
 
-- **Quick translate**: Use the toolbar above the email — no panel needed
-- **Chain actions**: Compose in Portuguese, translate to English, change tone to Formal
-- **Scam check**: Auto-analyzes SPF, DKIM, and authentication headers
-- **Persistent settings**: Your provider, language, and tone are remembered
+GenIA can automatically generate replies to incoming emails and save them directly into your **Drafts** folder:
+
+1. Go to **Settings → Preferences → AI Assistant** in Roundcube.
+2. In **Auto-generate draft replies for incoming emails**, select:
+   - **When opening/reading an email**: Prepares a draft in the background as you view an email, displaying an *AI Draft Ready* banner with a one-click "Review / Edit" button.
+   - **On new incoming email**: Background check automatically drafts responses for new incoming INBOX emails and places them in your `Drafts` folder with a notification.
+3. Keep **Smart filter** enabled (recommended) to automatically skip newsletters, marketing mail (`List-Unsubscribe`), automated notifications (`Auto-Submitted`), and emails that don't expect a response.
 
 ---
 

@@ -116,3 +116,16 @@ $config['lifeprisma_ai_rate_limit'] = 3;
 $config['lifeprisma_ai_admins'] = [
     // 'admin@yourdomain.com',
 ];
+
+// ============================================================
+// Auto-Draft Responses for Incoming Emails
+// ============================================================
+// Automatic draft generation can also be configured per-user under Settings -> Preferences -> AI Assistant.
+// Options:
+//   'disabled' — Feature disabled by default
+//   'open'     — Auto-generate draft response in the background when viewing/reading an email
+//   'receive'  — Auto-generate draft response in the background when new mail arrives in INBOX
+// $config['lifeprisma_ai_auto_draft_mode'] = 'disabled';
+
+// Smart filter: only draft if email asks questions or expects a reply (skips newsletters/bulk mail)
+// $config['lifeprisma_ai_auto_draft_filter'] = true;

@@ -16,11 +16,13 @@ class lifeprisma_ai extends rcube_plugin
         $this->register_action('plugin.lifeprisma_ai_templates', [$this, 'handle_templates']);
         $this->register_action('plugin.lifeprisma_ai_admin', [$this, 'handle_admin']);
         $this->register_action('plugin.lifeprisma_ai_admin_save', [$this, 'handle_admin_save']);
+        $this->register_action('plugin.lifeprisma_ai_autodraft', [$this, 'handle_autodraft']);
 
         $this->add_hook('render_page', [$this, 'render_page']);
         $this->add_hook('preferences_sections_list', [$this, 'preferences_sections']);
         $this->add_hook('preferences_list', [$this, 'preferences_list']);
         $this->add_hook('preferences_save', [$this, 'preferences_save']);
+        $this->add_hook('new_messages', [$this, 'handle_new_messages']);
     }
 
     public function render_page($args)
@@ -66,6 +68,8 @@ class lifeprisma_ai extends rcube_plugin
                 'language' => $prefs['genia_language'] ?? '',
                 'tone' => $prefs['genia_tone'] ?? '',
                 'auto_draft' => $prefs['genia_auto_draft'] ?? 0,
+                'auto_draft_mode' => $prefs['genia_auto_draft_mode'] ?? 'disabled',
+                'auto_draft_filter' => $prefs['genia_auto_draft_filter'] ?? 1,
                 'followup_check' => $prefs['genia_followup_check'] ?? 1,
             ]);
 
@@ -340,6 +344,13 @@ class lifeprisma_ai extends rcube_plugin
         $smart_compose_checkbox = new html_checkbox(['name' => '_genia_smart_compose', 'id' => 'genia_smart_compose', 'value' => 1]);
         $followup_checkbox = new html_checkbox(['name' => '_genia_followup_check', 'id' => 'genia_followup_check', 'value' => 1]);
 
+        $auto_draft_mode_select = new html_select(['name' => '_genia_auto_draft_mode', 'id' => 'genia_auto_draft_mode']);
+        $auto_draft_mode_select->add('Disabled', 'disabled');
+        $auto_draft_mode_select->add('When opening/reading an email', 'open');
+        $auto_draft_mode_select->add('On new incoming email (background check)', 'receive');
+
+        $auto_draft_filter_checkbox = new html_checkbox(['name' => '_genia_auto_draft_filter', 'id' => 'genia_auto_draft_filter', 'value' => 1]);
+
         $args['blocks']['genia_general'] = [
             'name' => 'General Settings',
             'options' => [
@@ -351,8 +362,16 @@ class lifeprisma_ai extends rcube_plugin
                     'title' => 'Default tone',
                     'content' => $tone_select->show($prefs['genia_tone'] ?? 'professional'),
                 ],
+                'genia_auto_draft_mode' => [
+                    'title' => 'Auto-generate draft replies for incoming emails',
+                    'content' => $auto_draft_mode_select->show($prefs['genia_auto_draft_mode'] ?? 'disabled'),
+                ],
+                'genia_auto_draft_filter' => [
+                    'title' => 'Smart filter (only draft if email asks questions or expects a reply)',
+                    'content' => $auto_draft_filter_checkbox->show($prefs['genia_auto_draft_filter'] ?? 1),
+                ],
                 'genia_auto_draft' => [
-                    'title' => 'Auto-save AI content as draft',
+                    'title' => 'Auto-save AI content as draft (in Compose)',
                     'content' => $draft_checkbox->show($prefs['genia_auto_draft'] ?? 0),
                 ],
                 'genia_smart_compose' => [
@@ -380,6 +399,8 @@ class lifeprisma_ai extends rcube_plugin
         $args['prefs']['genia_language'] = rcube_utils::get_input_string('_genia_language', rcube_utils::INPUT_POST);
         $args['prefs']['genia_tone'] = rcube_utils::get_input_string('_genia_tone', rcube_utils::INPUT_POST);
         $args['prefs']['genia_auto_draft'] = rcube_utils::get_input_string('_genia_auto_draft', rcube_utils::INPUT_POST) ? 1 : 0;
+        $args['prefs']['genia_auto_draft_mode'] = rcube_utils::get_input_string('_genia_auto_draft_mode', rcube_utils::INPUT_POST) ?: 'disabled';
+        $args['prefs']['genia_auto_draft_filter'] = rcube_utils::get_input_string('_genia_auto_draft_filter', rcube_utils::INPUT_POST) ? 1 : 0;
         $args['prefs']['genia_smart_compose'] = rcube_utils::get_input_string('_genia_smart_compose', rcube_utils::INPUT_POST) ? 1 : 0;
         $args['prefs']['genia_followup_check'] = rcube_utils::get_input_string('_genia_followup_check', rcube_utils::INPUT_POST) ? 1 : 0;
 
@@ -1475,7 +1496,8 @@ class lifeprisma_ai extends rcube_plugin
             'Message-ID', 'X-Mailer', 'X-Originating-IP',
             'Received-SPF', 'Authentication-Results', 'DKIM-Signature',
             'ARC-Authentication-Results', 'X-Spam-Status', 'X-Spam-Score',
-            'Content-Type', 'MIME-Version', 'Received'
+            'Content-Type', 'MIME-Version', 'Received',
+            'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'
         ];
 
         $lines = explode("\n", $raw);
@@ -1753,6 +1775,393 @@ class lifeprisma_ai extends rcube_plugin
                 return "Help with this email in {$language} with a {$tone} tone.\n" .
                     ($email_body ? "Current text:\n{$email_body}\n\n" : '') .
                     "Instructions: {$instruction}";
+        }
+    }
+
+    /**
+     * Hook callback for incoming mail detection
+     */
+    public function handle_new_messages($args)
+    {
+        $rcmail = rcmail::get_instance();
+        $prefs = $rcmail->user->get_prefs();
+        $mode = $prefs['genia_auto_draft_mode'] ?? 'disabled';
+
+        if ($mode !== 'receive') {
+            return;
+        }
+
+        $mbox = $args['mailbox'] ?? 'INBOX';
+        if (strtoupper($mbox) !== 'INBOX') {
+            return;
+        }
+
+        $storage = $rcmail->get_storage();
+        $storage->set_folder($mbox);
+
+        $uids = $storage->search($mbox, 'UNSEEN RECENT');
+        if (empty($uids)) {
+            $uids = $storage->search($mbox, 'UNSEEN');
+        }
+
+        if (empty($uids)) {
+            return;
+        }
+
+        // Limit to 2 most recent messages per check
+        $uids = array_slice(array_reverse($uids), 0, 2);
+        $created_subjects = [];
+
+        foreach ($uids as $uid) {
+            $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
+            if ($subj) {
+                $created_subjects[] = $subj;
+            }
+        }
+
+        if (!empty($created_subjects)) {
+            $count = count($created_subjects);
+            $msg = ($count === 1)
+                ? "GenIA created an AI draft reply for '{$created_subjects[0]}' in Drafts"
+                : "GenIA created {$count} AI draft replies in Drafts";
+            $rcmail->output->command('display_message', $msg, 'confirmation');
+        }
+    }
+
+    /**
+     * Action handler for on-demand autodraft generation (e.g. read view)
+     */
+    public function handle_autodraft()
+    {
+        $rcmail = rcmail::get_instance();
+        header('Content-Type: application/json; charset=utf-8');
+
+        $uid = rcube_utils::get_input_string('msg_uid', rcube_utils::INPUT_POST);
+        $mbox = rcube_utils::get_input_string('mbox', rcube_utils::INPUT_POST) ?: 'INBOX';
+
+        if (empty($uid)) {
+            echo json_encode(['status' => 'error', 'message' => 'Missing msg_uid']);
+            exit;
+        }
+
+        $prefs = $rcmail->user->get_prefs();
+        $mode = $prefs['genia_auto_draft_mode'] ?? 'disabled';
+
+        if ($mode === 'disabled') {
+            echo json_encode(['status' => 'skipped', 'message' => 'Auto-draft disabled']);
+            exit;
+        }
+
+        $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
+
+        if ($subj) {
+            echo json_encode(['status' => 'success', 'created' => true, 'subject' => $subj]);
+        } else {
+            echo json_encode(['status' => 'skipped', 'created' => false]);
+        }
+        exit;
+    }
+
+    /**
+     * Check if a message is suitable for auto-drafting and not already processed
+     */
+    private function should_auto_draft($uid, $mbox, $prefs)
+    {
+        $rcmail = rcmail::get_instance();
+
+        // Check if already processed
+        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+        if ($this->cache_get($cache_key) !== null) {
+            return false;
+        }
+
+        $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+        if (!empty($raw_headers)) {
+            // Check for bulk / newsletter / automated headers
+            if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers)) {
+                $this->cache_set($cache_key, ['status' => 'skipped_bulk'], 86400 * 7);
+                return false;
+            }
+            if (preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers)) {
+                $this->cache_set($cache_key, ['status' => 'skipped_bulk'], 86400 * 7);
+                return false;
+            }
+            if (preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
+                $this->cache_set($cache_key, ['status' => 'skipped_auto'], 86400 * 7);
+                return false;
+            }
+        }
+
+        $ctx = $this->fetch_message_context($uid, $mbox);
+        if (empty($ctx) || empty($ctx['body'])) {
+            return false;
+        }
+
+        // Skip messages sent by user themselves
+        $user_emails = [];
+        $identities = $rcmail->user->list_identities();
+        foreach ($identities as $ident) {
+            if (!empty($ident['email'])) {
+                $user_emails[] = strtolower(trim($ident['email']));
+            }
+        }
+        $from_email = strtolower($ctx['from']);
+        foreach ($user_emails as $ue) {
+            if ($ue && strpos($from_email, $ue) !== false) {
+                $this->cache_set($cache_key, ['status' => 'skipped_self'], 86400 * 7);
+                return false;
+            }
+        }
+
+        // Smart filter: check if the email expects a reply or asks questions
+        $use_filter = !empty($prefs['genia_auto_draft_filter']);
+        if ($use_filter) {
+            $body = $ctx['body'];
+            $subject = $ctx['subject'];
+            $text = $subject . ' ' . $body;
+
+            $has_question = strpos($text, '?') !== false;
+            $has_request = (bool) preg_match('/\b(please|could you|can you|let me know|what do you think|your thoughts|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|update me)\b/i', $text);
+
+            if (!$has_question && !$has_request) {
+                $this->cache_set($cache_key, ['status' => 'skipped_no_action'], 86400 * 7);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Generate an AI draft for a message and save to Drafts
+     */
+    public function generate_autodraft_for_message($uid, $mbox, $prefs)
+    {
+        $rcmail = rcmail::get_instance();
+        $cache_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+
+        if (!$this->should_auto_draft($uid, $mbox, $prefs)) {
+            return false;
+        }
+
+        $ctx = $this->fetch_message_context($uid, $mbox);
+        if (empty($ctx)) return false;
+
+        $subject = $ctx['subject'] ?? '';
+        $from = $ctx['from'] ?? '';
+        $body = $ctx['body'] ?? '';
+        $date = $ctx['date'] ?? '';
+
+        $identity = $rcmail->user->get_identity();
+        $sender_name = trim(($identity['name'] ?? '') . ' <' . ($identity['email'] ?? '') . '>');
+
+        $language = $prefs['genia_language'] ?? 'English';
+        $tone = $prefs['genia_tone'] ?? 'professional';
+
+        // Select provider: use default_provider from admin or first available
+        $admin_config = $this->get_admin_config();
+        $provider_id = $admin_config['default_provider'] ?? '';
+        $provider = $this->get_provider_config($provider_id);
+        if (empty($provider)) {
+            $this->ai_log("[AUTODRAFT] No provider available for autodraft");
+            return false;
+        }
+
+        $instruction = "Draft a polite and helpful response addressing the points in this email.";
+        $reply_result = $this->call_ai_direct('reply', $instruction, '', $body, $subject, $language, $tone, $sender_name, $from, $provider);
+
+        if (empty($reply_result)) {
+            $this->ai_log("[AUTODRAFT] Empty AI response generated for uid=$uid");
+            return false;
+        }
+
+        // Extract Message-ID for threading headers
+        $orig_msg_id = '';
+        $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+        if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
+            $orig_msg_id = trim($m[1]);
+        }
+
+        $saved = $this->create_imap_draft($from, $subject, $reply_result, $orig_msg_id, $date, $from, $body);
+
+        if ($saved) {
+            $this->cache_set($cache_key, [
+                'status' => 'draft_created',
+                'subject' => $subject,
+                'time' => time(),
+            ], 86400 * 7);
+            return $subject;
+        }
+
+        return false;
+    }
+
+    /**
+     * Direct non-streaming AI call for background auto-drafting
+     */
+    private function call_ai_direct($action, $instruction, $email_body, $reply_text, $subject, $language, $tone, $sender_name, $original_sender, $provider)
+    {
+        $rcmail = rcmail::get_instance();
+        $api_key = $provider['api_key'] ?? '';
+        $model = $provider['model'] ?? 'gemini-3.6-flash';
+        $api_url = $provider['api_url'] ?? 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+        $api_type = $provider['api_type'] ?? 'chat_completions';
+        $max_tokens = (int) $rcmail->config->get('lifeprisma_ai_max_tokens', 2000);
+        $temperature = (float) $rcmail->config->get('lifeprisma_ai_temperature', 0.5);
+
+        $is_local = $api_type === 'chat_completions' && strpos($api_url, 'localhost') !== false;
+        if (empty($api_key) && !$is_local) {
+            return false;
+        }
+
+        $system_prompt = $this->build_system_prompt($action);
+        $user_prompt = $this->build_user_prompt($action, $instruction, $email_body, $reply_text, $subject, $language, $tone, $sender_name, '', $original_sender, '');
+
+        if ($api_type === 'anthropic') {
+            $payload = [
+                'model' => $model,
+                'system' => $system_prompt,
+                'messages' => [['role' => 'user', 'content' => $user_prompt]],
+                'max_tokens' => $max_tokens,
+                'temperature' => $temperature,
+            ];
+        } elseif ($api_type === 'chat_completions') {
+            $messages = [
+                ['role' => 'system', 'content' => $system_prompt],
+                ['role' => 'user', 'content' => $user_prompt],
+            ];
+            $payload = [
+                'model' => $model,
+                'messages' => $messages,
+                'max_tokens' => $max_tokens,
+                'temperature' => $temperature,
+            ];
+        } else {
+            $payload = [
+                'model' => $model,
+                'instructions' => $system_prompt,
+                'input' => $user_prompt,
+                'max_output_tokens' => $max_tokens,
+                'temperature' => $temperature,
+            ];
+        }
+
+        $curl_headers = ['Content-Type: application/json'];
+        if ($api_type === 'anthropic') {
+            $curl_headers[] = 'x-api-key: ' . $api_key;
+            $curl_headers[] = 'anthropic-version: 2023-06-01';
+        } elseif (!empty($api_key)) {
+            $curl_headers[] = 'Authorization: Bearer ' . $api_key;
+        }
+
+        $ch = curl_init($api_url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => $curl_headers,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 60,
+            CURLOPT_SSL_VERIFYPEER => !$is_local,
+        ]);
+
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($http_code !== 200 || empty($response)) {
+            return false;
+        }
+
+        $data = json_decode($response, true);
+        if (!$data) return false;
+
+        $content = '';
+        if ($api_type === 'anthropic') {
+            foreach ($data['content'] ?? [] as $block) {
+                if (($block['type'] ?? '') === 'text') $content .= $block['text'];
+            }
+        } elseif ($api_type === 'chat_completions') {
+            $content = $data['choices'][0]['message']['content'] ?? '';
+        } else {
+            if (!empty($data['output'])) {
+                foreach ($data['output'] as $item) {
+                    if (($item['type'] ?? '') === 'message' && !empty($item['content'])) {
+                        foreach ($item['content'] as $block) {
+                            if (($block['type'] ?? '') === 'output_text') $content .= $block['text'];
+                        }
+                    }
+                }
+            }
+        }
+
+        return trim($content);
+    }
+
+    /**
+     * Save message to Drafts IMAP mailbox
+     */
+    private function create_imap_draft($to, $subject, $reply_body, $orig_msg_id = '', $orig_date = '', $orig_from = '', $orig_body = '')
+    {
+        try {
+            $rcmail = rcmail::get_instance();
+            $storage = $rcmail->get_storage();
+            $drafts_mbox = $rcmail->config->get('drafts_mbox', 'Drafts');
+
+            if (!$storage->folder_exists($drafts_mbox)) {
+                $storage->folder_create($drafts_mbox, true);
+            }
+
+            $identity = $rcmail->user->get_identity();
+            $from_name = $identity['name'] ?? '';
+            $from_email = $identity['email'] ?? '';
+            $from_str = $from_name ? "\"$from_name\" <$from_email>" : $from_email;
+
+            $re_subject = (stripos($subject, 'Re:') === 0) ? $subject : 'Re: ' . $subject;
+
+            // Quote original message if present
+            $quoted = '';
+            if (!empty($orig_body)) {
+                $date_str = $orig_date ? "On $orig_date, " : "On earlier message, ";
+                $from_info = $orig_from ? "$orig_from wrote:" : "sender wrote:";
+                $quote_header = $date_str . $from_info;
+                $quoted = "\n\n" . $quote_header . "\n" . preg_replace('/^/m', '> ', trim($orig_body));
+            }
+
+            $full_body = trim($reply_body) . $quoted;
+            $domain = $rcmail->config->mail_domain() ?: 'localhost';
+            $msg_id = '<' . md5(uniqid(microtime(), true)) . '@' . $domain . '>';
+
+            $headers = [
+                'Date: ' . date('r'),
+                'From: ' . $from_str,
+                'To: ' . $to,
+                'Subject: ' . $re_subject,
+                'Message-ID: ' . $msg_id,
+                'X-Mailer: GenIA AI Assistant',
+                'X-GenIA-AutoDraft: 1',
+                'MIME-Version: 1.0',
+                'Content-Type: text/plain; charset=UTF-8',
+                'Content-Transfer-Encoding: 8bit',
+            ];
+
+            if (!empty($orig_msg_id)) {
+                $headers[] = 'In-Reply-To: ' . $orig_msg_id;
+                $headers[] = 'References: ' . $orig_msg_id;
+            }
+
+            $raw_message = implode("\r\n", $headers) . "\r\n\r\n" . $full_body;
+
+            $saved = $storage->save_message($drafts_mbox, $raw_message, '', false, ['SEEN', 'DRAFT']);
+            if ($saved) {
+                $this->ai_log("[AUTODRAFT] Successfully saved draft to $drafts_mbox for '$subject'");
+                return true;
+            } else {
+                $this->ai_log("[AUTODRAFT ERROR] Failed to save draft to $drafts_mbox");
+                return false;
+            }
+        } catch (\Exception $e) {
+            $this->ai_log("[AUTODRAFT EXCEPTION] " . $e->getMessage());
+            return false;
         }
     }
 }
