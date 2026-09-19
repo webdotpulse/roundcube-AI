@@ -10,7 +10,9 @@ namespace XCalendar;
  */
 
 // need to use RCUBE_INSTALL_PATH because caldav subdomain server causes problems with require paths otherwise
-require_once RCUBE_INSTALL_PATH . "plugins/xcalendar/program/Entity.php";
+require_once (defined('RCUBE_INSTALL_PATH') && file_exists(RCUBE_INSTALL_PATH . "plugins/xcalendar/program/Entity.php"))
+    ? RCUBE_INSTALL_PATH . "plugins/xcalendar/program/Entity.php"
+    : __DIR__ . "/Entity.php";
 require_once __DIR__ . "/../../xframework/common/Format.php";
 require_once __DIR__ . "/Timezone.php";
 

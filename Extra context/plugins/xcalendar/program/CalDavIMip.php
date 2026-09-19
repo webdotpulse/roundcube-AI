@@ -1,10 +1,18 @@
 <?php
 namespace XCalendar;
 
-require_once RCUBE_INSTALL_PATH . 'plugins/xframework/common/Utils.php';
-require_once RCUBE_INSTALL_PATH . 'plugins/xframework/common/Format.php';
-require_once RCUBE_INSTALL_PATH . 'plugins/xcalendar/program/CalDavLog.php';
-require_once RCUBE_INSTALL_PATH . 'plugins/xcalendar/vendor/autoload.php';
+require_once (defined('RCUBE_INSTALL_PATH') && file_exists(RCUBE_INSTALL_PATH . 'plugins/xframework/common/Utils.php'))
+    ? RCUBE_INSTALL_PATH . 'plugins/xframework/common/Utils.php'
+    : __DIR__ . '/../../xframework/common/Utils.php';
+require_once (defined('RCUBE_INSTALL_PATH') && file_exists(RCUBE_INSTALL_PATH . 'plugins/xframework/common/Format.php'))
+    ? RCUBE_INSTALL_PATH . 'plugins/xframework/common/Format.php'
+    : __DIR__ . '/../../xframework/common/Format.php';
+require_once (defined('RCUBE_INSTALL_PATH') && file_exists(RCUBE_INSTALL_PATH . 'plugins/xcalendar/program/CalDavLog.php'))
+    ? RCUBE_INSTALL_PATH . 'plugins/xcalendar/program/CalDavLog.php'
+    : __DIR__ . '/CalDavLog.php';
+require_once (defined('RCUBE_INSTALL_PATH') && file_exists(RCUBE_INSTALL_PATH . 'plugins/xcalendar/vendor/autoload.php'))
+    ? RCUBE_INSTALL_PATH . 'plugins/xcalendar/vendor/autoload.php'
+    : __DIR__ . '/../vendor/autoload.php';
 
 use Sabre\VObject\ITip;
 use XFramework\Format;

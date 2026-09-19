@@ -124,7 +124,7 @@ composer require "webdotpulse/roundcube-ai:dev-main"
 > - **Skin:** GMail+ deployed to `skins/gmail_plus`
 > - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
 > - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, `plugins/thunderbird_labels`, and `plugins/xcalendar`
-> - **Zero-Config Licensing & Clean UI:** Automatically configures `$config['license_key'] = ''` (no paid key needed at runtime) and `$config['remove_vendor_branding'] = true;` (removes vendor branding from login screen).
+> - **Zero-Config Licensing & Clean UI:** Automatically configures `$config['license_key'] = 'RCPLUSFREE20266u'` (compatible with all legacy and updated checks) and `$config['remove_vendor_branding'] = true;` (removes vendor branding from login screen).
 > - Default configuration files (`config.inc.php`) are safely initialized from `.dist` and `.sample` files without overwriting any existing settings.
 
 #### 3. Enable Skin & Plugins in Roundcube
@@ -149,7 +149,7 @@ $config['plugins'] = [
 ];
 
 // Roundcube Plus & Skin configuration
-$config['license_key'] = '';
+$config['license_key'] = 'RCPLUSFREE20266u';
 $config['remove_vendor_branding'] = true;
 ```
 

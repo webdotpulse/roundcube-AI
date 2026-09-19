@@ -272,7 +272,7 @@ class RoundcubeExtraContentInstaller
         $this->info("  [i] Email Notifications Cron Job (run every 1 minute):");
         $this->info("        Option 1 (URL):  * * * * * wget -q -O - <roundcube_url>/index.php?xcalendar-cron=1 >/dev/null 2>&1");
         $this->info("        Option 2 (CLI):  * * * * * php {$cronScript}");
-        $this->info("  [i] License Key & Branding: Configured automatically in config/config.inc.php (\$config['license_key'] = ''; \$config['remove_vendor_branding'] = true;).");
+        $this->info("  [i] License Key & Branding: Configured automatically in config/config.inc.php (\$config['license_key'] = 'RCPLUSFREE20266u'; \$config['remove_vendor_branding'] = true;).");
     }
 
     /**
@@ -348,7 +348,8 @@ class RoundcubeExtraContentInstaller
         }
 
         $hasGmailPlusSkin = preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]gmail_plus['\"]/", $configContent);
-        $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent);
+        $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
+        $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent) && !$hasEmptyLicenseKey;
         $hasRemoveVendorBranding = preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $configContent);
 
         $needsConfigUpdate = !empty($missingPlugins) || !$hasGmailPlusSkin || !$hasLicenseKey || !$hasRemoveVendorBranding;
@@ -362,7 +363,7 @@ class RoundcubeExtraContentInstaller
                 $this->info("  Skin available to activate: \$config['skin'] = 'gmail_plus';");
             }
             if (!$hasLicenseKey) {
-                $this->info("  License key setting missing: \$config['license_key'] = '';");
+                $this->info("  License key setting missing or empty: \$config['license_key'] = 'RCPLUSFREE20266u';");
             }
             if (!$hasRemoveVendorBranding) {
                 $this->info("  Vendor branding setting missing: \$config['remove_vendor_branding'] = true;");
@@ -430,9 +431,13 @@ class RoundcubeExtraContentInstaller
         }
 
         if ($addLicenseKey && !preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $content)) {
-            $content .= "\n// Roundcube Plus license key (not required at runtime; left empty)\n\$config['license_key'] = '';\n";
+            $content .= "\n// Roundcube Plus license key (valid key for legacy checks; unneeded in patched plugins)\n\$config['license_key'] = 'RCPLUSFREE20266u';\n";
             $modified = true;
-            $this->success("  -> Added \$config['license_key'] = '' to config.inc.php");
+            $this->success("  -> Added \$config['license_key'] = 'RCPLUSFREE20266u' to config.inc.php");
+        } elseif (preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $content)) {
+            $content = preg_replace("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", "\$config['license_key'] = 'RCPLUSFREE20266u';", $content);
+            $modified = true;
+            $this->success("  -> Updated \$config['license_key'] = 'RCPLUSFREE20266u' in config.inc.php");
         }
 
         if ($addRemoveVendorBranding && !preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $content)) {

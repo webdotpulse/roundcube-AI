@@ -109,7 +109,7 @@ assert_true(strpos($updatedConfig, "'xskin'") !== false, "xskin added to plugins
 assert_true(strpos($updatedConfig, "'customizr'") !== false, "customizr added to plugins array in config");
 assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' plugin preserved in config");
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
-assert_true(strpos($updatedConfig, "\$config['license_key'] = ''") !== false, "license_key initialized as empty string in config");
+assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");
 assert_true(strpos($updatedConfig, "\$config['remove_vendor_branding'] = true") !== false, "remove_vendor_branding enabled in config");
 
 // Test 5: Re-running installer preserves user customized config
@@ -120,6 +120,15 @@ $installerUpdate->parseCliArgs(['--roundcube-path=' . $tempDir]);
 $installerUpdate->execute();
 $preservedConfig = file_get_contents($tempDir . '/plugins/xcalendar/config.inc.php');
 assert_true(strpos($preservedConfig, "\$config['custom'] = 123;") !== false, "Preserves modified user config in plugins/xcalendar/config.inc.php");
+
+// Test 6: Upgrading empty license_key to RCPLUSFREE20266u
+echo "\n--- Test 6: Empty License Key Upgrade Verification ---\n";
+file_put_contents($tempDir . '/config/config.inc.php', str_replace("'RCPLUSFREE20266u'", "''", file_get_contents($tempDir . '/config/config.inc.php')));
+$installerUpgrade = new RoundcubeExtraContentInstaller(dirname(__DIR__), $tempDir);
+$installerUpgrade->parseCliArgs(['--roundcube-path=' . $tempDir, '--activate']);
+$installerUpgrade->execute();
+$upgradedConfig = file_get_contents($tempDir . '/config/config.inc.php');
+assert_true(strpos($upgradedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "Empty license_key automatically upgraded to RCPLUSFREE20266u");
 
 // Cleanup
 remove_dir_recursive($tempDir);

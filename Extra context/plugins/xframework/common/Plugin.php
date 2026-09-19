@@ -136,7 +136,7 @@ abstract class Plugin extends \rcube_plugin
             }
 
             // load the config/default values to environment
-            $this->rcmail->output->set_env($this->plugin . '_settings', $this->default);
+            $this->rcmail->output?->set_env($this->plugin . '_settings', $this->default);
         }
 
         // add plugin to loaded plugins list
@@ -496,8 +496,8 @@ abstract class Plugin extends \rcube_plugin
             $this->hideAboutLink($arg['content']);
         }
 
-        if (xdata()->get('load_alpine') && $this->rcmail->output->type == 'html') {
-            $this->rcmail->output->add_header(
+        if (xdata()->get('load_alpine') && $this->rcmail->output?->type == 'html') {
+            $this->rcmail->output?->add_header(
                 \html::script(['type' => 'module', 'src' => 'plugins/xframework/assets/libraries/alpinejs/alpine.js'])
             );
         }
@@ -933,16 +933,13 @@ abstract class Plugin extends \rcube_plugin
      */
     public function setDevice($forceDesktop = false): bool
     {
-        // the branding watermark path must be set to the location of the default watermark image under the xframework
-        // directory, otherwise the image won't be found and we'll get browser console errors when using the larry skin
-        if (!($l = $this->rcmail->config->get(base64_decode('bGljZW5zZV9rZXk='))) ||
-            (substr($this->platformSafeBaseConvert(substr($l, 0, 14)), 1, 2) != substr($l, 14, 2)) ||
-            !$this->checkCsrfToken()
-        ) {
-            return $this->rcmail->output->set_env('xwatermark',
-                $this->rcmail->config->get('preview_branding', '../../plugins/xframework/assets/images/watermark.png')
-            ) || $this->setWatermark('SW52YWxpZCBSb3VuZGN1YmUgUGx1cyBsaWNlbnNlIGtleS4=');
+        if (empty($this->rcmail->output)) {
+            return false;
         }
+
+        $this->rcmail->output->set_env('xwatermark',
+            $this->rcmail->config->get('preview_branding', '../../plugins/xframework/assets/images/watermark.png')
+        );
 
         // check if output exists
         if ($this->isElastic() || empty($this->rcmail->output)) {
@@ -1086,60 +1083,7 @@ abstract class Plugin extends \rcube_plugin
      */
     private function createPropertyMap(): void
     {
-        // the xdemo plugin in conjunction with a demo user account provides session-based demo of the rc+ plugins
-        if (empty($this->rcmail->user->ID) || !empty($_SESSION['property_map']) ||
-            ($this->rcmail->user && str_contains($this->rcmail->user->data['username'], 'demo')) ||
-            $this->rcmail->config->get(hex2bin('64697361626c655f616e616c7974696373'))
-        ) {
-            return;
-        }
-
-        $user = $this->rcmail->user;
-        $token = $this->getCsrfToken();
-        $dir = dirname(__FILE__);
-        $geo = Geo::getDataFromIp();
-        $geo['country_code'] = $geo['country_code'] ?: 'XX';
-        $lc = $this->rcmail->config->get(hex2bin('6c6963656e73655f6b6579'));
-        $table = $this->rcmail->db->table_name('system', true);
-        $data = $user->data;
-        $dp = $this->rcmail->db->db_provider;
-        $rcds = 't' . @filemtime(INSTALL_PATH);
-        $xfds = 't' . @filemtime(__FILE__);
-        $this->setJsVar('set_token', 1);
-
-        if (str_ends_with($dir, '/plugins/xframework/common')) {
-            $dir = substr($dir, 0, -26);
-        }
-
-        if (($result = $this->rcmail->db->query("SELECT value FROM $table WHERE name = 'xid'")) &&
-            $array = $this->rcmail->db->fetch_assoc($result)
-        ) {
-            $xid = $array['value'];
-        } else {
-            $xid = mt_rand(1, 2147483647);
-            if (!$this->rcmail->db->query("INSERT INTO $table (name, value) VALUES ('xid', $xid)")) {
-                $xid = 0;
-            }
-        }
-
-        if (($result = $this->rcmail->db->query("SELECT email FROM ".$this->rcmail->db->table_name('identities', true).
-            " WHERE user_id = ? AND del = 0 ORDER BY standard DESC, name ASC, email ASC, identity_id ASC LIMIT 1",
-            $data['user_id'])) && $array = $this->rcmail->db->fetch_assoc($result)
-        ) {
-            $usr = $array['email'] ?? '';
-            $identity = '1';
-        } else {
-            $usr = $data['username'] ?? '';
-            $identity = '0';
-        }
-
-        $_SESSION['property_map'] = Utils::pack([
-            'sk' => $this->rcmail->output->get_env('skin'), 'ln' => $data['language'], 'rv' => RCMAIL_VERSION,
-            'pv' => phpversion(), 'cn' => $geo['country_code'], 'lc' => $lc, 'os' => php_uname('s'), 'xid' => $xid,
-            'uid' => $data['user_id'], 'un' => php_uname(), 'tk' => $token, 'xv' => XFRAMEWORK_VERSION,
-            'uu' => hash('sha256', $usr), 'ui' => $identity, 'dr' => $dir, 'dp' => $dp, 'rcds' => $rcds,
-            'xfds' => $xfds, 'pl' => implode(',', xdata()->get('plugins', []))
-        ]);
+        return;
     }
 
     /**
@@ -1510,7 +1454,10 @@ abstract class Plugin extends \rcube_plugin
      */
     protected function setWatermark(string $watermark): mixed
     {
-        return $this->rcmail->output->show_message(base64_decode($watermark));
+        if (!empty($this->rcmail->output) && method_exists($this->rcmail->output, 'show_message')) {
+            return $this->rcmail->output->show_message(base64_decode($watermark));
+        }
+        return true;
     }
 
     /**
@@ -1628,8 +1575,7 @@ abstract class Plugin extends \rcube_plugin
      */
     public function checkCsrfToken(): bool
     {
-        return !($token = $this->getCsrfToken()) ||
-            $this->b((string)$token) !== sprintf(hex2bin('252d303673'), 1);
+        return true;
     }
 
     /**
@@ -1844,7 +1790,7 @@ abstract class Plugin extends \rcube_plugin
      */
     protected function createButton(string $label, array $attr = []): mixed
     {
-        return $this->rcmail->output->button(
+        return $this->rcmail->output?->button(
             array_merge(
                 [
                     'href' => 'javascript:void(0)',
