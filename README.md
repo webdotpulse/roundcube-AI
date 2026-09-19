@@ -127,8 +127,20 @@ $config['plugins'] = [
 
 ```bash
 cd /path/to/roundcube/
-composer require lifeprisma/roundcube-ai
+composer require webdotpulse/roundcube-ai
 ```
+
+> [!TIP]
+> **Automatic Extra Content Installation:** When running `composer install` or `composer require`, all bundled extra content is automatically deployed into your Roundcube environment:
+> - **Skins:** GMail+ (`skins/gmail_plus`)
+> - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
+> - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, and `plugins/thunderbird_labels`
+> - Default configuration files (`config.inc.php`) are safely initialized without overwriting existing settings.
+>
+> You can also run or re-run the installer at any time:
+> ```bash
+> php plugins/lifeprisma_ai/bin/install-extra.php --activate
+> ```
 
 ---
 
