@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gemini Executive Assistant — Cron Worker Interactive Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-base: #090d16;
+      --bg-surface: #0f172a;
+      --bg-surface-elevated: #1e293b;
+      --bg-surface-glass: rgba(15, 23, 42, 0.82);
+      --border-subtle: #1e293b;
+      --border-highlight: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-glow: rgba(99, 102, 241, 0.25);
+      --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.25);
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.25);
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --code-bg: #070b13;
+      --code-border: #1e293b;
+      --badge-bg: rgba(99, 102, 241, 0.15);
+      --badge-text: #a5b4fc;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5);
+      --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.15);
+    }
+
+    [data-theme="light"] {
+      --bg-base: #f1f5f9;
+      --bg-surface: #ffffff;
+      --bg-surface-elevated: #f8fafc;
+      --bg-surface-glass: rgba(255, 255, 255, 0.88);
+      --border-subtle: #e2e8f0;
+      --border-highlight: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #94a3b8;
+      --primary: #4f46e5;
+      --primary-light: #6366f1;
+      --primary-glow: rgba(79, 70, 229, 0.15);
+      --accent-cyan: #0284c7;
+      --accent-cyan-glow: rgba(2, 132, 199, 0.15);
+      --accent-emerald: #059669;
+      --accent-emerald-glow: rgba(5, 150, 105, 0.15);
+      --code-bg: #0f172a;
+      --code-border: #334155;
+      --badge-bg: #e0e7ff;
+      --badge-text: #3730a3;
+      --shadow-glow: 0 10px 25px rgba(79, 70, 229, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      line-height: 1.6;
+      font-size: 15px;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Ambient background lighting */
+    .ambient-glow {
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 500px;
+      background: radial-gradient(ellipse at center, var(--primary-glow) 0%, rgba(6, 182, 212, 0.08) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app-container {
+      position: relative;
+      z-index: 1;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 20px 80px;
+    }
+
+    /* Header styling */
+    header.hero {
+      margin-bottom: 28px;
+      padding: 32px 36px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg), var(--shadow-glow);
+      backdrop-filter: blur(12px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    header.hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--accent-cyan), var(--accent-emerald));
+    }
+
+    .hero-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--badge-bg);
+      color: var(--badge-text);
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .badge-pill .pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    .hero h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: clamp(26px, 3.5vw, 36px);
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .hero h1 span.gradient-text {
+      background: linear-gradient(135deg, #a5b4fc 0%, #38bdf8 50%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p.lead {
+      color: var(--text-muted);
+      font-size: 15px;
+      max-width: 850px;
+    }
+
+    .theme-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .theme-toggle-btn:hover {
+      color: var(--text-main);
+      border-color: var(--primary);
+    }
+
+    /* Layout Grid */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 28px;
+    }
+
+    @media (min-width: 1060px) {
+      .main-grid {
+        grid-template-columns: 380px 1fr;
+      }
+    }
+
+    /* Sticky Config Sidebar */
+    .config-sidebar {
+      position: relative;
+    }
+
+    .config-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+    }
+
+    .config-card::-webkit-scrollbar {
+      width: 6px;
+    }
+    .config-card::-webkit-scrollbar-thumb {
+      background: var(--border-highlight);
+      border-radius: 3px;
+    }
+
+    .card-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .card-subtitle {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    /* Presets Chips */
+    .presets-container {
+      margin-bottom: 20px;
+    }
+
+    .presets-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .preset-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .preset-btn:hover {
+      background: rgba(99, 102, 241, 0.12);
+      border-color: var(--primary);
+      color: var(--text-main);
+    }
+
+    .preset-btn.active {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: var(--primary);
+      color: #c7d2fe;
+      font-weight: 600;
+    }
+
+    .preset-btn .badge-current {
+      margin-left: auto;
+      font-size: 10px;
+      background: var(--accent-emerald);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    /* Form Fields */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .form-label span.hint {
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text-dim);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 9px 12px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-md);
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      transition: all 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--primary-light);
+      box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .quick-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .chip-btn {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-dim);
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.15s ease;
+    }
+
+    .chip-btn:hover {
+      color: var(--text-main);
+      border-color: var(--primary);
+    }
+
+    /* Setup Progress Tracker */
+    .progress-widget {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .progress-bar-bg {
+      height: 8px;
+      background: var(--bg-surface-elevated);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent-emerald));
+      border-radius: 999px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .progress-reset-btn {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-size: 11px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .progress-reset-btn:hover {
+      color: var(--accent-rose);
+    }
+
+    /* Content Area */
+    .content-area {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      background: var(--bg-surface);
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--bg-surface);
+      border-color: var(--border-subtle);
+      color: var(--primary-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards / Sections */
+    .step-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 26px 30px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+    }
+
+    .step-card:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .step-checkbox-container {
+      padding-top: 2px;
+    }
+
+    .step-checkbox {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-highlight);
+      border-radius: 6px;
+      background: var(--bg-surface-elevated);
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .step-checkbox:hover {
+      border-color: var(--primary);
+    }
+
+    .step-checkbox:checked {
+      background: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+    }
+
+    .step-checkbox:checked::after {
+      content: '';
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+    }
+
+    .step-info {
+      flex: 1;
+    }
+
+    .step-num {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary-light);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .step-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.3;
+    }
+
+    .step-desc {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      margin-top: 6px;
+    }
+
+    /* Code Blocks */
+    .code-container {
+      position: relative;
+      background: var(--code-bg);
+      border: 1px solid var(--code-border);
+      border-radius: var(--radius-md);
+      margin: 14px 0 18px;
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid var(--code-border);
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .code-header .lang-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .copy-btn.copied {
+      background: var(--accent-emerald);
+      border-color: var(--accent-emerald);
+      color: #fff;
+    }
+
+    pre.code-block {
+      padding: 14px 16px;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      white-space: pre;
+    }
+
+    /* Highlight badge for variables inside code */
+    .code-param {
+      color: #38bdf8;
+      font-weight: 600;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 1px 4px;
+      border-radius: 3px;
+    }
+
+    /* Architecture Diagram */
+    .arch-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin: 18px 0;
+      font-family: 'JetBrains Mono', monospace;
+      color: #cbd5e1;
+      font-size: 13px;
+      overflow-x: auto;
+    }
+
+    .flow-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin: 16px 0;
+    }
+
+    .flow-step {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      position: relative;
+    }
+
+    .flow-step .step-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .flow-step h4 {
+      font-size: 14px;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .flow-step p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Alerts */
+    .callout {
+      display: flex;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .callout-info {
+      background: rgba(6, 182, 212, 0.08);
+      border: 1px solid rgba(6, 182, 212, 0.25);
+      color: #e0f2fe;
+    }
+
+    .callout-info svg {
+      color: var(--accent-cyan);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .callout-warning {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #fef3c7;
+    }
+
+    .callout-warning svg {
+      color: var(--accent-amber);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .callout-success {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      color: #d1fae5;
+    }
+
+    .callout-success svg {
+      color: var(--accent-emerald);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Tables */
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .styled-table th {
+      background: var(--bg-surface-elevated);
+      color: var(--text-muted);
+      font-weight: 600;
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-highlight);
+    }
+
+    .styled-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+    }
+
+    .styled-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Accordion */
+    .accordion-item {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      margin-bottom: 12px;
+      overflow: hidden;
+      background: var(--bg-surface-elevated);
+    }
+
+    .accordion-header {
+      width: 100%;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: none;
+      border: none;
+      color: var(--text-main);
+      font-size: 14.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .accordion-header:hover {
+      color: var(--primary-light);
+    }
+
+    .accordion-icon {
+      transition: transform 0.2s ease;
+    }
+
+    .accordion-item.open .accordion-icon {
+      transform: rotate(180deg);
+    }
+
+    .accordion-body {
+      padding: 0 18px 16px;
+      display: none;
+      color: var(--text-muted);
+      font-size: 13.5px;
+    }
+
+    .accordion-item.open .accordion-body {
+      display: block;
+    }
+
+    /* Terminal Simulator */
+    .terminal-window {
+      background: #050811;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      margin: 20px 0;
+      box-shadow: 0 20px 30px -10px rgba(0,0,0,0.7);
+    }
+
+    .terminal-topbar {
+      background: #0f172a;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1e293b;
+    }
+
+    .terminal-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #eab308; }
+    .dot-green { background: #22c55e; }
+
+    .terminal-title {
+      color: #94a3b8;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .terminal-screen {
+      padding: 18px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #94a3b8;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .term-prompt { color: #38bdf8; font-weight: 600; }
+    .term-info { color: #818cf8; }
+    .term-label { color: #f59e0b; font-weight: 600; }
+    .term-ai { color: #34d399; font-weight: 600; }
+    .term-gold { color: #fbbf24; }
+    .term-white { color: #f8fafc; font-weight: 600; }
+    .term-box { color: #64748b; }
+
+    /* Action bar */
+    .action-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: var(--radius-md);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--bg-surface-elevated);
+      border-color: var(--border-highlight);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-highlight);
+    }
+
+    /* Floating Toast */
+    .toast-msg {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--accent-emerald);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      font-size: 13.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+    }
+
+    .toast-msg.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff; color: #000; }
+      .ambient-glow, .config-sidebar, .nav-tabs, .theme-toggle-btn, .copy-btn, .toast-msg { display: none !important; }
+      .main-grid { display: block; }
+      .step-card { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; }
+      .code-container { background: #f8fafc; border: 1px solid #ccc; color: #000; }
+      pre.code-block { color: #000; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-glow"></div>
+
+  <div class="app-container">
+    <!-- Top Hero Section -->
+    <header class="hero">
+      <div class="hero-top">
+        <div class="badge-pill">
+          <span class="pulse-dot"></span>
+          Roundcube AI — Production Deployment Guide
+        </div>
+        <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle Theme">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+          <span id="themeLabel">Light Mode</span>
+        </button>
+      </div>
+      <h1>
+        Activating the <span class="gradient-text">Gemini Executive Assistant</span> Background Worker
+      </h1>
+      <p class="lead">
+        Interactive, live command generator for autonomous 24/7 IMAP triage, Roundcube label tagging, and learned draft reply replication. All commands below dynamically adapt to your real server paths in real time.
+      </p>
+    </header>
+
+    <!-- Main 2-Column Layout -->
+    <div class="main-grid">
+      <!-- Left: Interactive Parameters Sidebar -->
+      <aside class="config-sidebar">
+        <div class="config-card">
+          <div class="card-title">
+            <svg width="20" height="20" fill="none" stroke="var(--primary-light)" stroke-width="2" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"></path><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"></path></svg>
+            Server Parameters
+          </div>
+          <p class="card-subtitle">Values instantly update all commands, cron lines, and configs.</p>
+
+          <!-- Presets -->
+          <div class="presets-container">
+            <span class="presets-label">Server Profiles:</span>
+            <div class="preset-buttons">
+              <button type="button" class="preset-btn active" id="presetKoen">
+                <span>⚡ MobilityPulse / TheChargeGrid</span>
+                <span class="badge-current">Active</span>
+              </button>
+              <button type="button" class="preset-btn" id="presetStandard">
+                <span>🐧 Standard Debian / Ubuntu</span>
+              </button>
+              <button type="button" class="preset-btn" id="presetCustom">
+                <span>⚙️ Custom / cPanel / Shared</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Parameter Inputs -->
+          <div class="form-group">
+            <label class="form-label" for="inputPluginPath">
+              Plugin Root Path
+              <span class="hint">Absolute directory</span>
+            </label>
+            <input type="text" id="inputPluginPath" class="form-input" value="/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai" spellcheck="false" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputPhpBin">
+              PHP CLI Binary
+              <span class="hint">Path to php</span>
+            </label>
+            <input type="text" id="inputPhpBin" class="form-input" value="/usr/bin/php" spellcheck="false" />
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-target="inputPhpBin" data-val="/usr/bin/php">/usr/bin/php</button>
+              <button type="button" class="chip-btn" data-target="inputPhpBin" data-val="/usr/bin/php8.2">php8.2</button>
+              <button type="button" class="chip-btn" data-target="inputPhpBin" data-val="/usr/bin/php8.3">php8.3</button>
+              <button type="button" class="chip-btn" data-target="inputPhpBin" data-val="/usr/local/bin/php">/usr/local/bin/php</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputWebUser">
+              Server User : Group
+              <span class="hint">Owner of files</span>
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <input type="text" id="inputWebUser" class="form-input" value="mobilitypulsecom" placeholder="user" spellcheck="false" />
+              <input type="text" id="inputWebGroup" class="form-input" value="mobilitypulsecom" placeholder="group" spellcheck="false" />
+            </div>
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-user="mobilitypulsecom" data-group="mobilitypulsecom">mobilitypulsecom</button>
+              <button type="button" class="chip-btn" data-user="www-data" data-group="www-data">www-data</button>
+              <button type="button" class="chip-btn" data-user="nginx" data-group="nginx">nginx</button>
+              <button type="button" class="chip-btn" data-user="apache" data-group="apache">apache</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputLogFile">
+              Worker Log File
+              <span class="hint">Destination</span>
+            </label>
+            <input type="text" id="inputLogFile" class="form-input" value="/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log" spellcheck="false" />
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-target="inputLogFile" data-val="/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log">Plugin dir (Safe)</button>
+              <button type="button" class="chip-btn" data-target="inputLogFile" data-val="/var/log/roundcube-ai-worker.log">/var/log/... (Root)</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputCronFreq">
+              Cron Frequency
+              <span class="hint">Crontab timing</span>
+            </label>
+            <select id="inputCronFreq" class="form-select">
+              <option value="*/3 * * * *">Every 3 minutes (Recommended)</option>
+              <option value="*/5 * * * *">Every 5 minutes</option>
+              <option value="* * * * *">Every 1 minute (Ultra responsive)</option>
+              <option value="*/10 * * * *">Every 10 minutes</option>
+              <option value="*/15 * * * *">Every 15 minutes</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputEmail">
+              Monitored Email
+              <span class="hint">Target account</span>
+            </label>
+            <input type="text" id="inputEmail" class="form-input" value="koen@thechargegrid.com" spellcheck="false" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputImapHost">
+              IMAP Server Host
+              <span class="hint">Port 993/143</span>
+            </label>
+            <input type="text" id="inputImapHost" class="form-input" value="ssl://localhost:993" spellcheck="false" />
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-target="inputImapHost" data-val="ssl://localhost:993">ssl://localhost:993</button>
+              <button type="button" class="chip-btn" data-target="inputImapHost" data-val="ssl://mail.thechargegrid.com:993">mail.thechargegrid.com</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="inputDraftsFolder">
+              IMAP Drafts Folder
+              <span class="hint">Folder name</span>
+            </label>
+            <input type="text" id="inputDraftsFolder" class="form-input" value="Drafts" spellcheck="false" />
+            <div class="quick-chips">
+              <button type="button" class="chip-btn" data-target="inputDraftsFolder" data-val="Drafts">Drafts</button>
+              <button type="button" class="chip-btn" data-target="inputDraftsFolder" data-val="INBOX.Drafts">INBOX.Drafts</button>
+              <button type="button" class="chip-btn" data-target="inputDraftsFolder" data-val="Concepten">Concepten (Dutch)</button>
+            </div>
+          </div>
+
+          <!-- Progress Widget -->
+          <div class="progress-widget">
+            <div class="progress-header">
+              <span>Setup Progress</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="progressBar" class="progress-bar-fill"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span id="progressStepsText" style="font-size: 11.5px; color: var(--text-dim);">0 of 6 steps completed</span>
+              <button type="button" id="btnResetProgress" class="progress-reset-btn">Reset</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right: Main Content & Step-by-Step Interactive Guide -->
+      <main class="content-area">
+        <!-- Tab Navigation -->
+        <nav class="nav-tabs" role="tablist">
+          <button class="tab-btn active" data-tab="tab-guide">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2Z"></path></svg>
+            Step-by-Step Manual
+          </button>
+          <button class="tab-btn" data-tab="tab-script">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6m8 14h8"></path></svg>
+            One-Click Bash Script
+          </button>
+          <button class="tab-btn" data-tab="tab-systemd">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7Z"></path></svg>
+            24/7 Systemd Daemon
+          </button>
+          <button class="tab-btn" data-tab="tab-simulator">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+            Dry-Run Terminal Sim
+          </button>
+          <button class="tab-btn" data-tab="tab-troubleshoot">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            Troubleshooting
+          </button>
+        </nav>
+
+        <!-- TAB 1: STEP-BY-STEP MANUAL -->
+        <div id="tab-guide" class="tab-pane active">
+          <!-- Architecture Overview Card -->
+          <div class="step-card">
+            <div class="step-num">Architecture Overview</div>
+            <h2 class="step-title">How the Background Worker Operates</h2>
+            <p class="step-desc">
+              The worker runs autonomously in the background via Linux Cron or Systemd daemon (even when all users are completely logged out of Roundcube). It connects to IMAP, triages unread mail with Gemini 3.8 Flash, tags emails with organizational labels, replicates learned answers, and prepares draft replies.
+            </p>
+
+            <div class="flow-grid">
+              <div class="flow-step">
+                <span class="step-tag">Step 1 • Triage</span>
+                <h4>Security & Priority</h4>
+                <p>Gemini analyzes urgency, sender intent, and tags with Roundcube IMAP label flags ($Label1 - $Label5).</p>
+              </div>
+              <div class="flow-step">
+                <span class="step-tag">Step 2 • Memory</span>
+                <h4>Knowledge Replication</h4>
+                <p>Checks AI memory for previously verified answers to common client questions and replicates them consistently.</p>
+              </div>
+              <div class="flow-step">
+                <span class="step-tag">Step 3 • Drafts</span>
+                <h4>Draft Generation</h4>
+                <p>Generates executive draft replies and saves them directly into your IMAP Drafts folder (ready for review).</p>
+              </div>
+            </div>
+
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">worker-flow.diag</span>
+                <button class="copy-btn" data-copy-target="archDiagram">Copy Diagram</button>
+              </div>
+              <pre class="code-block" id="archDiagram">[ Incoming Client Email in INBOX ]
+               │
+               ▼
+   [ Background Cron Worker ] (<span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php)
+               │
+               ├─► 1. Triage & Security Check (Gemini)
+               │      └─► Sets IMAP Label Flag ($Label1 - $Label5 via roundcube-labels)
+               │
+               ├─► 2. AI Knowledge & Memory Check
+               │      └─► Replicates verified answer if similar question was answered before
+               │
+               └─► 3. Draft Generation (Gemini 3.8 Flash)
+                      └─► Saves formatted draft into IMAP "<span class="dyn-drafts-folder">Drafts</span>" folder (X-Unsent: 1)</pre>
+            </div>
+          </div>
+
+          <!-- STEP 1: PREREQUISITES -->
+          <div class="step-card" id="step1">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep1" data-step="1" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 1</span>
+                <h3 class="step-title">Verify System Prerequisites</h3>
+                <p class="step-desc">
+                  Run the following command on your server to verify that your PHP CLI environment satisfies all prerequisites.
+                </p>
+              </div>
+            </div>
+
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdPrereq">Copy Command</button>
+              </div>
+              <pre class="code-block" id="cmdPrereq"><span class="dyn-php-bin">/usr/bin/php</span> -v
+<span class="dyn-php-bin">/usr/bin/php</span> -m | grep -E "openssl|curl|json|mbstring|pcntl"</pre>
+            </div>
+
+            <div class="callout callout-info">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <div>
+                <strong>Requirements Checklist:</strong>
+                <ul style="margin: 4px 0 0 16px;">
+                  <li><strong>PHP CLI</strong>: Version 8.0 or newer (8.1, 8.2, 8.3 fully supported).</li>
+                  <li><strong>openssl</strong>: For secure IMAP TLS/SSL connections.</li>
+                  <li><strong>curl</strong>: For Google Gemini API communication.</li>
+                  <li><strong>json & mbstring</strong>: For payload parsing and UTF-8 handling.</li>
+                  <li><strong>pcntl</strong>: Optional, used for graceful shutdown signals when running in daemon mode.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 2: CONFIGURE WORKER -->
+          <div class="step-card" id="step2">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep2" data-step="2" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 2</span>
+                <h3 class="step-title">Configure Worker Settings in config.inc.php</h3>
+                <p class="step-desc">
+                  Ensure your plugin configuration file exists in your plugin directory and configure the background worker options.
+                </p>
+              </div>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 8px;">
+              Initialize configuration from distribution template:
+            </p>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdInitConfig">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdInitConfig">cd <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>
+test -f config.inc.php || cp config.inc.php.dist config.inc.php</pre>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 16px 0 8px;">
+              Snippet to verify/add inside <code style="color: #38bdf8;">config.inc.php</code>:
+            </p>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">php — config.inc.php</span>
+                <button class="copy-btn" data-copy-target="codeConfigSnippet">Copy PHP Config</button>
+              </div>
+              <pre class="code-block" id="codeConfigSnippet">// 1. Google Gemini API Key & Model
+$config['lifeprisma_ai_gemini_api_key'] = 'YOUR_GOOGLE_GEMINI_API_KEY';
+$config['lifeprisma_ai_gemini_model'] = 'gemini-3.8-flash';
+
+// 2. Message Triage Labels (roundcube-labels integration)
+$config['lifeprisma_ai_triage_labels_enabled'] = true;
+$config['lifeprisma_ai_triage_label_map'] = [
+    'action_required_high' => '$Label1', // Belangrijk / Important (Red)
+    'action_required'      => '$Label4', // Te doen / To Do (Blue)
+    'meeting'              => '$Label2', // Werk / Work (Orange)
+    'follow_up'            => '$Label4', // Te doen / To Do (Blue)
+    'fyi'                  => '$Label5', // Later (Violet)
+    'scam'                 => '$Label1', // Warning
+];
+
+// 3. 24/7 Background Worker Accounts Configuration
+$config['lifeprisma_ai_worker_imap_host'] = '<span class="dyn-imap-host">ssl://localhost:993</span>';
+$config['lifeprisma_ai_worker_accounts'] = [
+    [
+        'email' => '<span class="dyn-email">koen@thechargegrid.com</span>',
+        'password' => 'your_secret_email_or_app_password',
+        'drafts_folder' => '<span class="dyn-drafts-folder">Drafts</span>',
+    ],
+];</pre>
+            </div>
+          </div>
+
+          <!-- STEP 3: DRY RUN TEST -->
+          <div class="step-card" id="step3">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep3" data-step="3" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 3</span>
+                <h3 class="step-title">Test with Safe Dry-Run Mode</h3>
+                <p class="step-desc">
+                  Before creating the cron job, test the worker in safe <strong>dry-run</strong> mode. This verifies IMAP connectivity and Gemini API responses without modifying anything in your mailbox.
+                </p>
+              </div>
+            </div>
+
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdDryRun">Copy Dry-Run Command</button>
+              </div>
+              <pre class="code-block" id="cmdDryRun">cd <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>
+<span class="dyn-php-bin">/usr/bin/php</span> bin/worker.php --account=<span class="dyn-email">koen@thechargegrid.com</span> --dry-run --verbose</pre>
+            </div>
+
+            <div class="callout callout-success">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <div>
+                <strong>Safe Testing Guarantee:</strong>
+                In <code>--dry-run</code> mode, emails are never marked read, labels are not permanently stored, and no drafts are deposited onto the IMAP server. You can view the simulated output in the <a href="#" onclick="switchTab('tab-simulator'); return false;" style="color: var(--accent-cyan); text-decoration: underline;">Dry-Run Simulator Tab</a>.
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: LINUX CRON SETUP -->
+          <div class="step-card" id="step4">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep4" data-step="4" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 4</span>
+                <h3 class="step-title">Setup Permissions, Log File & Linux Cron Job</h3>
+                <p class="step-desc">
+                  Set permissions, initialize the log file, and schedule the background execution in crontab.
+                </p>
+              </div>
+            </div>
+
+            <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">1. Set Execution Permissions:</h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdPermissions">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdPermissions">chmod +x <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php
+chown -R <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">mobilitypulsecom</span> <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span></pre>
+            </div>
+
+            <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">2. Initialize Log File:</h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdInitLog">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdInitLog">touch <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
+chown <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">mobilitypulsecom</span> <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
+chmod 0640 <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span></pre>
+            </div>
+
+            <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">3. Edit Crontab:</h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdEditCron">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdEditCron"># Open user crontab
+crontab -e -u <span class="dyn-user">mobilitypulsecom</span></pre>
+            </div>
+
+            <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">4. Crontab Entry to Add:</h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">cron</span>
+                <button class="copy-btn" data-copy-target="cmdCronLine">Copy Crontab Entry</button>
+              </div>
+              <pre class="code-block" id="cmdCronLine"><span class="dyn-cron-freq">*/3 * * * *</span> <span class="dyn-php-bin">/usr/bin/php</span> <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php >> <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span> 2>&1</pre>
+            </div>
+          </div>
+
+          <!-- STEP 5: LOG ROTATION -->
+          <div class="step-card" id="step5">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep5" data-step="5" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 5</span>
+                <h3 class="step-title">Configure Log Rotation (Optional but Recommended)</h3>
+                <p class="step-desc">
+                  Prevent log files from growing indefinitely on production servers.
+                </p>
+              </div>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 8px;">
+              Create <code>/etc/logrotate.d/roundcube-ai-worker</code> (requires root/sudo):
+            </p>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">logrotate</span>
+                <button class="copy-btn" data-copy-target="codeLogrotate">Copy Logrotate Config</button>
+              </div>
+              <pre class="code-block" id="codeLogrotate"><span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span> {
+    weekly
+    missingok
+    rotate 8
+    compress
+    delaycompress
+    notifempty
+    create 0640 <span class="dyn-user">mobilitypulsecom</span> <span class="dyn-group">mobilitypulsecom</span>
+}</pre>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--text-muted); margin: 12px 0 8px;">
+              Verify logrotate syntax:
+            </p>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdTestLogrotate">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdTestLogrotate">logrotate -d /etc/logrotate.d/roundcube-ai-worker</pre>
+            </div>
+          </div>
+
+          <!-- STEP 6: VERIFICATION CHECKLIST -->
+          <div class="step-card" id="step6">
+            <div class="step-header">
+              <div class="step-checkbox-container">
+                <input type="checkbox" class="step-checkbox" id="checkStep6" data-step="6" />
+              </div>
+              <div class="step-info">
+                <span class="step-num">Step 6</span>
+                <h3 class="step-title">Live Verification & Monitoring</h3>
+                <p class="step-desc">
+                  Monitor the real-time execution and verify all autonomous AI actions.
+                </p>
+              </div>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 8px;">
+              Tail the live worker log:
+            </p>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdTailLog">Copy</button>
+              </div>
+              <pre class="code-block" id="cmdTailLog">tail -f <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span></pre>
+            </div>
+
+            <table class="styled-table">
+              <thead>
+                <tr>
+                  <th>Check</th>
+                  <th>Command / Test</th>
+                  <th>Expected Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Crontab Active</strong></td>
+                  <td><code>crontab -l -u <span class="dyn-user">mobilitypulsecom</span></code></td>
+                  <td>Shows the worker command line entry</td>
+                </tr>
+                <tr>
+                  <td><strong>Log Output</strong></td>
+                  <td><code>tail -n 30 <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/.../worker.log</span></code></td>
+                  <td>Shows periodic processing passes and UID counts</td>
+                </tr>
+                <tr>
+                  <td><strong>Label Synchronization</strong></td>
+                  <td>Send email with "Urgent: Proposal needed"</td>
+                  <td>Email receives Red / Blue label flag in Roundcube</td>
+                </tr>
+                <tr>
+                  <td><strong>Drafts Generated</strong></td>
+                  <td>Check Roundcube "<span class="dyn-drafts-folder">Drafts</span>" folder</td>
+                  <td>New draft response appears with "Re: Proposal needed"</td>
+                </tr>
+                <tr>
+                  <td><strong>AI Memory Replication</strong></td>
+                  <td>Ask a known customer pricing/feature question</td>
+                  <td>Replicates consistent company answer from memory</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 2: ONE-CLICK BASH SCRIPT -->
+        <div id="tab-script" class="tab-pane">
+          <div class="step-card">
+            <div class="step-num">Quick Deployment</div>
+            <h2 class="step-title">Automated Server Setup Script</h2>
+            <p class="step-desc">
+              Execute this single self-contained script on your server. It will check prerequisites, set executable permissions, initialize log files, run a safe dry-run test, and print the exact crontab entry for you.
+            </p>
+
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash — setup-worker.sh</span>
+                <button class="copy-btn" data-copy-target="scriptDeploy">Copy Full Script</button>
+              </div>
+              <pre class="code-block" id="scriptDeploy">#!/usr/bin/env bash
+# ==============================================================================
+# Gemini Executive Assistant Worker — Automated Installer
+# Target: <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>
+# Generated dynamically for: <span class="dyn-user">mobilitypulsecom</span> / <span class="dyn-email">koen@thechargegrid.com</span>
+# ==============================================================================
+
+set -e
+echo "========================================================="
+echo "Gemini Executive Assistant — Cron Worker Setup"
+echo "========================================================="
+
+PLUGIN_DIR="<span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>"
+PHP_BIN="<span class="dyn-php-bin">/usr/bin/php</span>"
+LOG_FILE="<span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>"
+USER="<span class="dyn-user">mobilitypulsecom</span>"
+GROUP="<span class="dyn-group">mobilitypulsecom</span>"
+
+# 1. Check PHP
+echo "[1/5] Checking PHP CLI..."
+if ! command -v "$PHP_BIN" &> /dev/null; then
+    echo "ERROR: PHP binary not found at $PHP_BIN"
+    exit 1
+fi
+echo "  Found PHP version: $("$PHP_BIN" -r 'echo PHP_VERSION;')"
+
+# 2. Check directory
+echo "[2/5] Checking plugin directory..."
+if [ ! -d "$PLUGIN_DIR" ]; then
+    echo "ERROR: Plugin directory $PLUGIN_DIR does not exist!"
+    exit 1
+fi
+
+# 3. Permissions
+echo "[3/5] Setting permissions..."
+chmod +x "$PLUGIN_DIR/bin/worker.php"
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+chmod 0640 "$LOG_FILE"
+echo "  Worker binary and log permissions set."
+
+# 4. Dry Run Test
+echo "[4/5] Testing worker in dry-run mode..."
+"$PHP_BIN" "$PLUGIN_DIR/bin/worker.php" --dry-run || {
+    echo "WARNING: Dry-run test exited with a warning. Check config.inc.php!"
+}
+
+# 5. Crontab reminder
+echo "[5/5] Setup complete! Add this line to your crontab (crontab -e -u $USER):"
+echo "---------------------------------------------------------"
+echo "<span class="dyn-cron-freq">*/3 * * * *</span> $PHP_BIN $PLUGIN_DIR/bin/worker.php >> $LOG_FILE 2>&1"
+echo "---------------------------------------------------------"
+echo "Done! Monitor with: tail -f $LOG_FILE"
+</pre>
+            </div>
+
+            <div class="action-row">
+              <button type="button" class="btn-action btn-primary" id="btnDownloadScript">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                Download setup-worker.sh
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: SYSTEMD DAEMON -->
+        <div id="tab-systemd" class="tab-pane">
+          <div class="step-card">
+            <div class="step-num">Alternative: 24/7 Daemon</div>
+            <h2 class="step-title">Systemd Background Service</h2>
+            <p class="step-desc">
+              If your server supports root systemd services and you prefer a continuous background daemon rather than cron, configure this service unit.
+            </p>
+
+            <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--text-main);">1. Service Unit: <code>/etc/systemd/system/lifeprisma-ai-worker.service</code></h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">systemd — lifeprisma-ai-worker.service</span>
+                <button class="copy-btn" data-copy-target="codeSystemdUnit">Copy Service File</button>
+              </div>
+              <pre class="code-block" id="codeSystemdUnit">[Unit]
+Description=Gemini Executive Assistant 24/7 Background Worker (Autonomous Mode)
+After=network.target dovecot.service
+
+[Service]
+Type=simple
+User=<span class="dyn-user">mobilitypulsecom</span>
+Group=<span class="dyn-group">mobilitypulsecom</span>
+WorkingDirectory=<span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>
+ExecStart=<span class="dyn-php-bin">/usr/bin/php</span> <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php --daemon --interval=60
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target</pre>
+            </div>
+
+            <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">2. Enable and Start Systemd Daemon:</h4>
+            <div class="code-container">
+              <div class="code-header">
+                <span class="lang-tag">bash</span>
+                <button class="copy-btn" data-copy-target="cmdSystemdCtrl">Copy Commands</button>
+              </div>
+              <pre class="code-block" id="cmdSystemdCtrl">systemctl daemon-reload
+systemctl enable lifeprisma-ai-worker.service
+systemctl start lifeprisma-ai-worker.service
+
+# Check status and live log stream
+systemctl status lifeprisma-ai-worker.service
+journalctl -u lifeprisma-ai-worker.service -f</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: DRY RUN SIMULATOR -->
+        <div id="tab-simulator" class="tab-pane">
+          <div class="step-card">
+            <div class="step-num">CLI Sandbox</div>
+            <h2 class="step-title">Interactive Terminal Output Simulator</h2>
+            <p class="step-desc">
+              Preview what running <code>worker.php --dry-run --verbose</code> looks like on your server with your configured paths and accounts:
+            </p>
+
+            <div class="terminal-window">
+              <div class="terminal-topbar">
+                <div class="terminal-dot dot-red"></div>
+                <div class="terminal-dot dot-yellow"></div>
+                <div class="terminal-dot dot-green"></div>
+                <div class="terminal-title">bash — <span class="dyn-user">mobilitypulsecom</span>@server</div>
+              </div>
+              <div class="terminal-screen" id="terminalScreen">
+                <div><span class="term-prompt"><span class="dyn-user">mobilitypulsecom</span>@server:~$</span> cd <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span></div>
+                <div><span class="term-prompt"><span class="dyn-user">mobilitypulsecom</span>@server:~$</span> <span class="dyn-php-bin">/usr/bin/php</span> bin/worker.php --account=<span class="dyn-email">koen@thechargegrid.com</span> --dry-run --verbose</div>
+                <div class="term-box">===========================================================</div>
+                <div class="term-white">Gemini Executive Assistant — 24/7 CLI Background Worker</div>
+                <div>Model: <span class="term-gold">gemini-3.8-flash</span> | Mode: Single Pass</div>
+                <div class="term-gold">DRY RUN MODE ENABLED — No changes will be written to IMAP</div>
+                <div class="term-box">===========================================================</div>
+                <div><span class="term-info">[INFO]</span> Loading configuration from: <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/config.inc.php</div>
+                <div><span class="term-info">[INFO]</span> Processing account: <span class="term-white"><span class="dyn-email">koen@thechargegrid.com</span></span> on <span class="dyn-imap-host">ssl://localhost:993</span></div>
+                <div><span class="term-info">[INFO]</span> Connected to IMAP server successfully.</div>
+                <div><span class="term-info">[INFO]</span> INBOX: Found 1 unread message. Processing...</div>
+                <div><span class="term-label">[LABEL]</span> UID 142 "Urgent: Charging Station Contract Proposal" — Tagged with label <span class="term-gold">$Label1 (Belangrijk)</span></div>
+                <div><span class="term-ai">[AI]</span> Gemini 3.8 Flash triage classification: <span class="term-white">action_required_high</span> (Urgency: high)</div>
+                <div><span class="term-ai">[AI]</span> Generating executive draft reply in Dutch/English...</div>
+                <div class="term-box">================= [DRY-RUN DRAFT] =================</div>
+                <div><span class="term-gold">To:</span> client@example.com</div>
+                <div><span class="term-gold">Subject:</span> Re: Urgent: Charging Station Contract Proposal</div>
+                <div><span class="term-gold">Folder:</span> <span class="dyn-drafts-folder">Drafts</span> (X-Unsent: 1)</div>
+                <div style="color: #cbd5e1; margin-top: 6px;">
+Beste heer/mevrouw,<br/><br/>
+Hartelijk dank voor uw bericht over het laadstation contractvoorstel.<br/>
+Ik heb uw documenten doorgenomen en we bereiden de gevraagde aanpassingen voor.<br/>
+U ontvangt voor het einde van de werkdag een definitieve bevestiging.<br/><br/>
+Met vriendelijke groet,<br/>
+<span class="dyn-email">koen@thechargegrid.com</span>
+                </div>
+                <div class="term-box">===================================================</div>
+                <div><span class="term-info">[INFO]</span> [DRY-RUN] Skipped IMAP write. Message UID 142 kept unread.</div>
+                <div><span class="term-info">[INFO]</span> Worker pass finished cleanly. Duration: 1.42s</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 5: TROUBLESHOOTING -->
+        <div id="tab-troubleshoot" class="tab-pane">
+          <div class="step-card">
+            <div class="step-num">Diagnostics</div>
+            <h2 class="step-title">Common Issues & Troubleshooting Matrix</h2>
+            <p class="step-desc">
+              Click any issue below for immediate diagnosis and customized resolution commands.
+            </p>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                <span>1. Cannot connect to IMAP server (Connection refused / SSL failure)</span>
+                <span class="accordion-icon">▼</span>
+              </button>
+              <div class="accordion-body">
+                <p><strong>Cause:</strong> Host port mismatch or strict SSL certificate verification on localhost.</p>
+                <ul style="margin: 8px 0 12px 20px;">
+                  <li>Check whether your mail server listens on <code>ssl://localhost:993</code> (implicit TLS) or <code>tcp://localhost:143</code> (STARTTLS).</li>
+                  <li>If your hostname certificate requires fully qualified domain name, change <code>$config['lifeprisma_ai_worker_imap_host']</code> from <code>localhost</code> to your server FQDN (e.g., <code>ssl://mail.thechargegrid.com:993</code>).</li>
+                </ul>
+                <div class="code-container">
+                  <div class="code-header">
+                    <span class="lang-tag">bash — test port</span>
+                    <button class="copy-btn" data-copy-target="testPortCmd">Copy</button>
+                  </div>
+                  <pre class="code-block" id="testPortCmd">nc -zv localhost 993 || nc -zv localhost 143</pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                <span>2. Drafts folder name mismatch (Drafts not visible in Roundcube)</span>
+                <span class="accordion-icon">▼</span>
+              </button>
+              <div class="accordion-body">
+                <p><strong>Cause:</strong> Mail servers use different folder naming conventions depending on locale and server configuration:</p>
+                <ul style="margin: 8px 0 12px 20px;">
+                  <li>English: <code>Drafts</code></li>
+                  <li>Dovecot namespace prefix: <code>INBOX.Drafts</code></li>
+                  <li>Dutch: <code>Concepten</code> or <code>INBOX.Concepten</code></li>
+                </ul>
+                <p>Set <code>'drafts_folder' => '<span class="dyn-drafts-folder">Drafts</span>'</code> in your account configuration array in <code>config.inc.php</code>.</p>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                <span>3. Crontab permission denied or log file write error</span>
+                <span class="accordion-icon">▼</span>
+              </button>
+              <div class="accordion-body">
+                <p><strong>Cause:</strong> The user running the cron job does not have write permissions to the destination log file.</p>
+                <div class="code-container">
+                  <div class="code-header">
+                    <span class="lang-tag">bash — fix permissions</span>
+                    <button class="copy-btn" data-copy-target="fixPermCmd">Copy</button>
+                  </div>
+                  <pre class="code-block" id="fixPermCmd">touch <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
+chown <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">mobilitypulsecom</span> <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
+chmod 0640 <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                <span>4. Dovecot Master User authentication syntax</span>
+                <span class="accordion-icon">▼</span>
+              </button>
+              <div class="accordion-body">
+                <p>If you prefer not to store individual account passwords, configure Dovecot Master Users:</p>
+                <div class="code-container">
+                  <div class="code-header">
+                    <span class="lang-tag">php — config.inc.php</span>
+                    <button class="copy-btn" data-copy-target="codeMasterUser">Copy</button>
+                  </div>
+                  <pre class="code-block" id="codeMasterUser">$config['lifeprisma_ai_worker_imap_host'] = '<span class="dyn-imap-host">ssl://localhost:993</span>';
+$config['lifeprisma_ai_worker_dovecot_master_user'] = 'masteradmin';
+$config['lifeprisma_ai_worker_dovecot_master_password'] = 'your_master_secret';
+$config['lifeprisma_ai_worker_accounts'] = [
+    ['email' => '<span class="dyn-email">koen@thechargegrid.com</span>', 'drafts_folder' => '<span class="dyn-drafts-folder">Drafts</span>'],
+];</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Floating Toast Notification -->
+  <div id="toast" class="toast-msg">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    <span id="toastText">Copied to clipboard!</span>
+  </div>
+
+  <!-- Interactive JavaScript Engine -->
+  <script>
+    (function () {
+      'use strict';
+
+      // State
+      const state = {
+        pluginPath: '/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai',
+        phpBin: '/usr/bin/php',
+        webUser: 'mobilitypulsecom',
+        webGroup: 'mobilitypulsecom',
+        logFile: '/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log',
+        cronFreq: '*/3 * * * *',
+        email: 'koen@thechargegrid.com',
+        imapHost: 'ssl://localhost:993',
+        draftsFolder: 'Drafts',
+        theme: 'dark',
+        completedSteps: {}
+      };
+
+      // Profiles
+      const profiles = {
+        koen: {
+          pluginPath: '/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai',
+          phpBin: '/usr/bin/php',
+          webUser: 'mobilitypulsecom',
+          webGroup: 'mobilitypulsecom',
+          logFile: '/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log',
+          cronFreq: '*/3 * * * *',
+          email: 'koen@thechargegrid.com',
+          imapHost: 'ssl://localhost:993',
+          draftsFolder: 'Drafts'
+        },
+        standard: {
+          pluginPath: '/var/www/html/plugins/lifeprisma_ai',
+          phpBin: '/usr/bin/php',
+          webUser: 'www-data',
+          webGroup: 'www-data',
+          logFile: '/var/log/roundcube-ai-worker.log',
+          cronFreq: '*/3 * * * *',
+          email: 'koen@thechargegrid.com',
+          imapHost: 'ssl://localhost:993',
+          draftsFolder: 'Drafts'
+        },
+        custom: {
+          pluginPath: '/home/username/public_html/roundcube/plugins/lifeprisma_ai',
+          phpBin: '/usr/local/bin/php',
+          webUser: 'username',
+          webGroup: 'username',
+          logFile: '/home/username/logs/roundcube-ai-worker.log',
+          cronFreq: '*/5 * * * *',
+          email: 'admin@domain.com',
+          imapHost: 'ssl://mail.domain.com:993',
+          draftsFolder: 'Drafts'
+        }
+      };
+
+      // DOM Elements
+      const inputPluginPath = document.getElementById('inputPluginPath');
+      const inputPhpBin = document.getElementById('inputPhpBin');
+      const inputWebUser = document.getElementById('inputWebUser');
+      const inputWebGroup = document.getElementById('inputWebGroup');
+      const inputLogFile = document.getElementById('inputLogFile');
+      const inputCronFreq = document.getElementById('inputCronFreq');
+      const inputEmail = document.getElementById('inputEmail');
+      const inputImapHost = document.getElementById('inputImapHost');
+      const inputDraftsFolder = document.getElementById('inputDraftsFolder');
+
+      const presetKoen = document.getElementById('presetKoen');
+      const presetStandard = document.getElementById('presetStandard');
+      const presetCustom = document.getElementById('presetCustom');
+
+      const themeToggleBtn = document.getElementById('themeToggleBtn');
+      const themeLabel = document.getElementById('themeLabel');
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+
+      // Update all reactive elements in DOM
+      function render() {
+        // Strip trailing slashes from plugin path
+        const cleanPluginPath = state.pluginPath.replace(/\/+$/, '');
+
+        // Update all spans with class dyn-*
+        document.querySelectorAll('.dyn-plugin-path').forEach(el => el.textContent = cleanPluginPath);
+        document.querySelectorAll('.dyn-php-bin').forEach(el => el.textContent = state.phpBin);
+        document.querySelectorAll('.dyn-user').forEach(el => el.textContent = state.webUser);
+        document.querySelectorAll('.dyn-group').forEach(el => el.textContent = state.webGroup);
+        document.querySelectorAll('.dyn-log-file').forEach(el => el.textContent = state.logFile);
+        document.querySelectorAll('.dyn-cron-freq').forEach(el => el.textContent = state.cronFreq);
+        document.querySelectorAll('.dyn-email').forEach(el => el.textContent = state.email);
+        document.querySelectorAll('.dyn-imap-host').forEach(el => el.textContent = state.imapHost);
+        document.querySelectorAll('.dyn-drafts-folder').forEach(el => el.textContent = state.draftsFolder);
+
+        // Update progress bar
+        updateProgress();
+      }
+
+      // Sync input fields to state
+      function syncFromInputs() {
+        state.pluginPath = inputPluginPath.value.trim() || '/var/www/html/plugins/lifeprisma_ai';
+        state.phpBin = inputPhpBin.value.trim() || '/usr/bin/php';
+        state.webUser = inputWebUser.value.trim() || 'www-data';
+        state.webGroup = inputWebGroup.value.trim() || 'www-data';
+        state.logFile = inputLogFile.value.trim() || '/var/log/roundcube-ai-worker.log';
+        state.cronFreq = inputCronFreq.value;
+        state.email = inputEmail.value.trim() || 'user@example.com';
+        state.imapHost = inputImapHost.value.trim() || 'ssl://localhost:993';
+        state.draftsFolder = inputDraftsFolder.value.trim() || 'Drafts';
+
+        render();
+        saveToLocalStorage();
+      }
+
+      // Apply a preset
+      function applyPreset(presetKey) {
+        const p = profiles[presetKey];
+        if (!p) return;
+
+        state.pluginPath = p.pluginPath;
+        state.phpBin = p.phpBin;
+        state.webUser = p.webUser;
+        state.webGroup = p.webGroup;
+        state.logFile = p.logFile;
+        state.cronFreq = p.cronFreq;
+        state.email = p.email;
+        state.imapHost = p.imapHost;
+        state.draftsFolder = p.draftsFolder;
+
+        inputPluginPath.value = state.pluginPath;
+        inputPhpBin.value = state.phpBin;
+        inputWebUser.value = state.webUser;
+        inputWebGroup.value = state.webGroup;
+        inputLogFile.value = state.logFile;
+        inputCronFreq.value = state.cronFreq;
+        inputEmail.value = state.email;
+        inputImapHost.value = state.imapHost;
+        inputDraftsFolder.value = state.draftsFolder;
+
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        if (presetKey === 'koen') presetKoen.classList.add('active');
+        if (presetKey === 'standard') presetStandard.classList.add('active');
+        if (presetKey === 'custom') presetCustom.classList.add('active');
+
+        render();
+        saveToLocalStorage();
+        showToast(`Loaded ${presetKey === 'koen' ? 'MobilityPulse / TheChargeGrid' : presetKey} profile`);
+      }
+
+      // Input Event Listeners
+      [inputPluginPath, inputPhpBin, inputWebUser, inputWebGroup, inputLogFile, inputEmail, inputImapHost, inputDraftsFolder].forEach(input => {
+        input.addEventListener('input', syncFromInputs);
+      });
+      inputCronFreq.addEventListener('change', syncFromInputs);
+
+      // Presets buttons
+      presetKoen.addEventListener('click', () => applyPreset('koen'));
+      presetStandard.addEventListener('click', () => applyPreset('standard'));
+      presetCustom.addEventListener('click', () => applyPreset('custom'));
+
+      // Chips
+      document.querySelectorAll('.chip-btn').forEach(chip => {
+        chip.addEventListener('click', function () {
+          if (this.dataset.target) {
+            const target = document.getElementById(this.dataset.target);
+            if (target) {
+              target.value = this.dataset.val;
+              syncFromInputs();
+            }
+          } else if (this.dataset.user && this.dataset.group) {
+            inputWebUser.value = this.dataset.user;
+            inputWebGroup.value = this.dataset.group;
+            syncFromInputs();
+          }
+        });
+      });
+
+      // Tabs
+      window.switchTab = function (tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+          pane.classList.toggle('active', pane.id === tabId);
+        });
+      };
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+      });
+
+      // Accordion
+      document.querySelectorAll('.accordion-header').forEach(header => {
+        header.addEventListener('click', function () {
+          const item = this.parentElement;
+          item.classList.toggle('open');
+        });
+      });
+
+      // Copying functionality
+      function copyToClipboard(text, btnElement) {
+        if (!navigator.clipboard) {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.top = '-9999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            onCopied(btnElement);
+          } catch (err) {
+            console.error('Fallback copy failed', err);
+          }
+          document.body.removeChild(textArea);
+          return;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+          onCopied(btnElement);
+        }).catch(err => {
+          console.error('Failed to copy', err);
+        });
+      }
+
+      function onCopied(btnElement) {
+        if (btnElement) {
+          const originalText = btnElement.textContent;
+          btnElement.classList.add('copied');
+          btnElement.textContent = '✓ Copied!';
+          setTimeout(() => {
+            btnElement.classList.remove('copied');
+            btnElement.textContent = originalText;
+          }, 2000);
+        }
+        showToast('Copied command to clipboard!');
+      }
+
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+          const targetId = this.dataset.copyTarget;
+          const targetEl = document.getElementById(targetId);
+          if (targetEl) {
+            copyToClipboard(targetEl.textContent.trim(), this);
+          }
+        });
+      });
+
+      // Toast
+      let toastTimer = null;
+      function showToast(message) {
+        if (!toast) return;
+        toastText.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('show');
+        }, 2500);
+      }
+
+      // Download Script
+      const btnDownloadScript = document.getElementById('btnDownloadScript');
+      if (btnDownloadScript) {
+        btnDownloadScript.addEventListener('click', function () {
+          const scriptText = document.getElementById('scriptDeploy').textContent.trim();
+          const blob = new Blob([scriptText], { type: 'text/x-sh' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'setup-worker.sh';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('Downloaded setup-worker.sh');
+        });
+      }
+
+      // Progress Checkboxes
+      const totalSteps = 6;
+      function updateProgress() {
+        let completed = 0;
+        for (let i = 1; i <= totalSteps; i++) {
+          const cb = document.getElementById('checkStep' + i);
+          if (cb && cb.checked) {
+            completed++;
+          }
+        }
+        const pct = Math.round((completed / totalSteps) * 100);
+        const pb = document.getElementById('progressBar');
+        const pp = document.getElementById('progressPercent');
+        const pt = document.getElementById('progressStepsText');
+        if (pb) pb.style.width = pct + '%';
+        if (pp) pp.textContent = pct + '%';
+        if (pt) pt.textContent = `${completed} of ${totalSteps} steps completed`;
+      }
+
+      for (let i = 1; i <= totalSteps; i++) {
+        const cb = document.getElementById('checkStep' + i);
+        if (cb) {
+          cb.addEventListener('change', function () {
+            state.completedSteps[this.dataset.step] = this.checked;
+            updateProgress();
+            saveToLocalStorage();
+          });
+        }
+      }
+
+      const btnResetProgress = document.getElementById('btnResetProgress');
+      if (btnResetProgress) {
+        btnResetProgress.addEventListener('click', function () {
+          for (let i = 1; i <= totalSteps; i++) {
+            const cb = document.getElementById('checkStep' + i);
+            if (cb) cb.checked = false;
+          }
+          state.completedSteps = {};
+          updateProgress();
+          saveToLocalStorage();
+          showToast('Progress reset');
+        });
+      }
+
+      // Theme toggle
+      function setTheme(theme) {
+        state.theme = theme;
+        if (theme === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+          themeLabel.textContent = 'Dark Mode';
+        } else {
+          document.documentElement.removeAttribute('data-theme');
+          themeLabel.textContent = 'Light Mode';
+        }
+        localStorage.setItem('roundcube_ai_theme', theme);
+      }
+
+      themeToggleBtn.addEventListener('click', () => {
+        setTheme(state.theme === 'dark' ? 'light' : 'dark');
+      });
+
+      // LocalStorage Persistence
+      function saveToLocalStorage() {
+        try {
+          localStorage.setItem('roundcube_ai_worker_config', JSON.stringify({
+            pluginPath: state.pluginPath,
+            phpBin: state.phpBin,
+            webUser: state.webUser,
+            webGroup: state.webGroup,
+            logFile: state.logFile,
+            cronFreq: state.cronFreq,
+            email: state.email,
+            imapHost: state.imapHost,
+            draftsFolder: state.draftsFolder,
+            completedSteps: state.completedSteps
+          }));
+        } catch (e) {
+          // ignore localStorage security restrictions
+        }
+      }
+
+      function loadFromLocalStorage() {
+        try {
+          const savedTheme = localStorage.getItem('roundcube_ai_theme');
+          if (savedTheme) {
+            setTheme(savedTheme);
+          }
+
+          const savedData = localStorage.getItem('roundcube_ai_worker_config');
+          if (savedData) {
+            const parsed = JSON.parse(savedData);
+            if (parsed.pluginPath) state.pluginPath = parsed.pluginPath;
+            if (parsed.phpBin) state.phpBin = parsed.phpBin;
+            if (parsed.webUser) state.webUser = parsed.webUser;
+            if (parsed.webGroup) state.webGroup = parsed.webGroup;
+            if (parsed.logFile) state.logFile = parsed.logFile;
+            if (parsed.cronFreq) state.cronFreq = parsed.cronFreq;
+            if (parsed.email) state.email = parsed.email;
+            if (parsed.imapHost) state.imapHost = parsed.imapHost;
+            if (parsed.draftsFolder) state.draftsFolder = parsed.draftsFolder;
+            if (parsed.completedSteps) state.completedSteps = parsed.completedSteps;
+
+            inputPluginPath.value = state.pluginPath;
+            inputPhpBin.value = state.phpBin;
+            inputWebUser.value = state.webUser;
+            inputWebGroup.value = state.webGroup;
+            inputLogFile.value = state.logFile;
+            inputCronFreq.value = state.cronFreq;
+            inputEmail.value = state.email;
+            inputImapHost.value = state.imapHost;
+            inputDraftsFolder.value = state.draftsFolder;
+
+            if (state.completedSteps) {
+              for (let i = 1; i <= totalSteps; i++) {
+                const cb = document.getElementById('checkStep' + i);
+                if (cb && state.completedSteps[i]) {
+                  cb.checked = true;
+                }
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      // Initialize
+      loadFromLocalStorage();
+      render();
+    })();
+  </script>
+</body>
+</html>

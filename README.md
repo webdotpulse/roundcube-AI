@@ -194,7 +194,7 @@ The plugin includes native support and dedicated assets for both default Roundcu
 Want Gemini to triage emails, set IMAP labels, and prepare draft replies **around the clock even when you are completely logged out of Roundcube and your computer is turned off**?
 
 > [!TIP]
-> For a detailed, step-by-step setup guide with copy-paste commands, see the dedicated [**Cron Worker Activation Guide**](docs/CRON_WORKER_SETUP.md).
+> For a detailed, step-by-step setup guide with copy-paste commands, see the dedicated [**Cron Worker Activation Guide**](docs/CRON_WORKER_SETUP.md) or open the interactive configurator [**CRON_WORKER_SETUP.html**](docs/CRON_WORKER_SETUP.html) to adapt commands dynamically to your server paths.
 
 ### Quick Activation (Linux Cron)
 

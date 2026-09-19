@@ -2,6 +2,10 @@
 
 This guide provides a comprehensive, step-by-step walkthrough to activate and monitor the **Gemini Executive Assistant Background Worker** for Roundcube.
 
+> [!TIP]
+> **Interactive Version Available**:
+> Open [**CRON_WORKER_SETUP.html**](CRON_WORKER_SETUP.html) in your web browser to interactively customize your server paths (`/data/sites/web/...`), test presets, and copy auto-adapted crontab and daemon commands with a single click.
+
 The background worker operates autonomously in the background (even when all users are completely logged out of Roundcube). It connects to IMAP mailboxes, runs Google Gemini triage, tags emails with organizational labels (compatible with `roundcube-labels`), replicates verified answers to common client questions from AI memory, and deposits pre-crafted executive responses directly into the IMAP Drafts folder ready for review.
 
 ---
