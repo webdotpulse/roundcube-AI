@@ -701,7 +701,8 @@ rcm_tb_label_update_count = function (labelKey, delta) {
 
   var badge = $("#tb-labels-list li[data-label=\"" + labelKey + "\"] .tb-label-count");
   if (badge.length) {
-    badge.text(next >= 0 ? next : 0).show();
+    var final_cnt = (typeof next === "number" && !isNaN(next) && next >= 0) ? next : 0;
+    badge.text(final_cnt).show().css("display", "inline-block");
   }
 };
 
@@ -1156,7 +1157,7 @@ $(function () {
           ? parseInt(rcmail.env.tb_label_counts[key], 10) : null;
         var final_c = (server_c !== null && !isNaN(server_c)) ? server_c : rcm_tb_label_count_local_messages(key);
         var display_c = (final_c !== null && !isNaN(final_c) && final_c >= 0) ? final_c : 0;
-        badge.text(display_c).show();
+        badge.text(display_c).show().css("display", "inline-block");
       }
     });
     rcm_tb_label_fetch_counts();
@@ -1169,11 +1170,12 @@ $(function () {
       var allLabels = rcmail.env.tb_label_custom_labels || {};
       $.each(allLabels, function (key) {
         if (key === "LABEL0") return;
-        var count = parseInt((data.counts && data.counts[key]) || 0, 10);
+        var raw = (data.counts && typeof data.counts[key] !== "undefined") ? data.counts[key] : null;
+        var count = (raw !== null) ? parseInt(raw, 10) : 0;
         var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
         if (badge.length) {
           var final_cnt = (!isNaN(count) && count >= 0) ? count : 0;
-          badge.text(final_cnt).show();
+          badge.text(final_cnt).show().css("display", "inline-block");
         }
       });
     }
