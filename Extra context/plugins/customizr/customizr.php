@@ -55,6 +55,54 @@ class customizr extends rcube_plugin
     private $settings_section;
 
     /**
+     * Resolves an image path: if it is a local upload path (e.g. plugins/customizr/uploads/custom_...),
+     * converts it to a base64 data URI so it works even when plugins/ is outside webroot or blocked.
+     */
+    public static function resolve_image_url(?string $url): string
+    {
+        if (empty($url)) {
+            return '';
+        }
+        $url = trim($url);
+        // Already a data URI or external URL
+        if (str_starts_with($url, 'data:') || str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        // Check if pointing to plugins/customizr/uploads/
+        if (strpos($url, 'plugins/customizr/uploads/') !== false) {
+            $filename = basename($url);
+            $upload_dir = __DIR__ . '/uploads';
+            $local_path = $upload_dir . '/' . $filename;
+            if (!file_exists($local_path) && is_dir($upload_dir)) {
+                $matches = glob($upload_dir . '/' . $filename . '*');
+                if (!empty($matches)) {
+                    $local_path = $matches[0];
+                }
+            }
+            if (file_exists($local_path) && !is_dir($local_path)) {
+                $ext = strtolower(pathinfo($local_path, PATHINFO_EXTENSION));
+                $data = @file_get_contents($local_path);
+                if ($data !== false) {
+                    $mime = '';
+                    if (function_exists('mime_content_type')) {
+                        $detected = @mime_content_type($local_path);
+                        if ($detected && str_starts_with($detected, 'image/')) {
+                            $mime = $detected;
+                        }
+                    }
+                    if (!$mime) {
+                        $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : ($ext === 'jpg' ? 'jpeg' : ($ext ?: 'png'))));
+                    }
+                    return 'data:' . $mime . ';base64,' . base64_encode($data);
+                }
+            }
+        }
+
+        return $url;
+    }
+
+    /**
      * Initialize the plugin
      */
     public function init()
@@ -70,6 +118,12 @@ class customizr extends rcube_plugin
         $this->custom_logo_login = $this->rcmail->config->get('custom_logo_login');
         $this->watermark_uri = $this->rcmail->config->get('custom_watermark_uri');
         $this->watermark_image = $this->rcmail->config->get('custom_watermark_image');
+
+        // Resolve images to data URIs if they reference local uploads
+        $this->custom_logo = self::resolve_image_url($this->custom_logo);
+        $this->custom_logo_login = self::resolve_image_url($this->custom_logo_login);
+        $this->custom_favicon = !is_null($this->custom_favicon) ? self::resolve_image_url($this->custom_favicon) : null;
+        $this->watermark_image = self::resolve_image_url($this->watermark_image);
 
         // Apply custom logo to core Roundcube config if set
         // Use login logo when on login task; otherwise use mailbox logo
@@ -137,6 +191,7 @@ class customizr extends rcube_plugin
      */
     private function render_image_field($field_name, $field_id, $value, $title_label, $desc_text, $accept = 'image/*,.ico,.svg')
     {
+        $value = self::resolve_image_url($value);
         $has_value = !empty($value);
         $escaped_val = htmlspecialchars((string) $value, ENT_QUOTES);
 
@@ -155,7 +210,7 @@ class customizr extends rcube_plugin
             'name' => '_' . $field_name . '_file',
             'class' => 'customizr-file-input',
             'accept' => $accept,
-            'style' => 'display: none;',
+            'style' => 'position: absolute !important; width: 0 !important; height: 0 !important; opacity: 0 !important; pointer-events: none !important; overflow: hidden !important;',
             'onchange' => "customizr_handle_file_select(this, '{$field_id}')",
         ]);
 
@@ -358,10 +413,22 @@ function customizr_handle_file_select(fileInput, fieldId) {
     if (!fileInput.files || !fileInput.files[0]) return;
     var file = fileInput.files[0];
 
+    // Max 2.5MB check
+    if (file.size > 2.5 * 1024 * 1024) {
+        alert('Selected image exceeds 2.5MB limit. Please choose a smaller image.');
+        fileInput.value = '';
+        return;
+    }
+
     // 1. Instant client-side preview via FileReader
     var reader = new FileReader();
     reader.onload = function(e) {
         var dataUrl = e.target.result;
+        var input = document.getElementById(fieldId);
+        if (input) {
+            input.value = dataUrl;
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
         customizr_update_preview(fieldId, dataUrl);
     };
     reader.readAsDataURL(file);
@@ -391,17 +458,6 @@ function customizr_handle_file_select(fileInput, fieldId) {
                         return;
                     }
                 } catch(err) {}
-            }
-            // Fallback: put data URL into field if server upload didn't succeed
-            var input = document.getElementById(fieldId);
-            if (input && reader.result) {
-                input.value = reader.result;
-            }
-        };
-        xhr.onerror = function() {
-            var input = document.getElementById(fieldId);
-            if (input && reader.result) {
-                input.value = reader.result;
             }
         };
         xhr.send(formData);
@@ -452,33 +508,32 @@ JS;
             return null;
         }
 
+        $data = @file_get_contents($file['tmp_name']);
+        if ($data === false) {
+            return null;
+        }
+
+        $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : ($ext === 'jpg' ? 'jpeg' : $ext)));
+        $dataUri = 'data:' . $mime . ';base64,' . base64_encode($data);
+
+        // Also save to disk backup if uploads directory is writable
         $upload_dir = __DIR__ . '/uploads';
         if (!is_dir($upload_dir)) {
             @mkdir($upload_dir, 0755, true);
         }
-
-        // Protective .htaccess preventing execution of arbitrary scripts
         $htaccess = $upload_dir . '/.htaccess';
-        if (!file_exists($htaccess)) {
-            @file_put_contents($htaccess, "# Disable script execution\n<FilesMatch \"\.(php|phtml|php3|php4|php5|php7|phps|inc|cgi|pl|sh)$\">\nOrder Deny,Allow\nDeny from all\n</FilesMatch>\nOptions -Indexes -ExecCGI\n");
+        if (!file_exists($htaccess) && is_dir($upload_dir)) {
+            @file_put_contents($htaccess, "# Disable script execution\n<FilesMatch \"\.(php|phtml|php3|php4|php5|php7|phps|inc|cgi|pl|sh)$\">\nOrder Deny,Allow\nDeny from all\n</FilesMatch>\nOptions -Indexes\n");
         }
-
         $random_bytes = function_exists('random_bytes') ? bin2hex(random_bytes(4)) : substr(md5((string) mt_rand()), 0, 8);
         $filename = 'custom_' . time() . '_' . $random_bytes . '.' . $ext;
-        $target_path = $upload_dir . '/' . $filename;
-
-        if (is_writable($upload_dir) && @move_uploaded_file($file['tmp_name'], $target_path)) {
-            return './plugins/customizr/uploads/' . $filename;
+        if (is_writable($upload_dir)) {
+            if (!@move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $filename)) {
+                @file_put_contents($upload_dir . '/' . $filename, $data);
+            }
         }
 
-        // Fallback to data URI if upload directory is read-only
-        $data = @file_get_contents($file['tmp_name']);
-        if ($data !== false) {
-            $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : $ext));
-            return 'data:' . $mime . ';base64,' . base64_encode($data);
-        }
-
-        return null;
+        return $dataUri;
     }
 
     /**
@@ -532,7 +587,7 @@ JS;
                 }
 
                 $val = trim((string) rcube_utils::get_input_value('_' . $field, rcube_utils::INPUT_POST));
-                $args['prefs'][$field] = $val;
+                $args['prefs'][$field] = self::resolve_image_url($val);
             }
         }
 
@@ -550,19 +605,25 @@ JS;
      */
     public function render_page($args)
     {
-        // replace static links to <skin>/watermark.html and set blankpage env
-        if (!empty($this->watermark_uri) || !empty($this->watermark_image)) {
-            $url = $this->watermark_uri ?: $this->rcmail->url('plugin.watermark');
+        $active_watermark = self::resolve_image_url($this->watermark_image);
+        // replace static links to <skin>/watermark.html and set blankpage / xwatermark env
+        if (!empty($this->watermark_uri) || !empty($active_watermark)) {
+            $url = $this->watermark_uri ?: ($active_watermark ?: $this->rcmail->url('plugin.watermark'));
             if (strpos($args['content'], 'watermark.html') !== false) {
                 $args['content'] = preg_replace('!(src)="([^"]+/watermark.html)"!', '\\1="' . $url . '"', $args['content']);
             }
             $this->rcmail->output->set_env('blankpage', $url);
+            if (!empty($active_watermark)) {
+                $this->rcmail->output->set_env('xwatermark', $active_watermark);
+                $this->rcmail->config->set('preview_branding', $active_watermark);
+            }
         }
 
         // replace or inject favicon
         if (!is_null($this->custom_favicon)) {
-            $favicon = !empty($this->custom_favicon) ?
-                html::tag('link', array('rel' => 'shortcut icon', 'href' => $this->custom_favicon)) :
+            $active_fav = self::resolve_image_url($this->custom_favicon);
+            $favicon = !empty($active_fav) ?
+                html::tag('link', array('rel' => 'shortcut icon', 'href' => $active_fav)) :
                 '';
 
             $args['content'] = preg_replace('!<link\s[^>]*rel="(shortcut )?icon"[^>]*>!i', $favicon, $args['content'], -1, $count);
@@ -577,11 +638,20 @@ JS;
         // on login page, use custom_logo_login if configured; otherwise use custom_logo
         $is_login = ($this->rcmail->task === 'login');
         $active_logo = ($is_login && !empty($this->custom_logo_login)) ? $this->custom_logo_login : $this->custom_logo;
+        $active_logo = self::resolve_image_url($active_logo);
 
         if (!empty($active_logo)) {
-            $args['content'] = preg_replace(
-                '!(<img\b[^>]*\bid="logo"[^>]*\bsrc=)["\'][^"\']*["\']!i',
-                '${1}"' . htmlspecialchars($active_logo, ENT_QUOTES) . '"',
+            $escaped = htmlspecialchars($active_logo, ENT_QUOTES);
+            $args['content'] = preg_replace_callback(
+                '/<img\b([^>]*?)>/i',
+                function ($m) use ($escaped) {
+                    $tag = $m[0];
+                    $attrs = $m[1];
+                    if (preg_match('/\b(?:id=["\']?(?:logo|toplogo)["\']?|class=["\'][^"\']*\blogo\b[^"\']*["\'])/i', $attrs)) {
+                        return preg_replace('/\bsrc=["\'][^"\']*["\']/i', 'src="' . $escaped . '"', $tag);
+                    }
+                    return $tag;
+                },
                 $args['content']
             );
         }
@@ -605,16 +675,17 @@ JS;
      */
     public function watermark_page()
     {
+        $watermark = self::resolve_image_url($this->watermark_image);
         // Search and replace watermark background image if template exists
         if ($templ = $this->rcmail->output->get_skin_file('/watermark.html')) {
-            echo preg_replace('!url\(.+watermark.+\)!U', "url('$this->watermark_image')", file_get_contents($templ));
-        } elseif (!empty($this->watermark_image)) {
+            echo preg_replace('!url\(.+watermark.+\)!U', "url('$watermark')", file_get_contents($templ));
+        } elseif (!empty($watermark)) {
             // Fallback for modern skins without watermark.html (e.g. Elastic)
             echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'
                 . 'body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background-color:transparent; }'
                 . 'img { max-width:80%; max-height:80%; opacity:0.18; }'
                 . '</style></head><body>'
-                . '<img src="' . htmlspecialchars($this->watermark_image, ENT_QUOTES) . '" alt="" />'
+                . '<img src="' . htmlspecialchars($watermark, ENT_QUOTES) . '" alt="" />'
                 . '</body></html>';
         }
         exit;

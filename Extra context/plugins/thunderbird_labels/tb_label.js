@@ -336,7 +336,7 @@ rcm_tb_label_init_sidebar = function () {
              '    <span class="tb-labels-title">' + rcm_tb_label_escape_html(labels_title) + '</span>' +
              '    <button type="button" class="tb-labels-add-btn" id="tb-labels-add-btn" title="' + rcm_tb_label_escape_html(add_label_title) + '" aria-label="' + rcm_tb_label_escape_html(add_label_title) + '">+</button>' +
              '  </div>' +
-             '  <ul id="tb-labels-list" class="tb-labels-list treelist listing folderlist" role="tree"></ul>' +
+             '  <ul id="tb-labels-list" class="tb-labels-list" role="tree"></ul>' +
              '</div>';
 
   if ($("#mailboxlist").length) {

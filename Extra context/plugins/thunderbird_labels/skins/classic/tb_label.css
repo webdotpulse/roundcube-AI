@@ -247,6 +247,22 @@ ul.tb-labels-list {
   padding: 0 6px 6px 6px;
 }
 
+#tb-labels-list li::before,
+#tb-labels-list li::after,
+#tb-labels-list li a::before,
+#tb-labels-list li a::after,
+ul.tb-labels-list li::before,
+ul.tb-labels-list li::after,
+ul.tb-labels-list li a::before,
+ul.tb-labels-list li a::after,
+.tb-labels-sidebar .tb-labels-list li::before,
+.tb-labels-sidebar .tb-labels-list li::after,
+.tb-labels-sidebar .tb-labels-list li a::before,
+.tb-labels-sidebar .tb-labels-list li a::after {
+  content: none !important;
+  display: none !important;
+}
+
 ul.tb-labels-list li.tb-label-item a.tb-label-link {
   display: flex;
   align-items: center;

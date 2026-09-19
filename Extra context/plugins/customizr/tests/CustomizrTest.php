@@ -453,5 +453,49 @@ foreach ($langs as $lang) {
     }
 }
 
+// Test 7: resolve_image_url & Elastic Logo Matching
+echo "\n--- Test 7: resolve_image_url & Elastic Logo Matching ---\n";
+$upload_dir = __DIR__ . '/../uploads';
+if (!is_dir($upload_dir)) {
+    @mkdir($upload_dir, 0755, true);
+}
+$test_img_name = 'custom_test_' . time() . '_unit.png';
+$test_img_path = $upload_dir . '/' . $test_img_name;
+file_put_contents($test_img_path, "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15c4\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xb4\x00\x00\x00\x00IEND\xaeB`\x82");
+
+// Exact path resolve
+$resolved_exact = customizr::resolve_image_url('./plugins/customizr/uploads/' . $test_img_name);
+assert_true(str_starts_with($resolved_exact, 'data:image/'), "resolve_image_url converts uploads path to data URI");
+
+// Glob prefix resolve (when extension is omitted or path is truncated)
+$prefix_name = explode('.', $test_img_name)[0];
+$resolved_prefix = customizr::resolve_image_url('./plugins/customizr/uploads/' . $prefix_name);
+assert_true($resolved_prefix === $resolved_exact, "resolve_image_url resolves via glob prefix match when extension is omitted");
+
+// Preserves external URL and data URI
+assert_true(customizr::resolve_image_url('https://example.com/logo.png') === 'https://example.com/logo.png', "Preserves external HTTPS URL");
+assert_true(customizr::resolve_image_url('data:image/svg+xml;base64,PHN2Zz4=') === 'data:image/svg+xml;base64,PHN2Zz4=', "Preserves existing data URI");
+
+// Test Elastic skin toplogo and class logo replacement in render_page
+rcube::reset_instance();
+$rc = rcube::get_instance();
+$rc->task = 'mail';
+$rc->config->set('custom_logo', '/custom_roundcube_logo.svg');
+$rc->config->set('custom_watermark_image', '/custom_watermark.png');
+$plugin_elastic = new customizr();
+$plugin_elastic->init();
+
+$elastic_html = '<div id="layout-sidebar"><a href="./"><img src="skins/elastic/images/logo.svg" id="toplogo" alt="Logo"></a>'
+    . '<div class="mobile-logo"><img class="logo" src="skins/elastic/images/logo.svg"></div></div>';
+$rendered_elastic = $plugin_elastic->render_page(['content' => $elastic_html]);
+$content_elastic = $rendered_elastic['content'];
+
+assert_true(strpos($content_elastic, 'src="/custom_roundcube_logo.svg" id="toplogo"') !== false, "Replaces src in id=toplogo tag");
+assert_true(strpos($content_elastic, 'class="logo" src="/custom_roundcube_logo.svg"') !== false, "Replaces src in class=logo tag");
+assert_true($rc->output->env['xwatermark'] === '/custom_watermark.png', "Sets rcmail env xwatermark for gmail_plus / elastic");
+assert_true($rc->config->get('preview_branding') === '/custom_watermark.png', "Sets preview_branding config");
+
+@unlink($test_img_path);
+
 echo "\n*** ALL TESTS PASSED SUCCESSFULLY ***\n";
 

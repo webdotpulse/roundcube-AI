@@ -57,7 +57,9 @@ html.dark-mode  {
 }
 
 #taskmenu a.settings,
-#taskmenu a.button-settings {
+#taskmenu a.button-settings,
+#taskmenu a.logout,
+#taskmenu a.button-logout {
     display: block !important;
     visibility: visible !important;
     opacity: 1 !important;
@@ -166,9 +168,26 @@ html.dark-mode  {
             right: 30%;
         }
 
-        .special-buttons{
+        .special-buttons {
             left: auto;
             right: 0;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center;
+
+            a {
+                padding: 0.5rem 0 !important;
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
+
+            a.logout,
+            a.button-logout {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+            }
 
             a span.inner {
                 top: auto;
@@ -226,7 +245,9 @@ html.dark-mode  {
             }
 
             a.settings,
-            a.button-settings {
+            a.button-settings,
+            a.logout,
+            a.button-logout {
                 display: block !important;
                 visibility: visible !important;
                 opacity: 1 !important;
@@ -388,4 +409,17 @@ body.xcalendar-page.xelastic {
 // plugin: xai
 #xai-assistant-floating-button {
     right: 85px !important;
+}
+
+// remove folder icons before sidebar labels
+#tb-labels-list li:before,
+#tb-labels-list li:after,
+#tb-labels-list li a:before,
+#tb-labels-list li a:after,
+ul.tb-labels-list li:before,
+ul.tb-labels-list li:after,
+ul.tb-labels-list li a:before,
+ul.tb-labels-list li a:after {
+    content: none !important;
+    display: none !important;
 }
