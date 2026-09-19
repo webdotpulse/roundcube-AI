@@ -1,0 +1,31 @@
+{
+    "name": "webdotpulse/roundcube-loader",
+    "type": "roundcube-plugin",
+    "description": "Gmail-style full-page loading screen and animated progress bar for Roundcube Webmail during login and application startup.",
+    "keywords": [
+        "roundcube",
+        "plugin",
+        "loader",
+        "page-loader",
+        "gmail",
+        "login-loader",
+        "splash-screen",
+        "progress-bar"
+    ],
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Webdotpulse",
+            "homepage": "https://github.com/webdotpulse"
+        }
+    ],
+    "require": {
+        "php": ">=7.4.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}

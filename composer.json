@@ -21,7 +21,9 @@
         "customizr",
         "thread_drafts",
         "thunderbird_labels",
-        "xcalendar"
+        "xcalendar",
+        "roundcube_loader",
+        "page-loader"
     ],
     "authors": [
         {
@@ -39,7 +41,8 @@
         "lifeprisma/roundcube-genia": "self.version",
         "lifeprisma/roundcube-ai": "self.version",
         "webdotpulse/lifeprisma-ai": "self.version",
-        "roundcubeplus/xcalendar": "self.version"
+        "roundcubeplus/xcalendar": "self.version",
+        "webdotpulse/roundcube-loader": "self.version"
     },
     "suggest": {
         "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars"

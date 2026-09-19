@@ -1,0 +1,50 @@
+<?php
+
+/**
+ * Roundcube Loader Plugin Configuration
+ *
+ * Gmail-style full-page loader and progress bar for login and application startup.
+ *
+ * @license GNU GPLv3+
+ * @author Webdotpulse & LifePrisma
+ */
+
+$config = [];
+
+// Enable or disable the page loader plugin
+$config['roundcube_loader_enabled'] = true;
+
+// Visual theme style:
+// 'gmail'            - Classic Gmail Red loading bar (#d93025)
+// 'google_gradient'  - Modern Google 4-color gradient bar (#4285f4, #ea4335, #fbbc05, #34a853)
+// 'roundcube'        - Roundcube Blue brand color (#008cd4)
+$config['roundcube_loader_theme'] = 'gmail';
+
+// Logo branding displayed above the progress bar:
+// 'gmail'      - Authentic Gmail envelope vector logo
+// 'roundcube'  - Clean Roundcube vector emblem
+// 'custom'     - Use custom image or SVG specified in roundcube_loader_custom_logo
+$config['roundcube_loader_logo_type'] = 'gmail';
+
+// Custom logo URL or relative path if roundcube_loader_logo_type is 'custom'
+// Example: 'skins/gmail_plus/assets/images/logo_header.png'
+$config['roundcube_loader_custom_logo'] = '';
+
+// Custom progress bar fill color (hex code or CSS color string).
+// Overrides default theme bar color if set (leave null to use theme default).
+$config['roundcube_loader_bar_color'] = null;
+
+// Display the user's login username ("Loading john.doe@domain.com...")
+$config['roundcube_loader_show_username'] = true;
+
+// Display "Standard View" classic subtext below the progress bar
+$config['roundcube_loader_show_subtext'] = true;
+
+// Show full-page loader immediately upon submitting the login form
+$config['roundcube_loader_splash_on_login'] = true;
+
+// Show full-page loader during initial application bootstrap after login
+$config['roundcube_loader_splash_on_startup'] = true;
+
+// Timeout (in seconds) before displaying the "Taking longer than usual? Click to reload" fallback link
+$config['roundcube_loader_timeout'] = 15;

@@ -90,6 +90,8 @@ assert_true(is_dir($tempDir . '/plugins/customizr'), "Plugin 'customizr' install
 assert_true(is_dir($tempDir . '/plugins/thread_drafts'), "Plugin 'thread_drafts' installed in plugins/");
 assert_true(is_dir($tempDir . '/plugins/thunderbird_labels'), "Plugin 'thunderbird_labels' installed in plugins/");
 assert_true(is_dir($tempDir . '/plugins/xcalendar'), "Plugin 'xcalendar' installed in plugins/");
+assert_true(is_dir($tempDir . '/plugins/roundcube_loader'), "Plugin 'roundcube_loader' installed in plugins/");
+assert_true(file_exists($tempDir . '/plugins/roundcube_loader/config.inc.php'), "roundcube_loader config.inc.php initialized from dist");
 
 // Test 3: xcalendar Specific Post-Install Verifications
 echo "\n--- Test 3: xcalendar Specific Post-Install Verifications ---\n";
@@ -107,6 +109,7 @@ assert_true(strpos($updatedConfig, "'skin'] = 'gmail_plus'") !== false, "Skin up
 assert_true(strpos($updatedConfig, "'xcalendar'") !== false, "xcalendar added to plugins array in config");
 assert_true(strpos($updatedConfig, "'xskin'") !== false, "xskin added to plugins array in config");
 assert_true(strpos($updatedConfig, "'customizr'") !== false, "customizr added to plugins array in config");
+assert_true(strpos($updatedConfig, "'roundcube_loader'") !== false, "roundcube_loader added to plugins array in config");
 assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' plugin preserved in config");
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
 assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");

@@ -1,0 +1,249 @@
+/**
+ * Roundcube Loader Plugin — Gmail-style Loading Screen Styles
+ *
+ * @license GNU GPLv3+
+ * @author Webdotpulse & LifePrisma
+ */
+
+:root {
+  --rc-loader-bg: #ffffff;
+  --rc-loader-text: #202124;
+  --rc-loader-subtext: #5f6368;
+  --rc-loader-track: #e0e0e0;
+  --rc-loader-bar-color: #d93025;
+  --rc-loader-link: #1a73e8;
+  --rc-loader-font: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+/* Dark Mode support: automatic detection via dark-mode class or media query */
+html.dark-mode,
+body.dark-mode,
+[data-theme='dark'] {
+  --rc-loader-bg: #202124;
+  --rc-loader-text: #e8eaed;
+  --rc-loader-subtext: #9aa0a6;
+  --rc-loader-track: #3c4043;
+  --rc-loader-bar-color: #ea4335;
+  --rc-loader-link: #8ab4f8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not(.light-mode) {
+    --rc-loader-bg: #202124;
+    --rc-loader-text: #e8eaed;
+    --rc-loader-subtext: #9aa0a6;
+    --rc-loader-track: #3c4043;
+    --rc-loader-bar-color: #ea4335;
+    --rc-loader-link: #8ab4f8;
+  }
+}
+
+/* Theme variants */
+.rc-loader-theme-roundcube {
+  --rc-loader-bar-color: #008cd4;
+  --rc-loader-link: #006699;
+}
+
+.rc-loader-theme-google-gradient .rc-loader-bar {
+  background: linear-gradient(90deg, #4285f4 0%, #ea4335 33%, #fbbc05 66%, #34a853 100%) !important;
+}
+
+/* Fullscreen Loader Overlay */
+#rc-page-loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999999;
+  background-color: var(--rc-loader-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--rc-loader-font);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s ease-out;
+  user-select: none;
+  -webkit-user-select: none;
+  overflow: hidden;
+}
+
+#rc-page-loader.rc-loader-hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Central Card */
+.rc-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  max-width: 440px;
+  width: 90%;
+  box-sizing: border-box;
+}
+
+/* Branding Logo */
+.rc-loader-logo-wrapper {
+  margin-bottom: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+}
+
+.rc-loader-logo {
+  height: 48px;
+  max-width: 220px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.06));
+  animation: rc-loader-logo-intro 0.6s ease-out;
+}
+
+@keyframes rc-loader-logo-intro {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Progress Bar Track */
+.rc-loader-progress-track {
+  width: 320px;
+  max-width: 100%;
+  height: 4px;
+  background-color: var(--rc-loader-track);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  margin-bottom: 20px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+/* Progress Bar Fill */
+.rc-loader-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background-color: var(--rc-loader-bar-color);
+  border-radius: 4px;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(217, 48, 37, 0.35);
+}
+
+.rc-loader-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  animation: rc-loader-shimmer 1.8s infinite ease-in-out;
+}
+
+@keyframes rc-loader-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+/* Loading Status Text */
+.rc-loader-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rc-loader-text);
+  line-height: 1.4;
+  margin: 0 0 6px 0;
+  transition: opacity 0.2s ease;
+  word-break: break-word;
+}
+
+.rc-loader-username {
+  font-weight: 600;
+  color: var(--rc-loader-text);
+}
+
+/* Subtext & Classic Gmail Footer */
+.rc-loader-subtext {
+  font-size: 12px;
+  color: var(--rc-loader-subtext);
+  line-height: 1.4;
+  margin: 0;
+}
+
+.rc-loader-footer {
+  margin-top: 28px;
+  font-size: 11px;
+  color: var(--rc-loader-subtext);
+  opacity: 0.85;
+}
+
+.rc-loader-footer a {
+  color: var(--rc-loader-link);
+  text-decoration: none;
+}
+
+.rc-loader-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Slow Connection / Fallback Timeout Alert */
+.rc-loader-fallback {
+  display: none;
+  margin-top: 22px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--rc-loader-subtext);
+  animation: rc-loader-fadein 0.4s ease-in;
+}
+
+html.dark-mode .rc-loader-fallback {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.rc-loader-fallback a {
+  color: var(--rc-loader-link);
+  font-weight: 500;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-left: 6px;
+}
+
+@keyframes rc-loader-fadein {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
