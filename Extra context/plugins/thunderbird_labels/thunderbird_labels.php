@@ -91,23 +91,61 @@ class thunderbird_labels extends rcube_plugin
 		}
 	}
 
+	private function getLabelText(string $key): string
+	{
+		$text = '';
+		if (method_exists($this, 'gettext')) {
+			$text = $this->gettext($key);
+		} elseif (method_exists($this, 'getText')) {
+			$text = $this->getText($key);
+		}
+		if (empty($text) || $text === $key) {
+			$defaults = [
+				'label0' => 'No Label',
+				'label1' => 'Important',
+				'label2' => 'Work',
+				'label3' => 'Personal',
+				'label4' => 'To do',
+				'label5' => 'Later',
+			];
+			$text = $defaults[strtolower($key)] ?? $key;
+		}
+		return $text;
+	}
+
+	private function getDefaultLabels(): array
+	{
+		return array(
+			'LABEL0' => $this->getLabelText('label0'),
+			'LABEL1' => $this->getLabelText('label1'),
+			'LABEL2' => $this->getLabelText('label2'),
+			'LABEL3' => $this->getLabelText('label3'),
+			'LABEL4' => $this->getLabelText('label4'),
+			'LABEL5' => $this->getLabelText('label5'),
+		);
+	}
+
 	private function setCustomLabels()
 	{
 		$c = (array) $this->rc->config->get('tb_label_custom_labels', array());
+		$default_labels = $this->getDefaultLabels();
 		if (empty($c) || isset($c[3]))
 		{
 			// if no user specific labels, use localized strings by default
-			$c = array(
-				'LABEL0' => $this->getText('label0'),
-				'LABEL1' => $this->getText('label1'),
-				'LABEL2' => $this->getText('label2'),
-				'LABEL3' => $this->getText('label3'),
-				'LABEL4' => $this->getText('label4'),
-				'LABEL5' => $this->getText('label5')
-			);
+			$c = $default_labels;
+		}
+		else
+		{
+			// Ensure each standard label is not empty or raw database key (e.g. LABEL1)
+			for ($i = 0; $i <= 5; $i++) {
+				$k = "LABEL$i";
+				if (!isset($c[$k]) || $c[$k] === '' || $c[$k] === $k || preg_match('/^LABEL[0-9]+$/i', $c[$k])) {
+					$c[$k] = $default_labels[$k] ?? ($this->getLabelText("label$i") ?: $k);
+				}
+			}
 		}
 		if (!isset($c['LABEL0'])) {
-			$c['LABEL0'] = $this->getText('label0');
+			$c['LABEL0'] = $default_labels['LABEL0'];
 		}
 		$this->rc->config->set('tb_label_custom_labels', $c);
 		// pass label strings to JS
@@ -205,20 +243,22 @@ class thunderbird_labels extends rcube_plugin
 			&& $this->rc->config->get('tb_label_modify_labels'))
 		{
 			$custom_labels = $this->rc->config->get('tb_label_custom_labels');
+			$default_labels = $this->getDefaultLabels();
 			foreach ($custom_labels as $key => $value)
 			{
+				$label_title = $default_labels[$key] ?? $this->getLabelText(strtolower($key));
 				$input = new html_inputfield(array(
 					'name' => "custom_$key",
 					'id' => "custom_$key",
 					'type' => 'text',
 					'autocomplete' => 'off',
-					'title' => $this->getText(strtolower($key)), # shows default value on hover
+					'title' => $label_title, # shows default value on hover
 					'value' => $value));
 
 				$args['blocks']['tb_label']['options']["option_$key"] = array(
-					'title' => $key,
+					'title' => $label_title,
 					'content' => $input->show()
-					);
+				);
 			}
 		}
 
@@ -617,14 +657,7 @@ class thunderbird_labels extends rcube_plugin
 		} else {
 			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
 			if (empty($custom_labels) || isset($custom_labels[3])) {
-				$custom_labels = array(
-					'LABEL0' => $this->getText('label0'),
-					'LABEL1' => $this->getText('label1'),
-					'LABEL2' => $this->getText('label2'),
-					'LABEL3' => $this->getText('label3'),
-					'LABEL4' => $this->getText('label4'),
-					'LABEL5' => $this->getText('label5')
-				);
+				$custom_labels = $this->getDefaultLabels();
 			}
 
 			$prev_folder = $this->rc->storage->get_folder();
@@ -809,14 +842,7 @@ class thunderbird_labels extends rcube_plugin
 		if ($key && $key !== 'LABEL0') {
 			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
 			if (empty($custom_labels) || isset($custom_labels[3])) {
-				$custom_labels = array(
-					'LABEL0' => $this->getText('label0'),
-					'LABEL1' => $this->getText('label1'),
-					'LABEL2' => $this->getText('label2'),
-					'LABEL3' => $this->getText('label3'),
-					'LABEL4' => $this->getText('label4'),
-					'LABEL5' => $this->getText('label5')
-				);
+				$custom_labels = $this->getDefaultLabels();
 			}
 			$default_colors = array(
 				'LABEL1' => '#d93025',

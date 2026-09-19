@@ -149,11 +149,12 @@ class RoundcubeLoaderTestRunner
         $this->assert(strpos($htmlLogin, 'rc-loader-bar') !== false, 'Contains progress bar element');
         $this->assert(strpos($htmlLogin, 'Standard View') !== false, 'Contains Standard View subtext');
 
-        // Test 3: HTML markup structure in application startup mode (visible)
+        // Test 3: HTML markup structure in application startup mode (starts hidden, unhides via sessionStorage)
         echo "\n--- Test 3: HTML Output on Mail / App Startup ---\n";
         $htmlApp = $plugin->buildLoaderHtml(false);
-        $this->assert(strpos($htmlApp, 'rc-loader-hidden') === false, 'App startup mode does NOT have rc-loader-hidden');
-        $this->assert(strpos($htmlApp, 'display: flex;') !== false, 'App startup mode starts visible with display:flex');
+        $this->assert(strpos($htmlApp, 'rc-loader-hidden') !== false, 'App startup mode starts with rc-loader-hidden');
+        $this->assert(strpos($htmlApp, 'display: none;') !== false, 'App startup mode starts hidden with display:none');
+        $this->assert(strpos($htmlApp, 'sessionStorage.getItem(\'rc_loader_active\')===\'1\'') !== false, 'Contains inline sessionStorage login check script');
 
         // Test 4: Logo rendering
         echo "\n--- Test 4: Logo Rendering (Default Gmail & Roundcube) ---\n";

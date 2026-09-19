@@ -71,7 +71,7 @@ class roundcube_loader extends rcube_plugin
             'show_username' => (bool) $this->rc->config->get('roundcube_loader_show_username', true),
             'show_subtext' => (bool) $this->rc->config->get('roundcube_loader_show_subtext', true),
             'splash_on_login' => (bool) $this->rc->config->get('roundcube_loader_splash_on_login', true),
-            'splash_on_startup' => (bool) $this->rc->config->get('roundcube_loader_splash_on_startup', true),
+            'splash_on_startup' => (bool) $this->rc->config->get('roundcube_loader_splash_on_startup', false),
             'timeout' => (int) $this->rc->config->get('roundcube_loader_timeout', 15),
         ];
 
@@ -104,12 +104,12 @@ class roundcube_loader extends rcube_plugin
         $sanitizedTheme = preg_replace('/[^a-z0-9_-]/i', '', $theme);
         $themeClass = 'rc-loader-theme-' . $sanitizedTheme;
 
-        // On the login page, the overlay starts hidden and is activated on form submit
-        $hiddenClass = $isLogin ? ' rc-loader-hidden' : '';
-        $initialDisplay = $isLogin ? 'display: none;' : 'display: flex;';
+        // Overlay is initially hidden on all pages so internal transitions never flash it
+        $hiddenClass = ' rc-loader-hidden';
+        $initialDisplay = 'display: none;';
 
-        // Custom bar color override if specified
-        $customBarColor = $this->rc->config->get('roundcube_loader_bar_color');
+        // Custom bar color override if specified (defaults to modern blue)
+        $customBarColor = $this->rc->config->get('roundcube_loader_bar_color', '#1a73e8');
         $colorStyle = '';
         if (!empty($customBarColor) && is_string($customBarColor)) {
             $safeColor = htmlspecialchars($customBarColor, ENT_QUOTES, 'UTF-8');
@@ -147,6 +147,7 @@ HTML;
     </div>
   </div>
 </div>
+<script>try{if(sessionStorage.getItem('rc_loader_active')==='1'){var _l=document.getElementById('rc-page-loader');if(_l){_l.style.display='flex';_l.classList.remove('rc-loader-hidden');}}}catch(e){}</script>
 HTML;
     }
 
@@ -177,7 +178,7 @@ HTML;
         }
 
         // Fallback text mark if SVG is not readable
-        return '<span class="rc-loader-logo" style="font-size: 28px; font-weight: bold; color: #ea4335;">Gmail</span>';
+        return '<span class="rc-loader-logo" style="font-size: 28px; font-weight: bold; color: #1a73e8;">Webmail</span>';
     }
 
     /**

@@ -21,7 +21,7 @@
         show_username: true,
         show_subtext: true,
         splash_on_login: true,
-        splash_on_startup: true,
+        splash_on_startup: false,
         timeout: 15,
       }
     );
@@ -217,7 +217,7 @@
       return;
     }
 
-    // On webmail app load: check if just logged in or startup splash enabled
+    // On webmail app load: only run loader if coming from active login submit
     var justLoggedIn = false;
     var cachedUser = '';
     try {
@@ -225,7 +225,11 @@
       cachedUser = sessionStorage.getItem('rc_loader_user') || '';
     } catch (e) {}
 
-    if (justLoggedIn || config.splash_on_startup) {
+    // Must be active login flow; never run on normal page/task transitions (e.g. mail -> settings)
+    if (justLoggedIn) {
+      els.loader.classList.remove('rc-loader-hidden');
+      els.loader.style.display = 'flex';
+
       // Progress through final loading stage
       setProgress(65);
       if (els.text && cachedUser && config.show_username) {
@@ -256,9 +260,12 @@
         });
       }
     } else {
-      // Hide immediately if not requested
+      // Hide immediately and remove from DOM if not an active login redirect
       els.loader.classList.add('rc-loader-hidden');
       els.loader.style.display = 'none';
+      if (els.loader.parentNode) {
+        els.loader.parentNode.removeChild(els.loader);
+      }
     }
   }
 

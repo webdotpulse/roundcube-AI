@@ -176,11 +176,24 @@ rcm_tb_label_css = (function () {
 })();
 
 i18n_label = function (label_name) {
-  if (!window.rcmail || !rcmail.env || !rcmail.env.tb_label_custom_labels) {
-    return label_name;
+  if (!label_name) return "";
+  var custom_str = (window.rcmail && rcmail.env && rcmail.env.tb_label_custom_labels)
+    ? rcmail.env.tb_label_custom_labels[label_name] : null;
+  if (custom_str && custom_str !== label_name && !/^LABEL[0-9]+$/i.test(custom_str)) {
+    return custom_str;
   }
-  var custom_str = rcmail.env.tb_label_custom_labels[label_name];
-  return custom_str ? custom_str : label_name;
+  var loc_key = "thunderbird_labels." + String(label_name).toLowerCase();
+  if (window.rcmail && rcmail.labels && rcmail.labels[loc_key]) {
+    return rcmail.labels[loc_key];
+  }
+  var default_names = {
+    LABEL1: "Important",
+    LABEL2: "Work",
+    LABEL3: "Personal",
+    LABEL4: "To do",
+    LABEL5: "Later"
+  };
+  return default_names[String(label_name).toUpperCase()] || custom_str || label_name;
 };
 
 // Shows the colors based on flag info like in Thunderbird / Gmail
@@ -390,6 +403,9 @@ rcm_tb_label_render_sidebar_items = function () {
     if (key === "LABEL0") return;
     var color = colors[key] || "#757575";
 
+    // Resolve human-friendly name instead of raw DB key (e.g. LABEL1 -> Important)
+    var display_name = (name && name !== key && !/^LABEL[0-9]+$/i.test(name)) ? name : i18n_label(key);
+
     // Determine count: use server count if present; otherwise fallback to local loaded messages count
     var count = 0;
     if (counts && typeof counts[key] !== "undefined") {
@@ -400,15 +416,15 @@ rcm_tb_label_render_sidebar_items = function () {
     }
     var is_active = rcmail.env.tb_label_active_filter === key;
 
-    var count_html = count > 0
-      ? '<span class="tb-label-count">' + count + "</span>"
-      : '<span class="tb-label-count" style="display:none;"></span>';
+    // Show "0" explicitly when there is nothing to show
+    var display_count = (typeof count === "number" && !isNaN(count) && count >= 0) ? count : 0;
+    var count_html = '<span class="tb-label-count">' + display_count + '</span>';
 
     var item = $(
       '<li class="tb-label-item ' + (is_active ? "selected active " : "") + key.toLowerCase() + '" data-label="' + key + '" role="treeitem">' +
-        '<a href="#label-' + key + '" class="tb-label-link ' + (is_active ? "active" : "") + '" title="' + rcm_tb_label_escape_html(name) + '">' +
+        '<a href="#label-' + key + '" class="tb-label-link ' + (is_active ? "active" : "") + '" title="' + rcm_tb_label_escape_html(display_name) + '">' +
           '<span class="tb-label-icon ' + key.toLowerCase() + '" style="color: ' + color + ';">' + TB_LABEL_TAG_SVG + '</span>' +
-          '<span class="name tb-label-name">' + rcm_tb_label_escape_html(name) + '</span>' +
+          '<span class="name tb-label-name">' + rcm_tb_label_escape_html(display_name) + '</span>' +
           count_html +
         "</a>" +
         '<button type="button" class="tb-label-delete-btn" title="' + rcm_tb_label_escape_html(del_title) + '" aria-label="' + rcm_tb_label_escape_html(del_title) + '">&times;</button>' +
@@ -685,11 +701,7 @@ rcm_tb_label_update_count = function (labelKey, delta) {
 
   var badge = $("#tb-labels-list li[data-label=\"" + labelKey + "\"] .tb-label-count");
   if (badge.length) {
-    if (next > 0) {
-      badge.text(next).show();
-    } else {
-      badge.text("").hide();
-    }
+    badge.text(next >= 0 ? next : 0).show();
   }
 };
 
@@ -1143,11 +1155,8 @@ $(function () {
         var server_c = (rcmail.env.tb_label_counts && typeof rcmail.env.tb_label_counts[key] !== "undefined")
           ? parseInt(rcmail.env.tb_label_counts[key], 10) : null;
         var final_c = (server_c !== null && !isNaN(server_c)) ? server_c : rcm_tb_label_count_local_messages(key);
-        if (final_c > 0) {
-          badge.text(final_c).show();
-        } else {
-          badge.text("").hide();
-        }
+        var display_c = (final_c !== null && !isNaN(final_c) && final_c >= 0) ? final_c : 0;
+        badge.text(display_c).show();
       }
     });
     rcm_tb_label_fetch_counts();
@@ -1163,11 +1172,8 @@ $(function () {
         var count = parseInt((data.counts && data.counts[key]) || 0, 10);
         var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
         if (badge.length) {
-          if (count > 0 && !isNaN(count)) {
-            badge.text(count).show();
-          } else {
-            badge.text("").hide();
-          }
+          var final_cnt = (!isNaN(count) && count >= 0) ? count : 0;
+          badge.text(final_cnt).show();
         }
       });
     }

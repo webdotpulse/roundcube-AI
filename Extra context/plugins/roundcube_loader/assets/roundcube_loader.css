@@ -10,7 +10,7 @@
   --rc-loader-text: #202124;
   --rc-loader-subtext: #5f6368;
   --rc-loader-track: #e0e0e0;
-  --rc-loader-bar-color: #d93025;
+  --rc-loader-bar-color: #1a73e8;
   --rc-loader-link: #1a73e8;
   --rc-loader-font: 'Google Sans', Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 }
@@ -23,7 +23,7 @@ body.dark-mode,
   --rc-loader-text: #e8eaed;
   --rc-loader-subtext: #9aa0a6;
   --rc-loader-track: #3c4043;
-  --rc-loader-bar-color: #ea4335;
+  --rc-loader-bar-color: #4285f4;
   --rc-loader-link: #8ab4f8;
 }
 
@@ -33,7 +33,7 @@ body.dark-mode,
     --rc-loader-text: #e8eaed;
     --rc-loader-subtext: #9aa0a6;
     --rc-loader-track: #3c4043;
-    --rc-loader-bar-color: #ea4335;
+    --rc-loader-bar-color: #4285f4;
     --rc-loader-link: #8ab4f8;
   }
 }
@@ -144,7 +144,7 @@ body.dark-mode,
   background-color: var(--rc-loader-bar-color);
   border-radius: 4px;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 8px rgba(217, 48, 37, 0.35);
+  box-shadow: 0 0 8px rgba(26, 115, 232, 0.4);
 }
 
 .rc-loader-bar::after {

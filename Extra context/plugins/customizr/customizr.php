@@ -816,10 +816,10 @@ JS;
         // inject custom colors (sidebar, topbar, compose button)
         $color_css = '';
         if (!empty($this->custom_sidebar_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_sidebar_bg)) {
-            $color_css .= "#layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($this->custom_sidebar_bg, ENT_QUOTES) . " !important; }\n";
+            $color_css .= "html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($this->custom_sidebar_bg, ENT_QUOTES) . " !important; }\n";
         }
         if (!empty($this->custom_topbar_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_topbar_bg)) {
-            $color_css .= ".header, #layout div > .header, #layout > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($this->custom_topbar_bg, ENT_QUOTES) . " !important; }\n";
+            $color_css .= "html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($this->custom_topbar_bg, ENT_QUOTES) . " !important; }\n";
         }
         if (!empty($this->custom_compose_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_compose_bg)) {
             $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($this->custom_compose_bg, ENT_QUOTES) . " !important; }\n";

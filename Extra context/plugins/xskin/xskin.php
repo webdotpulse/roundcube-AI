@@ -322,10 +322,10 @@ class xskin extends XFramework\Plugin
 
         $color_css = '';
         if (!empty($sidebar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $sidebar)) {
-            $color_css .= "#layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($sidebar, ENT_QUOTES) . " !important; }\n";
+            $color_css .= "html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($sidebar, ENT_QUOTES) . " !important; }\n";
         }
         if (!empty($topbar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $topbar)) {
-            $color_css .= ".header, #layout div > .header, #layout > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($topbar, ENT_QUOTES) . " !important; }\n";
+            $color_css .= "html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($topbar, ENT_QUOTES) . " !important; }\n";
         }
         if (!empty($compose) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose)) {
             $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($compose, ENT_QUOTES) . " !important; }\n";
@@ -631,8 +631,8 @@ class xskin extends XFramework\Plugin
                     'value' => $pickerVal,
                     'class' => 'form-control form-control-color',
                     'style' => 'width: 44px; height: 38px; padding: 2px; display: inline-block; vertical-align: middle; cursor: pointer;',
-                    'onchange' => "document.getElementById('{$field}').value = this.value.toUpperCase();",
-                    'oninput' => "document.getElementById('{$field}').value = this.value.toUpperCase();",
+                    'onchange' => "document.getElementById('{$field}').value = this.value.toUpperCase(); xskin.applyCustomColor('{$field}', this.value);",
+                    'oninput' => "document.getElementById('{$field}').value = this.value.toUpperCase(); xskin.applyCustomColor('{$field}', this.value);",
                 ]);
                 $html .= html::tag('input', [
                     'type' => 'text',
@@ -643,13 +643,14 @@ class xskin extends XFramework\Plugin
                     'style' => 'width: 110px; display: inline-block; vertical-align: middle; margin-left: 8px; text-transform: uppercase;',
                     'placeholder' => '#RRGGBB',
                     'pattern' => '^#[0-9A-Fa-f]{6}$',
-                    'oninput' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; }",
+                    'oninput' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
+                    'onchange' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
                 ]);
                 $html .= html::tag('button', [
                     'type' => 'button',
                     'class' => 'btn btn-outline-secondary btn-sm',
                     'style' => 'margin-left: 6px; vertical-align: middle;',
-                    'onclick' => "document.getElementById('{$field}').value = ''; document.getElementById('{$field}_picker').value = '#ffffff';",
+                    'onclick' => "document.getElementById('{$field}').value = ''; document.getElementById('{$field}_picker').value = '#ffffff'; xskin.applyCustomColor('{$field}', '');",
                 ], rcube::Q($this->gettext('clear_color')));
 
                 $pref->html($html, $field, $this->gettext($labelKey), $this->gettext($labelKey . '_desc'));
@@ -658,7 +659,47 @@ class xskin extends XFramework\Plugin
 
         $pref->html(
             html::span(['class' => 'xskin-settings-save-hint'], $this->gettext('save_hint')) .
-            "<script>xskin.updateIFrameClasses();</script>",
+            "<script>
+            if (!window.xskin) window.xskin = {};
+            xskin.applyCustomColor = function(field, color) {
+                var hex = (color || '').trim();
+                if (hex && !/^#[0-9A-Fa-f]{3,6}$/.test(hex)) return;
+                var styleId = 'xskin-live-' + field;
+                var selMap = {
+                    custom_topbar_bg: 'html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header',
+                    custom_sidebar_bg: 'html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist',
+                    custom_compose_bg: '#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose'
+                };
+                var sel = selMap[field];
+                if (!sel) return;
+                var cssText = hex ? (sel + ' { background-color: ' + hex + ' !important; }') : '';
+                function applyToDoc(d) {
+                    if (!d || !d.head) return;
+                    var el = d.getElementById(styleId);
+                    if (!hex) {
+                        if (el) el.remove();
+                        return;
+                    }
+                    if (!el) {
+                        el = d.createElement('style');
+                        el.id = styleId;
+                        el.type = 'text/css';
+                        d.head.appendChild(el);
+                    }
+                    el.textContent = cssText;
+                }
+                try { applyToDoc(document); } catch (e) {}
+                try {
+                    if (window.parent && window.parent.document && window.parent.document !== document) {
+                        applyToDoc(window.parent.document);
+                    }
+                } catch (e) {}
+                if (window.$ && $('.xskin-settings-save-hint').length) {
+                    $('.xskin-settings-save-hint').fadeIn();
+                }
+            };
+            xskin.updateIFrameClasses();
+            </script>",
             ''
         );
 

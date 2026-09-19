@@ -31,8 +31,8 @@ $config['roundcube_loader_logo_type'] = 'gmail';
 $config['roundcube_loader_custom_logo'] = '';
 
 // Custom progress bar fill color (hex code or CSS color string).
-// Overrides default theme bar color if set (leave null to use theme default).
-$config['roundcube_loader_bar_color'] = null;
+// Overrides default theme bar color if set (defaults to '#1a73e8').
+$config['roundcube_loader_bar_color'] = '#1a73e8';
 
 // Display the user's login username ("Loading john.doe@domain.com...")
 $config['roundcube_loader_show_username'] = true;
@@ -44,7 +44,7 @@ $config['roundcube_loader_show_subtext'] = true;
 $config['roundcube_loader_splash_on_login'] = true;
 
 // Show full-page loader during initial application bootstrap after login
-$config['roundcube_loader_splash_on_startup'] = true;
+$config['roundcube_loader_splash_on_startup'] = false;
 
 // Timeout (in seconds) before displaying the "Taking longer than usual? Click to reload" fallback link
 $config['roundcube_loader_timeout'] = 15;

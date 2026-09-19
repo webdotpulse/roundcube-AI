@@ -293,6 +293,14 @@ assert_true(is_array($env_colors), "tb_label_colors exported to JS environment")
 assert_true(isset($env_colors['LABEL1']) && !empty($env_colors['LABEL1']), "LABEL1 has a color code assigned");
 assert_true(isset($env_colors['LABEL4']) && !empty($env_colors['LABEL4']), "LABEL4 has a color code assigned");
 
+// Verify sanitization of raw database label keys
+$rcmail->config->set('tb_label_custom_labels', ['LABEL1' => 'LABEL1', 'LABEL2' => 'LABEL2']);
+$plugin_sanitized = new thunderbird_labels();
+$plugin_sanitized->init();
+$sanitized_labels = $rcmail->output->env['tb_label_custom_labels'];
+assert_true($sanitized_labels['LABEL1'] === 'Important', "Raw database key LABEL1 sanitized to human-readable 'Important'");
+assert_true($sanitized_labels['LABEL2'] === 'Work', "Raw database key LABEL2 sanitized to human-readable 'Work'");
+
 // --- Test 3: imap_search_before Query Rewriting ---
 echo "\n--- Test 3: imap_search_before Search Query Rewriting ---\n";
 
@@ -434,7 +442,7 @@ $css_classic = file_get_contents($plugin_dir . '/skins/classic/tb_label.css');
 assert_true(strpos($css_classic, '.tb-label-count:empty') !== false, "classic tb_label.css contains .tb-label-count:empty rule");
 
 // Count rendering assertions in JS
-assert_true(strpos($js_content, 'count > 0') !== false, "tb_label.js checks count > 0 before rendering badge");
+assert_true(strpos($js_content, 'display_count') !== false || strpos($js_content, 'count >= 0') !== false, "tb_label.js renders count badge showing 0 when count is zero");
 assert_true(strpos($js_content, 'target_mbox = "INBOX"') !== false, "tb_label.js routes sidebar label click to INBOX");
 assert_true(strpos($js_content, 'tb-label-delete-btn') !== false, "tb_label.js renders tb-label-delete-btn for deleting labels");
 assert_true(strpos($js_content, 'rcm_tb_label_count_local_messages') !== false, "tb_label.js defines rcm_tb_label_count_local_messages helper");
