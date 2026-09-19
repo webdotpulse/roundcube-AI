@@ -28,9 +28,9 @@ class RoundcubeExtraContentInstaller
 
     public function __construct(?string $pluginDir = null, ?string $roundcubeDir = null)
     {
-        $this->pluginDir = $pluginDir ? realpath($pluginDir) : realpath(dirname(__DIR__));
+        $this->pluginDir = $pluginDir ? rtrim($pluginDir, '/\\') : dirname(__DIR__);
         if ($roundcubeDir) {
-            $this->roundcubeDir = realpath($roundcubeDir) ?: $roundcubeDir;
+            $this->roundcubeDir = rtrim($roundcubeDir, '/\\');
         }
     }
 
@@ -58,10 +58,10 @@ class RoundcubeExtraContentInstaller
                 $this->verbose = true;
             } elseif (str_starts_with($arg, '--roundcube-path=')) {
                 $path = substr($arg, strlen('--roundcube-path='));
-                $this->roundcubeDir = realpath($path) ?: $path;
+                $this->roundcubeDir = rtrim($path, '/\\');
             } elseif (str_starts_with($arg, '--target=')) {
                 $path = substr($arg, strlen('--target='));
-                $this->roundcubeDir = realpath($path) ?: $path;
+                $this->roundcubeDir = rtrim($path, '/\\');
             } elseif ($arg === '--help' || $arg === '-h') {
                 $this->printHelp();
                 exit(0);
@@ -81,25 +81,24 @@ class RoundcubeExtraContentInstaller
         // 1. Locate source directory containing extra content
         $sourceDir = $this->findSourceDir();
         if (!$sourceDir) {
-            $this->warning("No 'Extra context' or 'extra_content' directory found in {$this->pluginDir}. Nothing to install.");
+            $this->warning("No 'Extra context' directory found in {$this->pluginDir}. Nothing to install.");
             return 0;
         }
-        $this->info("Found extra content repository at: " . $sourceDir);
+        $this->info("Found extra content source at: {$sourceDir}");
 
         // 2. Locate destination Roundcube installation root
         $targetDir = $this->findRoundcubeDir();
         if (!$targetDir) {
             $this->warning("Could not automatically locate Roundcube root directory.");
-            $this->info("To deploy extra content into Roundcube, specify target path:");
-            $this->info("  php bin/install-extra.php --roundcube-path=/path/to/roundcube");
-            $this->info("Or set the ROUNDCUBE_PATH environment variable.");
+            $this->info("To deploy extra content into Roundcube, run:");
+            $this->info("  php " . __FILE__ . " --roundcube-path=/path/to/roundcube");
             return 0;
         }
 
-        $this->success("Detected Roundcube target at: " . $targetDir);
+        $this->success("Target Roundcube root: {$targetDir}");
 
         if ($this->dryRun) {
-            $this->warning("[DRY-RUN MODE ACTIVE] No filesystem modifications will be made.");
+            $this->warning("[DRY-RUN MODE ACTIVE] No filesystem changes will be made.");
         }
 
         $pluginsTarget = $targetDir . DIRECTORY_SEPARATOR . 'plugins';
@@ -112,51 +111,60 @@ class RoundcubeExtraContentInstaller
 
         $installedCount = 0;
 
-        // 3. Install Bundled Skin: GMail+
-        $gmailPlusSkinSrc = $this->resolvePath([
-            $sourceDir . '/skins/gmail_plus/skins/gmail_plus',
-            $sourceDir . '/skins/gmail_plus',
-        ]);
-
-        if ($gmailPlusSkinSrc && is_dir($gmailPlusSkinSrc)) {
-            $dest = $skinsTarget . DIRECTORY_SEPARATOR . 'gmail_plus';
-            $this->installComponent('skin', 'gmail_plus', $gmailPlusSkinSrc, $dest, 'config.inc.php.sample');
-            $installedCount++;
-        }
-
-        // 4. Install Roundcube Plus Plugins: xskin, xframework
-        $xskinSrc = $this->resolvePath([
-            $sourceDir . '/skins/gmail_plus/plugins/xskin',
-            $sourceDir . '/plugins/xskin',
-        ]);
-        if ($xskinSrc && is_dir($xskinSrc)) {
-            $dest = $pluginsTarget . DIRECTORY_SEPARATOR . 'xskin';
-            $this->installComponent('plugin', 'xskin', $xskinSrc, $dest, 'config.inc.php.dist');
-            $installedCount++;
-        }
-
-        $xframeworkSrc = $this->resolvePath([
-            $sourceDir . '/skins/gmail_plus/plugins/xframework',
-            $sourceDir . '/plugins/xframework',
-        ]);
-        if ($xframeworkSrc && is_dir($xframeworkSrc)) {
-            $dest = $pluginsTarget . DIRECTORY_SEPARATOR . 'xframework';
-            $this->installComponent('plugin', 'xframework', $xframeworkSrc, $dest, null);
-            $installedCount++;
-        }
-
-        // 5. Install Companion Plugins: customizr, thread_drafts, thunderbird_labels
-        $companionPlugins = ['customizr', 'thread_drafts', 'thunderbird_labels'];
-        foreach ($companionPlugins as $pluginName) {
-            $pluginSrc = $sourceDir . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . $pluginName;
-            if (is_dir($pluginSrc)) {
-                $dest = $pluginsTarget . DIRECTORY_SEPARATOR . $pluginName;
-                $this->installComponent('plugin', $pluginName, $pluginSrc, $dest, 'config.inc.php.dist');
+        // 3. Install all skins from Extra context/skins/ into <roundcube>/skins/
+        $skinsSrcDir = $sourceDir . DIRECTORY_SEPARATOR . 'skins';
+        if (is_dir($skinsSrcDir)) {
+            $skinItems = scandir($skinsSrcDir) ?: [];
+            foreach ($skinItems as $skinName) {
+                if ($skinName === '.' || $skinName === '..' || $skinName === '.git') {
+                    continue;
+                }
+                $src = $skinsSrcDir . DIRECTORY_SEPARATOR . $skinName;
+                if (!is_dir($src)) {
+                    continue;
+                }
+                // Handle legacy nested structure if Extra context/skins/gmail_plus/skins/gmail_plus exists
+                if (is_dir($src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName)) {
+                    $src = $src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName;
+                }
+                $dest = $skinsTarget . DIRECTORY_SEPARATOR . $skinName;
+                $this->installComponent('skin', $skinName, $src, $dest);
                 $installedCount++;
             }
         }
 
-        // 6. Ensure this AI plugin itself has a compatibility link or is recognized
+        // 4. Install all plugins from Extra context/plugins/ into <roundcube>/plugins/
+        $pluginsSrcDir = $sourceDir . DIRECTORY_SEPARATOR . 'plugins';
+        if (is_dir($pluginsSrcDir)) {
+            $pluginItems = scandir($pluginsSrcDir) ?: [];
+            foreach ($pluginItems as $pluginName) {
+                if ($pluginName === '.' || $pluginName === '..' || $pluginName === '.git') {
+                    continue;
+                }
+                $src = $pluginsSrcDir . DIRECTORY_SEPARATOR . $pluginName;
+                if (!is_dir($src)) {
+                    continue;
+                }
+                $dest = $pluginsTarget . DIRECTORY_SEPARATOR . $pluginName;
+                $this->installComponent('plugin', $pluginName, $src, $dest);
+                $installedCount++;
+            }
+        }
+
+        // 5. Fallback for legacy nested plugins in skins/gmail_plus/plugins
+        $legacyPluginsDir = $skinsSrcDir . DIRECTORY_SEPARATOR . 'gmail_plus' . DIRECTORY_SEPARATOR . 'plugins';
+        if (is_dir($legacyPluginsDir)) {
+            foreach (['xskin', 'xframework'] as $lp) {
+                $src = $legacyPluginsDir . DIRECTORY_SEPARATOR . $lp;
+                $dest = $pluginsTarget . DIRECTORY_SEPARATOR . $lp;
+                if (is_dir($src) && !is_dir($dest)) {
+                    $this->installComponent('plugin', $lp, $src, $dest);
+                    $installedCount++;
+                }
+            }
+        }
+
+        // 6. Ensure this AI plugin itself has compatibility link in plugins/
         $this->ensureAiPluginLinked($pluginsTarget);
 
         // 7. Check / Assist Roundcube Configuration
@@ -172,7 +180,7 @@ class RoundcubeExtraContentInstaller
     /**
      * Install a skin or plugin component to the target destination.
      */
-    private function installComponent(string $type, string $name, string $source, string $destination, ?string $sampleConfigFile): void
+    private function installComponent(string $type, string $name, string $source, string $destination): void
     {
         $this->info("Installing {$type} [{$name}]...");
         $this->info("  Source: {$source}");
@@ -185,21 +193,26 @@ class RoundcubeExtraContentInstaller
             $this->success("  -> Installed {$name} to {$destination}");
         }
 
-        // Bootstrap configuration file if sample/dist exists and target config does not
-        if ($sampleConfigFile) {
-            $targetConfigFile = $destination . DIRECTORY_SEPARATOR . 'config.inc.php';
-            $sampleFilePath = $destination . DIRECTORY_SEPARATOR . $sampleConfigFile;
-
-            if (!file_exists($targetConfigFile) && file_exists($sampleFilePath)) {
-                if ($this->dryRun) {
-                    $this->info("  -> Would initialize default config: {$targetConfigFile} from {$sampleConfigFile}");
-                } else {
-                    copy($sampleFilePath, $targetConfigFile);
-                    $this->success("  -> Initialized default config: {$targetConfigFile}");
+        // Bootstrap configuration file if .sample or .dist exists and config.inc.php does not
+        $targetConfigFile = $destination . DIRECTORY_SEPARATOR . 'config.inc.php';
+        if (!file_exists($targetConfigFile)) {
+            $sampleCandidates = [
+                $destination . DIRECTORY_SEPARATOR . 'config.inc.php.sample',
+                $destination . DIRECTORY_SEPARATOR . 'config.inc.php.dist',
+            ];
+            foreach ($sampleCandidates as $sampleFilePath) {
+                if (file_exists($sampleFilePath)) {
+                    if ($this->dryRun) {
+                        $this->info("  -> Would initialize default config: {$targetConfigFile} from " . basename($sampleFilePath));
+                    } else {
+                        @copy($sampleFilePath, $targetConfigFile);
+                        $this->success("  -> Initialized default config: {$targetConfigFile}");
+                    }
+                    break;
                 }
-            } elseif (file_exists($targetConfigFile)) {
-                $this->info("  -> Preserving existing user config at {$targetConfigFile}");
             }
+        } else {
+            $this->info("  -> Preserving existing user config at {$targetConfigFile}");
         }
     }
 
@@ -209,23 +222,30 @@ class RoundcubeExtraContentInstaller
      */
     private function ensureAiPluginLinked(string $pluginsTarget): void
     {
-        $pluginBaseName = basename($this->pluginDir);
-
-        // If installed inside Roundcube plugins directory (e.g. plugins/lifeprisma_ai or plugins/roundcube_ai)
         $lifeprismaTarget = $pluginsTarget . DIRECTORY_SEPARATOR . 'lifeprisma_ai';
         $roundcubeAiTarget = $pluginsTarget . DIRECTORY_SEPARATOR . 'roundcube_ai';
 
-        if ($this->pluginDir === realpath($roundcubeAiTarget) && !file_exists($lifeprismaTarget)) {
+        if ($this->isSamePath($this->pluginDir, $roundcubeAiTarget) && !file_exists($lifeprismaTarget)) {
             if (!$this->dryRun) {
                 @symlink('roundcube_ai', $lifeprismaTarget);
                 $this->info("Created compatibility symlink: {$lifeprismaTarget} -> roundcube_ai");
             }
-        } elseif ($this->pluginDir === realpath($lifeprismaTarget) && !file_exists($roundcubeAiTarget)) {
+        } elseif ($this->isSamePath($this->pluginDir, $lifeprismaTarget) && !file_exists($roundcubeAiTarget)) {
             if (!$this->dryRun) {
                 @symlink('lifeprisma_ai', $roundcubeAiTarget);
                 $this->info("Created compatibility symlink: {$roundcubeAiTarget} -> lifeprisma_ai");
             }
         }
+    }
+
+    /**
+     * Compare two paths safely.
+     */
+    private function isSamePath(string $p1, string $p2): bool
+    {
+        $r1 = realpath($p1) ?: rtrim($p1, '/\\');
+        $r2 = realpath($p2) ?: rtrim($p2, '/\\');
+        return $r1 === $r2;
     }
 
     /**
@@ -238,7 +258,7 @@ class RoundcubeExtraContentInstaller
 
         if (!file_exists($configFile) && file_exists($sampleFile) && $this->activate) {
             if (!$this->dryRun) {
-                copy($sampleFile, $configFile);
+                @copy($sampleFile, $configFile);
                 $this->success("Initialized Roundcube main config: {$configFile}");
             }
         }
@@ -247,11 +267,11 @@ class RoundcubeExtraContentInstaller
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
             $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'lifeprisma_ai'");
-            $this->info("And set the active skin in \$config['skin'] = 'gmail_plus';");
+            $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
 
-        $configContent = file_get_contents($configFile);
+        $configContent = @file_get_contents($configFile);
         if ($configContent === false) {
             return;
         }
@@ -305,7 +325,6 @@ class RoundcubeExtraContentInstaller
         }
 
         if (!empty($missingPlugins)) {
-            // Check if $config['plugins'] exists
             if (preg_match('/(\$config\[[\'"]plugins[\'"]\]\s*=\s*\[)([^\]]*)(\];)/s', $content, $m)) {
                 $currentPluginsText = $m[2];
                 $newEntries = "";
@@ -313,7 +332,6 @@ class RoundcubeExtraContentInstaller
                     $newEntries .= "    '{$plugin}',\n";
                 }
                 $replacement = $m[1] . "\n" . $currentPluginsText . (str_ends_with(trim($currentPluginsText), ',') ? "\n" : ",\n") . $newEntries . $m[3];
-                // Clean up duplicate empty commas or formatting
                 $replacement = preg_replace('/,\s*,\s*/', ",\n", $replacement);
                 $content = str_replace($m[0], $replacement, $content);
                 $modified = true;
@@ -322,7 +340,7 @@ class RoundcubeExtraContentInstaller
         }
 
         if ($modified && !$this->dryRun) {
-            file_put_contents($configFile, $content);
+            @file_put_contents($configFile, $content);
             $this->success("Successfully updated Roundcube configuration file at {$configFile}");
         }
     }
@@ -341,7 +359,7 @@ class RoundcubeExtraContentInstaller
 
         foreach ($candidates as $cand) {
             if (is_dir($cand)) {
-                return realpath($cand);
+                return $cand;
             }
         }
 
@@ -359,8 +377,8 @@ class RoundcubeExtraContentInstaller
 
         // Priority 1: INSTALL_PATH constant defined by roundcube/plugin-installer
         if (defined('INSTALL_PATH')) {
-            $path = realpath(INSTALL_PATH);
-            if ($path && is_dir($path)) {
+            $path = rtrim(INSTALL_PATH, '/\\');
+            if (is_dir($path)) {
                 return $path;
             }
         }
@@ -368,7 +386,7 @@ class RoundcubeExtraContentInstaller
         // Priority 2: ROUNDCUBE_PATH environment variable
         $envPath = getenv('ROUNDCUBE_PATH') ?: getenv('ROUNDCUBE_DIR');
         if ($envPath && is_dir($envPath)) {
-            return realpath($envPath);
+            return rtrim($envPath, '/\\');
         }
 
         // Priority 3: Check if plugin is located in <roundcube>/plugins/<plugin_dir>
@@ -376,34 +394,21 @@ class RoundcubeExtraContentInstaller
         if (basename($parentDir) === 'plugins') {
             $grandParentDir = dirname($parentDir);
             if ($this->isRoundcubeRoot($grandParentDir)) {
-                return realpath($grandParentDir);
+                return $grandParentDir;
             }
         }
 
         // Priority 4: Check current working directory
         $cwd = getcwd();
         if ($cwd && $this->isRoundcubeRoot($cwd)) {
-            return realpath($cwd);
+            return $cwd;
         }
 
         // Priority 5: Check parent of cwd
         if ($cwd) {
             $cwdParent = dirname($cwd);
             if ($this->isRoundcubeRoot($cwdParent)) {
-                return realpath($cwdParent);
-            }
-        }
-
-        // Priority 6: Standard local development paths
-        $localPaths = [
-            '/home/koen/Downloads/Roundcube/roundcubemail-1.7.4',
-            '/var/www/html/roundcube',
-            '/var/www/roundcube',
-            '/usr/share/roundcube',
-        ];
-        foreach ($localPaths as $lp) {
-            if ($this->isRoundcubeRoot($lp)) {
-                return realpath($lp);
+                return $cwdParent;
             }
         }
 
@@ -428,26 +433,13 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
-     * Resolves the first existing path from an array of candidates.
-     */
-    private function resolvePath(array $candidates): ?string
-    {
-        foreach ($candidates as $candidate) {
-            if (file_exists($candidate)) {
-                return realpath($candidate);
-            }
-        }
-        return null;
-    }
-
-    /**
      * Recursively copy files and directories preserving permissions.
      */
     private function copyRecursive(string $src, string $dst): void
     {
         if (is_link($src)) {
             if (file_exists($dst) || is_link($dst)) {
-                unlink($dst);
+                @unlink($dst);
             }
             @symlink(readlink($src), $dst);
             return;
@@ -456,15 +448,15 @@ class RoundcubeExtraContentInstaller
         if (is_file($src)) {
             $dir = dirname($dst);
             if (!is_dir($dir)) {
-                mkdir($dir, 0755, true);
+                @mkdir($dir, 0755, true);
             }
-            copy($src, $dst);
-            chmod($dst, fileperms($src) & 0777);
+            @copy($src, $dst);
+            @chmod($dst, fileperms($src) & 0777);
             return;
         }
 
         if (!is_dir($dst)) {
-            mkdir($dst, 0755, true);
+            @mkdir($dst, 0755, true);
         }
 
         $dir = opendir($src);
@@ -473,7 +465,7 @@ class RoundcubeExtraContentInstaller
         }
 
         while (($file = readdir($dir)) !== false) {
-            if ($file === '.' || $file === '..') {
+            if ($file === '.' || $file === '..' || $file === '.git') {
                 continue;
             }
             $srcItem = $src . DIRECTORY_SEPARATOR . $file;
@@ -486,8 +478,8 @@ class RoundcubeExtraContentInstaller
                 if ($file === 'config.inc.php' && file_exists($dstItem)) {
                     continue;
                 }
-                copy($srcItem, $dstItem);
-                chmod($dstItem, fileperms($srcItem) & 0777);
+                @copy($srcItem, $dstItem);
+                @chmod($dstItem, fileperms($srcItem) & 0777);
             }
         }
         closedir($dir);
