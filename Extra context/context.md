@@ -1,1 +1,2 @@
-1. Folder "roundcube_plus_skin_gmail_plus" contains the RoundCube Skin I will use this AI Plugin with. So adapt it to this skin.
+1. Folder "skins" contains the "gmail_plus" Skin I will use this AI Plugin with.
+2. Folder "plugins" contains "customizr", "thread_drafts", "thunderbird_labels"

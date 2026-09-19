@@ -1,0 +1,83 @@
+/**
+ * Thread Drafts Plugin Stylesheet for Elastic Skin
+ * Includes full dark mode and widescreen layout adjustments
+ */
+
+/* Elastic specific message list adjustments */
+html.layout-widescreen tr.thread-draft-row td.subject a,
+html.layout-desktop tr.thread-draft-row td.subject a {
+    font-style: italic;
+}
+
+tr.thread-draft-row {
+    background-color: rgba(234, 67, 53, 0.05);
+}
+
+tr.thread-draft-row:hover {
+    background-color: rgba(234, 67, 53, 0.1) !important;
+}
+
+tr.thread-draft-row.selected {
+    background-color: #e8f0fe !important;
+}
+
+.rcube-thread-draft-badge {
+    background-color: #fce8e6;
+    color: #c5221f;
+    border-color: #fad2cf;
+}
+
+.rcube-thread-root-draft-badge {
+    background-color: #fef0ef;
+    color: #d93025;
+    border-color: #f8cbc7;
+}
+
+.draft-reply-notice {
+    background-color: #fef7e0;
+    border-color: #f9e39b;
+    color: #614a19;
+}
+
+/* ================= Dark Mode ================= */
+html.dark-mode tr.thread-draft-row {
+    background-color: rgba(242, 139, 130, 0.07);
+}
+
+html.dark-mode tr.thread-draft-row:hover {
+    background-color: rgba(242, 139, 130, 0.14) !important;
+}
+
+html.dark-mode tr.thread-draft-row.selected {
+    background-color: #2b3b4d !important;
+}
+
+html.dark-mode .rcube-thread-draft-badge {
+    background-color: #4a211e;
+    color: #f28b82;
+    border-color: #5f2a27;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-mode .rcube-thread-root-draft-badge {
+    background-color: #431f1c;
+    color: #f6aea9;
+    border-color: #552724;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+html.dark-mode .draft-reply-notice {
+    background-color: #2b2518;
+    border-color: #4d4022;
+    color: #fdd663;
+}
+
+html.dark-mode .draft-reply-notice .draft-reply-icon {
+    color: #fdd663;
+}
+
+html.dark-mode .draft-reply-notice .draft-resume-btn {
+    background-color: #007bb7;
+    border-color: #006a9d;
+    color: #ffffff;
+}

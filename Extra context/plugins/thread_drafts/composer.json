@@ -1,0 +1,23 @@
+{
+    "name": "webdotpulse/roundcube-thread-drafts",
+    "type": "roundcube-plugin",
+    "description": "Roundcube Webmail plugin to include active unsent drafts into conversation threads.",
+    "keywords": ["roundcube", "mail", "plugin", "threads", "drafts", "conversation"],
+    "homepage": "https://github.com/webdotpulse/roundcube-thread-drafts",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Webdotpulse",
+            "email": "info@webdotpulse.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}

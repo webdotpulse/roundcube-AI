@@ -1,0 +1,25 @@
+{
+    "name": "roundcube/customizr",
+    "type": "roundcube-plugin",
+    "description": "Plugin to set custom logo, watermark image, favicon and stylesheets via config and user settings.",
+    "version": "1.0.0",
+    "keywords": ["customize", "logo", "watermark", "favicon", "styles", "settings", "theme"],
+    "license": "GNU GPLv3+",
+    "authors": [
+        {
+            "name": "Thomas Bruederli",
+            "email": "thomas@roundcube.net",
+            "role": "Lead"
+        }
+    ],
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://plugins.roundcube.net"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "roundcube/plugin-installer": ">=0.1.3"
+    }
+}

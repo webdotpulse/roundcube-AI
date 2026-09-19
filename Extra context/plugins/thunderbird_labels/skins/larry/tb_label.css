@@ -1,0 +1,117 @@
+.toolbar a.button.tb-label {
+  background-image: url(thunderbird_32.png);
+  background-position: 50% 0px;
+}
+/* useful? tries to show it's different from other options
+ul.toolbarmenu li a.label0.active {
+  color: #BBB;
+}
+*/
+#tb-label-menu ul li {
+  background-color: #444; /* hack, else submenu has light blue background? */
+}
+
+span.tb_label_dots {
+  /* position: absolute;
+  display: block; */
+  right: 3px;
+  top: 1.2em;
+  height: 0px;
+}
+
+/* hack for firefox : doesn't display the bullets at the correct height */
+@-moz-document url-prefix() {
+  span.tb_label_dots {
+    top: -19px;
+  }
+}
+
+span.tb_label_dots span {
+  font-size: 32px;
+  line-height: 0px;
+}
+
+span.tb_label_dots.bullets span {
+  vertical-align: -0.23em;
+}
+
+/* this goes into preview of an email */
+div#labelbox {
+  white-space: nowrap;
+  position: absolute;
+  right: 67px;
+  top: 35px;
+}
+
+div#labelbox span {
+  margin: 0 3px;
+  padding: 3px;
+  border: 1px solid black;
+  border-radius: 3px;
+  color: black;
+  font-weight: bold;
+}
+
+/* icon for settings-section */
+#sections-table tbody #rcmrowthunderbird_labels td.section {
+  background-image: url(thunderbird_24.png);
+  background-position: 3px 3px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25em 0.4em;
+  font-size: 75%;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 0.25rem;
+  transition:
+    color 0.15s ease-in-out,
+    background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+}
+
+.widescreen .messagelist td.subject span.subject {
+  display: unset;
+}
+
+span.tb_label_dots {
+  margin: 3px 1.1em 1.5em 1.4em;
+  clear: both;
+}
+
+span.tb_label_dots.badges {
+  vertical-align: middle;
+}
+
+span.tb_label_dots span.tb_label_badges {
+  font-size: 11px;
+  line-height: 11px !important;
+  color: #fff;
+  margin-right: 8px;
+  margin-top: -2px;
+  background-color: #c9c9c9;
+}
+.tb_label_badges.label1 {
+  background-color: #ff0000 !important;
+}
+
+.tb_label_badges.label2 {
+  background-color: #ff9900 !important;
+}
+
+.tb_label_badges.label3 {
+  background-color: #009900 !important;
+}
+
+.tb_label_badges.label4 {
+  background-color: #3333ff !important;
+}
+
+.tb_label_badges.label5 {
+  background-color: #993399 !important;
+}
