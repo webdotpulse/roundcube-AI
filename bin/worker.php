@@ -286,26 +286,33 @@ class LpaiImapClient {
     }
 
     public function fetch_message($uid) {
-        // Use BODY.PEEK[] to fetch full message without implicitly setting the \Seen flag (RFC 3501)
-        $response = $this->send_command("UID FETCH $uid (BODY.PEEK[])");
-        $full_msg = '';
-        $capturing = false;
-        $literal_bytes_left = 0;
+        $tag = $this->get_next_tag();
+        $cmd = "$tag UID FETCH $uid (BODY.PEEK[])\r\n";
+        if ($this->verbose) echo "[IMAP-OUT] $cmd";
+        fwrite($this->socket, $cmd);
 
-        foreach ($response as $line) {
-            if (preg_match('/\* \d+ FETCH \(UID ' . $uid . '.*\{(\d+)\}/i', $line, $m)) {
-                $capturing = true;
-                $literal_bytes_left = (int)$m[1];
-                continue;
+        $full_msg = '';
+
+        while (($line = $this->read_line()) !== false) {
+            if ($this->verbose) echo "[IMAP-IN] $line\n";
+
+            // Detect IMAP literal specification: * <num> FETCH (UID <uid> ... {<size>}
+            if (preg_match('/\{(\d+)\}\s*$/', $line, $m)) {
+                $literal_size = (int)$m[1];
+                if ($literal_size > 0) {
+                    $read_bytes = 0;
+                    while ($read_bytes < $literal_size && !feof($this->socket)) {
+                        $chunk = fread($this->socket, min(8192, $literal_size - $read_bytes));
+                        if ($chunk === false || strlen($chunk) === 0) break;
+                        $full_msg .= $chunk;
+                        $read_bytes += strlen($chunk);
+                    }
+                    if ($this->verbose) echo "[IMAP-RAW] Read $read_bytes / $literal_size literal bytes\n";
+                }
             }
-            if ($capturing) {
-                if ($literal_bytes_left > 0) {
-                    $full_msg .= $line . "\n";
-                    $literal_bytes_left -= (strlen($line) + 1);
-                }
-                if ($literal_bytes_left <= 0) {
-                    $capturing = false;
-                }
+
+            if (strpos($line, "$tag OK") === 0 || strpos($line, "$tag NO") === 0 || strpos($line, "$tag BAD") === 0) {
+                break;
             }
         }
 
@@ -356,10 +363,8 @@ class LpaiImapClient {
     }
 
     private function parse_raw_email($raw) {
-        $parts = explode("\r\n\r\n", str_replace(["\r\n", "\r"], ["\n", "\n"], $raw), 2);
-        if (count($parts) < 2) {
-            $parts = explode("\n\n", $raw, 2);
-        }
+        $normalized = str_replace(["\r\n", "\r"], "\n", $raw);
+        $parts = explode("\n\n", $normalized, 2);
         $header_str = $parts[0] ?? '';
         $body_str = $parts[1] ?? '';
 
@@ -387,18 +392,53 @@ class LpaiImapClient {
         if (preg_match('/Content-Type:\s*multipart\/[a-z]+;\s*boundary="?([^"\s;]+)"?/i', $header_str, $bm)) {
             $boundary = '--' . $bm[1];
             $sections = explode($boundary, $body_str);
+            $found_plain = false;
             foreach ($sections as $sec) {
                 if (stripos($sec, 'Content-Type: text/plain') !== false) {
-                    $sec_parts = explode("\n\n", trim($sec), 2);
-                    $clean_body = $sec_parts[1] ?? $clean_body;
+                    $sec_norm = str_replace(["\r\n", "\r"], ["\n", "\n"], trim($sec));
+                    $sec_parts = explode("\n\n", $sec_norm, 2);
+                    $part_headers = strtolower($sec_parts[0] ?? '');
+                    $part_body = $sec_parts[1] ?? '';
+                    if (strpos($part_headers, 'content-transfer-encoding: base64') !== false) {
+                        $part_body = base64_decode($part_body);
+                    } elseif (strpos($part_headers, 'content-transfer-encoding: quoted-printable') !== false) {
+                        $part_body = quoted_printable_decode($part_body);
+                    }
+                    $clean_body = $part_body;
+                    $found_plain = true;
                     break;
                 }
             }
-        }
-
-        // Strip HTML if body is HTML
-        if (stripos($headers['content-type'] ?? '', 'text/html') !== false) {
-            $clean_body = strip_tags(preg_replace('/<style\b[^>]*>(.*?)<\/style>/is', '', $clean_body));
+            if (!$found_plain) {
+                // Fallback to text/html section if text/plain not present
+                foreach ($sections as $sec) {
+                    if (stripos($sec, 'Content-Type: text/html') !== false) {
+                        $sec_norm = str_replace(["\r\n", "\r"], ["\n", "\n"], trim($sec));
+                        $sec_parts = explode("\n\n", $sec_norm, 2);
+                        $part_headers = strtolower($sec_parts[0] ?? '');
+                        $part_body = $sec_parts[1] ?? '';
+                        if (strpos($part_headers, 'content-transfer-encoding: base64') !== false) {
+                            $part_body = base64_decode($part_body);
+                        } elseif (strpos($part_headers, 'content-transfer-encoding: quoted-printable') !== false) {
+                            $part_body = quoted_printable_decode($part_body);
+                        }
+                        $clean_body = strip_tags(preg_replace('/<style\b[^>]*>(.*?)<\/style>/is', '', $part_body));
+                        break;
+                    }
+                }
+            }
+        } else {
+            // Single part email - decode if encoded
+            $encoding = strtolower($headers['content-transfer-encoding'] ?? '');
+            if ($encoding === 'base64') {
+                $clean_body = base64_decode($clean_body);
+            } elseif ($encoding === 'quoted-printable') {
+                $clean_body = quoted_printable_decode($clean_body);
+            }
+            // Strip HTML if single-part is HTML
+            if (stripos($headers['content-type'] ?? '', 'text/html') !== false) {
+                $clean_body = strip_tags(preg_replace('/<style\b[^>]*>(.*?)<\/style>/is', '', $clean_body));
+            }
         }
 
         return [
@@ -432,7 +472,7 @@ class LpaiImapClient {
 
     private function read_response_until($tag) {
         $lines = [];
-        while ($line = $this->read_line()) {
+        while (($line = $this->read_line()) !== false) {
             if ($this->verbose) echo "[IMAP-IN] $line\n";
             $lines[] = $line;
             if (strpos($line, "$tag OK") === 0 || strpos($line, "$tag NO") === 0 || strpos($line, "$tag BAD") === 0) {
