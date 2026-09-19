@@ -911,14 +911,17 @@ class xskin extends XFramework\Plugin
     protected function ensureSkinLogo(): void
     {
         if (empty($this->rcmail->config->get("skin_logo"))) {
-            $this->rcmail->config->set(
-                'skin_logo',
-                [
-                    '*' => "skins/$this->skin/assets/images/logo_header.png",
-                    '[print]' => "skins/$this->skin/assets/images/logo_print.png",
-                    'login' => false,
-                ]
-            );
+            $skinLogo = [
+                '*' => "skins/$this->skin/assets/images/logo_header.png",
+                '[print]' => "skins/$this->skin/assets/images/logo_print.png",
+            ];
+
+            $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
+            if ($basePath && is_file($basePath . "skins/$this->skin/assets/images/logo_login.png")) {
+                $skinLogo['login'] = "skins/$this->skin/assets/images/logo_login.png";
+            }
+
+            $this->rcmail->config->set('skin_logo', $skinLogo);
         }
     }
 
