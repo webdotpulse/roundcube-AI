@@ -156,10 +156,14 @@ chmod 0640 /var/log/roundcube-ai-worker.log
 ```
 
 ### 3. Add Crontab Entry
-Edit the crontab for the web server user:
+Open the crontab editor:
 
 ```bash
-crontab -e -u www-data
+# When logged in as your account user (e.g. Combell SSH / cPanel):
+crontab -e
+
+# Or if logged in as root on a multi-user VPS:
+# crontab -e -u www-data
 ```
 
 Add one of the following schedules:
@@ -254,7 +258,7 @@ journalctl -u lifeprisma-ai-worker.service -f
 
 | Check | How to Verify | Expected Result |
 | :--- | :--- | :--- |
-| **Crontab Active** | `crontab -l -u www-data` | Shows worker command entry |
+| **Crontab Active** | `crontab -l` | Shows worker command entry |
 | **Log Output** | `tail -f /var/log/roundcube-ai-worker.log` | Shows periodic execution passes |
 | **Label Sync** | Send an email with "Urgent" or questions | Email row receives red/blue badge in Roundcube |
 | **Drafts Created** | Check Roundcube "Drafts" folder | Draft reply appears with "Re: ..." subject |

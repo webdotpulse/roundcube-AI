@@ -1350,8 +1350,7 @@ $config['lifeprisma_ai_worker_accounts'] = [
                 <span class="lang-tag">bash</span>
                 <button class="copy-btn" data-copy-target="cmdPermissions">Copy</button>
               </div>
-              <pre class="code-block" id="cmdPermissions">chmod +x <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php
-chown -R <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">mobilitypulsecom</span> <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span></pre>
+              <pre class="code-block" id="cmdPermissions">chmod +x <span class="dyn-plugin-path">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai</span>/bin/worker.php</pre>
             </div>
 
             <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">2. Initialize Log File:</h4>
@@ -1361,7 +1360,6 @@ chown -R <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">
                 <button class="copy-btn" data-copy-target="cmdInitLog">Copy</button>
               </div>
               <pre class="code-block" id="cmdInitLog">touch <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
-chown <span class="dyn-user">mobilitypulsecom</span>:<span class="dyn-group">mobilitypulsecom</span> <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span>
 chmod 0640 <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/webmail.thechargegrid.com/plugins/lifeprisma_ai/worker.log</span></pre>
             </div>
 
@@ -1371,8 +1369,8 @@ chmod 0640 <span class="dyn-log-file">/data/sites/web/mobilitypulsecom/subsites/
                 <span class="lang-tag">bash</span>
                 <button class="copy-btn" data-copy-target="cmdEditCron">Copy</button>
               </div>
-              <pre class="code-block" id="cmdEditCron"># Open user crontab
-crontab -e -u <span class="dyn-user">mobilitypulsecom</span></pre>
+              <pre class="code-block" id="cmdEditCron"># Open your crontab editor (do NOT use -u on Combell / shared hosting)
+crontab -e</pre>
             </div>
 
             <h4 style="font-size: 14px; margin: 16px 0 8px; color: var(--text-main);">4. Crontab Entry to Add:</h4>
@@ -1468,7 +1466,7 @@ crontab -e -u <span class="dyn-user">mobilitypulsecom</span></pre>
               <tbody>
                 <tr>
                   <td><strong>Crontab Active</strong></td>
-                  <td><code>crontab -l -u <span class="dyn-user">mobilitypulsecom</span></code></td>
+                  <td><code>crontab -l</code></td>
                   <td>Shows the worker command line entry</td>
                 </tr>
                 <tr>
@@ -1558,7 +1556,7 @@ echo "[4/5] Testing worker in dry-run mode..."
 }
 
 # 5. Crontab reminder
-echo "[5/5] Setup complete! Add this line to your crontab (crontab -e -u $USER):"
+echo "[5/5] Setup complete! Add this line to your crontab (run: crontab -e):"
 echo "---------------------------------------------------------"
 echo "<span class="dyn-cron-freq">*/3 * * * *</span> $PHP_BIN $PLUGIN_DIR/bin/worker.php >> $LOG_FILE 2>&1"
 echo "---------------------------------------------------------"
@@ -1758,6 +1756,24 @@ $config['lifeprisma_ai_worker_dovecot_master_password'] = 'your_master_secret';
 $config['lifeprisma_ai_worker_accounts'] = [
     ['email' => '<span class="dyn-email">koen@thechargegrid.com</span>', 'drafts_folder' => '<span class="dyn-drafts-folder">Drafts</span>'],
 ];</pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <button class="accordion-header">
+                <span>5. "The '-u' option does not exist" on Combell / Managed Hosting</span>
+                <span class="accordion-icon">▼</span>
+              </button>
+              <div class="accordion-body">
+                <p><strong>Cause:</strong> On managed hosting platforms like Combell (<code>com-linssh...</code>), SSH users are restricted to editing their own user crontab. The custom crontab utility does not accept the <code>-u &lt;user&gt;</code> flag.</p>
+                <p><strong>Fix:</strong> Simply run <code>crontab -e</code> to edit or <code>crontab -l</code> to inspect:</p>
+                <div class="code-container">
+                  <div class="code-header">
+                    <span class="lang-tag">bash — Combell crontab</span>
+                    <button class="copy-btn" data-copy-target="codeCombellCron">Copy</button>
+                  </div>
+                  <pre class="code-block" id="codeCombellCron">crontab -e</pre>
                 </div>
               </div>
             </div>
