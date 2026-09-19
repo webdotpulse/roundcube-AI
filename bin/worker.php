@@ -325,10 +325,64 @@ class LpaiImapClient {
         return $this->parse_raw_email($full_msg);
     }
 
+    public function list_folders() {
+        $response = $this->send_command('LIST "" "*"');
+        $folders = [];
+        foreach ($response as $line) {
+            if (preg_match('/^\*\s+LIST\s+\(([^)]*)\)\s+(?:"[^"]*"|nil|\S+)\s+(.+)$/i', trim($line), $m)) {
+                $raw_flags = preg_split('/\s+/', trim($m[1]));
+                $name = trim($m[2]);
+                if (strlen($name) >= 2 && $name[0] === '"' && substr($name, -1) === '"') {
+                    $name = substr($name, 1, -1);
+                }
+                $folders[] = [
+                    'name' => $name,
+                    'flags' => $raw_flags,
+                ];
+            }
+        }
+        return $folders;
+    }
+
+    public function resolve_drafts_folder($preferred = 'Drafts') {
+        $folders = $this->list_folders();
+        if (empty($folders)) {
+            return $preferred;
+        }
+
+        // 1. Check for SPECIAL-USE \Drafts attribute
+        foreach ($folders as $f) {
+            foreach ($f['flags'] as $flag) {
+                if (strcasecmp($flag, '\\Drafts') === 0) {
+                    return $f['name'];
+                }
+            }
+        }
+
+        // 2. Exact match for preferred
+        foreach ($folders as $f) {
+            if (strcasecmp($f['name'], $preferred) === 0) {
+                return $f['name'];
+            }
+        }
+
+        // 3. Fallback to common candidates
+        $candidates = ['Drafts', 'INBOX.Drafts', 'INBOX/Drafts', 'Concepten', 'INBOX.Concepten', 'Brouillons'];
+        foreach ($candidates as $cand) {
+            foreach ($folders as $f) {
+                if (strcasecmp($f['name'], $cand) === 0) {
+                    return $f['name'];
+                }
+            }
+        }
+
+        return $preferred;
+    }
+
     public function append_draft($folder, $raw_email) {
         $tag = $this->get_next_tag();
         $len = strlen($raw_email);
-        $cmd = "$tag APPEND " . $this->escape($folder) . " (\\Draft) {{$len}}\r\n";
+        $cmd = "$tag APPEND " . $this->escape($folder) . " (\\Draft \\Seen) {{$len}}\r\n";
         
         if ($this->verbose) echo "[IMAP-OUT] $cmd";
         fwrite($this->socket, $cmd);
@@ -645,6 +699,11 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                 continue;
             }
 
+            $drafts_folder = $client->resolve_drafts_folder($drafts_folder);
+            if ($is_verbose) {
+                echo "[$now] [IMAP] Target Drafts folder resolved to: '$drafts_folder'\n";
+            }
+
             if (!$client->select('INBOX')) {
                 echo "[$now] [ERROR] Failed to select INBOX for account: $email\n";
                 $client->close();
@@ -750,7 +809,9 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 
                     if (!$has_action && $category === 'fyi') {
                         echo "[$now] [SKIP-DRAFT] UID $uid '$subject' — Informational email (no reply needed, labeled as FYI)\n";
-                        $state->mark_processed($email, 'INBOX', $uid, 'labeled_fyi_no_draft', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
+                        if (!$is_dry_run) {
+                            $state->mark_processed($email, 'INBOX', $uid, 'labeled_fyi_no_draft', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
+                        }
                         continue;
                     }
                 }
@@ -802,7 +863,6 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     echo "To: $from\nSubject: Re: $subject\n\n";
                     echo $draft_reply . "\n";
                     echo "===================================================\n\n";
-                    $state->mark_processed($email, 'INBOX', $uid, 'dry_run_success', ['subject' => $subject]);
                 } else {
                     $raw_draft = lpai_worker_format_draft_message(
                         $from,
