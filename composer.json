@@ -61,10 +61,10 @@
     },
     "scripts": {
         "post-install-cmd": [
-            "@php bin/install-extra.php"
+            "@php bin/install-extra.php --activate"
         ],
         "post-update-cmd": [
-            "@php bin/install-extra.php"
+            "@php bin/install-extra.php --activate"
         ]
     }
 }

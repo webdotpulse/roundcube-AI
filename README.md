@@ -120,14 +120,15 @@ composer require "webdotpulse/roundcube-ai:dev-main"
 ```
 
 > [!TIP]
-> **Automatic Extra Content Deployment:** When Composer completes, the bundled installer automatically deploys all skins and companion plugins directly into your Roundcube installation:
+> **Automatic Extra Content Deployment & Activation:** When Composer completes, the bundled installer automatically deploys all skins and companion plugins directly into your Roundcube installation:
 > - **Skin:** GMail+ deployed to `skins/gmail_plus`
 > - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
 > - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, `plugins/thunderbird_labels`, and `plugins/xcalendar`
+> - **Zero-Config Licensing & Clean UI:** Automatically configures `$config['license_key'] = ''` (no paid key needed at runtime) and `$config['remove_vendor_branding'] = true;` (removes vendor branding from login screen).
 > - Default configuration files (`config.inc.php`) are safely initialized from `.dist` and `.sample` files without overwriting any existing settings.
 
 #### 3. Enable Skin & Plugins in Roundcube
-You can automatically register the skin and plugins in `config/config.inc.php` using the built-in activation helper:
+You can automatically register the skin, plugins, license, and branding settings in `config/config.inc.php` using the built-in activation helper:
 ```bash
 php plugins/roundcube_ai/bin/install-extra.php --activate
 ```
@@ -146,6 +147,10 @@ $config['plugins'] = [
     'xcalendar',
     'roundcube_ai', // or 'lifeprisma_ai'
 ];
+
+// Roundcube Plus & Skin configuration
+$config['license_key'] = '';
+$config['remove_vendor_branding'] = true;
 ```
 
 ---

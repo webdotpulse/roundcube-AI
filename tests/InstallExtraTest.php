@@ -109,6 +109,8 @@ assert_true(strpos($updatedConfig, "'xskin'") !== false, "xskin added to plugins
 assert_true(strpos($updatedConfig, "'customizr'") !== false, "customizr added to plugins array in config");
 assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' plugin preserved in config");
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
+assert_true(strpos($updatedConfig, "\$config['license_key'] = ''") !== false, "license_key initialized as empty string in config");
+assert_true(strpos($updatedConfig, "\$config['remove_vendor_branding'] = true") !== false, "remove_vendor_branding enabled in config");
 
 // Test 5: Re-running installer preserves user customized config
 echo "\n--- Test 5: Config Preservation on Update ---\n";

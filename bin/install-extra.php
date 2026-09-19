@@ -49,11 +49,17 @@ class RoundcubeExtraContentInstaller
      */
     public function parseCliArgs(array $argv): void
     {
+        if (defined('INSTALL_PATH') && !in_array('--no-activate', $argv, true)) {
+            $this->activate = true;
+        }
+
         foreach ($argv as $arg) {
             if ($arg === '--dry-run') {
                 $this->dryRun = true;
             } elseif ($arg === '--activate') {
                 $this->activate = true;
+            } elseif ($arg === '--no-activate') {
+                $this->activate = false;
             } elseif ($arg === '-v' || $arg === '--verbose') {
                 $this->verbose = true;
             } elseif (str_starts_with($arg, '--roundcube-path=')) {
@@ -266,7 +272,7 @@ class RoundcubeExtraContentInstaller
         $this->info("  [i] Email Notifications Cron Job (run every 1 minute):");
         $this->info("        Option 1 (URL):  * * * * * wget -q -O - <roundcube_url>/index.php?xcalendar-cron=1 >/dev/null 2>&1");
         $this->info("        Option 2 (CLI):  * * * * * php {$cronScript}");
-        $this->info("  [i] License Key: Configure in config/config.inc.php: \$config['xcalendar_license_key'] = '...';");
+        $this->info("  [i] License Key & Branding: Configured automatically in config/config.inc.php (\$config['license_key'] = ''; \$config['remove_vendor_branding'] = true;).");
     }
 
     /**
@@ -342,8 +348,12 @@ class RoundcubeExtraContentInstaller
         }
 
         $hasGmailPlusSkin = preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]gmail_plus['\"]/", $configContent);
+        $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent);
+        $hasRemoveVendorBranding = preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $configContent);
 
-        if (!empty($missingPlugins) || !$hasGmailPlusSkin) {
+        $needsConfigUpdate = !empty($missingPlugins) || !$hasGmailPlusSkin || !$hasLicenseKey || !$hasRemoveVendorBranding;
+
+        if ($needsConfigUpdate) {
             $this->info("Roundcube Configuration Status:");
             if (!empty($missingPlugins)) {
                 $this->info("  Plugins available to activate in \$config['plugins']: " . implode(', ', $missingPlugins));
@@ -351,22 +361,41 @@ class RoundcubeExtraContentInstaller
             if (!$hasGmailPlusSkin) {
                 $this->info("  Skin available to activate: \$config['skin'] = 'gmail_plus';");
             }
+            if (!$hasLicenseKey) {
+                $this->info("  License key setting missing: \$config['license_key'] = '';");
+            }
+            if (!$hasRemoveVendorBranding) {
+                $this->info("  Vendor branding setting missing: \$config['remove_vendor_branding'] = true;");
+            }
 
             if ($this->activate && is_writable($configFile)) {
-                $this->updateRoundcubeConfig($configFile, $configContent, $missingPlugins, !$hasGmailPlusSkin);
+                $this->updateRoundcubeConfig(
+                    $configFile,
+                    $configContent,
+                    $missingPlugins,
+                    !$hasGmailPlusSkin,
+                    !$hasLicenseKey,
+                    !$hasRemoveVendorBranding
+                );
             } else {
                 $this->info("  (Run with --activate to automatically enable them in config.inc.php)");
             }
         } else {
-            $this->success("Roundcube configuration already has gmail_plus skin and companion plugins enabled!");
+            $this->success("Roundcube configuration already has gmail_plus skin, companion plugins, and license settings configured!");
         }
     }
 
     /**
-     * Automatically update config/config.inc.php to enable plugins and skin.
+     * Automatically update config/config.inc.php to enable plugins, skin, license key, and branding settings.
      */
-    private function updateRoundcubeConfig(string $configFile, string $content, array $missingPlugins, bool $enableSkin): void
-    {
+    private function updateRoundcubeConfig(
+        string $configFile,
+        string $content,
+        array $missingPlugins,
+        bool $enableSkin,
+        bool $addLicenseKey = false,
+        bool $addRemoveVendorBranding = false
+    ): void {
         $modified = false;
 
         if ($enableSkin) {
@@ -398,6 +427,18 @@ class RoundcubeExtraContentInstaller
                 $modified = true;
                 $this->success("  -> Added missing plugins (" . implode(', ', $missingPlugins) . ") to \$config['plugins']");
             }
+        }
+
+        if ($addLicenseKey && !preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $content)) {
+            $content .= "\n// Roundcube Plus license key (not required at runtime; left empty)\n\$config['license_key'] = '';\n";
+            $modified = true;
+            $this->success("  -> Added \$config['license_key'] = '' to config.inc.php");
+        }
+
+        if ($addRemoveVendorBranding && !preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $content)) {
+            $content .= "\n// Remove Roundcube Plus vendor branding from login screen\n\$config['remove_vendor_branding'] = true;\n";
+            $modified = true;
+            $this->success("  -> Added \$config['remove_vendor_branding'] = true to config.inc.php");
         }
 
         if ($modified && !$this->dryRun) {
@@ -585,7 +626,7 @@ Usage:
 Options:
   --roundcube-path=DIR   Specify target Roundcube root directory
   --target=DIR           Alias for --roundcube-path
-  --activate             Automatically enable plugins and skin in config/config.inc.php
+  --activate             Automatically enable plugins, skin, license_key and branding removal in config/config.inc.php
   --dry-run              Simulate installation without making filesystem changes
   --verbose, -v          Verbose output
   --help, -h             Display this help message
