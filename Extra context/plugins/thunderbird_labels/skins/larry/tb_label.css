@@ -211,6 +211,10 @@ ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
   flex-shrink: 0;
 }
 
+.tb-label-count:empty {
+  display: none !important;
+}
+
 /* Filter bar */
 .tb-label-filter-bar {
   display: flex;

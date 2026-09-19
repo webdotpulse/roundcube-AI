@@ -125,6 +125,11 @@ class thunderbird_labels extends rcube_plugin
 		$colors = array_merge($default_colors, $user_colors);
 		$this->rc->config->set('tb_label_colors', $colors);
 		$this->rc->output->set_env('tb_label_colors', $colors);
+
+		$cache_key = 'tb_label_counts_' . md5('INBOX');
+		if (isset($_SESSION[$cache_key]) && is_array($_SESSION[$cache_key]) && !empty($_SESSION[$cache_key]['data'])) {
+			$this->rc->output->set_env('tb_label_counts', $_SESSION[$cache_key]['data']);
+		}
 	}
 
 	// create a section for the tb-labels Settings

@@ -375,15 +375,19 @@ rcm_tb_label_render_sidebar_items = function () {
   $.each(labels, function (key, name) {
     if (key === "LABEL0") return;
     var color = colors[key] || "#757575";
-    var count = counts[key] || 0;
+    var count = parseInt(counts[key] || 0, 10);
     var is_active = rcmail.env.tb_label_active_filter === key;
+
+    var count_html = count > 0
+      ? '<span class="tb-label-count">' + count + "</span>"
+      : '<span class="tb-label-count" style="display:none;"></span>';
 
     var item = $(
       '<li class="tb-label-item ' + (is_active ? "selected active " : "") + key.toLowerCase() + '" data-label="' + key + '" role="treeitem">' +
         '<a href="#label-' + key + '" class="tb-label-link ' + (is_active ? "active" : "") + '" title="' + rcm_tb_label_escape_html(name) + '">' +
           '<span class="tb-label-icon ' + key.toLowerCase() + '" style="color: ' + color + ';">' + TB_LABEL_TAG_SVG + '</span>' +
           '<span class="name tb-label-name">' + rcm_tb_label_escape_html(name) + '</span>' +
-          '<span class="tb-label-count unreadcount count"' + (count > 0 ? "" : ' style="display:none;"') + ">" + count + "</span>" +
+          count_html +
         "</a>" +
       "</li>"
     );
@@ -417,12 +421,24 @@ rcm_tb_label_filter_click = function (labelKey) {
   active_li.find("a.tb-label-link").addClass("active");
 
   // Remove active highlight from folders
+  $("#mailboxlist li").removeClass("selected active");
   $("#mailboxlist li a").removeClass("active");
 
   // Show active filter bar above message list
   rcm_tb_label_render_filter_bar(labelKey);
 
-  // Instant client-side filtering on loaded rows
+  var filter_val = "KEYWORD $" + labelKey;
+  var target_mbox = "INBOX";
+
+  // If currently viewing another folder (e.g. Trash, Sent, Junk), switch to INBOX where labeled mail lives
+  if (rcmail.env.mailbox && rcmail.env.mailbox !== target_mbox) {
+    if (rcmail.list_mailbox) {
+      rcmail.list_mailbox(target_mbox, 1, { filter: filter_val });
+      return;
+    }
+  }
+
+  // Instant client-side filtering on loaded rows if already in INBOX
   var match_count = 0;
   $("#messagelist tbody tr").each(function () {
     var uid = this.id.replace(/^rcmrow/, "");
@@ -435,8 +451,12 @@ rcm_tb_label_filter_click = function (labelKey) {
     }
   });
 
-  // Server-side search filter
-  rcmail.filter_mailbox("KEYWORD $" + labelKey);
+  // Server-side filter
+  if (rcmail.filter_mailbox) {
+    rcmail.filter_mailbox(filter_val);
+  } else if (rcmail.list_mailbox) {
+    rcmail.list_mailbox(rcmail.env.mailbox || target_mbox, 1, { filter: filter_val });
+  }
 };
 
 rcm_tb_label_render_filter_bar = function (labelKey) {
@@ -478,11 +498,27 @@ rcm_tb_label_clear_filter_ui = function () {
   $("#tb-labels-list li a").removeClass("active");
   $("#tb-label-filter-bar").remove();
   $("#messagelist tbody tr").show();
+
+  // Restore active mailbox folder highlighting
+  if (rcmail.env.mailbox) {
+    var folder_li = $("#mailboxlist li.mailbox." + rcmail.env.mailbox.toLowerCase());
+    if (!folder_li.length) {
+      folder_li = $("#mailboxlist a[rel='" + rcmail.env.mailbox + "']").closest("li");
+    }
+    if (folder_li.length) {
+      folder_li.addClass("selected");
+      folder_li.find("> a").addClass("active");
+    }
+  }
 };
 
 rcm_tb_label_clear_filter = function () {
   rcm_tb_label_clear_filter_ui();
-  rcmail.filter_mailbox("ALL");
+  if (rcmail.filter_mailbox) {
+    rcmail.filter_mailbox("ALL");
+  } else if (rcmail.list_mailbox) {
+    rcmail.list_mailbox(rcmail.env.mailbox || "INBOX", 1);
+  }
 };
 
 // ==========================================
@@ -593,8 +629,9 @@ rcm_tb_label_show_add_modal = function () {
 // ==========================================
 
 rcm_tb_label_fetch_counts = function () {
-  if (!window.rcmail || rcmail.task !== "mail" || !rcmail.env.mailbox) return;
-  rcmail.http_request("plugin.thunderbird_labels.get_counts", "_mbox=" + urlencode(rcmail.env.mailbox));
+  if (!window.rcmail || rcmail.task !== "mail") return;
+  var mbox = "INBOX";
+  rcmail.http_request("plugin.thunderbird_labels.get_counts", "_mbox=" + urlencode(mbox));
 };
 
 rcm_tb_label_update_count = function (labelKey, delta) {
@@ -606,11 +643,12 @@ rcm_tb_label_update_count = function (labelKey, delta) {
   rcmail.env.tb_label_counts[labelKey] = next;
 
   var badge = $("#tb-labels-list li[data-label=\"" + labelKey + "\"] .tb-label-count");
-  badge.text(next);
-  if (next > 0) {
-    badge.show();
-  } else {
-    badge.hide();
+  if (badge.length) {
+    if (next > 0) {
+      badge.text(next).show();
+    } else {
+      badge.text("").hide();
+    }
   }
 };
 
@@ -1048,23 +1086,31 @@ $(function () {
 
   // Event listener: folder loaded / list refreshed
   rcmail.addEventListener("responseafterlist", function (p) {
-    rcm_tb_label_fetch_counts();
-    if (!rcmail.env.tb_label_active_filter) {
+    if (rcmail.env.tb_label_active_filter) {
+      $("#mailboxlist li").removeClass("selected active");
+      $("#mailboxlist li a").removeClass("active");
+      $("#tb-labels-list li[data-label=\"" + rcmail.env.tb_label_active_filter + "\"]").addClass("selected active");
+    } else {
       rcm_tb_label_clear_filter_ui();
     }
+    rcm_tb_label_fetch_counts();
   });
 
   // Commands received from PHP backend
   rcmail.addEventListener("plugin.thunderbird_labels.update_counts", function (data) {
     if (data && data.counts) {
       rcmail.env.tb_label_counts = data.counts;
-      $.each(data.counts, function (key, count) {
+      var allLabels = rcmail.env.tb_label_custom_labels || {};
+      $.each(allLabels, function (key) {
+        if (key === "LABEL0") return;
+        var count = parseInt((data.counts && data.counts[key]) || 0, 10);
         var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
-        badge.text(count);
-        if (count > 0) {
-          badge.show();
-        } else {
-          badge.hide();
+        if (badge.length) {
+          if (count > 0) {
+            badge.text(count).show();
+          } else {
+            badge.text("").hide();
+          }
         }
       });
     }

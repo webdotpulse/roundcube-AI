@@ -425,5 +425,16 @@ $css_content = file_get_contents($css_elastic);
 assert_true(strpos($css_content, '.tb-labels-sidebar') !== false, "elastic tb_label.css contains .tb-labels-sidebar");
 assert_true(strpos($css_content, '.tb-label-filter-bar') !== false, "elastic tb_label.css contains .tb-label-filter-bar");
 assert_true(strpos($css_content, '.tb-label-modal') !== false, "elastic tb_label.css contains .tb-label-modal");
+assert_true(strpos($css_content, '.tb-label-count:empty') !== false, "elastic tb_label.css contains .tb-label-count:empty rule");
+
+$css_larry = file_get_contents($plugin_dir . '/skins/larry/tb_label.css');
+assert_true(strpos($css_larry, '.tb-label-count:empty') !== false, "larry tb_label.css contains .tb-label-count:empty rule");
+
+$css_classic = file_get_contents($plugin_dir . '/skins/classic/tb_label.css');
+assert_true(strpos($css_classic, '.tb-label-count:empty') !== false, "classic tb_label.css contains .tb-label-count:empty rule");
+
+// Count rendering assertions in JS
+assert_true(strpos($js_content, 'count > 0') !== false, "tb_label.js checks count > 0 before rendering badge");
+assert_true(strpos($js_content, 'target_mbox = "INBOX"') !== false, "tb_label.js routes sidebar label click to INBOX");
 
 echo "\n*** ALL THUNDERBIRD LABELS TESTS PASSED (100%) ***\n";

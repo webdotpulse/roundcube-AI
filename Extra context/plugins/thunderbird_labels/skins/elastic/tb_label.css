@@ -320,6 +320,10 @@ body.dark-mode ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
   flex-shrink: 0;
 }
 
+.tb-label-count:empty {
+  display: none !important;
+}
+
 ul.tb-labels-list li.tb-label-item.active .tb-label-count {
   color: #1a73e8;
 }
