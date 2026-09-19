@@ -34,6 +34,13 @@ if (window.rcmail) {
         lpai_apply_server_prefs();
         lpai_restore_prefs();
         lpai_bind_events();
+
+        // Render labels on initial page load if present in environment
+        if (rcmail.env.lpai_row_labels) {
+            Object.keys(rcmail.env.lpai_row_labels).forEach(function(uid) {
+                lpai_sync_message_row_label(uid, rcmail.env.lpai_row_labels[uid]);
+            });
+        }
     });
 
     // In widescreen 3-pane mode (e.g. gmail_plus), listen for dynamic message preview loads
@@ -53,6 +60,22 @@ if (window.rcmail) {
             lpai_add_message_button();
             lpai_init_executive_triage();
         }, 200);
+    });
+
+    // Render inbox message row label chips whenever Roundcube renders or updates the message list
+    rcmail.addEventListener('plugin.lifeprisma_ai_sync_labels', function(rowLabels) {
+        if (rowLabels && typeof rowLabels === 'object') {
+            Object.keys(rowLabels).forEach(function(uid) {
+                lpai_sync_message_row_label(uid, rowLabels[uid]);
+            });
+        }
+    });
+
+    rcmail.addEventListener('messagelist_update', function() {
+        var labels = rcmail.env.lpai_row_labels || {};
+        Object.keys(labels).forEach(function(uid) {
+            lpai_sync_message_row_label(uid, labels[uid]);
+        });
     });
 }
 

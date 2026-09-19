@@ -51,6 +51,7 @@ class lifeprisma_ai extends rcube_plugin
         $this->add_hook('preferences_list', [$this, 'preferences_list']);
         $this->add_hook('preferences_save', [$this, 'preferences_save']);
         $this->add_hook('new_messages', [$this, 'handle_new_messages']);
+        $this->add_hook('messages_list', [$this, 'handle_messages_list']);
         $this->add_hook('message_compose', [$this, 'handle_message_compose']);
         $this->add_hook('message_sent', [$this, 'handle_message_sent']);
 
@@ -936,6 +937,51 @@ Body:
                 : "Gemini prepared {$count} AI draft replies in Drafts";
             $rcmail->output->command('display_message', $msg, 'confirmation');
         }
+    }
+
+    /**
+     * Hook triggered when rendering the mailbox message list table.
+     * Detects IMAP label flags ($Label1 - $Label5) and passes them to the frontend
+     * so colored label badges are rendered directly on the inbox rows.
+     */
+    public function handle_messages_list($args)
+    {
+        if (empty($args['messages']) || !is_array($args['messages'])) {
+            return $args;
+        }
+
+        $row_labels = [];
+        $label_flags = ['$label1', '$label2', '$label3', '$label4', '$label5'];
+
+        foreach ($args['messages'] as $header) {
+            if (empty($header) || empty($header->uid)) continue;
+
+            if (!empty($header->flags) && is_array($header->flags)) {
+                foreach ($header->flags as $flag_name => $val) {
+                    $flag_lower = strtolower((string) $flag_name);
+                    if (in_array($flag_lower, $label_flags, true)) {
+                        $idx = substr($flag_lower, 6);
+                        $canonical = '$Label' . $idx;
+                        $row_labels[(string) $header->uid] = $canonical;
+
+                        // Ensure row receives CSS classes in standard Roundcube rendering
+                        if (!is_array($header->list_flags)) {
+                            $header->list_flags = [];
+                        }
+                        $header->list_flags['label-' . $idx] = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!empty($row_labels)) {
+            $rcmail = rcmail::get_instance();
+            $rcmail->output->set_env('lpai_row_labels', $row_labels);
+            $rcmail->output->command('plugin.lifeprisma_ai_sync_labels', $row_labels);
+        }
+
+        return $args;
     }
 
     /**

@@ -133,15 +133,22 @@ $config['lifeprisma_ai_admins'] = [
 // Run via CLI: php bin/worker.php (cron) or php bin/worker.php --daemon (systemd)
 
 // Default IMAP server for the worker
-$config['lifeprisma_ai_worker_imap_host'] = 'ssl://localhost:993';
+// IMPORTANT: On managed hosting platforms (such as Combell, cPanel, Plesk),
+// the web server and mail server are separated. Do NOT use 'localhost' if connection is refused.
+// Use your provider's IMAP host, e.g.:
+//   Combell:               'ssl://imap.combell.com:993' or 'ssl://mail.thechargegrid.com:993'
+//   Self-hosted / VPS:     'ssl://localhost:993'
+$config['lifeprisma_ai_worker_imap_host'] = 'ssl://mail.thechargegrid.com:993';
 
 // List of email accounts to monitor in background
+// Method A: Enter individual email and password for each account to monitor.
+// Method B: Leave password blank and configure Dovecot Master User below.
 $config['lifeprisma_ai_worker_accounts'] = [
     /*
     [
-        'email' => 'ceo@yourdomain.com',
-        'password' => 'secret_app_password', // or left empty if using Dovecot master user
-        'imap_host' => 'ssl://localhost:993', // optional override
+        'email' => 'koen@thechargegrid.com',
+        'password' => 'secret_app_password', // your mailbox password
+        'imap_host' => 'ssl://mail.thechargegrid.com:993', // optional override
         'drafts_folder' => 'Drafts',
     ],
     */

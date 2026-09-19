@@ -38,6 +38,7 @@ $options = getopt('hvd', [
     'daemon',
     'once',
     'dry-run',
+    'reset-state',
     'interval:',
     'account:',
     'config:',
@@ -58,6 +59,7 @@ OPTIONS:
       --interval=SEC   Seconds to sleep between checks in daemon mode (default: 60)
       --once           Run a single pass and exit (default if not daemon)
       --dry-run        Triage and generate replies to console without modifying IMAP
+      --reset-state    Clear processed email history (.worker_state.json) and re-check all unseen emails
       --account=EMAIL  Process only the specified email account
       --config=PATH    Specify custom path to config.inc.php
 
@@ -69,7 +71,10 @@ EXAMPLES:
   php bin/worker.php --daemon --interval=30
 
   # Test triage on an account without writing drafts:
-  php bin/worker.php --account=ceo@example.com --dry-run --verbose
+  php bin/worker.php --account=koen@thechargegrid.com --dry-run --verbose
+
+  # Reset processed state and re-triage unread emails:
+  php bin/worker.php --reset-state --dry-run --verbose
 
 HELP;
     exit(0);
@@ -78,6 +83,7 @@ HELP;
 $is_daemon = isset($options['d']) || isset($options['daemon']);
 $is_dry_run = isset($options['dry-run']);
 $is_verbose = isset($options['v']) || isset($options['verbose']);
+$is_reset_state = isset($options['reset-state']);
 $poll_interval = isset($options['interval']) ? max(5, (int) $options['interval']) : 60;
 $target_account = $options['account'] ?? null;
 $custom_config = $options['config'] ?? null;
@@ -102,20 +108,32 @@ if (function_exists('pcntl_signal')) {
 function lpai_worker_load_config($custom_config = null) {
     $config = [];
 
-    // Search candidate paths
+    // Search candidate paths in strict priority order:
+    // 1. Custom CLI path (--config=...)
+    // 2. Plugin config (plugins/lifeprisma_ai/config.inc.php)
+    // 3. Roundcube root config (config/config.inc.php)
+    // 4. Distribution template fallback (config.inc.php.dist)
     $candidates = [];
     if ($custom_config && file_exists($custom_config)) {
         $candidates[] = $custom_config;
     }
     $candidates[] = dirname(__DIR__) . '/config.inc.php';
-    $candidates[] = dirname(__DIR__) . '/config.inc.php.dist';
     $candidates[] = dirname(__DIR__, 3) . '/config/config.inc.php';
+    $candidates[] = dirname(__DIR__) . '/config.inc.php.dist';
 
+    $loaded_from = null;
     foreach ($candidates as $file) {
         if (file_exists($file)) {
             require $file;
-            break;
+            $loaded_from = $file;
+            if (!empty($config['lifeprisma_ai_worker_accounts'])) {
+                break;
+            }
         }
+    }
+
+    if ($loaded_from) {
+        $config['_loaded_from'] = $loaded_from;
     }
 
     // Default fallbacks
@@ -167,6 +185,13 @@ class LpaiWorkerState {
             if (is_array($data)) {
                 $this->state = $data;
             }
+        }
+    }
+
+    public function reset() {
+        $this->state = [];
+        if (file_exists($this->filepath)) {
+            @unlink($this->filepath);
         }
     }
 
@@ -261,7 +286,8 @@ class LpaiImapClient {
     }
 
     public function fetch_message($uid) {
-        $response = $this->send_command("UID FETCH $uid (RFC822)");
+        // Use BODY.PEEK[] to fetch full message without implicitly setting the \Seen flag (RFC 3501)
+        $response = $this->send_command("UID FETCH $uid (BODY.PEEK[])");
         $full_msg = '';
         $capturing = false;
         $literal_bytes_left = 0;
@@ -284,8 +310,8 @@ class LpaiImapClient {
         }
 
         if (empty($full_msg)) {
-            // Alternative fetch RFC822.HEADER and BODY[TEXT]
-            $h_res = $this->send_command("UID FETCH $uid (RFC822.HEADER)");
+            // Alternative non-destructive fetch of headers
+            $h_res = $this->send_command("UID FETCH $uid (BODY.PEEK[HEADER])");
             $full_msg = implode("\n", $h_res);
         }
 
@@ -528,11 +554,18 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg_
 function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_account = null, $is_dry_run = false, $is_verbose = false) {
     $accounts = $config['lifeprisma_ai_worker_accounts'] ?? [];
     if (empty($accounts)) {
-        echo "[WARN] No accounts configured in 'lifeprisma_ai_worker_accounts'. Edit config.inc.php to specify accounts.\n";
+        echo "[WARN] No accounts configured in 'lifeprisma_ai_worker_accounts'.\n";
+        echo "       Please edit " . ($config['_loaded_from'] ?? 'config.inc.php') . " to configure your account credentials:\n";
+        echo "       \$config['lifeprisma_ai_worker_accounts'] = [\n";
+        echo "           ['email' => 'koen@thechargegrid.com', 'password' => 'YOUR_PASSWORD', 'drafts_folder' => 'Drafts'],\n";
+        echo "       ];\n";
         return;
     }
 
     $imap_host = $config['lifeprisma_ai_worker_imap_host'] ?? 'ssl://localhost:993';
+    if ($is_verbose && strpos($imap_host, 'localhost') !== false) {
+        echo "[HINT] Worker IMAP host is set to '$imap_host'. On shared/managed hosting (e.g. Combell), verify if your mail host is external (e.g. 'ssl://imap.combell.com:993' or 'ssl://mail.thechargegrid.com:993').\n";
+    }
     $model = $config['lifeprisma_ai_gemini_model'] ?? 'gemini-3.8-flash';
 
     foreach ($accounts as $acc) {
@@ -616,23 +649,15 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 
                 // 2. Self-sent filter
                 if (stripos($from, $email) !== false) {
+                    if ($is_verbose) echo "[$now] [SKIP] UID $uid '$subject' — Self-sent email\n";
                     $state->mark_processed($email, 'INBOX', $uid, 'skipped_self');
                     continue;
                 }
 
-                // 3. Actionable / Smart filter
-                if (!empty($config['lifeprisma_ai_auto_draft_filter'])) {
-                    $text = $subject . ' ' . $body;
-                    $has_action = (strpos($text, '?') !== false) ||
-                        preg_match('/\b(please|could you|can you|let me know|what do you think|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap)\b/i', $text);
-                    if (!$has_action) {
-                        echo "[$now] [SKIP] UID $uid '$subject' — Informational only (no action or questions detected)\n";
-                        $state->mark_processed($email, 'INBOX', $uid, 'skipped_no_action');
-                        continue;
-                    }
-                }
+                // 3. Triage & Label Assignment (roundcube-labels / Thunderbird compatible)
+                $assigned_flag = null;
+                $category = 'fyi';
 
-                // 4. Assign IMAP Label Flag (roundcube-labels integration)
                 if (!empty($config['lifeprisma_ai_triage_labels_enabled'])) {
                     $label_map = $config['lifeprisma_ai_triage_label_map'] ?? [
                         'action_required_high' => '$Label1',
@@ -643,19 +668,50 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                         'scam'                 => '$Label1',
                     ];
 
-                    $assigned_flag = '$Label4'; // Default to To Do
-                    $text_lower = strtolower($subject . ' ' . $body);
-                    if (preg_match('/\b(urgent|asap|critical|immediate|action required|important|belangrijk|spoed)\b/i', $text_lower)) {
+                    $text_combined = $subject . ' ' . $body;
+                    $text_lower = strtolower($text_combined);
+                    $has_question = (strpos($text_combined, '?') !== false);
+                    $has_action_words = (bool) preg_match('/\b(please|could you|can you|let me know|what do you think|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|gelieve|kunt u|kan je|bevestig|graag|reactie|antwoord|nodig|actie)\b/i', $text_lower);
+
+                    if (preg_match('/\b(urgent|asap|critical|immediate|action required|important|belangrijk|spoed|dringend|prioriteit)\b/i', $text_lower)) {
+                        $category = 'action_required_high';
                         $assigned_flag = $label_map['action_required_high'] ?? '$Label1';
-                    } elseif (preg_match('/\b(meeting|zoom|google meet|teams|calendar|schedule|afspraak|overleg)\b/i', $text_lower)) {
+                    } elseif (preg_match('/\b(meeting|zoom|google meet|teams|calendar|schedule|afspraak|overleg|vergadering)\b/i', $text_lower)) {
+                        $category = 'meeting';
                         $assigned_flag = $label_map['meeting'] ?? '$Label2';
-                    } elseif (preg_match('/\b(follow up|checking in|status update|status)\b/i', $text_lower)) {
+                    } elseif (preg_match('/\b(follow up|checking in|status update|status|opvolging)\b/i', $text_lower)) {
+                        $category = 'follow_up';
                         $assigned_flag = $label_map['follow_up'] ?? '$Label4';
+                    } elseif ($has_question || $has_action_words) {
+                        $category = 'action_required';
+                        $assigned_flag = $label_map['action_required'] ?? '$Label4';
+                    } else {
+                        $category = 'fyi';
+                        $assigned_flag = $label_map['fyi'] ?? '$Label5';
                     }
 
                     if (!$is_dry_run && !empty($assigned_flag)) {
-                        $client->add_flags($uid, $assigned_flag);
-                        echo "[$now] [LABEL] UID $uid '$subject' — Tagged with label flag $assigned_flag\n";
+                        $flag_ok = $client->add_flags($uid, $assigned_flag);
+                        if ($flag_ok) {
+                            echo "[$now] [LABEL] UID $uid '$subject' — Tagged with label flag $assigned_flag ($category)\n";
+                        } else {
+                            echo "[$now] [WARN] Failed to set flag $assigned_flag on UID $uid\n";
+                        }
+                    } else {
+                        echo "[$now] [LABEL-PLAN] UID $uid '$subject' — Evaluated label: $assigned_flag ($category)" . ($is_dry_run ? " (Dry-run, not stored)" : "") . "\n";
+                    }
+                }
+
+                // 4. Smart Draft Gate (skips draft reply generation for purely informational / FYI emails)
+                if (!empty($config['lifeprisma_ai_auto_draft_filter'])) {
+                    $text_combined = $subject . ' ' . $body;
+                    $has_action = (strpos($text_combined, '?') !== false) ||
+                        preg_match('/\b(please|could you|can you|let me know|what do you think|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|gelieve|kunt u|kan je|bevestig|graag|reactie|antwoord|nodig|actie)\b/i', strtolower($text_combined));
+
+                    if (!$has_action && $category === 'fyi') {
+                        echo "[$now] [SKIP-DRAFT] UID $uid '$subject' — Informational email (no reply needed, labeled as FYI)\n";
+                        $state->mark_processed($email, 'INBOX', $uid, 'labeled_fyi_no_draft', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
+                        continue;
                     }
                 }
 
@@ -722,7 +778,7 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     $saved = $client->append_draft($drafts_folder, $raw_draft);
                     if ($saved) {
                         echo "[$now] [SUCCESS] Pre-crafted Gemini draft saved to '$drafts_folder' for: '$subject'\n";
-                        $state->mark_processed($email, 'INBOX', $uid, 'draft_created', ['subject' => $subject]);
+                        $state->mark_processed($email, 'INBOX', $uid, 'draft_created', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
                     } else {
                         echo "[$now] [ERROR] Failed to save draft into '$drafts_folder' for UID $uid\n";
                     }
@@ -742,12 +798,20 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 // ============================================================
 $state_file = __DIR__ . '/.worker_state.json';
 $state = new LpaiWorkerState($state_file);
+
+if ($is_reset_state) {
+    $state->reset();
+    echo "[INFO] Worker state reset successfully. All unseen emails will be re-processed.\n";
+}
+
 $config = lpai_worker_load_config($custom_config);
+$loaded_cfg = $config['_loaded_from'] ?? 'default fallbacks';
 
 $model = $config['lifeprisma_ai_gemini_model'] ?? 'gemini-3.8-flash';
 echo "===========================================================\n";
 echo "Gemini Executive Assistant — 24/7 CLI Background Worker\n";
 echo "Model: $model | Mode: " . ($is_daemon ? "Daemon (interval: {$poll_interval}s)" : "Single Pass") . "\n";
+echo "Config: $loaded_cfg\n";
 if ($is_dry_run) echo "DRY RUN MODE ENABLED — No changes will be written to IMAP\n";
 echo "===========================================================\n";
 
