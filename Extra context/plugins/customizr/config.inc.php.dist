@@ -4,7 +4,7 @@
 // Default is 'customizr' (dedicated "Custom Appearance" section).
 $config['customizr_settings_section'] = 'customizr';
 
-// Define a custom watermark image (relative or absolute URL)
+// Define a custom watermark image (relative or absolute URL, or uploaded path)
 $config['custom_watermark_image'] = './skins/watermark.png';
 
 // Define a custom URI to be displayed instead of the empty watermark page
@@ -13,8 +13,11 @@ $config['custom_watermark_uri'] = '';
 // Define a custom favicon image (empty string to remove it)
 $config['custom_favicon'] = './skins/favicon.ico';
 
-// Define a custom logo image (replaces default Roundcube logo)
+// Define a custom logo image for the mailbox / webmail interface (empty string for skin default)
 $config['custom_logo'] = '';
+
+// Define a custom logo image specifically for the login page (empty string falls back to custom_logo)
+$config['custom_logo_login'] = '';
 
 // Defines a custom CSS file which is added to every page
 $config['custom_stylesheet'] = './skins/custom.css';
@@ -23,4 +26,4 @@ $config['custom_stylesheet'] = './skins/custom.css';
 $config['custom_css'] = '';
 
 // Optional: Prevent users from overriding specific options in the Settings UI:
-// $config['dont_override'] = ['custom_watermark_image', 'custom_watermark_uri', 'custom_favicon', 'custom_logo', 'custom_stylesheet', 'custom_css'];
+// $config['dont_override'] = ['custom_watermark_image', 'custom_watermark_uri', 'custom_favicon', 'custom_logo', 'custom_logo_login', 'custom_stylesheet', 'custom_css'];

@@ -64,6 +64,7 @@ if (!class_exists('rcube')) {
     {
         public $env = [];
         public $included_css = [];
+        public $scripts = [];
 
         public function set_env($key, $val)
         {
@@ -73,6 +74,11 @@ if (!class_exists('rcube')) {
         public function include_css($file)
         {
             $this->included_css[] = $file;
+        }
+
+        public function add_script($script, $pos = 'head')
+        {
+            $this->scripts[] = ['script' => $script, 'pos' => $pos];
         }
 
         public function get_skin_file($path)
@@ -228,6 +234,7 @@ $rc->config->set('dont_override', [
     'custom_watermark_uri',
     'custom_favicon',
     'custom_logo',
+    'custom_logo_login',
     'custom_stylesheet',
     'custom_css',
 ]);
@@ -244,6 +251,7 @@ $rc->config->set('custom_watermark_image', './skins/watermark.png');
 $rc->config->set('custom_favicon', './favicon.ico');
 $rc->config->set('custom_stylesheet', './custom.css');
 $rc->config->set('custom_logo', './logo.png');
+$rc->config->set('custom_logo_login', './logo_login.png');
 $rc->config->set('custom_css', 'body { color: red; }');
 
 $plugin = new customizr();
@@ -261,15 +269,21 @@ assert_true(isset($opts['custom_watermark_image']), "Form includes custom_waterm
 assert_true(isset($opts['custom_watermark_uri']), "Form includes custom_watermark_uri field");
 assert_true(isset($opts['custom_favicon']), "Form includes custom_favicon field");
 assert_true(isset($opts['custom_logo']), "Form includes custom_logo field");
+assert_true(isset($opts['custom_logo_login']), "Form includes custom_logo_login field");
 assert_true(isset($opts['custom_stylesheet']), "Form includes custom_stylesheet field");
 assert_true(isset($opts['custom_css']), "Form includes custom_css field");
 
-// Verify values in rendered fields
+// Verify values and preview components in rendered fields
 assert_true(strpos($opts['custom_watermark_image']['content'], 'value="./skins/watermark.png"') !== false, "Watermark image value rendered");
 assert_true(strpos($opts['custom_favicon']['content'], 'value="./favicon.ico"') !== false, "Favicon value rendered");
 assert_true(strpos($opts['custom_stylesheet']['content'], 'value="./custom.css"') !== false, "Stylesheet value rendered");
 assert_true(strpos($opts['custom_logo']['content'], 'value="./logo.png"') !== false, "Logo value rendered");
+assert_true(strpos($opts['custom_logo_login']['content'], 'value="./logo_login.png"') !== false, "Logo login value rendered");
+assert_true(strpos($opts['custom_logo']['content'], 'customizr-preview-box') !== false, "Logo field has image preview box");
+assert_true(strpos($opts['custom_logo_login']['content'], 'customizr-file-input') !== false, "Logo login field has file upload button");
+assert_true(strpos($opts['custom_logo']['content'], 'customizr-clear-btn') !== false, "Logo field has clear button");
 assert_true(strpos($opts['custom_css']['content'], 'body { color: red; }') !== false, "Inline CSS value rendered");
+assert_true(!empty($rc->output->scripts), "Client-side preview JavaScript added to page output");
 
 // Test 3b: Specific options in dont_override omitted
 $rc->config->set('dont_override', ['custom_logo', 'custom_css']);
@@ -280,6 +294,7 @@ $opts_partial = $form_partial['blocks']['customizr']['options'];
 assert_true(!isset($opts_partial['custom_logo']), "custom_logo omitted when in dont_override");
 assert_true(!isset($opts_partial['custom_css']), "custom_css omitted when in dont_override");
 assert_true(isset($opts_partial['custom_favicon']), "custom_favicon present when not in dont_override");
+assert_true(isset($opts_partial['custom_logo_login']), "custom_logo_login present when not in dont_override");
 
 // Test 4: preferences_save
 echo "\n--- Test 4: Preferences Save Hook ---\n";
@@ -292,6 +307,7 @@ $_POST = [
     '_custom_watermark_uri'   => 'https://example.com/welcome',
     '_custom_favicon'         => './new_favicon.ico',
     '_custom_logo'            => './hacked_logo.png', // in dont_override!
+    '_custom_logo_login'      => './new_login_logo.png',
     '_custom_stylesheet'      => './new_styles.css',
     '_custom_css'             => 'h1 > a { font-size: 20px; }',
 ];
@@ -306,35 +322,99 @@ assert_true($saved['custom_watermark_image'] === './new_watermark.png', "custom_
 assert_true($saved['custom_watermark_uri'] === 'https://example.com/welcome', "custom_watermark_uri saved");
 assert_true($saved['custom_favicon'] === './new_favicon.ico', "custom_favicon saved");
 assert_true(!isset($saved['custom_logo']), "custom_logo rejected because it is in dont_override");
+assert_true($saved['custom_logo_login'] === './new_login_logo.png', "custom_logo_login saved");
 assert_true($saved['custom_stylesheet'] === './new_styles.css', "custom_stylesheet saved");
 assert_true($saved['custom_css'] === 'h1 > a { font-size: 20px; }', "custom_css saved with raw selectors");
 
-// Test 5: render_page HTML modifications
-echo "\n--- Test 5: Render Page Modifications ---\n";
+// Test 4b: File upload handler in preferences_save
+echo "\n--- Test 4b: File Upload and Fallback ---\n";
+// Create a temporary mock image file
+$tmp_img = tempnam(sys_get_temp_dir(), 'test_img');
+file_put_contents($tmp_img, "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR");
+
+$mock_file = [
+    'name'     => 'test_logo.png',
+    'type'     => 'image/png',
+    'tmp_name' => $tmp_img,
+    'error'    => UPLOAD_ERR_OK,
+    'size'     => 16,
+];
+
+// Test save_uploaded_file with valid image
+$saved_url = $plugin->save_uploaded_file($mock_file);
+assert_true(!empty($saved_url), "save_uploaded_file returns valid URL or data URI");
+assert_true(
+    strpos($saved_url, 'plugins/customizr/uploads/') !== false || strpos($saved_url, 'data:image/png;base64,') === 0,
+    "Uploaded file saved to uploads directory or returned as base64 data URI"
+);
+
+// Test disallowing dangerous files
+$tmp_bad = tempnam(sys_get_temp_dir(), 'test_bad');
+file_put_contents($tmp_bad, "<?php echo 'bad'; ?>");
+$bad_file = [
+    'name'     => 'exploit.php',
+    'type'     => 'application/x-php',
+    'tmp_name' => $tmp_bad,
+    'error'    => UPLOAD_ERR_OK,
+    'size'     => 21,
+];
+$bad_res = $plugin->save_uploaded_file($bad_file);
+assert_true($bad_res === null, "save_uploaded_file rejects disallowed file extension (.php)");
+@unlink($tmp_bad);
+@unlink($tmp_img);
+
+// Test 5: render_page HTML modifications and Dual Logo
+echo "\n--- Test 5: Render Page Modifications & Dual Logo ---\n";
 rcube::reset_instance();
 $rc = rcube::get_instance();
+$rc->task = 'mail'; // normal mailbox view
 $rc->config->set('custom_favicon', '/fav.png');
-$rc->config->set('custom_logo', '/mybrand.svg');
+$rc->config->set('custom_logo', '/mail_logo.svg');
+$rc->config->set('custom_logo_login', '/login_only_logo.svg');
 $rc->config->set('custom_css', 'a.test { color: green; }');
 $rc->config->set('custom_stylesheet', '/my_styles.css');
 $rc->config->set('custom_watermark_uri', '/custom_empty.html');
 
-$plugin = new customizr();
-$plugin->init();
+$plugin_mail = new customizr();
+$plugin_mail->init();
 
 $html_sample = '<!DOCTYPE html><html><head><title>Roundcube</title><link rel="shortcut icon" href="skins/elastic/images/favicon.ico" /></head>'
     . '<body><div id="header"><img id="logo" src="skins/elastic/images/logo.svg" /></div>'
     . '<iframe src="skins/elastic/watermark.html"></iframe></body></html>';
 
-$rendered = $plugin->render_page(['content' => $html_sample]);
-$content = $rendered['content'];
+// On mailbox view (task = mail), logo should be $custom_logo (/mail_logo.svg)
+$rendered_mail = $plugin_mail->render_page(['content' => $html_sample]);
+$content_mail = $rendered_mail['content'];
 
-assert_true(strpos($content, '<link rel="shortcut icon" href="/fav.png" />') !== false, "Favicon link correctly replaced");
-assert_true(strpos($content, '<img id="logo" src="/mybrand.svg"') !== false, "Logo image src correctly replaced");
-assert_true(strpos($content, '<iframe src="/custom_empty.html">') !== false, "Watermark link correctly replaced");
-assert_true(strpos($content, '<style type="text/css">') !== false && strpos($content, 'a.test { color: green; }') !== false, "Inline CSS style tag correctly injected");
+assert_true(strpos($content_mail, '<link rel="shortcut icon" href="/fav.png" />') !== false, "Favicon link correctly replaced");
+assert_true(strpos($content_mail, '<img id="logo" src="/mail_logo.svg"') !== false, "Mailbox view uses custom_logo");
+assert_true(strpos($content_mail, '/login_only_logo.svg') === false, "Mailbox view does NOT use login logo");
+assert_true(strpos($content_mail, '<iframe src="/custom_empty.html">') !== false, "Watermark link correctly replaced");
+assert_true(strpos($content_mail, '<style type="text/css">') !== false && strpos($content_mail, 'a.test { color: green; }') !== false, "Inline CSS style tag correctly injected");
 assert_true(in_array('/my_styles.css', $rc->output->included_css), "External CSS registered with include_css");
 assert_true($rc->output->env['blankpage'] === '/custom_empty.html', "blankpage env variable set");
+
+// On login page (task = login), logo should be $custom_logo_login (/login_only_logo.svg)
+$rc->task = 'login';
+$plugin_login = new customizr();
+$plugin_login->init();
+
+$rendered_login = $plugin_login->render_page(['content' => $html_sample]);
+$content_login = $rendered_login['content'];
+assert_true(strpos($content_login, '<img id="logo" src="/login_only_logo.svg"') !== false, "Login view uses custom_logo_login");
+
+// On login page when custom_logo_login is empty, should fall back to custom_logo
+rcube::reset_instance();
+$rc = rcube::get_instance();
+$rc->task = 'login';
+$rc->config->set('custom_logo', '/mail_logo.svg');
+$rc->config->set('custom_logo_login', '');
+$plugin_fallback = new customizr();
+$plugin_fallback->init();
+
+$rendered_fallback = $plugin_fallback->render_page(['content' => $html_sample]);
+$content_fallback = $rendered_fallback['content'];
+assert_true(strpos($content_fallback, '<img id="logo" src="/mail_logo.svg"') !== false, "Login view falls back to custom_logo when custom_logo_login is empty");
 
 // Test 6: Localization integrity
 echo "\n--- Test 6: Localization Verification ---\n";
@@ -349,6 +429,14 @@ $required_keys = [
     'custom_favicon_desc',
     'custom_logo',
     'custom_logo_desc',
+    'custom_logo_login',
+    'custom_logo_login_desc',
+    'upload_image',
+    'choose_file',
+    'remove_image',
+    'image_preview',
+    'no_image',
+    'upload_error',
     'custom_stylesheet',
     'custom_stylesheet_desc',
     'custom_css',
@@ -366,3 +454,4 @@ foreach ($langs as $lang) {
 }
 
 echo "\n*** ALL TESTS PASSED SUCCESSFULLY ***\n";
+

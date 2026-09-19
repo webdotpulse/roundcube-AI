@@ -182,3 +182,450 @@ div.contextmenu li .label5 {
 #message-header {
   position: relative;
 }
+
+/* ==========================================================================
+   Gmail-Style Labels Sidebar UI
+   ========================================================================== */
+
+.tb-labels-sidebar {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .tb-labels-sidebar {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.tb-labels-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  user-select: none;
+}
+
+.tb-labels-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #5f6368;
+  letter-spacing: 0.3px;
+}
+
+body.dark-mode .tb-labels-title {
+  color: #9aa0a6;
+}
+
+.tb-labels-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: #5f6368;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.tb-labels-add-btn:hover {
+  background-color: rgba(60, 64, 67, 0.08);
+  color: #202124;
+}
+
+body.dark-mode .tb-labels-add-btn {
+  color: #9aa0a6;
+}
+
+body.dark-mode .tb-labels-add-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e8eaed;
+}
+
+ul.tb-labels-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 8px 8px;
+}
+
+ul.tb-labels-list li.tb-label-item {
+  margin-bottom: 1px;
+}
+
+ul.tb-labels-list li.tb-label-item a.tb-label-link {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 0 16px 16px 0;
+  text-decoration: none;
+  color: #202124;
+  font-size: 13px;
+  font-weight: 400;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  position: relative;
+  cursor: pointer;
+}
+
+body.dark-mode ul.tb-labels-list li.tb-label-item a.tb-label-link {
+  color: #e8eaed;
+}
+
+ul.tb-labels-list li.tb-label-item a.tb-label-link:hover {
+  background-color: rgba(60, 64, 67, 0.08);
+  text-decoration: none;
+}
+
+body.dark-mode ul.tb-labels-list li.tb-label-item a.tb-label-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+ul.tb-labels-list li.tb-label-item.active a.tb-label-link,
+ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
+  background-color: #e8f0fe !important;
+  color: #1a73e8 !important;
+  font-weight: 600;
+}
+
+body.dark-mode ul.tb-labels-list li.tb-label-item.active a.tb-label-link,
+body.dark-mode ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
+  background-color: rgba(138, 180, 248, 0.16) !important;
+  color: #8ab4f8 !important;
+}
+
+.tb-label-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.tb-label-name {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-label-count {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6368;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+ul.tb-labels-list li.tb-label-item.active .tb-label-count {
+  color: #1a73e8;
+}
+
+body.dark-mode .tb-label-count {
+  color: #9aa0a6;
+}
+
+body.dark-mode ul.tb-labels-list li.tb-label-item.active .tb-label-count {
+  color: #8ab4f8;
+}
+
+/* ==========================================================================
+   Active Filter Banner
+   ========================================================================== */
+
+.tb-label-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dadce0;
+  font-size: 13px;
+  animation: tb-filter-bar-fade-in 0.2s ease-out;
+}
+
+body.dark-mode .tb-label-filter-bar {
+  background-color: #202124;
+  border-bottom-color: #3c4043;
+}
+
+@keyframes tb-filter-bar-fade-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tb-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  border: 1px solid;
+}
+
+.tb-filter-chip-name {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-filter-clear-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  opacity: 0.75;
+  transition: opacity 0.15s;
+}
+
+.tb-filter-clear-btn:hover {
+  opacity: 1;
+}
+
+.tb-filter-text {
+  color: #5f6368;
+  font-size: 12px;
+}
+
+body.dark-mode .tb-filter-text {
+  color: #9aa0a6;
+}
+
+/* ==========================================================================
+   New Label Modal Dialog
+   ========================================================================== */
+
+.tb-label-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tb-label-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.tb-label-modal-dialog {
+  position: relative;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  width: 90%;
+  max-width: 440px;
+  overflow: hidden;
+  z-index: 2;
+  animation: tb-modal-pop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+body.dark-mode .tb-label-modal-dialog {
+  background: #2d2e30;
+  color: #e8eaed;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+@keyframes tb-modal-pop {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.tb-label-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #dadce0;
+}
+
+body.dark-mode .tb-label-modal-header {
+  border-bottom-color: #3c4043;
+}
+
+.tb-label-modal-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.tb-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  color: #5f6368;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+body.dark-mode .tb-modal-close {
+  color: #9aa0a6;
+}
+
+.tb-label-modal-body {
+  padding: 20px;
+}
+
+.tb-label-modal-body .form-group {
+  margin-bottom: 16px;
+}
+
+.tb-label-modal-body label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3c4043;
+}
+
+body.dark-mode .tb-label-modal-body label {
+  color: #dadce0;
+}
+
+.tb-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.tb-input:focus {
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+}
+
+body.dark-mode .tb-input {
+  background: #202124;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+body.dark-mode .tb-input:focus {
+  border-color: #8ab4f8;
+  box-shadow: 0 0 0 2px rgba(138, 180, 248, 0.2);
+}
+
+.tb-color-swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.tb-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.tb-color-swatch:hover {
+  transform: scale(1.12);
+}
+
+.tb-color-swatch.active {
+  border-color: #202124;
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+body.dark-mode .tb-color-swatch.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #2d2e30 inset;
+}
+
+.tb-label-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 20px;
+  border-top: 1px solid #dadce0;
+  background: #f8f9fa;
+}
+
+body.dark-mode .tb-label-modal-footer {
+  background: #252628;
+  border-top-color: #3c4043;
+}
+
+.tb-label-modal-footer .btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tb-modal-cancel {
+  background: transparent;
+  border: 1px solid #dadce0;
+  color: #3c4043;
+}
+
+body.dark-mode .tb-modal-cancel {
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+.tb-modal-submit {
+  background: #1a73e8;
+  border: 1px solid #1a73e8;
+  color: #ffffff;
+}
+
+.tb-modal-submit:hover {
+  background: #1557b0;
+}
+
+/* ==========================================================================
+   Gmail-Style Message Badges
+   ========================================================================== */
+
+span.tb_label_dots {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+span.tb_label_dots span.tb_label_badges {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin: 0;
+  text-shadow: none;
+  letter-spacing: 0.1px;
+}
+

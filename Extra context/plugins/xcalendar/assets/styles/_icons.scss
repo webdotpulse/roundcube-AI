@@ -1,0 +1,63 @@
+@use "../../../xframework/assets/styles/colors";
+@use "../../../xframework/assets/styles/icons";
+@use "../../../xframework/assets/styles/icons_map";
+
+#xcalendar-toolbar .calendar-day:before { @include icons.icon(icons_map.$calendar-day); }
+#xcalendar-toolbar .calendar-week:before { @include icons.icon(icons_map.$grid-large); }
+#xcalendar-toolbar .calendar-month:before { @include icons.icon(icons_map.$grid-small); }
+#xcalendar-toolbar .calendar-agenda:before { @include icons.icon(icons_map.$list); }
+#xcalendar-toolbar .calendar-search:before { @include icons.icon(icons_map.$search); }
+#xcalendar-toolbar .calendar-settings:before { @include icons.icon(icons_map.$gear); }
+#xcalendar-toolbar .calendar-add-event:before { @include icons.icon(icons_map.$plus-square); }
+#calendar-list-container .new-calendar:before { @include icons.icon(icons_map.$bars); }
+#calendar-list-container .calendar-item .edit:before { @include icons.icon(icons_map.$create); }
+
+#event-edit .attendee-item td.attendee-status {
+    .needs-action:before { @include icons.icon(icons_map.$question); color: #aaa; }
+    .accepted:before { @include icons.icon(icons_map.$check-square); @include colors.success-text-color; }
+    .declined:before { @include icons.icon(icons_map.$times-circle); @include colors.error-text-color; }
+    .tentative:before { @include icons.icon(icons_map.$question); @include colors.warning-text-color; }
+    .delegated:before { @include icons.icon(icons_map.$forward); color: #9369ff; }
+}
+
+.restore-popup a.hide-popup:after { @include icons.icon(icons_map.$times); }
+#calendar-grid .fc-today-button:before { @include icons.icon(icons_map.$home); display: inline !important; }
+.xcalendar-sun-data:before { @include icons.icon(icons_map.$sun); }
+#add-events-to-calendar:before { @include icons.icon(icons_map.$calendar); }
+
+#layout .xcalendar-mobile-show-sidebar:before { @include icons.icon(icons_map.$calendar); }
+#layout .xcalendar-mobile-show-content:before { @include icons.icon(icons_map.$grid-small); }
+
+.fc-popover-close.fa-times:before { @include icons.icon(icons_map.$times); }
+
+#xcalendar-message-itip {
+    .attendee-accepted:before { @include icons.icon(icons_map.$plus-circle); }
+    .attendee-declined:before { @include icons.icon(icons_map.$times-circle); }
+    .attendee-tentative:before { @include icons.icon(icons_map.$circle-empty); }
+    .attendee-delegated:before { @include icons.icon(icons_map.$user-circle); }
+    .attendee-needs-action:before { @include icons.icon(icons_map.$question); }
+}
+
+#event-search-controller {
+    .search-options:before { @include icons.icon(icons_map.$gear); display: block !important; }
+    .clear-results:before { @include icons.icon(icons_map.$times); display: block !important; }
+}
+
+body.xmobile {
+    #main-menu #xcalendar-main span:before { @include icons.icon(icons_map.$calendar); }
+    #main-menu #xcalendar-date span:before { @include icons.icon(icons_map.$calendar-short); }
+    #main-menu #xcalendar-list span:before { @include icons.icon(icons_map.$calendar-list); }
+    #main-menu #xcalendar-toolbar-button span:before { @include icons.icon(icons_map.$options); }
+    a.tab-summary:before { @include icons.icon(icons_map.$wrench); }
+    a.tab-share:before { @include icons.icon(icons_map.$share); }
+    a.tab-publish:before { @include icons.icon(icons_map.$monitor); }
+    a.tab-sync:before { @include icons.icon(icons_map.$connections); }
+    a.tab-recurrence:before { @include icons.icon(icons_map.$repeat); }
+    a.tab-alarms:before { @include icons.icon(icons_map.$clock); }
+    a.tab-attendees:before { @include icons.icon(icons_map.$users); }
+    a.tab-attachments:before { @include icons.icon(icons_map.$attachment); }
+    a.tab-sharing:before { @include icons.icon(icons_map.$share); }
+    a.tab-import-export:before { @include icons.icon(icons_map.$import); }
+    #calendar-list-container .new-calendar:before { @include icons.icon(icons_map.$bars); }
+    #calendar-list-container .calendar-item .edit:before { @include icons.icon(icons_map.$edit); }
+}

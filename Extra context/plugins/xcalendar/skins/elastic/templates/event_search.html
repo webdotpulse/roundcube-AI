@@ -1,0 +1,139 @@
+<div id='event-search-controller' x-data="EventSearchController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+    <div id='event-search' class='editor uibox' :class="{ loading: loading }" x-show="editing" x-cloak>
+
+        <h2 class='editor-title boxtitle'>
+            <span><roundcube:label name="search" /></span>
+        </h2>
+
+        <div class='content-box' x-show='!loading'>
+            <form id="search-input" @submit.prevent="search()">
+                <input type="text" id="xcalendar-search-input" class="form-control" x-model="searchText" />
+                <button type="submit" class="button mainaction" :disabled="!searchText || searching || !hasEnabledCalendars()">
+                    <roundcube:label name="search" /></button>
+
+                <roundcube:if condition="env:xelastic">
+                    <button type="button" class="search-options button" data-popup="search-options-popup" :disabled="searching"
+                            :class="{modified: hasModifiedOptions()}"
+                            @click="rangeShortcutsVisible = false">
+                    </button>
+                <roundcube:else />
+                    <button type="button" class="search-options button" data-popup="search-options-popup" :disabled="searching"
+                            :class="{modified: hasModifiedOptions()}"
+                            onclick='UI.toggle_popup("search-options-popup", event);return false;'
+                            @click="rangeShortcutsVisible = false">
+                    </button>
+                <roundcube:endif />
+
+                <button type="button" class="clear-results button btn-danger" @click="clear()"
+                        title="<roundcube:label name='xcalendar.clear_search_results' />"
+                        :disabled="!hasResults() || searching"></button>
+            </form>
+
+            <div class="editor-loader" x-show="searching">
+                <span class='xspinner'></span>
+            </div>
+
+            <div id="outdated" x-show="!searching && searchComplete && hasResults() && outdated">
+                <div class="icon xi-information"></div>
+                <div class="text"><roundcube:label name="xcalendar.search_outdated_message" /></div>
+            </div>
+
+            <div id="no-results" x-show="!searching && searchComplete && !hasResults()">
+                <h4><roundcube:label name="searchnomatch" /></h4>
+                <p class="result-info"><roundcube:label name="xcalendar.modify_search_options" /></p>
+            </div>
+
+            <div id="search-results" x-show="!searching && searchComplete && hasResults()">
+                <h4 x-text="searchTitle"></h4>
+                <p class="result-info"><roundcube:label name="xcalendar.date_range_subtitle" />
+                    <span x-text="searchStartDate + ' - ' + searchEndDate"></span></p>
+
+                <table class='propform auto-width'>
+                    <thead>
+                        <tr>
+                            <th class="title"><roundcube:label name="xcalendar.title" /></th>
+                            <th><roundcube:label name="xcalendar.start" /></th>
+                            <th><roundcube:label name="xcalendar.end" /></th>
+                            <th><roundcube:label name="xcalendar.calendar" /></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="item in searchResults" :key="item.id">
+                            <tr x-show="!item.removed" @click="preview($event, item.id)">
+                                <td class='title' x-text="item.title"></td>
+                                <td class='start' x-text="item.start"></td>
+                                <td class='end' x-text="item.end"></td>
+                                <td class='calendar' x-text="item.calendar_name"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+
+                <template x-if="totalPages > 1">
+                    <div class="pager">
+                        <button class="button btn btn-secondary" @click="search(page - 1)" :disabled="page === 1">
+                            <roundcube:label name="previous" /></button>
+                        <template x-for="pageNum in getPagesRange(page)" :key="pageNum">
+                            <button class="button btn btn-secondary"
+                                    @click="search(pageNum)" :disabled="page === pageNum" x-text="pageNum"></button>
+                        </template>
+                        <button class="button btn btn-secondary" @click="search(page + 1)" :disabled="page === totalPages">
+                            <roundcube:label name="next" />
+                        </button>
+                    </div>
+                </template>
+
+            </div>
+        </div>
+
+        <div class='formbuttons editor-button-bar'>
+            <div>
+                <button class="button mainaction" @click="cancel()" :disabled="searching">
+                    <roundcube:label name="close" />
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="search-options-popup" class="popupmenu" x-data="SearchOptionsPopupController">
+        <h5><roundcube:label name="xcalendar.date_range" /></h5>
+        <div class="range-inputs">
+            <label for="search-start-date"><roundcube:label name="xcalendar.start" /></label>
+            <input type="text" id="search-start-date" class="form-control" readonly="readonly"
+                   x-model="startDate" x-init="initDate($el)" />
+
+            <label for="search-end-date"><roundcube:label name="xcalendar.end" /></label>
+            <input type="text" id="search-end-date" class="form-control" readonly="readonly"
+                   x-model="endDate" x-init="initDate($el)" />
+        </div>
+
+        <div class="range-shortcut-links" :class="{'shortcuts-visible': rangeShortcutsVisible}">
+            <button type="button" class="xanchor" @click="rangeShortcutsVisible = true">
+                <roundcube:label name="xcalendar.show_shortcuts" /> <span></span></button>
+            <button type="button" class="xanchor" @click="rangeShortcutsVisible = false">
+                <roundcube:label name="xcalendar.hide_shortcuts" /> <span></span></button>
+        </div>
+        <div class="range-shortcuts" x-show="rangeShortcutsVisible">
+            <ul>
+                <li><button type="button" class="xanchor" @click="setRange('this_month')"><roundcube:label name="xcalendar.this_month" /></button></li>
+                <li><button type="button" class="xanchor" @click="setRange('this_year')"><roundcube:label name="xcalendar.this_year" /></button></li>
+                <li><button type="button" class="xanchor" @click="setRange('past_30_days')"><roundcube:label name="xcalendar.past_30_days" /></button></li>
+                <li><button type="button" class="xanchor" @click="setRange('next_30_days')"><roundcube:label name="xcalendar.next_30_days" /></button></li>
+                <li><button type="button" class="xanchor" @click="setRange('past_6_months')"><roundcube:label name="xcalendar.past_6_months" /></button></li>
+                <li><button type="button" class="xanchor" @click="setRange('next_6_months')"><roundcube:label name="xcalendar.next_6_months" /></button></li>
+            </ul>
+        </div>
+        <div x-show="calendars.length >= 2">
+            <h5><roundcube:label name="xcalendar.calendars" /></h5>
+            <div class="search-calendars">
+                <template x-for="calendar in calendars" :key="calendar.id">
+                    <div class="search-calendar-item">
+                        <input type="checkbox" class="" x-model="calendar.checked" :id="'search-calendar-checkbox-' + calendar.id" />
+                        <label :for="'search-calendar-checkbox-' + calendar.id" x-text="calendar.name"></label>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</div>

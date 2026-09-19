@@ -1,0 +1,896 @@
+<div id='event-edit-controller' x-data="EventEditController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+    <div class='restore-popup animation-fade' x-show='restoreId' x-cloak>
+        <roundcube:label name="xcalendar.event_removed" />
+        <a href='#' @click='restore()' class="undo"><roundcube:label name="undo" /></a>
+        <a href='#' @click='hideRestore()' class='hide-popup'></a>
+    </div>
+
+    <div id='event-edit' class='editor uibox' :class="{ loading: loading }" x-show="editing" x-cloak>
+        <roundcube:if condition="env:xelastic" />
+        <h2 class="editor-title" x-show="!loading">
+            <span x-show="data.id"><roundcube:label name="xcalendar.edit_event" /></span>
+            <span x-show="!data.id"><roundcube:label name="xcalendar.create_event" /></span>
+        </h2>
+        <roundcube:else />
+        <h2 class="boxtitle" x-show="!loading">
+            <span x-show="data.id"><roundcube:label name="xcalendar.edit_event" /></span>
+            <span x-show="!data.id"><roundcube:label name="xcalendar.create_event" /></span>
+        </h2>
+        <roundcube:endif />
+        <div class="editor-loader" x-show="loading">
+            <span class='xspinner'></span>
+        </div>
+        <div class='content-box' x-show='!loading'>
+            <div id="event-tabs" class='xtabs'>
+                <ul class='nav nav-tabs'>
+                    <li class='nav-item'>
+                        <a class='nav-link active tab-summary' data-toggle="tab" href="#event-tab-summary">
+                            <span><roundcube:label name="xcalendar.summary" /></span>
+                        </a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link tab-recurrence' data-toggle="tab" href="#event-tab-recurrence">
+                            <span><roundcube:label name="xcalendar.recurrence" /></span>
+                        </a>
+                        <div class="xbadge" x-show="data.repeat && data.repeat.freq">1</div>
+                    </li>
+                    <li class='nav-item' x-show="isLocalCalendar()">
+                        <a class='nav-link tab-alarms' data-toggle="tab" href="#event-tab-alarms">
+                            <span><roundcube:label name="xcalendar.notifications" /></span>
+                        </a>
+                        <div class="xbadge" x-show="data.alarms && data.alarms.length"
+                             x-text="data.alarms ? data.alarms.length : ''"></div>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link tab-attendees' data-toggle="tab" href="#event-tab-attendees">
+                            <span><roundcube:label name="xcalendar.attendees" /></span>
+                        </a>
+                        <div class="xbadge" x-show="data.attendees && data.attendees.length"
+                             x-text="data.attendees ? data.attendees.length : ''"></div>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link tab-attachments' data-toggle="tab" href="#event-tab-attachments">
+                            <span><roundcube:label name="attachments" /></span>
+                        </a>
+                        <div class="xbadge" x-show="data.attachments && data.attachments.length"
+                             x-text="data.attachments ? data.attachments.length : ''"></div>
+                    </li>
+                </ul>
+
+                <div class="itip-organizer-message" x-show="showItipOrganizerNote">
+                    <roundcube:label name="xcalendar.itip_organizer_message" />
+                </div>
+
+                <div class='tabbed tab-content'>
+
+                    <!-- ######################### SUMMARY ######################### -->
+
+                    <div id='event-tab-summary' class='tab-pane active formcontent' role="tabpanel">
+                        <table class='propform'>
+                            <tr x-show='!data.owner'>
+                                <td class="title">
+                                    <label for="xtitle"><roundcube:label name="xcalendar.owner" /></label>
+                                </td>
+                                <td class="input">
+                                    <span x-text="data.ownerEmail"></span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xtitle"><roundcube:label name="xcalendar.title" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='text' class='full' name="title" id="xtitle" x-model="data.title">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xtitle"><roundcube:label name="xcalendar.start" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='text' class='date-input' name="start_date" id="xstart_date"
+                                           x-model="data.start_date" x-init="initDate($el, () => startDateChange())">
+                                    <input type="text" class='time-input' name="start_time" id="xstart_time"
+                                           x-show="!data.all_day" autocomplete="off" x-model.lazy="data.start_time"
+                                           x-init="initTime($el, () => startTimeChange())" />
+                                    <select name="timezone_start" class="form-control timezone-input"
+                                            x-model="data.timezone_start" x-show="!data.all_day && timezonesVisible">
+                                        <template x-for="(name, key) in timezones" :key="key">
+                                            <option :value="key"
+                                                    :selected="key == data.timezone_start"
+                                                    x-text="name"></option>
+                                        </template>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xtitle"><roundcube:label name="xcalendar.end" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='text' class='date-input' name="end_date" id="xend_date"
+                                           x-model="data.end_date" x-init="initDate($el)">
+                                    <input type="text" class='time-input' name="end_time" id="xend_time"
+                                           x-show="!data.all_day" autocomplete="off" x-model.lazy="data.end_time"
+                                           x-init="initTime($el)" />
+                                    <select name="timezone_end" class="form-control timezone-input"
+                                            x-model="data.timezone_end"
+                                            x-show="!data.all_day && timezonesVisible">
+                                        <template x-for="(name, key) in timezones" :key="key">
+                                            <option :value="key"
+                                                    :selected="key == data.timezone_end"
+                                                    x-text="name"></option>
+                                        </template>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr x-show="!(data.all_day || (timezonesVisible && !resetTimezonesLinkVisible()))">
+                                <td class="title"></td>
+                                <td class="input">
+                                    <a href="#" x-show="!timezonesVisible" @click="showTimezones()">
+                                        <roundcube:label name="xcalendar.show_timezones" />
+                                    </a>
+                                    <a href="#" @click="resetTimezones()" x-show="resetTimezonesLinkVisible()">
+                                        <roundcube:label name="xcalendar.reset_timezones" />
+                                    </a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xall_day"><roundcube:label name="xcalendar.all_day" /></label>
+                                </td>
+                                <td class="input" colspan='2'>
+                                    <input type='checkbox' name='all_day' id='xall_day' x-model="data.all_day" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xlocation"><roundcube:label name="xcalendar.location" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='text' class='full' id="xlocation" x-model='data.location'>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xdescription"><roundcube:label name="xcalendar.description" /></label>
+                                </td>
+                                <td class="input">
+                                    <textarea class='full' id="xdescription" x-model='data.description'
+                                              @focus="descriptionFocus()"
+                                              @blur="descriptionBlur()"
+                                              @change="descriptionFocus()">
+                                    </textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xurl"><roundcube:label name="xcalendar.url" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='text' class='full' id="xurl" x-model='data.url'>
+                                </td>
+                            </tr>
+                            <template x-if="calendarType == 1">
+                                <tr class="form-group row">
+                                    <td class="title col-sm-4">
+                                        <label for="xcalendar_id"><roundcube:label name="xcalendar.calendar" /></label>
+                                    </td>
+                                    <td class="input col-sm-8">
+                                        <select name="calendar_id" class="form-control" id="xcalendar_id"
+                                                x-model="data.calendar_id" @change="copyCalendarColors()">
+                                            <template x-for="calendar in calendars" :key="calendar.id">
+                                                <option :data-bg_color="calendar.bg_color"
+                                                        :data-tx_color="calendar.tx_color"
+                                                        :value="calendar.id"
+                                                        :selected="calendar.id == data.calendar_id"
+                                                        x-text="calendar.name"></option>
+                                            </template>
+                                        </select>
+                                        <div class='calendar-hidden-warning' x-show="!calendars[data.calendar_id].enabled">
+                                            <span>
+                                                <roundcube:label name="xcalendar.this_calendar_is_hidden" />
+                                                <a href="javascript:void(0)" @click="toggleCalendarVisibility(data.calendar_id)">
+                                                    <roundcube:label name="xcalendar.make_calendar_visible" />
+                                                </a>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <tr>
+                                <td class="title">
+                                    <label for="xuse_calendar_colors"><roundcube:label name="xcalendar.use_calendar_colors" /></label>
+                                </td>
+                                <td class="input">
+                                     <input type='checkbox' name='use_calendar_colors' id='xuse_calendar_colors'
+                                            x-model="data.use_calendar_colors" />
+                                </td>
+                            </tr>
+                            <tr x-show="!data.use_calendar_colors">
+                                <td class="title">
+                                    <label for="xbg_color"><roundcube:label name="xcalendar.bg_color" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='color' name="bg_color" id="xbg_color" x-model="data.bg_color">
+                                </td>
+                            </tr>
+                            <tr x-show="!data.use_calendar_colors">
+                                <td class="title">
+                                    <label for="xbg_color"><roundcube:label name="xcalendar.tx_color" /></label>
+                                </td>
+                                <td class="input">
+                                    <input type='color' name="tx_color" id="xtx_color" x-model="data.tx_color">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xcategory"><roundcube:label name="xcalendar.category" /></label>
+                                </td>
+                                <td class="input">
+                                    <select name="category" class="form-control" id="xcategory" x-model="data.category">
+                                        <template x-for="category in categories" :key="category.name">
+                                            <option :value='category.name'
+                                                    :selected="category.name == data.category"
+                                                    x-text="category.name" ></option>
+                                        </template>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr x-show='data.owner'>
+                                <td class="title">
+                                    <label for="xbusy"><roundcube:label name="xcalendar.show_me_as" /></label>
+                                </td>
+                                <td class="input">
+                                    <select name="busy" id="xbusy" class="form-control" x-model="data.busy">
+                                        <option value="0"><roundcube:label name="xcalendar.available" /></option>
+                                        <option value="1"><roundcube:label name="xcalendar.busy" /></option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr x-show='data.owner'>
+                                <td class="title">
+                                    <label for="xvisibility"><roundcube:label name="xcalendar.visibility" /></label>
+                                </td>
+                                <td class="input">
+                                    <select name="visibility" id="xvisibility" class="form-control"
+                                            x-model="data.visibility">
+                                        <option value="default"><roundcube:label name="xcalendar.calendar_default" /></option>
+                                        <option value="public"><roundcube:label name="xcalendar.public" /></option>
+                                        <option value="private"><roundcube:label name="xcalendar.private" /></option>
+                                    </select>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="title">
+                                    <label for="xpriority"><roundcube:label name="priority" /></label>
+                                </td>
+                                <td class="input">
+                                    <select name="priority" id="xpriority" class="form-control" x-model="data.priority">
+                                        <option value="0"><roundcube:label name="xcalendar.not_specified" /></option>
+                                        <option value="1">1 <roundcube:label name="highest" /></option>
+                                        <option value="2">2 <roundcube:label name="high" /></option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5 <roundcube:label name="normal" /></option>
+                                        <option value="6">6</option>
+                                        <option value="7">7</option>
+                                        <option value="8">8 <roundcube:label name="low" /></option>
+                                        <option value="9">9 <roundcube:label name="lowest" /></option>
+                                    </select>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- ######################### ALARMS ######################### -->
+
+                    <div id='event-tab-alarms' class='tab-pane formcontent' role="tabpanel">
+                        <div id="email-notification-disabled-note" x-show="emailNotificationsError"
+                             x-text="emailNotificationsError"></div>
+                        <div class='notifications-container'>
+                            <template x-for="(alarm, index) in data.alarms" :key="index">
+                                <div>
+                                    <select name="alarm-type" class="form-control" x-model="alarm.alarm_type">
+                                        <option value="0"><roundcube:label name="xcalendar.popup" /></option>
+                                        <template x-if="emailNotificationsEnabled">
+                                            <option value="1"><roundcube:label name="email" /></option>
+                                        </template>
+                                    </select>
+                                    <select name="alarm-position" class='form-control auto-width'
+                                            x-model="alarm.alarm_position">
+                                        <option value="0"><roundcube:label name="xcalendar.alarm_before_event_starts" /></option>
+                                        <option value="1"><roundcube:label name="xcalendar.alarm_after_event_starts" /></option>
+                                        <option value="2"><roundcube:label name="xcalendar.alarm_before_event_ends" /></option>
+                                        <option value="3"><roundcube:label name="xcalendar.alarm_after_event_ends" /></option>
+                                        <option value="4"><roundcube:label name="xcalendar.alarm_at_specific_time" /></option>
+                                    </select>
+                                    <input type='text' class="form-control short" x-model='alarm.alarm_number'
+                                           x-show="alarm.alarm_position != 4">
+                                    <select name="alarm-units" class='form-control auto-width'
+                                            x-model="alarm.alarm_units" x-show="alarm.alarm_position != 4">
+                                        <option value="minutes"><roundcube:label name="xcalendar.minutes" /></option>
+                                        <option value="hours"><roundcube:label name="xcalendar.hours" /></option>
+                                        <option value="days"><roundcube:label name="xcalendar.days" /></option>
+                                        <option value="weeks"><roundcube:label name="xcalendar.weeks" /></option>
+                                    </select>
+                                    <input type='text' class='form-control date-input' x-model="alarm.absolute_date"
+                                           x-show="alarm.alarm_position == 4"
+                                           x-init="initDate($el)">
+                                    <input type="text" class='form-control time-input' autocomplete="off"
+                                           x-model.lazy="alarm.absolute_time"
+                                           x-show="alarm.alarm_position == 4"
+                                           x-init="initTime($el)" />
+                                    <button type='button' class='button btn btn-danger' @click='removeAlarm(index)'>
+                                        <roundcube:label name="delete" />
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+                        <p x-show='!data.alarms || !data.alarms.length'>
+                            <roundcube:label name="xcalendar.no_notifications" />
+                        </p>
+                        <p>
+                            <button type='button' class='btn btn-secondary' @click='addAlarm()'>
+                                <roundcube:label name="xcalendar.add_notification" />
+                            </button>
+                        </p>
+                    </div>
+
+                    <!-- ######################### RECURRENCE ######################### -->
+
+                    <div id='event-tab-recurrence' class='tab-pane formcontent' role="tabpanel">
+                        <table class='propform'>
+                            <tr>
+                                <td class="title">
+                                    <label for="xrepeat-freq"><roundcube:label name="xcalendar.repeat" /></label>
+                                </td>
+                                <td class="input">
+                                    <select class="full form-control" id="xrepeat-freq"
+                                            x-model="data.repeat.freq">
+                                        <option value=""><roundcube:label name="xcalendar.never" /></option>
+                                        <option value="DAILY"><roundcube:label name="xcalendar.daily" /></option>
+                                        <option value="WEEKLY"><roundcube:label name="xcalendar.weekly" /></option>
+                                        <option value="MONTHLY"><roundcube:label name="xcalendar.monthly" /></option>
+                                        <option value="YEARLY"><roundcube:label name="xcalendar.yearly" /></option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr x-show="data.repeat.freq">
+                                <td class="title">
+                                    <label for="xrepeat-interval"><roundcube:label name="xcalendar.repeat_every" /></label>
+                                </td>
+                                <td class="input">
+                                    <div class="horizontal-controls">
+                                        <input type="number" id="xrepeat-interval" x-model="data.repeat.interval" min="1" max="999">
+                                        <span x-show="data.repeat.freq == 'DAILY'"><roundcube:label name="xcalendar.days" /></span>
+                                        <span x-show="data.repeat.freq == 'WEEKLY'"><roundcube:label name="xcalendar.weeks" /></span>
+                                        <span x-show="data.repeat.freq == 'MONTHLY'"><roundcube:label name="xcalendar.months" /></span>
+                                        <span x-show="data.repeat.freq == 'YEARLY'"><roundcube:label name="xcalendar.years" /></span>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr x-show="data.repeat.freq == 'WEEKLY'">
+                                <td class="title">
+                                    <label><roundcube:label name="xcalendar.repeat_on" /></label>
+                                </td>
+                                <td class="input week-grid">
+                                    <div class="button-grid">
+                                        <!-- custom-control-input prevents elastic from making the checkboxes into pretty_checkboxes -->
+                                        <!-- no-switchbox prevents RC+ from reformatting the checkboxes-->
+                                        <input type="checkbox" id="xd-mon" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['MO']">
+                                        <label class="form-control" for="xd-mon"><roundcube:label name="mon" /></label>
+                                        <input type="checkbox" id="xd-tue" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['TU']">
+                                        <label class="form-control" for="xd-tue"><roundcube:label name="tue" /></label>
+                                        <input type="checkbox" id="xd-wed" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['WE']">
+                                        <label class="form-control" for="xd-wed"><roundcube:label name="wed" /></label>
+                                        <input type="checkbox" id="xd-thu" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['TH']">
+                                        <label class="form-control" for="xd-thu"><roundcube:label name="thu" /></label>
+                                        <input type="checkbox" id="xd-fri" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['FR']">
+                                        <label class="form-control" for="xd-fri"><roundcube:label name="fri" /></label>
+                                        <input type="checkbox" id="xd-sat" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['SA']">
+                                        <label class="form-control" for="xd-sat"><roundcube:label name="sat" /></label>
+                                        <input type="checkbox" id="xd-sun" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.weekly_byday['SU']">
+                                        <label class="form-control" for="xd-sun"><roundcube:label name="sun" /></label>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr x-show="data.repeat.freq == 'MONTHLY' || data.repeat.freq == 'YEARLY'">
+                                <td class="title">
+                                    <label for="xrepeat-monthly-type"><roundcube:label name="xcalendar.repeat_by" /></label>
+                                </td>
+                                <td class="input">
+                                    <select id="xrepeat-monthly-type" class="form-control" x-model="data.repeat.bytype">
+                                        <option value="byday"><roundcube:label name="xcalendar.day_of_week" /></option>
+                                        <option value="bymonthday"><roundcube:label name="xcalendar.day_of_month" /></option>
+                                    </select>
+                                </td>
+                            </tr>
+
+                            <tr x-show="(data.repeat.freq == 'MONTHLY' || data.repeat.freq == 'YEARLY') && data.repeat.bytype == 'byday'">
+                                <td class="title">
+                                    <label for="xrepeat-monthly-byday-prefix"><roundcube:label name="xcalendar.repeat_on" /></label>
+                                </td>
+                                <td class="input">
+                                    <div class="horizontal-controls">
+                                        <select id="xrepeat-monthly-byday-prefix" class="form-control"
+                                                x-model="data.repeat.byday_prefix">
+                                            <option value=""><roundcube:label name="xcalendar.every" /></option>
+                                            <option value="1"><roundcube:label name="xcalendar.first" /></option>
+                                            <option value="2"><roundcube:label name="xcalendar.second" /></option>
+                                            <option value="3"><roundcube:label name="xcalendar.third" /></option>
+                                            <option value="4"><roundcube:label name="xcalendar.fourth" /></option>
+                                            <option value="5"><roundcube:label name="xcalendar.fifth" /></option>
+                                            <option value="-2"><roundcube:label name="xcalendar.second_to_last" /></option>
+                                            <option value="-1"><roundcube:label name="xcalendar.last" /></option>
+                                        </select>
+                                        <select name="repeat-byday-value" class="form-control"
+                                                x-model="data.repeat.byday_value">
+                                            <option value="MO"><roundcube:label name="monday" /></option>
+                                            <option value="TU"><roundcube:label name="tuesday" /></option>
+                                            <option value="WE"><roundcube:label name="wednesday" /></option>
+                                            <option value="TH"><roundcube:label name="thursday" /></option>
+                                            <option value="FR"><roundcube:label name="friday" /></option>
+                                            <option value="SA"><roundcube:label name="saturday" /></option>
+                                            <option value="SU"><roundcube:label name="sunday" /></option>
+                                            <option value="DAY"><roundcube:label name="xcalendar.day" /></option>
+                                            <option value="WEEKDAY"><roundcube:label name="xcalendar.weekday" /></option>
+                                            <option value="WEEKEND_DAY"><roundcube:label name="xcalendar.weekend_day" /></option>
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr x-show="(data.repeat.freq == 'MONTHLY' || data.repeat.freq == 'YEARLY') && data.repeat.bytype == 'bymonthday'">
+                                <td class="title">
+                                    <label><roundcube:label name="xcalendar.repeat_on" /></label>
+                                </td>
+                                <td class="input box-grid">
+                                    <div class="button-grid no-padding">
+                                        <template x-for="i in [1, 2, 3, 4, 5, 6, 7]" :key="i">
+                                            <div>
+                                                <input type="checkbox" :id="'xd1-' + i"
+                                                       class='custom-control-input no-switchbox'
+                                                       x-model="data.repeat.bymonthday[i]">
+                                                <label class="form-control" :for="'xd1-' + i" x-text="i"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="button-grid no-padding">
+                                        <template x-for="i in [8, 9, 10, 11, 12, 13, 14]" :key="i">
+                                            <div>
+                                                <input type="checkbox" :id="'xd2-' + i"
+                                                       class='custom-control-input no-switchbox'
+                                                       x-model="data.repeat.bymonthday[i]">
+                                                <label class="form-control" :for="'xd2-' + i" x-text="i"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="button-grid no-padding">
+                                        <template x-for="i in [15, 16, 17, 18, 19, 20, 21]" :key="i">
+                                            <div>
+                                                <input type="checkbox" :id="'xd3-' + i"
+                                                       class='custom-control-input no-switchbox'
+                                                       x-model="data.repeat.bymonthday[i]">
+                                                <label class="form-control" :for="'xd3-' + i" x-text="i"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="button-grid no-padding">
+                                        <template x-for="i in [22, 23, 24, 25, 26, 27, 28]" :key="i">
+                                            <div>
+                                                <input type="checkbox" :id="'xd4-' + i"
+                                                       class='custom-control-input no-switchbox'
+                                                       x-model="data.repeat.bymonthday[i]">
+                                                <label class="form-control" :for="'xd4-' + i" x-text="i"></label>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="button-grid">
+                                        <template x-for="i in [29, 30, 31]" :key="i">
+                                            <div>
+                                                <input type="checkbox" :id="'xd5-' + i"
+                                                       class='custom-control-input no-switchbox'
+                                                       x-model="data.repeat.bymonthday[i]">
+                                                <label class="form-control" :for="'xd5-' + i" x-text="i"></label>
+                                            </div>
+                                        </template>
+                                        <div>
+                                            <input type="checkbox" id="xd-last-day"
+                                                   class='custom-control-input no-switchbox'
+                                                   x-model="data.repeat.bymonthday[-1]">
+                                            <label class="form-control last-day" for="xd-last-day">
+                                                <roundcube:label name="xcalendar.last_day" />
+                                            </label>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr x-show="data.repeat.freq == 'YEARLY'">
+                                <td class="title"></td>
+                                <td class="input box-grid year-grid">
+                                    <div class="button-grid no-padding">
+                                        <input type="checkbox" id="xm-1" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[1]">
+                                        <label class="form-control" for="xm-1"><roundcube:label name="jan" /></label>
+                                        <input type="checkbox" id="xm-2" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[2]">
+                                        <label class="form-control" for="xm-2"><roundcube:label name="feb" /></label>
+                                        <input type="checkbox" id="xm-3" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[3]">
+                                        <label class="form-control" for="xm-3"><roundcube:label name="mar" /></label>
+                                        <input type="checkbox" id="xm-4" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[4]">
+                                        <label class="form-control" for="xm-4"><roundcube:label name="apr" /></label>
+                                        <input type="checkbox" id="xm-5" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[5]">
+                                        <label class="form-control" for="xm-5"><roundcube:label name="may" /></label>
+                                        <input type="checkbox" id="xm-6" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[6]">
+                                        <label class="form-control" for="xm-6"><roundcube:label name="jun" /></label>
+                                    </div>
+                                    <div class="button-grid">
+                                        <input type="checkbox" id="xm-7" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[7]">
+                                        <label class="form-control" for="xm-7"><roundcube:label name="jul" /></label>
+                                        <input type="checkbox" id="xm-8" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[8]">
+                                        <label class="form-control" for="xm-8"><roundcube:label name="aug" /></label>
+                                        <input type="checkbox" id="xm-9" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[9]">
+                                        <label class="form-control" for="xm-9"><roundcube:label name="sep" /></label>
+                                        <input type="checkbox" id="xm-10" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[10]">
+                                        <label class="form-control" for="xm-10"><roundcube:label name="oct" /></label>
+                                        <input type="checkbox" id="xm-11" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[11]">
+                                        <label class="form-control" for="xm-11"><roundcube:label name="nov" /></label>
+                                        <input type="checkbox" id="xm-12" class='custom-control-input no-switchbox'
+                                               x-model="data.repeat.bymonth[12]">
+                                        <label class="form-control" for="xm-12"><roundcube:label name="dec" /></label>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <tr x-show="data.repeat.freq">
+                                <td class="title">
+                                    <label for="xrepeat-range">
+                                        <roundcube:label name="xcalendar.recurrence_range" />
+                                    </label>
+                                </td>
+                                <td class="input">
+                                    <div class="horizontal-controls">
+                                        <select id="xrepeat-range" class="form-control" x-model="data.repeat.range">
+                                            <option value="forever"><roundcube:label name="xcalendar.repeat_forever" /></option>
+                                            <option value="count"><roundcube:label name="xcalendar.end_after" /></option>
+                                            <option value="until"><roundcube:label name="xcalendar.end_by_date" /></option>
+                                        </select>
+
+                                        <input type="number" id="xrepeat-range-count" x-model="data.repeat.count"
+                                               min="1" max="999" x-show="data.repeat.range == 'count'">
+                                        <label for="xrepeat-range-count" x-show="data.repeat.range == 'count'">
+                                            <roundcube:label name="xcalendar.occurrences" /></label>
+
+                                        <input type="text" id="xrepeat-end-date" x-model="data.repeat.until"
+                                               x-show="data.repeat.range == 'until'" x-init="initDate($el)">
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <fieldset x-show="data.repeat.freq && data.excluded && data.excluded.length">
+                            <legend><roundcube:label name="xcalendar.removed_events_title" /></legend>
+                            <table class="propform repeat-excluded">
+                                <template x-for="(date, index) in data.excluded" :key="index">
+                                    <tr>
+                                        <td class="title">
+                                            <label x-text="formatExcluded(date)"></label>
+                                        </td>
+                                        <td class="excluded-action">
+                                            <a href="#" @click="restoreRemoved(index)">
+                                                <roundcube:label name="xcalendar.restore" />
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </table>
+                        </fieldset>
+                    </div>
+
+                    <!-- ######################### ATTENDEES ######################### -->
+
+                    <div id='event-tab-attendees' class='tab-pane formcontent' role="tabpanel">
+                        <table class='edit-table attendee-table'>
+                            <thead>
+                            <tr>
+                                <th colspan="2">
+                                    <roundcube:label name="email" />
+                                </th>
+                                <th>
+                                    <roundcube:label name="xcalendar.attendee_role" />
+                                    <div class='xinfo'>
+                                        <div><roundcube:label name="xcalendar.attendee_role_info" /></div>
+                                    </div>
+                                </th>
+                                <th>
+                                    <roundcube:label name="xcalendar.attendance" />
+                                </th>
+                                <th class='permission'>
+                                    <roundcube:label name="xcalendar.attendee_notify" />
+                                    <div class='xinfo left'>
+                                        <div><roundcube:label name="xcalendar.attendee_notify_info" /></div>
+                                    </div>
+                                </th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                                <tr class='new-attendee'>
+                                    <td class='input' colspan="2">
+                                        <div class="input-group">
+                                            <textarea name="new-attendee-textarea" spellcheck="false"
+                                                      id="new-attendee-textarea" tabindex="-1"
+                                                      data-recipient-input="true" autocomplete="off"
+                                                      aria-autocomplete="list" aria-expanded="false"></textarea>
+                                        </div>
+                                        <div class='error-message' x-show='newAttendeeError'>
+                                            <roundcube:label name="noemailwarning" />
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select name="new-attendee-role" class="form-control"
+                                                x-model="newAttendee.role">
+                                            <option value="0"><roundcube:label name="xcalendar.attendee_role_required" /></option>
+                                            <option value="1"><roundcube:label name="xcalendar.attendee_role_optional" /></option>
+                                            <option value="2"><roundcube:label name="xcalendar.attendee_role_chair" /></option>
+                                            <option value="3"><roundcube:label name="xcalendar.attendee_role_none" /></option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select name="new-attendee-status" class="form-control"
+                                                x-model="newAttendee.status">
+                                            <option value="0"><roundcube:label name="xcalendar.attendee_status_waiting_for_confirmation" /></option>
+                                            <option value="1"><roundcube:label name="xcalendar.attendee_status_info_yes" /></option>
+                                            <option value="2"><roundcube:label name="xcalendar.attendee_status_info_no" /></option>
+                                            <option value="3"><roundcube:label name="xcalendar.attendee_status_info_maybe" /></option>
+                                            <option value="4"><roundcube:label name="xcalendar.attendee_status_info_delegated" /></option>
+                                        </select>
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' class='no-switchbox' x-model='newAttendee.notify' />
+                                    </td>
+                                    <td class='button-bar text-center'>
+                                        <button type="button" class="btn btn-secondary" @click='addToAttendees()'>
+                                            <roundcube:label name="xcalendar.add_attendee" />
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+
+                            <template x-for="item in data.attendees" :key="item.email">
+                                <tbody>
+                                    <tr class='attendee-item'>
+                                        <td class="attendee-status">
+                                            <template x-if="item.status == 0">
+                                                <span class='needs-action'
+                                                      title="<roundcube:label name='xcalendar.attendee_status_waiting_for_confirmation' />"></span>
+                                            </template>
+                                            <template x-if="item.status == 1">
+                                                <span class='accepted'
+                                                      title="<roundcube:label name='xcalendar.attendee_status_info_yes' />"></span>
+                                            </template>
+                                            <template x-if="item.status == 2">
+                                                <span class='declined'
+                                                      title="<roundcube:label name='xcalendar.attendee_status_info_no' />"></span>
+                                            </template>
+                                            <template x-if="item.status == 3">
+                                                <span class='tentative'
+                                                      title="<roundcube:label name='xcalendar.attendee_status_info_maybe' />"></span>
+                                            </template>
+                                            <template x-if="item.status == 4">
+                                                <span class='delegated'
+                                                      title="<roundcube:label name='xcalendar.attendee_status_info_delegated' />"></span>
+                                            </template>
+                                        </td>
+                                        <td class="attendee-email">
+                                            <span class="email">
+                                                <span x-text="item.email"></span>
+                                                <span x-show="item.organizer == 1"> (<roundcube:label name="xcalendar.organizer" />)</span>
+                                            </span>
+                                            <span class="guests" x-show="item.status == 1 && item.guests > 0">(+<span x-text="item.guests"></span>)</span>
+                                        </td>
+                                        <td>
+                                            <select name="item-role" class="form-control" x-model="item.role">
+                                                <option value="0"><roundcube:label name="xcalendar.attendee_role_required" /></option>
+                                                <option value="1"><roundcube:label name="xcalendar.attendee_role_optional" /></option>
+                                                <option value="2"><roundcube:label name="xcalendar.attendee_role_none" /></option>
+                                                <option value="3"><roundcube:label name="xcalendar.attendee_role_chair" /></option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select name="item-status" class="form-control" x-model="item.status">
+                                                <option value="0"><roundcube:label name="xcalendar.attendee_status_waiting_for_confirmation" /></option>
+                                                <option value="1"><roundcube:label name="xcalendar.attendee_status_info_yes" /></option>
+                                                <option value="2"><roundcube:label name="xcalendar.attendee_status_info_no" /></option>
+                                                <option value="3"><roundcube:label name="xcalendar.attendee_status_info_maybe" /></option>
+                                                <option value="4"><roundcube:label name="xcalendar.attendee_status_info_delegated" /></option>
+                                            </select>
+                                        </td>
+                                        <td class='permission'>
+                                            <input type='checkbox' x-model='item.notify' x-show="item.organizer != 1" />
+                                        </td>
+                                        <td class='button-bar text-center'>
+                                            <button type="button" class="button btn btn-danger btn-xs"
+                                                    @click='removeFromAttendees(item.email)'
+                                                    :disabled="item.organizer == 1">
+                                                <roundcube:label name="delete" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class='comment' x-show="item.comment">
+                                        <td colspan="6" x-text="item.comment"></td>
+                                    </tr>
+                                </tbody>
+                            </template>
+                        </table>
+                    </div>
+
+                    <!-- ######################### ATTACHMENTS ######################### -->
+
+                    <div id='event-tab-attachments' class='tab-pane formcontent' role="tabpanel">
+                        <form id="event-attachment-form" enctype="multipart/form-data" method="post">
+                            <input type='file' id='attachment-upload' name='file' style="display:none"
+                                   onchange='window.dispatchEvent(new CustomEvent("event-edit-upload-start"))' />
+                        </form>
+
+                        <div id="attachment-buttons">
+                            <template x-if="attachmentsEnabled">
+                                <button class="button btn btn-secondary" onclick='$("#attachment-upload").click()'
+                                        :disabled="uploadingAttachment">
+                                    <roundcube:label name="upload" />
+                                </button>
+                            </template>
+                            <button class="button btn btn-secondary" @click='showAttachmentUrlDialog()'>
+                                <roundcube:label name="xcalendar.link" />
+                            </button>
+                            <button class="button btn btn-secondary" @click='selectFromGoogleDrive()'
+                                    x-show='!uploadingAttachment && googleDriveSelectEnabled()'>
+                                <roundcube:label name="xcalendar.xgoogle_drive_name" />
+                            </button>
+                            <button class="button btn btn-secondary" @click='selectFromDropbox()'
+                                    x-show='!uploadingAttachment && dropboxSelectEnabled()'>
+                                <roundcube:label name="xcalendar.xdropbox_name" />
+                            </button>
+                            <span x-show='uploadingAttachment' class='xspinner'></span>
+                        </div>
+
+                        <template x-if="attachmentsEnabled">
+                            <div id='attachment-upload-note'>
+                                <span x-text="maxAttachmentSizeNote"></span>
+                            </div>
+                        </template>
+
+                        <script>
+                            $('#event-attachment-form').ajaxForm({
+                                dataType:  "json",
+                                url: rcmail.url("uploadEventAttachment"),
+                                beforeSubmit: () => {
+                                    return !!$("#attachment-upload").val();
+                                },
+                                success: response => {
+                                    window.dispatchEvent(new CustomEvent("event-edit-upload-finished", { detail: response }));
+                                },
+                                error: () => {
+                                    window.dispatchEvent(new CustomEvent("event-edit-upload-finished", { detail: {
+                                        success: false,
+                                        message: "Error uploading file (Ajax error)",
+                                    }}));
+                                }
+                            });
+
+                            // bridge from the file input's onchange to the controller, since the input lives inside the
+                            // Alpine scope but jQuery's onchange string handler runs outside Alpine's expression evaluator
+                            window.addEventListener("event-edit-upload-start", () => {
+                                window.dispatchEvent(new CustomEvent("event-edit-upload-trigger"));
+                                if ($("#attachment-upload").val()) {
+                                    $("#event-attachment-form").submit();
+                                }
+                            });
+                        </script>
+
+                        <table id='event-attachment-table' class='edit-table'
+                               x-show='data.attachments && data.attachments.length'>
+                            <tr>
+                                <th class='attachment-name'><roundcube:label name="filename" /></th>
+                                <th class='attachment-location'><roundcube:label name="location" /></th>
+                                <th class='attachment-size'><roundcube:label name="filesize" /></th>
+                                <th></th>
+                            </tr>
+                            <template x-for="(item, index) in data.attachments" :key="index">
+                                <tr class='event-attachment' x-data="{ limit: 25, domain: xfilters.domain(item.path) }">
+                                    <td class='attachment-name' :title='item.name.length > limit ? item.name : ""'
+                                        x-text='xfilters.limitTo(item.name, limit) + (item.name.length > limit ? "…" : "")'>
+                                    </td>
+                                    <td class='attachment-location'>
+                                        <span :title='domain.length > limit ? domain : ""'
+                                              x-text='xfilters.limitTo(domain, limit) + (domain.length > limit ? "…" : "")'></span>
+                                    </td>
+                                    <td class='attachment-size'>
+                                        <span class='attachment-size-unknown' x-text="xfilters.filesize(item.size)"></span>
+                                    </td>
+                                    <td class='button-bar text-right'>
+                                        <a :href='item.path' target='_blank' class="btn btn-secondary btn-xs"
+                                           :class="{ disabled: removingAttachment === index }">
+                                           <roundcube:label name="download" />
+                                        </a>
+                                        <a href='javascript:void(0)' class="btn btn-danger btn-xs"
+                                           @click='removeAttachment(index)'
+                                           :class="{ disabled: removingAttachment === index }">
+                                            <roundcube:label name="delete" />
+                                        </a>
+                                    </td>
+                                </tr>
+                            </template>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='formbuttons editor-button-bar' x-show='!loading'>
+            <div class='mask' x-show='sending'></div>
+            <div>
+                <button type="button" class='button mainaction submit btn btn-primary' :class="{busy:sending}"
+                        @click='save()'
+                        :disabled='sending'>
+                     <span><roundcube:label name="save" /></span>
+                </button>
+                <button type="button" class='button cancel btn btn-secondary' @click='cancel()' :disabled='sending'>
+                    <span><roundcube:label name="cancel" /></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="xdialog-mask" x-show="attachmentUrlVisible" x-cloak>
+        <div class="xdialog-box">
+            <form @submit.prevent="addAttachmentUrl()">
+                <div class="xdialog-title">
+                    <roundcube:label name="xcalendar.attach_file_from_web" />
+                </div>
+                <div class="xdialog-contents">
+                    <div class="xdialog-error" x-show="attachmentUrlError">
+                        <roundcube:label name="xcalendar.invalid_url" />
+                    </div>
+                    <div class="dialog-text">
+                        <label for="attachmentUrlText">
+                            <roundcube:label name="xcalendar.attachment_url" />
+                        </label>
+                    </div>
+                    <div class="dialog-input">
+                        <input type="text" name="url" id="attachmentUrlText" class="form-control" x-model="attachmentUrlText" />
+                    </div>
+                </div>
+                <div class="xdialog-buttons">
+                    <button type="submit" class="button mainaction submit" :disabled="!attachmentUrlText">
+                        <roundcube:label name="ok" />
+                    </button>
+                    <button type="button" class="button cancel" @click="attachmentUrlVisible = false">
+                        <roundcube:label name="cancel" />
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

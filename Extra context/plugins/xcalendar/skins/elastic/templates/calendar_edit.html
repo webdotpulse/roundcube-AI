@@ -1,0 +1,723 @@
+<div id="calendar-edit-controller" x-data="CalendarEditController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+
+    <div class='restore-popup animate-fade' x-show='restoreId' x-cloak>
+        <roundcube:label name="xcalendar.calendar_removed" />
+        <a href='#' @click='restore()' class="undo"><roundcube:label name="undo" /></a>
+        <a href='#' @click='hideRestore()' class='hide-popup'></a>
+    </div>
+
+    <div id='calendar-edit' class='editor uibox' :class="{ loading: loading }" x-show="editing" x-cloak>
+        <h2 class='editor-title boxtitle' x-show="!loading && hasCalendarData">
+            <span x-show="data.type == 1 && data.id"><roundcube:label name="xcalendar.edit_calendar" /> (<span x-text="data.name"></span>)</span>
+            <span x-show="data.type == 1 && !data.id"><roundcube:label name="xcalendar.create_calendar" /></span>
+            <span x-show="data.type == 2 && data.id"><roundcube:label name="xcalendar.edit_holiday_calendar" /> (<span x-text="data.name"></span>)</span>
+            <span x-show="data.type == 3 && data.id"><roundcube:label name="xcalendar.edit_google_calendar" /> (<span x-text="data.name"></span>)</span>
+            <span x-show="data.type == 3 && !data.id"><roundcube:label name="xcalendar.add_google_calendar" /></span>
+            <span x-show="data.type == 4 && data.id"><roundcube:label name="xcalendar.edit_caldav_calendar" /> (<span x-text="data.name"></span>)</span>
+            <span x-show="data.type == 4 && !data.id"><roundcube:label name="xcalendar.add_caldav_calendar" /></span>
+            <span x-show="data.type == 5 && data.id"><roundcube:label name="xcalendar.edit_birthday_calendar" /> (<span x-text="data.name"></span>)</span>
+            <span x-show="data.type == 5 && !data.id"><roundcube:label name="xcalendar.add_birthday_calendar" /></span>
+        </h2>
+        <h2 class='editor-title boxtitle' x-show="!loading && !hasCalendarData">
+            <span><roundcube:label name="errortitle" /></span>
+        </h2>
+
+        <div class="editor-loader" x-show="loading">
+            <span class='xspinner'></span>
+        </div>
+
+        <div class="content-box calendar-data-error" x-show="!loading && !hasCalendarData">
+            <p><roundcube:label name="xcalendar.unable_to_retrieve_calendar_data" /></p>
+        </div>
+
+        <div class='content-box formcontent holiday-calendar' x-show='!loading && data.type == 2 && hasCalendarData'>
+            <table class='propform'>
+                <tbody>
+                    <tr>
+                        <td class="title"><label for="xname-holiday"><roundcube:label name="xcalendar.name" /></label></td>
+                        <td class="input"><input type='text' name="name" id="xname-holiday" x-model="data.name" autocomplete="off"></td>
+                    </tr>
+                    <tr>
+                        <td class="title"><label for="xbg_color"><roundcube:label name="xcalendar.bg_color" /></label></td>
+                        <td class="input color">
+                            <input type="color" name="bg_color" id="xbg_color" class="form-control" x-model="data.bg_color">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="title"><label for="xtx_color"><roundcube:label name="xcalendar.tx_color" /></label></td>
+                        <td class="input">
+                            <input type="color" name="bg_color" id="xtx_color" class="form-control" x-model="data.tx_color">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='content-box formcontent birthday-calendar' x-show='!loading && data.type == 5 && hasCalendarData'>
+            <div class="page-information">
+                <roundcube:label name="xcalendar.contact_birthdays_info" />
+            </div>
+
+            <ul class='edit-errors' x-show='errors.length'>
+                <template x-for="message in errors" :key="message">
+                    <li x-text="message"></li>
+                </template>
+            </ul>
+
+            <table class='propform'>
+                <tbody>
+                <tr>
+                    <td class="title"><label for="xname-birthdays"><roundcube:label name="xcalendar.name" /></label></td>
+                    <td class="input"><input type='text' name="name" id="xname-birthdays" x-model="data.name" autocomplete="off"></td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="xbg_color5"><roundcube:label name="xcalendar.bg_color" /></label></td>
+                    <td class="input">
+                        <input type='color' name="bg_color" id="xbg_color5" x-model="data.bg_color">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="xtx_color5"><roundcube:label name="xcalendar.tx_color" /></label></td>
+                    <td class="input">
+                        <input type='color' name="tx_color" id="xtx_color5" x-model="data.tx_color">
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='content-box formcontent google-calendar' x-show='!loading && data.type == 3 && hasCalendarData'>
+            <ul class='edit-errors' x-show='errors.length'>
+                <template x-for="message in errors" :key="message">
+                    <li x-text="message"></li>
+                </template>
+            </ul>
+
+            <table class='propform'>
+                <tbody>
+                    <tr>
+                        <td class="title"><label for="xname-google"><roundcube:label name="xcalendar.name" /></label></td>
+                        <td class="input"><input type='text' name="name" id="xname-google" x-model="data.name" autocomplete="off"></td>
+                    </tr>
+                    <tr>
+                        <td class="title"><label for="xurl-google"><roundcube:label name="xcalendar.google_id" /></label></td>
+                        <td class="input"><input type='text' name="url" id="xurl-google" x-model="data.url"></td>
+                    </tr>
+                    <tr>
+                        <td class="title"><label for="xbg_color3"><roundcube:label name="xcalendar.bg_color" /></label></td>
+                        <td class="input">
+                            <input type='color' name="bg_color" id="xbg_color3" x-model="data.bg_color">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="title"><label for="xtx_color3"><roundcube:label name="xcalendar.tx_color" /></label></td>
+                        <td class="input">
+                            <input type='color' name="tx_color" id="xtx_color3" x-model="data.tx_color">
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='content-box formcontent add-caldav-calendar' x-show='!loading && hasCalendarData && data.type == 4 && !data.id'>
+            <div class="page-information">
+                <roundcube:label name="xcalendar.add_caldav_calendar_information" />
+            </div>
+
+            <ul class='edit-errors' x-show='errors.length'>
+                <template x-for="message in errors" :key="message">
+                    <li x-text="message"></li>
+                </template>
+            </ul>
+
+            <table class='propform'>
+                <tbody>
+                <tr>
+                    <td class="title"><label for="add-caldav-url"><roundcube:label name="xcalendar.caldav_url" /></label></td>
+                    <td class="input">
+                        <input type='text' class="full" name="url" id="add-caldav-url" x-model="data.url"
+                               :disabled="findingCaldavCalendars">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="add-caldav-username"><roundcube:label name="username" /></label></td>
+                    <td class="input">
+                        <input type='text' id="add-caldav-username" x-model="data.username" autocomplete="off"
+                               :disabled="findingCaldavCalendars">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="add-caldav-password"><roundcube:label name="password" /></label></td>
+                    <td class="input">
+                        <input type="password" class="password-toggle-input" id="add-caldav-password"
+                               x-model="data.password" autocomplete="off" :disabled="findingCaldavCalendars">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"></td>
+                    <td class="input">
+                        <button type="button" class="btn btn-primary" @click="findCaldavCalendars()"
+                                :disabled="findingCaldavCalendars || !data.url || !data.username || !data.password">
+                            <roundcube:label name="xcalendar.find_calendars" />
+                        </button>
+                    </td>
+                </tr>
+                <tr x-show="findingCaldavCalendars">
+                    <td class="title"></td>
+                    <td class="input horizontal-flex calendar-search-progress">
+                        <div class="xspinner"></div>
+                        <div><roundcube:label name="xcalendar.searching_for_calendars" /></div>
+                    </td>
+                </tr>
+                <tr x-show="!findingCaldavCalendars && data.caldav_calendars && data.caldav_calendars.length">
+                    <td class="title"></td>
+                    <td class="input caldav-calendar-list">
+                        <h5>
+                            <roundcube:label name="xcalendar.select_calendars" />
+                        </h5>
+
+                        <table class="caldav-calendar-table">
+                            <tr x-show="selectableCaldavCalendars.length > 1">
+                                <th class="caldav-checkbox">
+                                    <input type="checkbox" id="select-all-calendars"
+                                           class='custom-control-input no-switchbox'
+                                           x-effect="$el.indeterminate = caldavSelectState === 'some'"
+                                           :checked="caldavSelectState === 'all'"
+                                           @change="toggleAllCaldavCalendars($event.target.checked)" />
+                                </th>
+                                <th class="caldav-name">
+                                    <roundcube:label name="name" />
+                                </th>
+                                <th class="caldav-attributes"></th>
+                            </tr>
+                            <template x-for="calendar in data.caldav_calendars" :key="calendar.id">
+                                <tr>
+                                    <td class="caldav-checkbox">
+                                        <input type="checkbox" :id="calendar.id" x-model="calendar.checked"
+                                               :disabled="calendar.disabled" />
+                                    </td>
+                                    <td class="caldav-name">
+                                        <input type="text" class="form-control" x-model="calendar.name"
+                                               :disabled="!calendar.checked || calendar.disabled" />
+                                    </td>
+                                    <td class="caldav-attributes">
+                                        <span class="calendar-info readonly" x-show="calendar.readonly && !calendar.disabled">
+                                            <roundcube:label name="xcalendar.read_only" />
+                                        </span>
+                                        <span class="calendar-info subscribed" x-show="calendar.disabled">
+                                            <roundcube:label name="xcalendar.subscribed" />
+                                        </span>
+                                    </td>
+                                </tr>
+                            </template>
+                        </table>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='content-box formcontent edit-caldav-calendar' x-show='!loading && hasCalendarData && data.type == 4 && data.id'>
+            <ul class='edit-errors' x-show='errors.length'>
+                <template x-for="message in errors" :key="message">
+                    <li x-text="message"></li>
+                </template>
+            </ul>
+
+            <table class='propform'>
+                <tbody>
+                <tr>
+                    <td class="title"><label for="edit-caldav-name"><roundcube:label name="xcalendar.name" /></label></td>
+                    <td class="input"><input type='text' class="full" name="url" id="edit-caldav-name" x-model="data.name"></td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="edit-caldav-bg"><roundcube:label name="xcalendar.bg_color" /></label></td>
+                    <td class="input">
+                        <input type='color' name="bg_color" id="edit-caldav-bg" x-model="data.bg_color">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="edit-caldav-tx"><roundcube:label name="xcalendar.tx_color" /></label></td>
+                    <td class="input">
+                        <input type='color' name="tx_color" id="edit-caldav-tx" x-model="data.tx_color">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="edit-caldav-url"><roundcube:label name="xcalendar.caldav_url" /></label></td>
+                    <td class="input"><input type='text' class="full" name="url" id="edit-caldav-url" x-model="data.url" disabled="disabled"></td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="edit-caldav-username"><roundcube:label name="username" /></label></td>
+                    <td class="input">
+                        <input type='text' id="edit-caldav-username" x-model="data.username" autocomplete="off">
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><label for="edit-caldav-password"><roundcube:label name="password" /></label></td>
+                    <td class="input">
+                        <input type="password" class="password-toggle-input" id="edit-caldav-password" x-model="data.password"
+                               @focus="focusEditCaldavPassword()" @blur="blurEditCaldavPassword()" autocomplete="off">
+                        <span class="password-toggle-button" onclick="xframework.togglePassword(this)"
+                              x-show="data.password && data.password != '[_password_placeholder_]'"></span>
+                    </td>
+                </tr>
+                <tr x-show='data.default_event_visibility'>
+                    <td class="title">
+                        <label for="edit-caldav-default-event-visibility"><roundcube:label name="xcalendar.default_event_visibility" /></label>
+                    </td>
+                    <td class="input" id='edit-caldav-default-event-visibility'>
+                        <select name="default-event-visibility" x-model="data.default_event_visibility">
+                            <option value='public'><roundcube:label name="xcalendar.public" /></option>
+                            <option value='private'><roundcube:label name="xcalendar.private" /></option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="title"><roundcube:label name="xcalendar.read_only" /></td>
+                    <td class="input">
+                        <span x-show="data.readonly == '1'"><roundcube:label name="xcalendar.read_only_status_yes" /></span>
+                        <span x-show="data.readonly == '0'"><roundcube:label name="xcalendar.read_only_status_no" /></span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='content-box formcontent local-calendar' x-show='!loading && data.type == 1 && hasCalendarData'>
+            <div id='local-calendar-tabs' class='xtabs'>
+                <ul class='nav nav-tabs'>
+                    <li class='nav-item'>
+                        <a class='nav-link active tab-summary' data-toggle="tab" href="#tab-summary">
+                            <span><roundcube:label name="xcalendar.summary" /></span>
+                        </a>
+                    </li>
+                    <li class='nav-item' x-show='shareEnabled && data.permissions && data.permissions.share_calendar'>
+                        <a class='nav-link tab-share' data-toggle="tab" href="#tab-share">
+                            <span><roundcube:label name="xcalendar.share_calendar" /></span>
+                        </a>
+                    </li>
+                    <li class='nav-item' x-show='publishEnabled && data.permissions && data.permissions.publish_calendar'>
+                        <a class='nav-link tab-publish' data-toggle="tab" href="#tab-publish">
+                            <span><roundcube:label name="xcalendar.publish_calendar" /></span>
+                        </a>
+                    </li>
+                    <li class='nav-item' x-show='caldavServerEnabled && data.owner'>
+                        <a class='nav-link tab-sync' data-toggle="tab" href="#tab-sync">
+                            <span><roundcube:label name="xcalendar.sync_calendar" /></span>
+                        </a>
+                    </li>
+                    <li class='nav-item'>
+                        <a class='nav-link tab-import-export' data-toggle="tab" href="#tab-advanced">
+                            <span><roundcube:label name="xcalendar.import_export" /></span>
+                        </a>
+                    </li>
+                </ul>
+
+                <div class='tabbed tab-content'>
+                    <div id='tab-summary' class='tab-pane active' role="tabpanel">
+                        <table class='propform'>
+                            <tbody>
+                                <tr x-show='!data.owner'>
+                                    <td class="title"><label><roundcube:label name="xcalendar.owner" /></label></td>
+                                    <td class="input"><span x-text="data.ownerEmail"></span></td>
+                                </tr>
+                                <tr>
+                                    <td class="title"><label for="xname-local"><roundcube:label name="xcalendar.name" /></label></td>
+                                    <td class="input"><input type='text' name="name" id="xname-local" x-model="data.name" autocomplete="off"></td>
+                                </tr>
+                                <tr>
+                                    <td class="title"><label for="xdescription2"><roundcube:label name="xcalendar.description" /></label></td>
+                                    <td class="input"><textarea name='description' id="xdescription2" x-model="data.description"></textarea></td>
+                                </tr>
+                                <tr>
+                                    <td class="title"><label for="xbg_color2"><roundcube:label name="xcalendar.bg_color" /></label></td>
+                                    <td class="input">
+                                        <input type='color' name="bg_color" id="xbg_color2" x-model="data.bg_color">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="title"><label for="xtx_color2"><roundcube:label name="xcalendar.tx_color" /></label></td>
+                                    <td class="input">
+                                        <input type='color' name="tx_color" id="xtx_color2" x-model="data.tx_color">
+                                    </td>
+                                </tr>
+                                <tr x-show='data.default_event_visibility'>
+                                    <td class="title"><label for="xdefault_event_visibility"><roundcube:label name="xcalendar.default_event_visibility" /></label></td>
+                                    <td class="input" id='xdefault_event_visibility'>
+                                        <select name="default-event-visibility" x-model="data.default_event_visibility">
+                                            <option value='public'><roundcube:label name="xcalendar.public" /></option>
+                                            <option value='private'><roundcube:label name="xcalendar.private" /></option>
+                                        </select>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id='tab-share' class='tab-pane' role="tabpanel">
+                        <template x-if="!data.id">
+                            <div>
+                                <p><roundcube:label name="xcalendar.share_no_id" /></p>
+                            </div>
+                        </template>
+                        <table class='edit-table share-table' x-show="data.id">
+                            <thead>
+                                <tr>
+                                    <th><roundcube:label name="email" /></th>
+                                    <th class='permission'>
+                                        <roundcube:label name="xcalendar.permission_share_calendar" />
+                                        <div class='xinfo'>
+                                            <div><roundcube:label name="xcalendar.permission_share_calendar_info" /></div>
+                                        </div>
+                                    </th>
+                                    <th class='permission'>
+                                        <roundcube:label name="xcalendar.permission_publish_calendar" />
+                                        <div class='xinfo'>
+                                            <div><roundcube:label name="xcalendar.permission_publish_calendar_info" /></div>
+                                        </div>
+                                    </th>
+                                    <th class='permission'>
+                                        <roundcube:label name="xcalendar.permission_edit_events" />
+                                        <div class='xinfo'>
+                                            <div><roundcube:label name="xcalendar.permission_edit_events_info" /></div>
+                                        </div>
+                                    </th>
+                                    <th class='permission'>
+                                        <roundcube:label name="xcalendar.permission_see_details" />
+                                        <div class='xinfo left'>
+                                            <div><roundcube:label name="xcalendar.permission_see_details_info" /></div>
+                                        </div>
+                                    </th>
+                                    <th class='permission'>
+                                        <roundcube:label name="xcalendar.share_send_notification" />
+                                        <div class='xinfo left'>
+                                            <div><roundcube:label name="xcalendar.share_send_notification_info" /></div>
+                                        </div>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class='new-share'>
+                                    <td class='input'>
+                                        <textarea name="new-share-textarea" spellcheck="false" id="new-share-textarea"
+                                                  tabindex="-1" data-recipient-input="true" autocomplete="off" aria-autocomplete="list"
+                                                  aria-expanded="false"></textarea>
+                                        <div class='error-message' x-show='newShareError'>
+                                            <roundcube:label name="noemailwarning" />
+                                        </div>
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' name="permissions-share-calendar" class='no-switchbox'
+                                               x-model='newShare.permissions.share_calendar' @click='canShareClicked(newShare, $event.target.checked)' />
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' name="permissions-publish-calendar" class='no-switchbox'
+                                               x-model='newShare.permissions.publish_calendar' @click='canPublishClicked(newShare, $event.target.checked)' />
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' name="permissions-edit-events" class='no-switchbox'
+                                               x-model='newShare.permissions.edit_events' @click='canEditClicked(newShare, $event.target.checked)' />
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' name="permissions-see-details" class='no-switchbox'
+                                               x-model='newShare.permissions.see_details' />
+                                    </td>
+                                    <td class='permission'>
+                                        <input type='checkbox' name="new-share-notify" class='no-switchbox' x-model='newShare.notify' />
+                                    </td>
+                                    <td class='buttons text-center'>
+                                        <button type="button" class="btn btn-secondary" @click='addToShare()'>
+                                            <roundcube:label name="xcalendar.share" />
+                                        </button>
+                                    </td>
+                                </tr>
+                                <template x-for="(item, index) in data.shares" :key="item.email">
+                                    <tr class='share-item'>
+                                        <td x-text="item.email"></td>
+                                        <td class='permission'><input type='checkbox' x-model='item.permissions.share_calendar'
+                                                                      @click='canShareClicked(item, $event.target.checked)' /></td>
+                                        <td class='permission'><input type='checkbox' x-model='item.permissions.publish_calendar'
+                                                                      @click='canPublishClicked(item, $event.target.checked)' /></td>
+                                        <td class='permission'><input type='checkbox' x-model='item.permissions.edit_events'
+                                                                      @click='canEditClicked(item, $event.target.checked)' /></td>
+                                        <td class='permission'><input type='checkbox' x-model='item.permissions.see_details' /></td>
+                                        <td class='permission'>
+                                            <template x-if="item.new">
+                                                <input type='checkbox' x-model='item.notify' />
+                                            </template>
+                                        </td>
+                                        <td class='buttons text-center'>
+                                            <button type="button" class="btn btn-xs btn-danger" @click='removeFromShare(index)'>
+                                                <roundcube:label name="delete" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id='tab-publish' class='tab-pane' role="tabpanel">
+                        <template x-if="!data.id">
+                            <div>
+                                <p><roundcube:label name="xcalendar.publish_no_id" /></p>
+                            </div>
+                        </template>
+                        <template x-if="data.id">
+                            <div>
+                                <p><roundcube:label name="xcalendar.publish_full" /></p>
+                                <p x-show='data.publish.code_full'>
+                                    <a :href="data.publish.url + data.publish.code_full + '.ics'" target='_blank'
+                                       x-text="data.publish.url + data.publish.code_full + '.ics'"></a><span class="xclipboard"></span>
+                                </p>
+                                <div class='mask-container button-bar'>
+                                    <div class='mask' x-show='publishing == "full"'></div>
+                                    <button type='button' class='btn btn-secondary' x-show='!data.publish.code_full' @click='publish(1, false)'>
+                                        <roundcube:label name="xcalendar.create_link" />
+                                    </button>
+                                    <button type='button' class='btn btn-secondary' x-show='data.publish.code_full' @click='publish(1, false)'>
+                                        <roundcube:label name="xcalendar.reset" />
+                                    </button>
+                                    <button type='button' class='btn btn-danger' x-show='data.publish.code_full' @click='publish(1, true)'>
+                                        <roundcube:label name="xcalendar.remove" />
+                                    </button>
+                                </div>
+
+                                <p><roundcube:label name="xcalendar.publish_busy" /></p>
+                                <p x-show='data.publish.code_busy'>
+                                    <a :href="data.publish.url + data.publish.code_busy + '.ics'" target='_blank'
+                                       x-text="data.publish.url + data.publish.code_busy + '.ics'"></a><span class="xclipboard"></span>
+                                </p>
+                                <div class='mask-container button-bar'>
+                                    <div class='mask' x-show='publishing == "busy"'></div>
+                                    <button type='button' class='btn btn-secondary' x-show='!data.publish.code_busy' @click='publish(0, false)'>
+                                        <roundcube:label name="xcalendar.create_link" />
+                                    </button>
+                                    <button type='button' class='btn btn-secondary' x-show='data.publish.code_busy' @click='publish(0, false)'>
+                                        <roundcube:label name="xcalendar.reset" />
+                                    </button>
+                                    <button type='button' class='btn btn-danger' x-show='data.publish.code_busy' @click='publish(0, true)'>
+                                        <roundcube:label name="xcalendar.remove" />
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div id='tab-sync' class='tab-pane' role="tabpanel">
+                        <div x-show="!data.id">
+                            <p><roundcube:label name="xcalendar.sync_no_id" /></p>
+                        </div>
+                        <div x-show="data.id">
+                            <h3><roundcube:label name="xcalendar.create_new_caldav_connection" /></h3>
+                            <table class='propform new-sync'>
+                                <tbody>
+                                    <tr>
+                                        <td class="title"><label for="xsync-name"><roundcube:label name="name" /></label></td>
+                                        <td class="input">
+                                            <!-- prevent autofill on some browsers -->
+                                            <input type='text' style='display:none' />
+                                            <input type='password' style='display:none' />
+
+                                            <input type='text' id='xsync-name' class='form-control'
+                                                   x-model='newSync.name'
+                                                   :class='{ error: newSyncErrors.indexOf("name") != -1 }' />
+                                            <div class='error-message' x-show='newSyncErrors.indexOf("name") != -1'>
+                                                <roundcube:label name="nonamewarning" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="title"><label for="xsync-password"><roundcube:label name="password" /></label></td>
+                                        <td class="input">
+                                            <input type='password' class="password-toggle-input form-control" id='xsync-password'
+                                                   x-model='newSync.password'
+                                                   :class='{ error: newSyncErrors.indexOf("password") != -1 }' />
+                                            <div class='error-message' x-show='newSyncErrors.indexOf("password") != -1'>
+                                                <roundcube:label name="xcalendar.password_too_short" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="title"><label for="xsync-password"><roundcube:label name="xcalendar.read_only" /></label></td>
+                                        <td class="input">
+                                            <input type='checkbox' x-model='newSync.read_only' />
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="title"></td>
+                                        <td class="buttons">
+                                            <div class='mask-container'>
+                                                <div class='mask' x-show='editingSync === 0'></div>
+                                                <button type="button" class="btn btn-primary" @click='addSync()'>
+                                                    <roundcube:label name="xcalendar.add_connection" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <h3 x-show="data.syncs && data.syncs.length"><roundcube:label name="xcalendar.your_caldav_connections" /></h3>
+
+                            <table class='edit-table sync-table' x-show="data.syncs && data.syncs.length">
+                                <thead>
+                                    <tr>
+                                        <th><roundcube:label name="namex" /></th>
+                                        <th><roundcube:label name="xcalendar.created_at" /></th>
+                                        <th><roundcube:label name="xcalendar.connected_at" /></th>
+                                        <th><roundcube:label name="xcalendar.read_only" /></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+
+                                <template x-for="(item, index) in data.syncs" :key="item.id">
+                                    <tbody>
+                                        <tr class='sync-item'>
+                                            <td class='sync-title' x-text="item.name"></td>
+                                            <td class='sync-title' x-text="item.created_at"></td>
+                                            <td class='sync-title' x-text="item.connected_at"></td>
+                                            <td class='sync-title'>
+                                                <span x-show='item.read_only'><roundcube:label name="xcalendar.yes" /></span>
+                                                <span x-show='!item.read_only'><roundcube:label name="xcalendar.no" /></span>
+                                            </td>
+                                            <td class='input button-bar text-right'>
+                                                <div class='mask-container'>
+                                                    <div class='mask' x-show='editingSync === index'></div>
+                                                    <button type="button" class="btn btn-secondary btn-xs" x-show='!item.details_visible' @click='item.details_visible=true'>
+                                                        <roundcube:label name="xcalendar.show_details" />
+                                                    </button>
+                                                    <button type="button" class="btn btn-secondary btn-xs" x-show='item.details_visible' @click='item.details_visible=false'>
+                                                        <roundcube:label name="xcalendar.hide_details" />
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger btn-xs" @click='removeSync(index)'>
+                                                        <roundcube:label name="delete" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr class='sync-details' x-show='item.details_visible'>
+                                            <td class="sync-title">
+                                                <roundcube:label name="xcalendar.url" />
+                                                <div class='xinfo right'>
+                                                    <div><roundcube:label name="xcalendar.caldav_url_info" /></div>
+                                                </div>
+                                            </td>
+                                            <td class="input" colspan='4'>
+                                                <span x-text="item.url"></span><span class='xclipboard'></span>
+                                            </td>
+                                        </tr>
+                                        <tr class='sync-details' x-show='item.details_visible'>
+                                            <td class="sync-title">
+                                                <roundcube:label name="xcalendar.alternate_url" />
+                                                <div class='xinfo right'>
+                                                    <div><roundcube:label name="xcalendar.caldav_alternate_url_info" /></div>
+                                                </div>
+                                            </td>
+                                            <td class="input" colspan='4'>
+                                                <span x-text="item.alternateUrl"></span><span class='xclipboard'></span>
+                                            </td>
+                                        </tr>
+                                        <tr class='sync-details' x-show='item.details_visible'>
+                                            <td class="sync-title"><roundcube:label name="username" /></td>
+                                            <td class="input" colspan='4'>
+                                                <span x-text="item.username"></span><span class='xclipboard'></span>
+                                            </td>
+                                        </tr>
+                                        <tr class='sync-details' x-show='item.details_visible'>
+                                            <td class="sync-title">
+                                                <roundcube:label name="password" />
+                                                <div class='xinfo right'>
+                                                    <div><roundcube:label name="xcalendar.caldav_password_info" /></div>
+                                                </div>
+                                            </td>
+                                            <td class="input" colspan='4'>
+                                                [<roundcube:label name="xcalendar.caldav_connection_password" />]
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </template>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id='tab-advanced' class='tab-pane' role="tabpanel">
+                        <template x-if="!data.id">
+                            <div>
+                                <p><roundcube:label name="xcalendar.import_no_id" /></p>
+                            </div>
+                        </template>
+                        <template x-if="data.id">
+                            <div>
+                                <div class="advanced-section" x-show='data.id && data.permissions && data.permissions.edit_events'>
+                                    <h3><roundcube:label name="xcalendar.import_from_file" /></h3>
+                                    <p><roundcube:label name="xcalendar.import_info" /></p>
+                                    <div class="advanced-buttons">
+                                        <button type='button' class='btn btn-secondary import' onclick='$("#event-import-input").click()'
+                                               :disabled="working">
+                                            <roundcube:label name="xcalendar.import_from_file" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="advanced-section">
+                                    <h3><roundcube:label name="xcalendar.export_to_file" /></h3>
+                                    <p><roundcube:label name="xcalendar.export_info" /></p>
+                                    <div class="advanced-buttons">
+                                        <button type="button" class="btn btn-secondary export" @click="exportCalendar()" :disabled="working">
+                                            <roundcube:label name='xcalendar.export_to_file' />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class='formbuttons editor-button-bar' x-show='!loading'>
+            <div class='mask' x-show='sending'></div>
+            <div x-show="hasCalendarData">
+                <button type="button" class='button mainaction submit' :class="{busy:sending}" @click='save()' :disabled="!saveEnabled()">
+                    <span><roundcube:label name="save" /></span>
+                </button>
+                <button type="button" class='button cancel' @click='cancel()' :disabled="sending">
+                    <roundcube:label name="cancel" />
+                </button>
+                <button type="button" class='button remove btn btn-danger button-left' x-show='data.show_remove' :disabled="sending" @click='remove()'>
+                    <roundcube:label name="xcalendar.remove_calendar" />
+                </button>
+            </div>
+            <div x-show="!hasCalendarData">
+                <button type="button" class='button cancel' @click='cancel()'><roundcube:label name="close" /></button>
+            </div>
+        </div>
+
+        <iframe id="event-export-iframe" style="display:none !important"></iframe>
+        <form id="event-import-form" enctype="multipart/form-data" method="post">
+            <input type='file' id='event-import-input' name='file' style="display:none"
+                   onchange='window.dispatchEvent(new CustomEvent("calendar-edit-import-start"))' />
+            <input type='hidden' name='calendarId' :value='data.id' />
+        </form>
+        <script>
+            // ajaxForm callbacks dispatch CustomEvents that the CalendarEditController listens for via
+            // window.addEventListener
+            $('#event-import-form').ajaxForm({
+                dataType:  "json",
+                url: rcmail.url("importEvents"),
+                beforeSubmit: function() { return !!$("#event-import-input").val(); },
+                success: function(data) { window.dispatchEvent(new CustomEvent("calendar-edit-import-finished", { detail: data })); },
+                error: function(data) { window.dispatchEvent(new CustomEvent("calendar-edit-import-finished", { detail: data })); }
+            });
+
+            // bridge from the input's onchange to the controller, since the input lives inside the Alpine scope but
+            // jQuery's onchange string handler runs outside Alpine's expression evaluator
+            window.addEventListener("calendar-edit-import-start", () => {
+                $("#event-import-form").submit();
+            });
+        </script>
+    </div>
+</div>
+

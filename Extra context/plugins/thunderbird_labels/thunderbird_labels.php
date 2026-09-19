@@ -47,6 +47,7 @@ class thunderbird_labels extends rcube_plugin
 			$this->add_hook('template_object_messageheaders', array($this, 'color_headers'));
 			$this->add_hook('render_page', array($this, 'tb_label_popup'));
 			$this->add_hook('check_recent', array($this, 'check_recent_flags'));
+			$this->add_hook('imap_search_before', array($this, 'imap_search_before'));
 			$this->include_stylesheet($this->local_skin_path() . '/tb_label.css');
 			#$this->include_stylesheet($this->local_skin_path() . '/tb_label.php');
 
@@ -67,6 +68,10 @@ class thunderbird_labels extends rcube_plugin
 				$this->api->add_content($html, 'toolbar');
 			// JS function "set_flags" => PHP function "set_flags"
 			$this->register_action('plugin.thunderbird_labels.set_flags', array($this, 'set_flags'));
+			$this->register_action('plugin.thunderbird_labels.get_counts', array($this, 'get_counts'));
+			$this->register_action('plugin.thunderbird_labels.add_label', array($this, 'add_label'));
+			$this->register_action('plugin.thunderbird_labels.update_label', array($this, 'update_label'));
+			$this->register_action('plugin.thunderbird_labels.delete_label', array($this, 'delete_label'));
 
 			if (method_exists($this, 'require_plugin')
 				&& in_array('contextmenu', $this->rc->config->get('plugins'))
@@ -88,21 +93,38 @@ class thunderbird_labels extends rcube_plugin
 
 	private function setCustomLabels()
 	{
-		$c = $this->rc->config->get('tb_label_custom_labels');
+		$c = (array) $this->rc->config->get('tb_label_custom_labels', array());
 		if (empty($c) || isset($c[3]))
 		{
 			// if no user specific labels, use localized strings by default
-			$this->rc->config->set('tb_label_custom_labels', array(
+			$c = array(
 				'LABEL0' => $this->getText('label0'),
 				'LABEL1' => $this->getText('label1'),
 				'LABEL2' => $this->getText('label2'),
 				'LABEL3' => $this->getText('label3'),
 				'LABEL4' => $this->getText('label4'),
 				'LABEL5' => $this->getText('label5')
-			));
+			);
 		}
+		if (!isset($c['LABEL0'])) {
+			$c['LABEL0'] = $this->getText('label0');
+		}
+		$this->rc->config->set('tb_label_custom_labels', $c);
 		// pass label strings to JS
-		$this->rc->output->set_env('tb_label_custom_labels', $this->rc->config->get('tb_label_custom_labels'));
+		$this->rc->output->set_env('tb_label_custom_labels', $c);
+
+		// Colors map
+		$default_colors = array(
+			'LABEL1' => '#d93025', // Red / Coral (1: to respond)
+			'LABEL2' => '#e37400', // Amber / Orange (2: FYI)
+			'LABEL3' => '#f29900', // Yellow / Gold (3: comment)
+			'LABEL4' => '#188038', // Green (4: notification)
+			'LABEL5' => '#129eaf', // Teal (5: meeting update)
+		);
+		$user_colors = (array) $this->rc->config->get('tb_label_colors', array());
+		$colors = array_merge($default_colors, $user_colors);
+		$this->rc->config->set('tb_label_colors', $colors);
+		$this->rc->output->set_env('tb_label_colors', $colors);
 	}
 
 	// create a section for the tb-labels Settings
@@ -225,14 +247,14 @@ class thunderbird_labels extends rcube_plugin
 		if (!in_array('tb_label_custom_labels', $dont_override)
 			&& $this->rc->config->get('tb_label_modify_labels'))
 		{
-			$args['prefs']['tb_label_custom_labels'] = array(
-			'LABEL0' => $this->gettext('label0'),
-			'LABEL1' => rcube_utils::get_input_value('custom_LABEL1', rcube_utils::INPUT_POST),
-			'LABEL2' => rcube_utils::get_input_value('custom_LABEL2', rcube_utils::INPUT_POST),
-			'LABEL3' => rcube_utils::get_input_value('custom_LABEL3', rcube_utils::INPUT_POST),
-			'LABEL4' => rcube_utils::get_input_value('custom_LABEL4', rcube_utils::INPUT_POST),
-			'LABEL5' => rcube_utils::get_input_value('custom_LABEL5', rcube_utils::INPUT_POST)
-			);
+			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+			$new_labels = array('LABEL0' => $this->gettext('label0'));
+			foreach ($custom_labels as $key => $old_val) {
+				if ($key === 'LABEL0') continue;
+				$new_val = rcube_utils::get_input_value("custom_$key", rcube_utils::INPUT_POST);
+				$new_labels[$key] = ($new_val !== null && $new_val !== '') ? $new_val : $old_val;
+			}
+			$args['prefs']['tb_label_custom_labels'] = $new_labels;
 		}
 
 		return $args;
@@ -345,7 +367,7 @@ class thunderbird_labels extends rcube_plugin
 
 		# FIXME: there is no reliable way to know if roundcube mangled a label of different client
 		#        here is just a workaround for the known Thunderbird labels
-		if (preg_match("/^LABEL[1-5]$/", $toggle_label)) # only for Thunderbird labels
+		if (preg_match("/^LABEL[0-9]+$/", $toggle_label)) # Thunderbird labels (LABEL1, LABEL2, etc.)
 		{
 			$imap->set_flag($flag_uids, "UN$toggle_label", $mbox); # quickhack to remove non-$ labels
 			$imap->set_flag($unflag_uids, "UN$toggle_label", $mbox); # quickhack to remove non-$ labels
@@ -411,11 +433,14 @@ class thunderbird_labels extends rcube_plugin
 		<ul class="toolbarmenu listing" role="menu" aria-labelledby="aria-label-tb-labelmenu">';
 		$tpl_end = '</ul></div>';
 		$tpl_menu = '';
-		$custom_labels = $this->rc->config->get('tb_label_custom_labels');
+		$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
 		$i = 0;
 		foreach ($custom_labels as $label_name => $human_readable)
 		{
-			$tpl_menu .= '<roundcube:button type="link-menuitem" command="plugin.thunderbird_labels.rcm_tb_label_menuclick" content="'.rcube::Q("$i $human_readable").'" prop="LABEL'.$i.'" classAct="tb-label label'.$i.' inline active" class="tb-label label'.$i.'" data-labelname="LABEL'.$i.'" />';
+			$num = preg_match('/^LABEL([0-9]+)$/', $label_name, $m) ? $m[1] : $i;
+			$label_class = 'label' . $num;
+			$display_text = $num > 0 ? "$num $human_readable" : $human_readable;
+			$tpl_menu .= '<roundcube:button type="link-menuitem" command="plugin.thunderbird_labels.rcm_tb_label_menuclick" content="'.rcube::Q($display_text).'" prop="'.$label_name.'" classAct="tb-label '.$label_class.' inline active" class="tb-label '.$label_class.'" data-labelname="'.$label_name.'" />';
 			$i++;
 		}
 		$html = $this->template2html($tpl.$tpl_menu.$tpl_end);
@@ -519,5 +544,216 @@ class thunderbird_labels extends rcube_plugin
 	function roundcube_flag($flag)
 	{
 		return ltrim(strtoupper($flag), '$\\');
+	}
+
+	/**
+	 * Translates label and tag search tokens in IMAP searches into valid keyword criteria
+	 */
+	public function imap_search_before($args)
+	{
+		$search = $args['search'] ?? '';
+		if (empty($search)) {
+			return $args;
+		}
+
+		$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+
+		// Translate label:val or tag:val into (OR KEYWORD $LabelX KEYWORD LabelX)
+		$search = preg_replace_callback('/(NOT\s+)?(?:label|tag):(?:"([^"]+)"|(\S+))/i', function($m) use ($custom_labels) {
+			$not = !empty($m[1]) ? 'NOT ' : '';
+			$val = !empty($m[2]) ? $m[2] : $m[3];
+
+			$flag = null;
+			if (preg_match('/^([1-9][0-9]*)$/', $val, $nm)) {
+				$flag = 'LABEL' . $nm[1];
+			} elseif (preg_match('/^LABEL[0-9]+$/i', $val)) {
+				$flag = strtoupper($val);
+			} else {
+				foreach ($custom_labels as $f => $name) {
+					if (strcasecmp($val, $name) === 0 || strcasecmp($val, trim($name)) === 0) {
+						$flag = $f;
+						break;
+					}
+				}
+				if (!$flag) {
+					if (preg_match('/^([0-9]+):/', $val, $pm)) {
+						$flag = 'LABEL' . $pm[1];
+					} else {
+						$flag = strtoupper(preg_replace('/[^a-zA-Z0-9_-]/', '', $val));
+					}
+				}
+			}
+
+			if ($flag) {
+				return $not . "(OR KEYWORD \${$flag} KEYWORD {$flag})";
+			}
+			return $m[0];
+		}, $search);
+
+		$args['search'] = $search;
+		return $args;
+	}
+
+	/**
+	 * Returns message count per label for the current mailbox
+	 */
+	public function get_counts()
+	{
+		$mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_GPC) ?: $this->rc->storage->get_folder();
+		if (!$mbox) {
+			$mbox = 'INBOX';
+		}
+
+		$cache_key = 'tb_label_counts_' . md5($mbox);
+		$counts = array();
+
+		if (isset($_SESSION[$cache_key]) && is_array($_SESSION[$cache_key]) && (time() - ($_SESSION[$cache_key]['_ts'] ?? 0) < 30)) {
+			$counts = $_SESSION[$cache_key]['data'];
+		} else {
+			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+			foreach ($custom_labels as $key => $name) {
+				if ($key === 'LABEL0') continue;
+				try {
+					$search_criteria = "OR KEYWORD \${$key} KEYWORD {$key}";
+					$res = $this->rc->storage->search_once($mbox, $search_criteria);
+					$counts[$key] = $res ? $res->count() : 0;
+				} catch (\Exception $e) {
+					$counts[$key] = 0;
+				}
+			}
+			$_SESSION[$cache_key] = array(
+				'_ts' => time(),
+				'data' => $counts,
+			);
+		}
+
+		$this->rc->output->command('plugin.thunderbird_labels.update_counts', array(
+			'mbox' => $mbox,
+			'counts' => $counts,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Adds a new custom label with name and color
+	 */
+	public function add_label()
+	{
+		$name = trim(rcube_utils::get_input_value('name', rcube_utils::INPUT_POST, true));
+		$color = trim(rcube_utils::get_input_value('color', rcube_utils::INPUT_POST, true));
+
+		if (empty($name)) {
+			$this->rc->output->show_message('error', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
+		$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+		$colors = (array) $this->rc->config->get('tb_label_colors', array());
+
+		$max_id = 5;
+		foreach (array_keys($custom_labels) as $k) {
+			if (preg_match('/^LABEL([0-9]+)$/', $k, $m)) {
+				$max_id = max($max_id, (int)$m[1]);
+			}
+		}
+		$new_key = 'LABEL' . ($max_id + 1);
+
+		$custom_labels[$new_key] = $name;
+		if (!empty($color)) {
+			$colors[$new_key] = $color;
+		} else {
+			$palette = array('#e05338', '#f29900', '#f6bf26', '#0f9d58', '#00897b', '#039be5', '#3f51b5', '#8e24aa', '#d81b60', '#757575');
+			$colors[$new_key] = $palette[($max_id + 1) % count($palette)];
+		}
+
+		$this->rc->user->save_prefs(array(
+			'tb_label_custom_labels' => $custom_labels,
+			'tb_label_colors' => $colors,
+		));
+
+		// Clear cached counts
+		if (!empty($_SESSION) && is_array($_SESSION)) {
+			foreach ($_SESSION as $k => $v) {
+				if (strpos($k, 'tb_label_counts_') === 0) {
+					unset($_SESSION[$k]);
+				}
+			}
+		}
+
+		$this->rc->output->command('plugin.thunderbird_labels.label_added', array(
+			'key' => $new_key,
+			'name' => $name,
+			'color' => $colors[$new_key],
+			'labels' => $custom_labels,
+			'colors' => $colors,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Updates an existing label (rename or recolor)
+	 */
+	public function update_label()
+	{
+		$key = trim(rcube_utils::get_input_value('key', rcube_utils::INPUT_POST, true));
+		$name = trim(rcube_utils::get_input_value('name', rcube_utils::INPUT_POST, true));
+		$color = trim(rcube_utils::get_input_value('color', rcube_utils::INPUT_POST, true));
+
+		$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+		$colors = (array) $this->rc->config->get('tb_label_colors', array());
+
+		if (isset($custom_labels[$key])) {
+			if (!empty($name)) {
+				$custom_labels[$key] = $name;
+			}
+			if (!empty($color)) {
+				$colors[$key] = $color;
+			}
+
+			$this->rc->user->save_prefs(array(
+				'tb_label_custom_labels' => $custom_labels,
+				'tb_label_colors' => $colors,
+			));
+
+			$this->rc->output->command('plugin.thunderbird_labels.label_updated', array(
+				'key' => $key,
+				'name' => $custom_labels[$key],
+				'color' => $colors[$key] ?? '#757575',
+				'labels' => $custom_labels,
+				'colors' => $colors,
+			));
+		}
+
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Deletes a label from user preferences
+	 */
+	public function delete_label()
+	{
+		$key = trim(rcube_utils::get_input_value('key', rcube_utils::INPUT_POST, true));
+		if ($key && $key !== 'LABEL0') {
+			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+			$colors = (array) $this->rc->config->get('tb_label_colors', array());
+
+			if (isset($custom_labels[$key])) {
+				unset($custom_labels[$key]);
+				unset($colors[$key]);
+
+				$this->rc->user->save_prefs(array(
+					'tb_label_custom_labels' => $custom_labels,
+					'tb_label_colors' => $colors,
+				));
+
+				$this->rc->output->command('plugin.thunderbird_labels.label_deleted', array(
+					'key' => $key,
+					'labels' => $custom_labels,
+					'colors' => $colors,
+				));
+			}
+		}
+		$this->rc->output->send();
 	}
 }

@@ -1,0 +1,18 @@
+{
+    "name": "roundcubeplus/xcalendar",
+    "type": "roundcube-plugin",
+    "description": "Adds an integrated shared calendar to Roundcube.",
+    "license": "Commercial",
+    "version": "2.4.2",
+    "homepage": "https://roundcubeplus.com",
+    "authors": [
+        {
+            "name": "Roundcube Plus",
+            "email": "contact@roundcubeplus.com"
+        }
+    ],
+    "require" : {
+        "psr/log": "^1",
+        "sabre/dav": "^4"
+	}
+}

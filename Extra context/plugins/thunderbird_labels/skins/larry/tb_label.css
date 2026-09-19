@@ -115,3 +115,226 @@ span.tb_label_dots span.tb_label_badges {
 .tb_label_badges.label5 {
   background-color: #993399 !important;
 }
+
+/* ==========================================================================
+   Gmail-Style Labels Sidebar UI
+   ========================================================================== */
+
+.tb-labels-sidebar {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.tb-labels-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  user-select: none;
+}
+
+.tb-labels-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  letter-spacing: 0.3px;
+}
+
+.tb-labels-add-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: #555;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tb-labels-add-btn:hover {
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+ul.tb-labels-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 6px 6px 6px;
+}
+
+ul.tb-labels-list li.tb-label-item a.tb-label-link {
+  display: flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 0 14px 14px 0;
+  text-decoration: none;
+  color: #333;
+  font-size: 12px;
+}
+
+ul.tb-labels-list li.tb-label-item a.tb-label-link:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+ul.tb-labels-list li.tb-label-item.active a.tb-label-link,
+ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
+  background-color: #d9e8fb !important;
+  color: #0055b3 !important;
+  font-weight: bold;
+}
+
+.tb-label-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.tb-label-name {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tb-label-count {
+  font-size: 11px;
+  font-weight: bold;
+  color: #666;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+/* Filter bar */
+.tb-label-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #f2f2f2;
+  border-bottom: 1px solid #ccc;
+  font-size: 12px;
+}
+
+.tb-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  border: 1px solid;
+}
+
+.tb-filter-clear-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+}
+
+/* Modal */
+.tb-label-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tb-label-modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.tb-label-modal-dialog {
+  position: relative;
+  background: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.tb-label-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tb-label-modal-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.tb-modal-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.tb-label-modal-body {
+  padding: 16px;
+}
+
+.tb-input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.tb-color-swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.tb-color-swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.tb-color-swatch.active {
+  border-color: #222;
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.tb-label-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 16px;
+  border-top: 1px solid #e0e0e0;
+  background: #f9f9f9;
+}
+

@@ -22,5 +22,19 @@ $labels['tb_label_contextmenu_title'] = 'Labels';
 $labels['tb_label_style_option'] = "UI Style for labels";
 $labels['tb_label_label'] = "Label";
 
+$labels['labels_title'] = 'Labels';
+$labels['add_label'] = 'Create new label';
+$labels['create_label'] = 'Create';
+$labels['cancel'] = 'Cancel';
+$labels['label_name'] = 'Label name';
+$labels['label_name_placeholder'] = 'Please enter a new label name...';
+$labels['label_color'] = 'Label color';
+$labels['filter_by_label'] = 'Filtered by label';
+$labels['clear_filter'] = 'Clear filter';
+$labels['delete_label'] = 'Delete label';
+$labels['rename_label'] = 'Rename label';
+$labels['change_color'] = 'Change label color';
+$labels['confirm_delete_label'] = 'Are you sure you want to delete this label?';
+
 $messages = array();
 

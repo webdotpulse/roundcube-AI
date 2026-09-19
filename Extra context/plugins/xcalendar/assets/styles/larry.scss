@@ -1,0 +1,809 @@
+@use "common";
+@use "icons";
+@use "search";
+
+.xcalendar.xlarry {
+
+    /* layout */
+
+    .popupmenu {
+        text-align: left;
+    }
+
+    .calendar-sidebar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 250px;
+    }
+
+    .calendar-sidebar #calendar-list-container {
+        position: absolute;
+        left: 0;
+        right: 0;
+    }
+
+    #main-calendar-container {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 260px;
+        overflow-y: hidden;
+    }
+
+    #xcalendar-toolbar.toolbar a.button {
+        height: auto;
+    }
+
+    /* calendar grid */
+
+    .fc .fc-toolbar.fc-header-toolbar {
+        margin-bottom: 0;
+    }
+
+    .fc-toolbar-chunk {
+        padding: 10px;
+
+        .btn-group {
+            display: inline-block;
+        }
+    }
+
+    /* datepicker */
+
+    #ui-datepicker-div {
+        -webkit-box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75) !important;
+        -moz-box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75) !important;
+        box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75) !important;
+    }
+
+    .ui-datepicker .ui-datepicker-header {
+        background: #b0ccd7;
+        color: #004458;
+    }
+
+    .ui-datepicker .ui-datepicker-prev,
+    .ui-datepicker .ui-datepicker-next {
+        text-align: center;
+        font-weight: normal;
+        font-size: 1.5em;
+    }
+
+    .ui-datepicker .ui-datepicker-prev span,
+    .ui-datepicker .ui-datepicker-next span {
+        display: none;
+    }
+
+    .ui-datepicker .ui-datepicker-prev:before {
+        content: "\02039";
+    }
+
+    .ui-datepicker .ui-datepicker-next:before {
+        content: "\0203A";
+    }
+
+    .ui-datepicker select.ui-datepicker-month,
+    .ui-datepicker select.ui-datepicker-year,
+    .ui-datepicker .ui-datepicker-prev,
+    .ui-datepicker .ui-datepicker-next,
+    .fc-state-default,
+    .boxtitle button {
+        color: #004458;
+        text-shadow: 0 1px 1px #fff;
+    }
+
+    .ui-datepicker .ui-datepicker-header {
+        text-shadow: none;
+    }
+
+    .ui-datepicker td a.ui-state-default {
+        background: #fff;
+    }
+
+    .ui-datepicker th {
+        font-weight: normal;
+    }
+
+    .ui-datepicker-calendar td {
+        border-color: #ddd;
+    }
+
+    .ui-datepicker-calendar td a {
+        color: #333 !important;
+        font-weight: normal !important;
+        border: none !important;
+    }
+
+    .ui-datepicker td a.ui-state-active {
+        background: #ddd !important;
+        text-shadow: none !important;
+    }
+
+    .ui-datepicker td.ui-datepicker-other-month a {
+        color: #aaa !important;
+    }
+
+    /* sidebar calendar */
+
+    #sidebar-calendar .ui-datepicker {
+        width: 100%;
+        min-width: 0;
+
+        select {
+            font-weight: normal;
+        }
+    }
+
+    #sidebar-calendar .ui-datepicker-header {
+        height: 26px;
+    }
+
+    #sidebar-calendar a.ui-datepicker-prev,
+    #sidebar-calendar a.ui-datepicker-next {
+        top: 5px;
+        cursor: pointer;
+    }
+
+    #sidebar-calendar .ui-datepicker-title {
+        padding-top: 1px;
+    }
+
+    #sidebar-calendar table.ui-datepicker-calendar {
+        outline: none !important;
+    }
+
+    #sidebar-calendar .ui-datepicker select.ui-datepicker-month,
+    #sidebar-calendar .ui-datepicker select.ui-datepicker-year {
+        background: transparent;
+        text-decoration: underline;
+        cursor: pointer;
+        outline: none;
+        padding: 0;
+        border: none !important;
+        text-align: center;
+    }
+
+    #sidebar-calendar .ui-datepicker select.ui-datepicker-month option,
+    #sidebar-calendar .ui-datepicker select.ui-datepicker-year option {
+        color: #333;
+    }
+
+    #sidebar-calendar td.ui-datepicker-week-col {
+        cursor: pointer;
+    }
+
+    #sidebar-calendar .selected-range td a {
+        background: #ddd !important;
+    }
+
+    #sidebar-calendar td.ui-datepicker-week-col {
+        text-align: center;
+        border-left: none;
+    }
+
+    /* timepicker */
+
+    .ui-timepicker-wrapper {
+        width: 80px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+    }
+
+    /* toolbar */
+
+    .toolbar {
+        position: absolute;
+        top: -6px;
+        left: 0;
+        height: 40px;
+        white-space: nowrap;
+        z-index: 10;
+    }
+
+    #mainscreen .toolbar a.button {
+        padding: 0;
+        background-color: transparent;
+    }
+
+    .toolbar a.button:before {
+        display: block;
+        font-size: 2.1em;
+        padding-bottom: 4px;
+        text-align: center;
+    }
+
+    &.xskin .toolbar a.button:before {
+        font-size: 1rem;
+    }
+
+    /* calendar list */
+
+    .boxtitle {
+        position: relative;
+    }
+
+    #new-calendar-container {
+        button {
+            background: transparent;
+            cursor: pointer;
+            border: none;
+            padding: 0;
+            font-size: 1.3em;
+        }
+    }
+
+    .calendar-list {
+        .calendar-item {
+            .left-container {
+                display: inline-block;
+                width: 22px;
+            }
+
+            a.title {
+                cursor: pointer;
+                display: block;
+                margin-right: 20px;
+                padding-left: 10px;
+                background: transparent !important;
+            }
+
+            .color {
+                position: relative;
+                top: 2px;
+                display: inline-block;
+                width: 16px;
+                height: 16px;
+            }
+
+            .name {
+                position: relative;
+                top: -2px;
+                margin-left: 5px;
+            }
+
+            a.title.disabled {
+                color: #aaa !important;
+            }
+
+            a.title.disabled .color {
+                background-color: #fff !important;
+                position: relative;
+                text-align: center;
+
+                &:before {
+                    position: absolute;
+                    display: block;
+                    width: 16px;
+                    height: 16px;
+                    color: #aaa;
+                    content: "×";
+                    font-size: 16px;
+                }
+            }
+
+            .edit {
+                display: none;
+                float: right;
+                cursor: pointer;
+                color: #555753;
+                padding: 4px 4px 0 4px;
+                margin-right: 6px;
+            }
+
+            &:hover .edit {
+                display: inline;
+            }
+        }
+
+        button.new-calendar {
+            padding: 0 5px;
+            margin: 0 !important;
+        }
+    }
+
+    #calendar-grid {
+        th a {
+            color: #333;
+            font-weight: normal;
+        }
+    }
+
+    /* edit table */
+
+    .edit-table {
+        width: 100%;
+        border-collapse: collapse;
+
+        tr {
+            border-bottom: 1px solid #eee;
+        }
+
+        tbody tr:hover {
+            background: #eee;
+        }
+
+        td,
+        th {
+            padding: 5px 10px;
+            text-align: left;
+        }
+
+        input[type=text],
+        input[type=email],
+        input[type=password],
+        textarea {
+
+            width: 100%;
+            margin: 0;
+            padding: 5px;
+        }
+
+        .actions {
+            min-width: 100px;
+            white-space: nowrap;
+            text-align: right;
+        }
+
+        .actions a {
+            margin-left: 10px;
+        }
+    }
+
+    #event-tab-attendees .edit-table .attendee-item {
+        border-bottom: 1px solid #eee;
+
+        tr {
+            border-bottom: none;
+        }
+    }
+
+    /* holidays */
+
+    .holiday-title {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-bottom: 5px;
+    }
+
+    table.holiday-content {
+        min-width: 50%;
+        border-collapse: collapse;
+    }
+
+    table.holiday-content tr:hover {
+        background: #eee;
+    }
+
+    table.holiday-content td {
+        padding: 5px 10px;
+    }
+
+    table.holiday-content tr.added {
+        background: #ffffcc;
+    }
+
+    table.holiday-content .actions {
+        text-align: right;
+    }
+
+    table.holiday-content .actions a.remove {
+        color: #993300;
+    }
+
+    /* event edit */
+
+    .propform .interval-text {
+        padding-left: 5px;
+    }
+
+    .auto-width,
+    .short {
+        width: auto !important;
+    }
+
+    .propform .checkboxes label {
+        float: left;
+    }
+
+    #event-attachment-table {
+        width: auto;
+        margin-top: 20px;
+    }
+
+    #event-attachment-table th,
+    #event-attachment-table td {
+        padding-left: 0;
+        padding-right: 20px;
+    }
+
+    #event-attachment-table tr:hover {
+        background: transparent;
+    }
+
+    #attachment-upload-note {
+        margin: 10px 0;
+        color: #aaa;
+    }
+
+    #attachment-upload-note span.attachment-upload-error {
+        color: #cc0000;
+    }
+
+    #event-tab-recurrence {
+        input[type=radio] {
+            width: auto;
+        }
+    }
+
+    /* forms */
+
+    .propform.auto-width {
+        width: auto;
+    }
+
+    .propform.auto-width td {
+        width: auto;
+    }
+
+    .propform input[type=text],
+    .propform input[type=password],
+    .propform select,
+    .propform textarea {
+        margin: 0;
+        padding: 5px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .propform input[type=checkbox],
+    .propform input[type=radio] {
+        margin: 0 5px;
+    }
+
+    .propform input[disabled=disabled],
+    .propform select[disabled=disabled] {
+        background-color: #eee;
+    }
+
+    .propform .input-table td.title {
+        white-space: nowrap;
+        width: 20%;
+        padding-right: 20px;
+    }
+
+    .propform .input-table td,
+    .propform div.input {
+        padding: 5px 0;
+    }
+
+    .xform .full {
+        propform: 100%;
+        box-sizing: border-box;
+    }
+
+    .propform input.date-input {
+        width: 100px;
+    }
+
+    .propform input.time-input {
+        width: 80px;
+    }
+
+    .propform input.short,
+    .propform select.short {
+        width: 60px;
+    }
+
+    .propform input.auto-width,
+    .propform select.auto-width {
+        width: auto;
+    }
+
+    .propform div.spacer {
+        margin-top: 5px;
+        padding-top: 10px;
+        border-top: 1px solid #ddd;
+    }
+
+    .propform .color-selection span {
+        padding-right: 5px;
+    }
+
+    .propform .date-divider {
+        padding: 0 5px;
+    }
+
+    .regular-checklist {
+        .custom-control-input {
+            position: relative;
+            opacity: 1;
+            margin: 0;
+        }
+
+
+        label {
+            display: inline-block;
+            padding: 5px 0;
+        }
+
+        span {
+            padding: 0 10px 0 3px;
+        }
+    }
+}
+
+/* settings page */
+
+#rcmrowxcalendar td.section {
+    background-position: 4px -526px;
+}
+
+#rcmrowxcalendar.selected td.section {
+    background-position: 4px -550px;
+}
+
+
+#xcalendar-categories .category-item {
+    margin-bottom: 5px;
+}
+
+#xcalendar-categories input {
+    margin: 0 !important;
+}
+
+#xcalendar_alarm_preview {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+
+/* mobile */
+
+.xcalendar.xmobile {
+
+    #main-calendar-container {
+        left: 0;
+    }
+
+    .calendar-sidebar {
+        width: 100%;
+    }
+
+    #calendar-list-container {
+        top: 0 !important;
+    }
+
+    #calendar-list-content li a {
+        padding-left: 10px;
+    }
+
+    #xcalendar-toolbar a.button:before {
+        content: "";
+    }
+
+    #xcalendar-toolbar {
+        display: none;
+    }
+
+    ul.treelist a.edit {
+        display: block;
+    }
+
+    #calendar-grid {
+        .fc-center {
+            float: left;
+            padding-left: 10px;
+            padding-top: 3px;
+        }
+
+        .fc-toolbar {
+            min-height: 30px;
+        }
+
+        .fc-right button span {
+            padding: 5px;
+        }
+    }
+
+    #event-preview {
+        position: relative;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100%;
+    }
+
+    #event-preview .propform td {
+        padding: 4px 10px;
+    }
+
+    .editor {
+        overflow-y: auto;
+    }
+
+    .editor .content-box,
+    .editor .formbuttons {
+        position: static;
+        padding: 10px;
+    }
+
+    .editor th {
+        font-weight: normal;
+    }
+
+    .editor .formbuttons {
+        padding-top: 10px;
+        padding-bottom: 20px;
+        height: auto;
+    }
+
+    .editor .formbuttons input {
+        display: block;
+        box-sizing: border-box;
+        margin: 0 0 10px 0;
+    }
+
+    .editor .formbuttons .button-right {
+        float: none;
+        margin: 0;
+    }
+
+    .editor .ui-tabs-panel {
+        padding: 0;
+    }
+
+    .editor .xtabs.ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+        padding: 5px 15px;
+        font-family:RcpIconFont;
+        font-size: 2em;
+        color: #333;
+        margin-right: 5px;
+    }
+
+    .editor .xtabs.ui-tabs .ui-tabs-nav .ui-tabs-anchor span {
+        display: none;
+    }
+
+    .editor .date-input {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .editor .time-input {
+        width: 100%;
+    }
+
+    .editor td.checkboxes label {
+        display: block;
+        width: 50%;
+        margin-bottom: 5px;
+    }
+
+    .editor #xrepeat-end-date {
+        display: block;
+        margin-top: 5px;
+    }
+
+    .editor td.input {
+        padding: 5px 0;
+    }
+
+    .editor input[type=text],
+    .editor textarea {
+        padding: 10px 5px;
+    }
+
+    .editor a.header-close {
+        display: block !important;
+        float: right;
+    }
+
+    #event-attachment-table th {
+        display: none;
+    }
+
+    #event-attachment-table,
+    #event-attachment-table tbody,
+    #event-attachment-table tr,
+    #event-attachment-table td {
+        display: block;
+        width: 100%;
+    }
+
+    #event-attachment-table td {
+        padding: 0 0 5px 0;
+    }
+
+    #event-attachment-table tr {
+        padding-top: 5px;
+        border-bottom: 1px solid #ddd;
+    }
+
+    #event-attachment-table td.attachment-download,
+    #event-attachment-table td.attachment-remove {
+        display: inline-block;
+        width: auto;
+        margin-right: 5px;
+    }
+
+    #event-tab-alarms td,
+    #event-tab-alarms p {
+        padding: 5px 0;
+    }
+
+    #event-tab-alarms td.alarm-number,
+    #event-tab-alarms td.alarm-units {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    #event-tab-alarms select {
+        width: 100%;
+    }
+
+    #sidebar-calendar .ui-datepicker-header {
+        height: auto;
+        min-height: 42px;
+    }
+
+    #sidebar-calendar .ui-datepicker-header a,
+    #sidebar-calendar .ui-datepicker-header select {
+        color: #333 !important;
+        text-decoration: none;
+    }
+
+    #sidebar-calendar .ui-datepicker-header a {
+        padding-top: 12px;
+    }
+
+    .restore-popup {
+        top: 50px;
+    }
+
+    .agenda-table td.day {
+        display: none;
+    }
+
+    #calendar-list-container ht.boxtitle {
+        position: relative;
+    }
+
+    .ui-datepicker-month,
+    .ui-datepicker-year {
+        padding: 0 10px !important;
+    }
+}
+
+.xmobile {
+    #xcalendar-categories {
+        .category-item {
+            margin-bottom: 10px;
+        }
+
+        input[type='text'] {
+            display: block;
+            margin-bottom: 10px !important;
+        }
+
+        input[type='color'] {
+            float: left;
+        }
+
+        input[type='button'] {
+            min-width: 80px;
+            min-height: 28px !important;
+            float: left;
+            margin-right: 7px !important;
+        }
+    }
+
+    #xcalendar_alarm_sound + input[type='button'] {
+        display: block;
+        width: 100%;
+        height: 28px;
+        margin-top: 10px;
+    }
+}

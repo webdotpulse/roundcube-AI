@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+
+RewriteEngine On
+
+RewriteRule ^\.well-known/caldav.*$ /index.php/ [R=307,L]
+
+# uncomment this line if you can't log in to caldav because your server strips the authorization header
+# SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+# if you get 'File not found' errors, try modifying this rule according to your server requirements
+# for example, this works on some Windows servers: RewriteRule . index.php [L]
+RewriteRule ^(.*)$ /index.php/$1 [L]
+
+</IfModule>

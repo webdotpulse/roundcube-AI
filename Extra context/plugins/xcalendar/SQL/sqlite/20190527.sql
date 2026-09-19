@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS xcalendar_attendees (
+    event_id INT UNSIGNED NOT NULL DEFAULT 0,
+    calendar_id INT UNSIGNED NOT NULL DEFAULT 0,
+    email VARCHAR(255) NOT NULL DEFAULT '',
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    code VARCHAR(40) NOT NULL DEFAULT '',
+    organizer TINYINT(1) NOT NULL DEFAULT 0,
+    role TINYINT(1) NOT NULL DEFAULT 0,
+    hidden TINYINT(1) NOT NULL DEFAULT 0,
+    can_see_attendees TINYINT(1) NOT NULL DEFAULT 1,
+    notify TINYINT(1) NOT NULL DEFAULT 1,
+    status TINYINT(1) NOT NULL DEFAULT 0,
+    guests INT UNSIGNED NOT NULL DEFAULT 0,
+    comment VARCHAR(255) NOT NULL DEFAULT '',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    responded_at TIMESTAMP NULL DEFAULT NULL,
+    PRIMARY KEY (event_id, email)
+);
+
+CREATE INDEX IF NOT EXISTS code ON xcalendar_attendees (code);
+
+ALTER TABLE xcalendar_events ADD has_attendees TINYINT(1) DEFAULT 0;

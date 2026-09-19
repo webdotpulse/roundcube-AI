@@ -1,0 +1,45 @@
+<div id="holiday-controller" x-data="HolidayController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+    <div class='editor uibox' :class="{ loading: loading }" x-show="editing" x-cloak>
+        <h2 class='editor-title boxtitle'>
+            <span><roundcube:label name="xcalendar.holiday_calendars" /></span>
+            <a class='header-close' href='javascript:void(0)' @click='cancel()'><roundcube:label name="close" /></a>
+        </h2>
+
+        <div class='content-box' x-show='!loading'>
+            <table class='holiday-content'>
+                <template x-for="(items, group) in list" :key="group">
+                    <tbody>
+                        <tr class='holiday-title-row'>
+                            <th colspan="2" class='holiday-title'>
+                                <span x-show="group === 'religions'"><roundcube:label name="xcalendar.religious_holidays" /></span>
+                                <span x-show="group === 'countries'"><roundcube:label name="xcalendar.country_holidays" /></span>
+                            </th>
+                        </tr>
+
+                        <template x-for="item in items" :key="item.url">
+                            <tr :class="{ added: added.indexOf(item.url) !== -1 }">
+                                <td class='holiday-name' x-text="item.name"></td>
+                                <td class='actions'>
+                                    <button type="button" class="btn btn-xs"
+                                            :class="{busy:sending == item.url,
+                                            'btn-secondary': added.indexOf(item.url) === -1,
+                                            'btn-danger': added.indexOf(item.url) !== -1}"
+                                            @click="addOrRemove(item.url, item.name)">
+                                        <span x-show="added.indexOf(item.url) === -1"><roundcube:label name="xcalendar.add" /></span>
+                                        <span x-show="added.indexOf(item.url) !== -1"><roundcube:label name="xcalendar.remove" /></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </template>
+            </table>
+        </div>
+
+        <div class='formbuttons editor-button-bar' x-show='!loading'>
+            <div>
+                <input type='button' class='button mainaction' @click='cancel()' value='<roundcube:label name="close" />'>
+            </div>
+        </div>
+    </div>
+</div>

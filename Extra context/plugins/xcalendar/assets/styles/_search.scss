@@ -1,0 +1,235 @@
+@use "../../../xframework/assets/styles/colors";
+@use "../../../xframework/assets/styles/icons";
+@use "../../../xframework/assets/styles/icons_map";
+
+#event-search-controller {
+    h4 {
+        text-align: center;
+        font-size: 1.2rem;
+    }
+
+    p.result-info {
+        text-align: center;
+        @include colors.text-dim-color;
+    }
+
+    .search-options.button {
+        position: relative;
+
+        &.modified:after {
+            display: block;
+            content: "";
+            position: absolute;
+            top: -.4em;
+            right: -.4em;
+            left: auto;
+            border-radius: 50%;
+            width: .8em;
+            height: .8em;
+            @include colors.background-badge-color(true);
+        }
+
+    }
+
+    #search-input {
+        display: flex;
+
+        input {
+            flex: 1;
+        }
+
+        button {
+            margin-left: .4rem;
+        }
+
+        :before {
+            margin: 0 !important;
+        }
+    }
+
+    #no-results {
+        margin-top: 2rem;
+    }
+
+    #outdated {
+        padding: .4rem;
+        margin: 1rem 0;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        @include colors.warning-box;
+
+        .icon {
+            position: relative;
+            top: 0.14rem;
+            font-size: 1.5rem;
+            padding-right: 1rem;
+            padding-left: 5px;
+        }
+
+        .text {
+            flex: 1 1 auto;
+            display: inline-block;
+            position: relative;
+        }
+    }
+
+    #search-results {
+        margin-top: 2rem;
+
+        table {
+            width: 100% !important;
+
+            tr {
+                display: table-row;
+                border-top: 1px solid;
+                @include colors.border-color;
+            }
+
+            tbody tr:hover {
+                @include colors.background-highlight-color;
+            }
+
+            th, td {
+                padding: .5rem 1rem;
+                text-align: left;
+            }
+
+            td {
+                cursor: pointer;
+
+                &.title {
+                    width: 40%;
+                }
+            }
+        }
+
+        .pager {
+            text-align: center;
+            margin-top: 2rem;
+
+            button {
+                margin: 0 .2rem;
+
+                &:first-child {
+                    margin-right: .5rem;
+                }
+
+                &:last-child {
+                    margin-left: .5rem;
+                }
+            }
+        }
+    }
+}
+
+#search-options-popup {
+    padding: 0 1rem 1rem 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+
+    h5 {
+        font-size: 1rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        padding: 0;
+    }
+
+    .search-calendar-item {
+        display: flex;
+        align-items: center;
+        margin: .5rem 0;
+
+        input {
+            margin-right: .5rem;
+        }
+
+        label {
+            margin: 0;
+        }
+    }
+
+    .range-inputs {
+        display: grid;
+        grid-template-columns: auto auto; // Two columns: one for labels and one for inputs
+        gap: 1rem;
+        align-items: center;
+        margin-bottom: .5rem;
+
+        label {
+            grid-column: 1;
+            margin: 0;
+        }
+
+        input {
+            grid-column: 2;
+            max-width: 8rem;
+        }
+    }
+
+    .range-shortcut-links {
+        text-align: center;
+
+        button {
+            white-space: nowrap;
+            text-decoration: none !important;
+        }
+
+        button:first-child {
+            display: block;
+
+            span:before {
+                @include icons.icon(icons_map.$caret-down);
+            }
+        }
+
+        &.shortcuts-visible button:first-child {
+            display: none;
+        }
+
+        button:last-child {
+            display: none;
+
+
+            span:before {
+                @include icons.icon(icons_map.$caret-up);
+            }
+        }
+
+        &.shortcuts-visible button:last-child {
+            display: block;
+        }
+    }
+
+    .range-shortcuts {
+        margin-top: .5rem;
+        @include colors.background-highlight-color;
+        padding: .5rem 1rem;
+
+        ul {
+            list-style: disc inside !important;
+            padding: 0;
+
+            li {
+                border: none !important;
+            }
+        }
+
+
+
+        button {
+
+
+        }
+    }
+}
+
+.xlarry #search-options-popup {
+    background: #fff;
+    left: auto !important;
+    right: 10px;
+
+    button {
+        font-size: 1em !important;
+    }
+}

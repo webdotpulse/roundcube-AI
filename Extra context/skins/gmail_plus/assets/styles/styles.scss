@@ -56,6 +56,13 @@ html.dark-mode  {
     overflow: initial;
 }
 
+#taskmenu a.settings,
+#taskmenu a.button-settings {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 // gmail compose button (displayed only if screen >= 1200px)
 #compose-plus {
     display: none;
@@ -197,6 +204,12 @@ html.dark-mode  {
         border-right: none !important;
 
         #taskmenu {
+            position: relative;
+            height: 100%;
+            padding-bottom: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+
             a {
                 padding: 1rem 0;
 
@@ -210,6 +223,13 @@ html.dark-mode  {
                 }
 
                 @include colors.text-color(true);
+            }
+
+            a.settings,
+            a.button-settings {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
             }
         }
     }

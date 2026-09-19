@@ -1,0 +1,394 @@
+<?php
+/**
+ * Roundcube Plus Calendar plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the file LICENSE for details.
+ */
+
+// Default initial calendar view. Users can change this value in the settings.
+//
+// Type: string
+// Allowed: 'month', 'agendaWeek', 'agendaDay', 'list'
+// Default: 'agendaWeek'
+$config['xcalendar_view'] = 'agendaWeek';
+
+// Default first day of the week. Sunday = 0, Monday = 1, Tuesday = 2, and so on.  Users can change this value in the
+// settings.
+//
+// Type: integer
+// Allowed: integer from 0 to 6
+// Default: 1
+$config['xcalendar_first_day'] = 1;
+
+// Default frequency of the displayed time slots. Users can change this value in the settings.
+//
+// Type: string
+// Allowed: time formatted as hours:minutes:seconds
+// Default: '00:30:00'
+$config['xcalendar_slot_duration'] = '00:30:00';
+
+// Default position to which the calendar scroll pane is initially scrolled. Users can change this value in the
+// settings.
+//
+// Type: string
+// Allowed: time formatted as hours:minutes:seconds, from '01:00:00' to '23:00:00'
+// Default: '06:00:00'
+$config['xcalendar_scroll_time'] = '06:00:00';
+
+// Whether week numbers are displayed on the sidebar calendar by default. Users can change this value in the settings.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_week_numbers'] = false;
+
+// Whether category colors are used as event borders by default. Users can change this value in the settings.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_event_border'] = false;
+
+// Default sound played when an event notification is displayed. No sound is played when this value is left empty. Users
+// can change this value in the settings.
+//
+// Type: string
+// Allowed: '', 'aurora', 'bamboo', 'bells', 'chord', 'circles', 'glass', 'maramba', 'metal', 'ripple', 'startrek',
+// 'whistle', 'yoohoo'
+// Default: 'maramba'
+$config['xcalendar_alarm_sound'] = 'maramba';
+
+// Default event background color.
+//
+// Type: string
+// Allowed: hexadecimal color value
+// Default: '#a9d5fc'
+$config['xcalendar_bg_color'] = '#a9d5fc';
+
+// Default event text color.
+//
+// Type: string
+// Allowed: hexadecimal color value
+// Default: '#333'
+$config['xcalendar_tx_color'] = '#333';
+
+// Default list of event categories. Users can change this value in the settings.
+//
+// Type: array
+// Allowed: array of arrays containing category information
+// Default:
+//     [
+//         ['name' => 'Personal', 'color' => '#8B008B'],
+//         ['name' => 'Work', 'color' => '#483D8B'],
+//         ['name' => 'Family', 'color' => '#006400'],
+//     ]
+$config['xcalendar_categories'] = [
+    ['name' => 'Personal', 'color' => '#8B008B'],
+    ['name' => 'Work', 'color' => '#483D8B'],
+    ['name' => 'Family', 'color' => '#006400'],
+];
+
+// Whether users can attach files to events. To enable attachment functionality, you must also specify a directory in
+// the xcalendar_attachment_dir setting below.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_enable_event_attachments'] = false;
+
+// Directory where event attachments are stored. The directory must be writable by the web server. If this value is set
+// to false or the directory does not exist, event attachment functionality is disabled.
+//
+// IMPORTANT: For security reasons, this directory should be located outside the web server root and must not be
+// accessible through a web browser.
+//
+// Type: string or boolean
+// Allowed: directory path, false
+// Default: false
+$config['xcalendar_attachment_dir'] = false;
+
+// Maximum permitted size of uploaded event attachment files in bytes.
+//
+// Type: integer
+// Allowed: positive integer
+// Default: 1000000
+$config['xcalendar_max_attachment_size'] = 1000000;
+
+// Whether Google Drive integration is enabled for calendar event attachments. When enabled, a "Google Drive" button is
+// displayed next to "Upload" on the attachments page when creating or editing calendar events.
+//
+// The xgoogle_drive plugin must be enabled and properly configured for this integration to work. Set this value to false
+// to disable attaching files from Google Drive.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_google_drive_integration'] = true;
+
+// Whether Dropbox integration is enabled for calendar event attachments. When enabled, a "Dropbox" button is displayed
+// next to "Upload" on the attachments page when creating or editing calendar events.
+//
+// The xdropbox plugin must be enabled and properly configured for this integration to work. Set this value to false to
+// disable attaching files from Dropbox.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_dropbox_integration'] = true;
+
+// Google Calendar API key used to enable support for Google calendars and holiday calendars. To obtain a key, log in to
+// the Google Developers Console, create or select an app, add the Calendar API, and create a new browser key.
+//
+// Type: string
+// Default: ''
+$config['xcalendar_google_calendar_key'] = '';
+
+// Whether sunrise time is displayed in the calendar month view by default. For this functionality to work, the xweather
+// plugin must be enabled and the country and city must be specified. Users can change this value in the settings.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_show_sunrise'] = false;
+
+// Whether sunset time is displayed in the calendar month view by default. For this functionality to work, the xweather
+// plugin must be enabled and the country and city must be specified. Users can change this value in the settings.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_show_sunset'] = false;
+
+// Whether email addresses are verified against the local Roundcube database before calendars are shared. Calendars can
+// be shared only between users who access the same Roundcube installation. When this setting is enabled, the plugin
+// verifies that the email account being shared with exists in the local Roundcube database.
+//
+// This prevents users from sharing calendars and sending notifications to email addresses located on remote servers.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_verify_shared_emails'] = false;
+
+// Email address domains allowed when sharing calendars. For example:
+//
+// ['mydomain.com', 'anotherdomain.com']
+//
+// With the example above, users can share their calendars only with email addresses that end with one of the specified
+// domains. To dynamically allow the current domain, add '<current>' to the array:
+//
+// ['<current>', 'anotherdomain.com']
+//
+// Leave the array empty to allow all email domains.
+//
+// Type: array
+// Allowed: array of domain names
+// Default: []
+$config['xcalendar_allowed_share_domains'] = [];
+
+// Whether calendar sharing functionality is enabled.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_calendar_share_enabled'] = true;
+
+// Whether calendar publishing functionality is enabled.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_calendar_publish_enabled'] = true;
+
+// Whether birthday calendar functionality is enabled. Birthday calendars collect birthday information from the local
+// address book and display it as calendar events. One birthday calendar is available per user.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_birthday_calendar_enabled'] = true;
+
+// Whether the calendar can connect to external CalDAV servers.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: true
+$config['xcalendar_caldav_client_enabled'] = true;
+
+// Whether outbound connections to CalDAV servers on private, loopback, link-local, or reserved addresses are blocked.
+// This protects against server-side request forgery (SSRF), where a user could point a calendar sync connection at
+// internal infrastructure, such as cloud metadata endpoints or internal services, and use the server to reach them.
+//
+// Leave this setting disabled if users connect to CalDAV servers on an internal or private network, which is common for
+// on-premise installations. Enable it on shared or multi-tenant servers where mailbox users should not be trusted with
+// the server's network access.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_caldav_block_private_hosts'] = false;
+
+// Whether CalDAV server synchronization functionality is enabled. When enabling this setting, you must also specify
+// xcalendar_caldav_server_domain below.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_caldav_server_enabled'] = false;
+
+// Full URL of the CalDAV server subdomain. To enable the CalDAV server, create a new subdomain and point it to:
+//
+// <roundcube>/plugins/xcalendar/caldav
+//
+// To work around incorrect password storage in some CalDAV clients, you can create a wildcard subdomain and include an
+// asterisk in this value. The asterisk is replaced with the calendar sync connection username.
+//
+// Type: string or null
+// Default: null
+$config['xcalendar_caldav_server_domain'] = null;
+
+// Whether the contents of the CalDAV server can be browsed by navigating to xcalendar_caldav_server_domain in a web
+// browser. This can be useful when debugging the CalDAV server setup.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_caldav_enable_browser_plugin'] = false;
+
+// SMTP username used when sending calendar emails while no user is logged in to Roundcube. Unlike the smtp_user setting
+// in the main Roundcube configuration, this value does not accept %u for the name of the currently logged-in user.
+//
+// Some calendar actions require sending emails while no user is logged in to Roundcube. For example, this can occur when
+// an attendee responds to an event invitation. In these cases, the plugin cannot provide the SMTP server with a username
+// and password associated with a logged-in user, which results in an undelivered message if the server requires
+// authentication. The xcalendar_smtp_user and xcalendar_smtp_pass settings provide global SMTP credentials for these
+// situations.
+//
+// Set this value to false if the SMTP server does not require authentication.
+//
+// Type: string or boolean
+// Allowed: string, false
+// Default: false
+$config['xcalendar_smtp_user'] = false;
+
+// SMTP password used when sending calendar emails while no user is logged in to Roundcube. Unlike the SMTP settings in
+// the main Roundcube configuration, this value does not accept %p for the password of the currently logged-in user.
+//
+// Set this value to false if the SMTP server does not require authentication.
+//
+// Type: string or boolean
+// Allowed: string, false
+// Default: false
+$config['xcalendar_smtp_pass'] = false;
+
+// Whether event email notification functionality is enabled. For this functionality to work, you must configure a cron
+// job on the server as explained in the xcalendar/README file.
+//
+// If the SMTP server requires authentication, you must also configure xcalendar_smtp_user and xcalendar_smtp_pass above.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_email_event_notifications'] = false;
+
+// Number of milliseconds the plugin waits after sending each notification email when executed by the cron job. Set this
+// value to 0 to disable the wait and send all notification emails immediately.
+//
+// If many emails are sent to the mail server one after another, users who are sending messages from the compose page at
+// the same time may experience delays. If this happens on your server, you can slow down cron message delivery by
+// specifying a pause here. Do not make the pause too long, or delivery of notification messages may be delayed.
+//
+// Type: integer
+// Allowed: integer greater than or equal to 0
+// Default: 0
+$config['xcalendar_email_event_notification_delivery_pause'] = 0;
+
+// Email address used to send iTIP messages that notify users about event invitations. If the SMTP server requires
+// authentication, make sure to specify xcalendar_smtp_user and xcalendar_smtp_pass above.
+//
+// If the SMTP server restricts sending email when the sender address differs from the authentication address, make sure
+// the email address specified here is the same as the one specified in xcalendar_smtp_user.
+//
+// WARNING: If this setting is left empty, iTIP messages are not sent.
+//
+// Type: string
+// Allowed: email address or empty string
+// Default: ''
+$config['xcalendar_imip_sender_email'] = '';
+
+// Number of seconds by which cron execution is delayed. This can be useful when more than one cron job runs every minute
+// and you want to spread out the server load. The PHP script sleeps for the specified number of seconds before executing
+// the cron job.
+//
+// Type: integer
+// Allowed: integer from 0 to 30
+// Default: 0
+$config['xcalendar_cron_execution_delay'] = 0;
+
+// Number of weeks spanned by the agenda view.
+//
+// Type: integer
+// Allowed: integer from 1 to 4
+// Default: 1
+$config['xcalendar_agenda_week_span'] = 1;
+
+// Whether debug messages and errors from the CalDAV server are written to a separate log file at logs/caldav. This
+// setting generates a large amount of log data, so make sure not to leave it enabled in production.
+//
+// Type: boolean
+// Allowed: true, false
+// Default: false
+$config['xcalendar_caldav_debug_log_enabled'] = false;
+
+// Default notification type for new calendar events. Users can change this value in the settings.
+//
+// Type: string
+// Allowed: 'none', 'popup', 'email'
+// Default: 'none'
+$config['xcalendar_default_notification_type'] = 'none';
+
+// Default notification position for new calendar events.
+//
+// Type: string
+// Allowed: 'before_start', 'after_start', 'before_end', 'after_end'
+// Default: 'before_start'
+$config['xcalendar_default_notification_position'] = 'before_start';
+
+// Default notification time offset for new calendar events. This is the numeric value paired with
+// xcalendar_default_notification_units. For example, 10 combined with 'minutes' means to notify the user 10 minutes
+// before the event.
+//
+// Type: integer
+// Allowed: integer from 0 to 60
+// Default: 10
+$config['xcalendar_default_notification_number'] = 10;
+
+// Default notification time unit for new calendar events.
+//
+// Type: string
+// Allowed: 'minutes', 'hours', 'days', 'weeks'
+// Default: 'minutes'
+$config['xcalendar_default_notification_units'] = 'minutes';
+
+// Time range limit for text searches in calendar events, defined in years. When set to a positive integer, users can
+// search that number of years into both the past and the future from the current date. For example, setting this value
+// to 1 allows searches one year back and one year forward, covering a total range of two years.
+//
+// Set this value to false to remove the search range limit entirely. Disabling the limit may affect performance,
+// especially on large datasets, because the search functionality relies on LIKE queries for cross-database
+// compatibility.
+//
+// Type: integer or boolean
+// Allowed: positive integer, false
+// Default: 1
+$config['xcalendar_search_range_year_limit'] = 1;
+
+// Default interval in minutes for refreshing calendar data in the background. Users can change this value in the
+// settings. Set this value to 0 to disable automatic refresh.
+//
+// Type: integer
+// Allowed: 0, 5, 15, 30, 60
+// Default: 30
+$config['xcalendar_refresh'] = 30;

@@ -1,0 +1,175 @@
+ROUNDCUBE PLUS CALENDAR PLUGIN
+==============================
+
+This plugin adds a shared calendar with CalDAV support to Roundcube.
+
+REQUIREMENTS
+------------
+- PHP: 8.0 or higher
+- Roundcube: 1.6, 1.7
+- Database: SQLite / MySQL / Postgres
+- cURL PHP extension
+
+SUPPORTED BROWSERS
+------------------
+Chrome 49+
+Firefox 15+
+Safari 10+
+Edge 12+
+Internet Explorer is not supported
+
+INSTALLATION
+------------
+1. Copy the directories xcalendar and xframework included in this package to the 'plugins' directory of your Roundcube
+installation.
+
+2. Rename the file <roundcube>/plugins/xcalendar/config.inc.php.dist to config.inc.php.
+
+3. Edit the file <roundcube>/plugins/xcalendar/config.inc.php and configure the plugin according to your needs.
+
+4. Edit the file <roundcube>/config/config.inc.php, add xcalendar to the plugins array and specify your license key.
+
+For more information on installing Roundcube Plus plugins see:
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=29
+
+COMPATIBILITY
+-------------
+1. This plugin has been created for the standard version of Roundcube as provided on the Roundcube website:
+https://roundcube.net. It might not work properly with customized versions of Roundcube including the version
+provided as part of the Kolab system. Please note that we cannot provide any technical support for the plugin
+deployed on a non-standard version of Roundcube.
+
+2. Event attachments might not work properly on some mobile devices/browsers due to device file handling limitations.
+
+3. Event publishing will not work and will be disabled under cPanel due to cPanel limitations.
+
+4. Event sharing will not work when using Roundcube is used with SQLite, since SQLite databases are not shared between
+the users.
+
+5. Event sharing might not work when using Roundcube on Webmin, since on Webmin Roundcube user names might not match
+the user email addresses.
+
+6. Email notifications for events will not work when Roundcube is used with SQLite.
+
+GOOGLE CALENDAR SUPPORT
+-----------------------
+If you'd like to enable Google calendar support, refer to the instructions in this article:
+
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=28
+
+CALDAV SUPPORT
+--------------
+If you'd like to enable the CalDAV server built into the calendar plugin, refer to the instructions in this article:
+
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=30
+
+DATABASE
+--------
+The calendar plugin stores its information in the Roundcube database. The plugin will create its database tables when
+you first open it in the browser. There's no need to create the database tables manually before using the plugin. The
+calendar tables are prefixed with "xcalendar_". The plugin will not modify the schema of any existing tables in the
+database.
+
+EVENT ATTACHMENTS / iCAL IMPORTS
+--------------------------------
+In order to use event attachments and calendar imports, you must make sure that the attachment directory specified in
+plugins/xcalendar/config.inc.php exists and is writable by the web server.
+
+In order to use Google Drive and Dropbox attachments, make sure you specify the client id and app key in config.inc.php.
+
+Using Google Drive and Dropbox attachments requires that popups be enabled in the browser. Please be aware that
+event attachments might not work on some mobile devices/browsers due to device limitations.
+
+EMAIL NOTIFICATIONS FOR EVENTS
+------------------------------
+The xcalendar plugin supports popup and email notifications for events. Popup notifications are available out of the box
+but email notifications require additional steps to set up.
+
+REQUIREMENTS
+
+In order to use email notifications, you must use MySQL or PostgreSQL. It's not possible to set up email notifications
+when using SQLite.
+
+CONFIG OPTIONS
+
+In order to enable email notifications for events you must set up the following xcalendar config options:
+
+1. Set xcalendar_email_event_notifications to true.
+2. If your SMTP server requires authentication, set the xcalendar_smtp_user and xcalendar_smtp_pass.
+
+CRON JOB
+
+Since Roundcube does not run on the server continuously, you have to set up a cron job that runs ever minute and triggers
+the mechanism that will send the emails that need to be sent during the given minute.
+
+Please note that if you set xcalendar_email_event_notifications to true, the plugin will check for the existence of a
+functional cron job and if it doesn't detect one, it will disable the email notifications functionality and display this
+message in the Notification tab of the event editing page:
+
+"Email notifications are disabled. Contact the administrator"
+
+If this happens, you should check your cron job and make sure it's running properly.
+
+There are two ways to set up the cron job: execute the PHP CLI script or trigger the cron URL. (The examples below assume
+you're using a Linux server.)
+
+OPTION 1: Trigger the cron URL
+
+If you can't use PHP CLI to run the cron script, you can trigger the notification functionality by accessing the
+cron URL. Add this to the cron tab:
+
+* * * * * wget -O - <roundcube_url>/index.php?xcalendar-cron=1 >/dev/null 2>&1
+
+Replace <roundcube_url> with the full URL path of your Roundcube installation.
+
+LIMITATIONS:
+
+This method cannot be used under cPanel because cPanel requires a user to be logged in to access Roundcube.
+
+OPTION 2: Execute the PHP script
+
+A) Add the following to your cron tab:
+
+* * * * * php <roundcube_file_path>/plugins/xcalendar/cron.php
+
+Replace <roundcube_file_path> with the absolute directory path of your Roundcube installation. (Under cPanel, Roundcube
+is usually installed in /usr/local/cpanel/base/3rdparty/roundcube.)
+
+Note that the version of PHP running in the command line has a separate configuration from the version running through
+the web server. You have to make sure that both the versions are set up with the same timezone, or else the messages
+will be sent at the wrong time.
+
+B) Change the permissions of the file <roundcube_file_path>/logs/sendmail to 0666 to allow the PHP CLI access to the
+sendmail log.
+
+LIMITATIONS:
+
+This method cannot be used with Roundcube 1.7, since there's no direct URL access to /plugins/xcalendar/cron.php
+
+CRON JOB TROUBLESHOOTING
+------------------------
+If the plugin does not send the event notification emails properly, you should check the following:
+
+1. Every time the cron job runs, it saves its execution time in the database. Check the record with the name
+'xcalendar_cron' in the table 'system' to see when the cron job was executed. It should have been executed within the
+last 60 seconds; if it was not, it means that your cron job is not running correctly.
+
+2. Navigate to this URL in your browser to check if the cron job generates any errors:
+
+<roundcube_url>/index.php?xcalendar-cron=1
+
+If you navigate to this directory during the minute when a notification is scheduled to be sent, you should see the
+'sent' report show 1 (or more.)
+
+If you can make the program send the emails properly by navigating to the above mentioned URL manually, it means that
+the plugin's email mechanism works as it should. Now all you need to do is make sure your cron job triggers that
+mechanism every minute.
+
+LICENSE
+-------
+This plugin is distributed under a commercial license. In order to use the plugin, you must purchase the license
+from Tecorama LLC. See the LICENSE file for details.
+
+COPYRIGHT
+---------
+Copyright (c) 2026, Tecorama LLC

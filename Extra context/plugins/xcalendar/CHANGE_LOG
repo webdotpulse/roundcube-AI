@@ -1,0 +1,975 @@
+2.4.2 (2026-09-09)
+==================
+- added config validators
+- fixed potential errors caused by invalid config entries
+- fixed notification sounds on RC 1.7
+- fixed notification email scheduling error handling
+- fixed problems with removing unused attachments from events
+- fixed potential errors in debug error logging
+- fixed potential errors when saving calendar data
+- fixed potential issues with calendar permissions
+- fixed potential issues with doubled events when exporting calendars
+- fixed missing ownership validation when processing CalDAV calendar updates
+- fixed CalDAV URL validation to prevent bypassing private host restrictions
+- fixed declining invitations without adding them to a calendar
+- removed unused notification sounds files in aac and ogg formats
+- prevented CalDAV passwords from being logged when debugging
+- updated the codebase for PHP 8.0+ compatibility
+- updated method signatures for compatibility with xframework
+- improved config documentation
+
+2.4.1 (2026-07-08)
+==================
+- improved the UI of the Add CalDAV Calendar page
+
+2.4 (2026-06-16)
+================
+- migrated the frontend from the deprecated AngularJS to Alpine.js
+- migrated fullcalendar from version 5.11.3 to 6.1.20
+- resolved a potential SSRF vulnerability when adding CalDAV calendars
+- resolved a potential SSRF vulnerability when saving CalDAV events
+- resolved a potential DoS vulnerability when running cron tasks
+- resolved a potential event hijacking vulnerability when saving events
+- resolved a potential unauthorized event access vulnerability in the CalDAV server
+- resolved a potential XSS vulnerability in event descriptions from remote calendars
+- resolved a potential IDOR vulnerability when downloading calendar events
+- resolved a potential XSS vulnerability when constructing iTip messages
+- resolved a potential XSS vulnerability when creating popup alarms
+- resolved a potential calendar hijacking vulnerability when saving calendars
+- resolved a potential calendar hijacking vulnerability when adding external CalDAV calendars
+- resolved a potential calendar hijacking vulnerability when adding Google calendars
+- resolved a potential data disclosure vulnerability when editing calendars
+- resolved a potential path traversal vulnerability when removing event attachments
+- resolved a potential path traversal vulnerability when downloading event attachments
+- resolved a potential path traversal vulnerability in the holiday calendar listing
+- resolved a potential path traversal vulnerability in the timezone label lookup
+- resolved a potential HTML injection vulnerability in iMIP emails
+- resolved a potential HTML injection vulnerability in shared calendar emails
+- strengthened random token generation for calendar publishing
+- strengthened hash verification in CalDAV server auth
+- strengthened CalDAV server principal preferences unserializing
+- rewrote zip calendar import to extract files in memory, optimizing it and preventing traversal attacks
+- added size and total file caps when extracting zip calendar import files
+- added owner check when processing iTip updates
+- added proper anchor HTML elements to URLs in iTip messages
+- added config option: xcalendar_caldav_block_private_hosts
+- added a warning label when saving events to hidden calendars
+- added a warning message if an attendee is specified but not added to the list when saving an event
+- removed timezone end synchronization to timezone start when timezone start changes
+- removed unused config option: xcalendar_event_organizer_notifications
+- changed the behavior of assigning colors during calendar changes when editing events
+- prevented calendar names from being overwritten when a calendar is shared with multiple users
+- clamped holiday names and URL lengths
+- improved CalDAV server error handling and reporting
+- improved holiday calendar UI
+- improved shared calendar UI
+- fixed birthday calendar not showing any birthdays on Roundcube 1.7
+- fixed birthdays not appearing in calendar views spanning more than two years
+- fixed February 29 birthdays showing on March 1 in non-leap years
+- fixed birthdays occasionally appearing on the wrong day near calendar range boundaries
+- fixed zip event imports failing when the browser reports a non-standard file type
+- fixed the end time shifting when dragging or resizing an event whose start and end use different timezones
+- fixed all-day event drag occasionally being treated as a timed event when moved
+- fixed detection of whether an event invitation has been updated by the organizer
+- fixed the "event updated" indicator not appearing when an invitation switched between all-day and timed
+- fixed deleted events still being served by the CalDAV server
+- fixed content-disposition encoding for attachment downloads
+- fixed private events not being excluded when exporting shared calendars
+- fixed encoding in notification emails
+- fixed privilege namespace in CalDAV calendar discovery
+- fixed error checking in Google calendar integration
+- fixed date range restrictions on the event search page
+- fixed event search preset using 20 days instead of 30
+- fixed JavaScript warnings on event click
+- fixed a potential infinite loop when clicking sidebar calendar items in week view
+- fixed a potential JavaScript error when adding sunrise/sunset times to calendar cells
+- fixed the initial time when creating events in month view
+- fixed a potential JavaScript error when building agenda view items
+- fixed locale issues when saving dropped events
+- fixed iframe JavaScript alarm triggers
+- fixed doubled .ics file extensions when downloading events
+- fixed incorrect event count shown in Today's Agenda sidebar box
+- fixed timezone handling when querying and saving CalDAV events
+- fixed db column mismatch when creating scheduling objects
+- fixed unintended anchor HTML elements in iMIP plain text
+- fixed CalDAV tab visible in Larry-based skins when CalDAV is disabled
+- fixed fullcalendar popup dark-mode colors
+- fixed event preview loader background color
+- fixed error handling on event drag-and-drop
+
+2.3.6 (2026-05-19)
+==================
+- ensured compatibility with Roundcube 1.7
+- dropped support for Roundcube 1.5
+- added an option to duplicate calendar events
+- added db index to fix slow queries on alarm table
+- added visual indicators when deleting events
+- upgraded Sabre libraries
+- fixed a bug where birthdays in January were not displayed on the calendar
+- fixed a bug where events are not reloaded properly after deleting a single recurring event
+- fixed compatibility problems with iCloud CalDAV servers
+- fixed CalDAV server warnings
+- fixed AI Assistant functions
+- moved angularjs libraries from xframework to xcalendar (to be migrated in upcoming upgrade)
+
+2.3.5 (2025-12-03)
+==================
+- translation improvements
+- changed scss naming style
+
+2.3.4 (2025-10-14)
+==================
+- added tools, controllers, and technical documentation for AI Assistant
+- improved error handling for remote CalDAV calendars
+- improved connectivity and error handling of Google and Holiday calendars
+- changed UI architecture for compatibility with other plugins
+- added support for %u and %p to external CalDAV connections
+- added support for gzip and deflate to external CalDAV connections
+- added rel=noopener to external links to prevent reverse-tabnabbing
+- fixed issues with allowed shared domains
+- fixed issues with Google calendar events
+- fixed alarm ajax calls after logout
+- fixed alarm triggering for repeated events
+- fixed event category color borders in day and week views
+- fixed event calendar/category colors in agenda view
+- fixed email invitation UI
+- fixed event description saving
+
+2.3.3 (2025-02-24)
+==================
+- added 'copy to clipboard' buttons
+- fixed published urls when using use_secure_urls
+- fixed js app compatibility
+
+2.3.2 (2024-11-08)
+==================
+- updated the mysql tables to utf8mb4 and dynamic row format
+- made the event preview description links clickable
+- made the description text area expandable if it contains more content
+- made it possible to specify caldav INSTALL_PATH via server variable
+- fixed PHP 8.x errors when enabling CalDAV log
+- fixed problems with removing holiday calendars
+- added support for both digest and basic authentication methods
+- added Arabic translation
+- added Bulgarian translation
+- added Chinese (Simplified) translation
+- added Chinese (Traditional) translation
+- added Estonian translation
+- added Greek translation
+- added Hungarian translation
+- added Japanese translation
+- added Korean translation
+- added Latvian translation
+- added Portuguese (Portugal) translation
+- added Slovak translation
+- added Swedish translation
+- updated license agreement
+
+2.3.1 (2024-07-15)
+==================
+- fixed problems with agenda autorefresh
+
+2.3 (2024-07-15)
+================
+- added support for connecting to third-party CalDAV servers
+- added contact birthday calendar functionality
+- added calendar auto-refresh option
+- added autocomplete to calendar shares
+- added an option to configure caldav server authentication type
+- added an option to attach files to events via URL
+- added save indicator for event drag-and-drop and resize
+- added progress indicators in sidebar calendar list
+- added an indicator for modified search options
+- added Google, Holiday, and CalDAV calendar events to Today's Agenda sidebar box
+- added password hide/show buttons to password inputs
+- added X-NOTIFY to CalDAV data to preserve attendee notify property
+- added close button for overflowing events popup
+- added description, url, and location to Google event preview
+- added double-click to edit events
+- added ESC handler to close editors and preview
+- discontinued Internet Explorer support
+- updated config file descriptions and default values
+- changed color selectors to native html inputs
+- changed Today's Agenda link targets to calendar day view
+- improved event attachment handling
+- improved retrieving Google calendar events
+- improved calendar publishing output
+- improved event preview UI
+- improved calendar edit UI
+- improved event edit UI
+- improved popup alarm dialog UI
+- improved itip invitation UI
+- improved Today's Agenda sidebar box UI
+- replaced deprecated date_sunrise function calls
+- fixed event preview popup hiding when clicked on the same event
+- fixed notification emails not being sent to attendees added to existing events
+- fixed default calendar selection in message invitations
+- fixed event alarm snooze options
+- fixed event preview popover menus
+- fixed occasional errors while removing holiday calendars
+- fixed settings categories UI
+- fixed caldav server RC constants inclusion
+- fixed shared calendar notifications
+- fixed problems with notifications from deleted calendars
+- fixed potential security problems with exporting events
+- fixed potential timezone conversion problems
+- fixed potential problems with creating default calendars
+- fixed formatting of ics download files
+- fixed event editing UI
+- fixed calendar editing UI
+- fixed vcalendar decoding
+- fixed event organizer attendee functionality
+- fixed popup event alarm snooze
+- fixed sidebar calendar sorting
+- fixed shared email not added to list warning when saving calendar
+
+2.2.9 (2024-04-04)
+==================
+- fixed problems with saving events via caldav
+
+2.2.8 (2024-04-02)
+==================
+- updated event recurrence functionality and UI
+- upgraded sabre libraries
+- resolved issues with repeated results in event search
+- fixed problems related to event notification date format conversion
+- corrected email notification subject timezone string
+
+2.2.7 (2024-01-31)
+==================
+- added event search
+- added an option to include multiple event attendees at a time
+- added support for multiple address books, including CardDAV, in attendee autocomplete
+- added the missing summary and attendee fields to valarms of type email
+- ensured that the vcalendar data served via caldav includes vtimezones
+- ensured proper endings for vcalendar data
+- changed the naming method for shared calendars
+- removed restrictions for calendar sharing with own identities
+- updated calendar UI
+- updated translations
+- fixed problems with sending cancellation emails when removing attendees
+- fixed UI problems with removing attendees from an event
+- fixed the alarm vcalendar value format
+- fixed the alarm select db query
+- fixed datepicker formatting and positioning
+- fixed cron function php warnings
+
+2.2.6 (2023-10-09)
+==================
+- cleaned up the dev javascript logging
+- updated the minimum PHP version check to 7.2
+- added vtimezones to to IMip VCalendar text (fixed incorrect event times in Outlook)
+- fixed product ID string in IMip VCalendar text
+- added disabled attributes to buttons when saving events
+
+2.2.5 (2023-09-13)
+==================
+- fixed some PHP warnings in ItipEventInfo on PHP 8
+- fixed event preview popup positioning
+
+2.2.4 (2023-05-15)
+==================
+- added the missing default notification settings to default config
+
+2.2.3 (2023-05-09)
+==================
+- fixed the timezone shift issues in published free/busy calendars
+
+2.2.2 (2023-04-18)
+==================
+- added the missing scroller to the sidebar calendar list
+
+2.2.1 (2023-03-14)
+==================
+- added default notifications for new events
+- fixed event sorting by time in sidebar agenda box
+- added Norwegian translation
+
+2.2 (2023-02-28)
+==================
+- fixed a problem with deleting events over caldav
+
+2.1.9 (2023-02-15)
+==================
+- updated sabre/dav and dependencies
+- made the plugin fully compatible with PHP 8.2
+- fixed displaying multiple info boxes for the same invitation event in email
+- added Danish translation
+- added Dutch translation
+- added Finnish translation
+- added Indonesian translation
+- added Lithuanian translation
+- added Romanian translation
+- added Slovenian translation
+- added Spanish translation
+- added Turkish translation
+- updated Czech translation
+- updated French translation
+- updated German translation
+- updated Italian translation
+- updated Polish translation
+- updated Portuguese translation
+- updated Russian translation
+
+2.1.8 (2022-12-16)
+==================
+- updated the sabre/dav version to be compatible with PHP 7.1
+
+2.1.7 (2022-12-16)
+==================
+- upgraded sabre/dav to version 4.4
+- upgraded fullcalendar to version 5.11.3
+- added identity name to organizer's email when sending emails to attendees
+- removed organizer from attendee list in ical text generation
+- updated the Google holiday calendar names
+- added the holiday calendar for Slovakia
+- updated holiday calendar translations to match the languages supported by RC 1.6 (added Kabyle, Uzbek, Talossan)
+- fixed some PHP 8 warnings
+
+2.1.6 (2022-11-21)
+==================
+- added support for hyperlinks in location and description fields of the event preview
+
+2.1.5 (2022-11-16)
+==================
+- fixed the timezone recalculation bug when dragging-and-dropping events
+
+2.1.4 (2022-11-01)
+==================
+- updated the invitation email format to ensure the display of action buttons in all email programs
+- fixed timezone issues with alarms in repeated events
+- fixed timezone issues for events created via caldav
+- fixed the header navigation buttons
+- changed the event category border thickness to make it more visible
+
+2.1.3 (2022-10-12)
+==================
+- changed the caldav principal display name to identity name
+- changed the repeat rules UNTIL field to include the time
+- changed the fullcalendar to use the browser time
+- fixed datetime warnings on PHP 8
+- updated the codebase syntax
+
+2.1.2 (2022-06-28)
+==================
+- fixed problems with the missing "Add events to calendar" popup menu for some ics attachments
+- fixed problems with the event preview popup that stayed open when creating a new event
+- fixed problems with calendar popup selects on elastic-based skins
+- fixed issues with clearing sync input fields when password too short
+
+2.1.1 (2022-06-20)
+==================
+- fixed localization issues with event email notifications
+- made the plugin compatible with Roundcube 1.6
+
+2.1 (2022-05-30)
+================
+- added iTip message HTML content
+- fixed caldav itip notification sender issues on MacOS and outlook.com
+- fixed occasional PHP warnings when dragging-and-dropping events
+- fixed calendar add menu item clicks not working on remote desktop
+- updated the German translation
+
+2.0.9 (2022-05-02)
+==================
+- fixed event notifications
+
+2.0.8 (2022-04-19)
+==================
+- fixed the 'add events to calendar' menu item not being shown for some ics attachments
+
+2.0.7 (2022-04-06)
+==================
+- fixed timezone label PHP warnings
+- fixed some localization inconsistencies
+- updated the French translation
+- fixed some potential html encoding problems
+- fixed caldav itip notification sender name issues on MacOS
+- fixed smtp authentication for caldav itip
+- fixed double itip notifications when deleting events via caldav
+
+2.0.6 (2022-03-09)
+==================
+- fixed the functionality of sending events by email
+- removed the xcalendar_event_details_in_email config option
+
+2.0.5 (2022-02-28)
+==================
+- fixed all-day event drag-and-drop
+- fixed the PHP warnings generated when dropping events
+- extensive code optimizations
+- fixed success notification popup UI
+
+2.0.4 (2022-02-16)
+==================
+- fixed repeat rules in caldav
+
+2.0.3 (2022-02-15)
+==================
+- fixed problems with all day events
+- fixed caldav warnings on PHP 8
+- fixed SQL query problems in ItipEventInfo
+- fixed a potential problem with incorrect default calendar ids
+- fixed charset problems with event notification email subjects
+- added organizer's name to invitation emails
+- added the Brazilian Portuguese translation
+
+2.0.2 (2022-01-31)
+==================
+- added a date header to itip messages
+- updated the Italian translation
+
+2.0.1 (2022-01-13)
+==================
+- fixed issues with deleting events over caldav
+- fixed inconsistencies in edit calendar data
+- fixed a small UI issue on the calendar edit page
+- fixed mysql db index naming in dbs with prefixes
+
+2.0 (2022-01-11)
+================
+- changed the minimum required PHP version to 7.1
+- changed the minimum required Roundcube version to 1.4
+- changed the import event uid search to use vevent uid
+- changed the default shared calendar permissions
+- added caldav server-size scheduling (itip/email) support
+- added in-email event invitation/response/cancellation functionality
+- added functionality to export shared calendars
+- added badges to indicate new shared calendars
+- added itip-aware email attachment ics import functionality
+- added config option xcalendar_caldav_debug_log_enabled for caldav debugging
+- added the Czech translation
+- upgraded sabre/dav to version 4.2.1
+- upgraded fullcalendar to version 5.10.1
+- upgraded the PHP code syntax
+- removed organizer from caldav attendee list
+- removed note functionality from attendee notification dialog for consistency
+- removed the attendance confirmation page and its functionality
+- prevented saving duplicated notifications in events
+- prevented saving duplicated attendees in events
+- prevented sharing calendars with yourself
+- prevented sharing shared calendars with the owner
+- prevented potential category html errors
+- fixed caldav attendee name and email display
+- fixed caldav ics property capitalization issues
+- fixed the calendar sidebar resizer problem
+- fixed the handling of the shared calendars that have been removed by owner
+- fixed the handling of previewing events from deleted calendars
+- fixed event preview text wrap issues
+- fixed the current time indicator line dark mode UI
+- fixed the dark mode day display UI
+- fixed the 'see details' functionality in shared calendars
+- fixed 'shares' warning when saving calendar data
+- fixed errors when publishing a shared calendar
+- fixed shared calendar list UI on elastic-based skins
+- fixed un-rendered js elements flicker on page load
+- fixed possible timezone conversion errors
+- fixed shared calendar permission cascading checkboxes functionality
+- fixed problems with exporting events from shared calendars
+- fixed non-switchbox checkbox colors in dark mode
+- updated the Polish translation
+
+1.9.6 (2021-09-08)
+==================
+- fixed problems with displaying shared calendars when local calendars are hidden
+- fixed the event alarm system so the emails are sent in the user's language
+- fixed cut toolbar icons in the larry skin
+
+1.9.5 (2021-09-06)
+==================
+- updated translation files with agenda time span
+
+1.9.4 (2021-09-01)
+==================
+- added an option for setting agenda time span
+- improved the settings saving functionality
+- fixed attendee notification dialog UI
+- fixed button appearance and placement
+- fixed a switch continue warning
+- fixed popup UI
+- fixed editor button bar UI
+- fixed event attachment page UI
+- updated the French translation
+- updated the German translation
+- updated the Hungarian translation
+- updated the Italian translation
+- updated the Polish translation
+- updated the Russian translation
+
+1.9.3 (2021-07-15)
+==================
+- fixed the event attendee autocomplete UI
+
+1.9.2 (2021-06-17)
+==================
+- removed index.php from the caldav alternate URL path to increase server compatibility
+- upgraded fullcalendar to version 5.8.0 to fix problems with month grid in Chrome 91
+
+1.9.1 (2021-06-10)
+==================
+- fixed the fullcalendar and sidebar calendar language support
+
+1.9 (2021-05-25)
+================
+- upgraded to fullcalendar 5.5.1
+- added event email notifications
+- added extended notification options
+- added caldav valarm support
+- added caldav support for all day events deleted from repeated sequences
+- added foreign keys to mysql and postgresql database tables
+- fixed the Google calendar functionality
+- fixed the holiday calendar functionality
+- fixed the problems with doubling events when using CalDAV in Apple calendars
+- fixed the attendee autocompletion menu UI
+- fixed the attendee delegated functionality
+- fixed the cPanel mobile menu css problems
+- fixed the elastic select elements that stayed open unless selected
+- fixed adding shared calendars by email links
+- fixed some UI issues on the settings page
+- added the ability to click on navigation dates
+- improved mobile support
+- improved the UI of the shared calendar emails
+- made the plugin compatible with Roundcube 1.5
+- made the plugin compatible with the dark mode
+- added the xcalendar_caldav_enable_browser_plugin config option
+- updated the Italian translation
+- updated the German translation
+- included caldav fix: https://github.com/sabre-io/dav/issues/1244#issuecomment-582607462
+
+1.8.6 (2021-02-10)
+==================
+- fixed the issue with the sidebar calendar selecting wrong dates
+
+1.8.5 (2021-01-11)
+==================
+- fixed problems with incomplete ics attachments in attendee invitation emails
+- fixed problems with displaying published calendar events
+- fixed problems with the read only flag not being saved when creating new caldav connections
+
+1.8.4 (2020-11-25)
+==================
+- fixed issues with displaying local events when external events can't be obtained in js
+
+1.8.3 (2020-11-16)
+==================
+- fixed import of all day events
+- fixed export of all day events
+- removed timezone controls when editing all day events
+- reset timezones after event changed to all day and saved
+- removed timezone information for all day events when exporting calendar
+- enabled automatic recreation of vevent db data if empty on caldav and export
+
+1.8.2 (2020-11-11)
+==================
+- added a function that automatically changes the event end time to be past the start time in the UI
+- fixed the event drag-and-drop/resize problem that added an extra day to the events
+- fixed the display of all day events that span several days
+- fixed the display of events that start and end outside of the current grid view
+- updated the German translation
+- updated the Russian translation
+
+1.8.1 (2020-10-21)
+==================
+- added the ability to move events between local and shared calendars
+- fixed the errors when editing shared events right after creation
+
+1.8 (2020-10-19)
+================
+- added support for exporting all calendar events to file
+- added support for excluded dates in repeated events when using caldav and importing events from file
+- added a list of removed recurring events that can be restored on the event edit page
+- added vtimezone data to exported events and caldav data
+- added timezone date/time conversion for events displayed in calendar grid
+- added timezone controls to editing events
+- added timezone information to event preview
+- added timezone support for event drag and drop
+- added timezone support for event alarms
+- added a 'No category' option to event edit options
+- added a confirmation for deleting owned calendars
+- added responsiveness to the event attendance confirmation page
+- moved the import button from the button bar to the import/export tab
+- rearranged the calendar editing button bar
+- focused the title input when editing calendars and events
+- removed default names when creating new calendars and events
+- fixed and updated the event recurrence UI
+- fixed weekly repeating rules decoding problems
+- fixed event edit attachment display
+- fixed the problem with excluded dates not being restored when undoing event deletions
+- fixed the problem with incorrect display of events that span several days
+- fixed the problem with displaying long text in event preview popups
+- fixed the problem with updating alarm date/time when dragging-and-dropping events
+- fixed event end if it's earlier than event start when saving
+- updated the Polish translation
+
+1.7.9 (2020-09-25)
+==================
+- improved the German translation
+
+1.7.8 (2020-09-14)
+==================
+- upgraded sabre/http to version 4.2.4
+- upgraded sabre/xml to version 1.5.1
+- upgraded sabre/vobject to version 4.2.2 (20 fixes, including recurrence after year 10000 on 32 bit)
+- upgraded sabre/dav to version 3.2.3
+
+1.7.7 (2020-07-31)
+==================
+- fixed a bug in the alarm snooze function that would work only on the calendar page
+
+1.7.6 (2020-06-29)
+==================
+- fixed email template problems on elastic skins
+
+1.7.5 (2020-06-24)
+==================
+- streamlined the generation of caldav sync urls
+
+1.7.4 (2020-06-23)
+==================
+- fixed potential problems with attachment download due to ob_clean
+
+1.7.3 (2020-06-17)
+==================
+- modified caldav server to provide a more flexible platform implementation support
+
+1.7.2 (2020-05-12)
+==================
+- randomized the timing of the alarm ajax calls to ease server load
+
+1.7.1 (2020-04-29)
+==================
+- fixed an include path in Event.php
+- fixed event attendee autocomplete popup layout on elastic
+
+1.7 (2020-03-25)
+================
+- fixed timezone problems with the end dates of repeated events
+- fixed various caldav problems with repeated events
+
+1.6.9 (2020-03-12)
+==================
+- fixed Content-Transfer-Encoding value in attendee invitation email headers
+- fixed recurring event handling when the d/m/y date format is used
+
+1.6.8 (2020-03-02)
+==================
+- fixed some potential errors while retrieving events from local calendars
+
+1.6.7 (2020-02-10)
+==================
+- fixed some problems with displaying invitation events
+
+1.6.6 (2020-01-02)
+==================
+- fixed the 'possibly malicious iframe' false-positive error generated by ModSecurity
+- added attendee events to calendar if attendance is set to 'yes' or 'maybe'
+- added ics file attachment to emails sent to event attendees
+- fixed additional db reserved word quoting problems
+- fixed 'hack attempt' log warning when reordering sidebar
+
+1.6.5 (2019-12-04)
+==================
+- fixed reserved word quoting in postgres db queries
+
+1.6.4 (2019-11-25)
+==================
+- fixed event notification system
+- fixed event preview align problems
+- fixed mini-calendar text color problems
+- fixed body class problems
+- fixed caldav problems on Roundcube 1.4
+- fixed problems with deleting notifications from events
+
+1.6.3 (2019-11-07)
+==================
+- improved mobile interface
+- improved event preview positioning
+- improved error logging
+- fixed import events warning
+- upgraded the plugin to work with Roundcube 1.4 RC2
+
+1.6.2 (2019-10-10)
+==================
+- fixed problems with displaying all day events when events are created via caldav
+- fixed sidebar calendar translation issues
+- updated the French translation
+
+1.6.1 (2019-09-02)
+==================
+- fixed deleting recurring events
+- fixed encoding of ajax error messages that include non-latin characters
+- updated installation instructions
+- added the Hungarian translation
+- fixed the undefined log function in EventBase
+- added error logging for event import
+- for security reasons changed the xcalendar_attachment_dir default
+- removed sabre migration scripts
+- increased security of file uploads
+
+1.6 (2019-07-11)
+================
+- fixed even retrieval date formatting for non-English languages
+- translated to French
+
+1.5.9 (2019-07-03)
+==================
+- fixed updating caldav data after event drag-and-drop
+
+1.5.8 (2019-06-17)
+==================
+- added event attendee functionality
+- fixed event editing UI
+- fixed all-day event import
+- fixed repeat rule end calculation problem
+- fixed elastic sidebar calendar formatting
+
+1.5.7 (2019-05-22)
+==================
+- made the plugin compatible with Roundcube 1.4 RC1
+- made it possible to use Google Drive or Dropbox attachments while disabling local attachments
+- fixed vevent export/caldav CREATED and LAST-MODIFIED properties to use UTC values
+- added 'the fifth weekday of the month' repeat rule option
+- fixed the Polish translation
+- fixed popup formatting
+
+1.5.6 (2019-03-04)
+==================
+- fixed error message when adding a Google calendar that has not been made public
+
+1.5.5 (2019-02-19)
+==================
+- added a wildcard caldav subdomain option to solve the password storage problem in Thunderbird
+
+1.5.4 (2019-02-06)
+==================
+- fixed shared email notification urls
+
+1.5.3 (2018-12-28)
+==================
+- fixed an issue with adding holiday calendars
+
+1.5.2 (2018-11-27)
+==================
+- fixed timezones in published calendars
+- updated the French translation
+
+1.5.1 (2018-09-18)
+==================
+- fixed a require bug in caldav
+
+1.5 (2018-08-28)
+================
+- added CalDAV server functionality
+- changed the format of event uid to GUID
+
+1.4.6 (2018-08-08)
+==================
+- fixed incompatibility problems with PHP 5.5
+
+1.4.5 (2018-08-01)
+==================
+- upgraded fullcalendar to version 3.9.0
+- made sending notifications to shared calendar users optional
+- fixed problems with deleting holiday calendars
+- improved calendar/event color management
+- improved calendar list UI
+- added a save calendar warning if there's an shared email address that's not added to the list
+- improved shared calendar error reporting
+- fixed a problem with adding shared calendars via url where refreshing the page would add the deleted calendar again
+
+1.4.4 (2018-07-09)
+==================
+- fixed a bug in the calendar retrieval functions
+
+1.4.3 (2018-07-03)
+==================
+- changed ajax response methods
+- fixed problems with displaying removed instances from repeated events
+- fixed problems with missing delete calendar button
+
+1.4.2 (2018-06-20)
+==================
+- fixed a problem with events attached to emails
+- fixed a problem with recurring Google calendar events
+
+1.4.1 (2018-06-14)
+==================
+- fixed a bug in event import
+
+1.4 (2018-06-04)
+================
+- added postgres support
+- upgraded the plugin to be compatible with Elastic beta
+- fixed the free/busy publishing functionality to make sure it doesn't show event information
+- fixed event preview box positioning to make sure it's not displayed outside the document bounds
+- fixed problems with displaying events that start in one month and end in another
+- fixed a security issue where repeated shared events showed event titles when they shouldn't
+- changed the initial url field size in mysql calendar table to fix index size limit on some installations
+
+1.3 (2017-12-06)
+================
+- upgraded fullcalendar to version 3.7
+- updated the shared calendar events to respect the event private/public status
+- updated the published calendar events to respect the event private/public status
+- updated the grid 'now' line to respect the user timezone specified in settings instead of the local browser date
+- updated the sidebar agenda to work with the user timezone specified in settings
+- updated the data flow to the frontend to remove any potential security issues
+- added new calendar share permission: 'publish calendar'
+- added new calendar share permission: 'see details'
+- added information popups that explain permissions
+- removed import button from calendar creation page
+- removed sharing options from calendar creation page
+- changed the display of url in event preview
+- updated the Polish translation
+- fixed shared calendar name in preview
+- fixed empty calendar properties displaying zeros
+- fixed icons on the undo popups
+- fixed css button positioning
+- fixed settings page UI on mobile devices
+- added the missing tab icons on mobile devices
+
+1.2.3 (2017-11-09)
+==================
+- fixed the problem with the shared calendar menu item being visible when sharing is disabled in the config
+- fixed problems with attaching files to events from Google Drive
+- fixed problems with attaching files to events from Dropbox
+- removed xcalendar_google_drive_client_id and xcalendar_dropbox_app_key from calendar config (use values from
+    xgoogle_calendar and xdropbox config)
+
+1.2.2 (2017-11-01)
+==================
+- added event details to message body when event is sent by email
+- added the xcalendar_event_details_in_email config option
+
+1.2.1 (2017-10-20)
+==================
+- added conversion of \n to new lines when importing events
+
+1.2 (2017-09-04)
+==================
+- fixed the problem with the holiday list page not displaying properly
+- added French translation
+
+1.1.9 (2017-06-07)
+==================
+- added config options to turn off calendar sharing and publishing
+- added a config option to turn off the share email verification
+- added a config option to specify the allowed email domains for calendar sharing
+- disabled calendar publishing under cpanel
+- disabled calendar sharing under cpanel when sqlite is used
+- fixed problems with importing calendar events from messages
+- fixed "Request security check failed" on servers with json_post installed
+- upgraded fullcalendar to version 3.4.0
+- added Italian translation
+
+1.1.8 (2017-05-10)
+==================
+- added calendar publishing
+- fixed first day of the week in recurring events
+- removed the url link to adding a shared calendar from emails sent under cpanel
+- added a check to make sure shared calendar users are located on the same server
+- updated translation pl_PL
+- fixed the attachment uploading UI
+- fixed progress spinner icons
+
+1.1.7 (2017-03-08)
+==================
+- updated the sabre xml and uri to version 1.x to downgrade their compatibility to PHP 5.5
+
+1.1.6 (2017-03-07)
+==================
+- upgraded Sabre\VObject to version 4.1.2
+- changed PHP version requirement to 5.5 or higher (minimal version required by VObject 4)
+- fixed importing events with yearly intervals
+- added a function to fix some improper import events syntax
+- added Polish translation
+
+1.1.5 (2017-03-01)
+==================
+- set the sounds to load .wav if running under cPanel (the only format allowed)
+
+1.1.4 (2017-02-20)
+==================
+- fixed sidebar calendar display problem
+- added title hints to toolbar buttons
+- upgraded fullcalendar to version 3.2.0
+- changed format of sound files and used howler.js to make sure they play in all browsers
+- fixed small html tag problems
+
+1.1.3 (2017-02-15)
+==================
+- fixed a problem with calendar js translations
+- added current time indicator line
+- standardized translation files
+
+1.1.2 (2017-02-07)
+==================
+- fixed the sunrise/sunset display
+- fixed the default calendar creation
+- replaced font awesome with skin-aware rc+ font
+- fixed path to fullcalendar locale files
+- added German translation
+
+1.1.1 (2017-01-10)
+==================
+- made the plugin compatible with SQLite
+
+1.1 (2017-01-04)
+==================
+- added new protected properties to make the plugin compatible with upgraded xframework
+- made the sidebar box display functions compatible with upgraded xframework
+
+1.0.9 (2016-12-19)
+==================
+- upgraded fullcalendar to version 3.1.0
+- fixed toolbar icons on IE
+- changed sound format from mp3 to wav so they play under cpanel
+- fixed event preview dates and times to be formatted according to the user preferences
+- fixed all-day event preview to show date without time
+- fixed month navigation icon positioning
+
+1.0.8 (2016-12-13)
+==================
+- fixed problems with event notifications and RRuleIterator errors
+- fixed the first day of the week calendar setting problems
+- fixed problems with displaying empty event location, description and url
+- fixed problems with displaying all day events in the week view
+- fixed syntax error in the config.inc.php.dist
+- fixed positioning of the add calendar button
+
+1.0.7 (2016-12-09)
+==================
+- made plugin compatible with xactivate
+- changed license agreement
+
+1.0.6 (2016-11-30)
+==================
+- added unit tests
+- made plugin compatible with the updated framework
+
+1.0.5 (2016-11-16)
+==================
+- made plugin compatible with db_prefix
+- removed references to legacy functions
+
+1.0.4 (2016-10-11)
+==================
+- made plugin compatible with the new way of including assets
+- made plugin compatible with xbackground
+
+1.0.3 (2016-09-06)
+==================
+- minor changes to make the plugin compatible with upgraded xframework
+
+1.0.2 (2016-08-08)
+==================
+- upgraded to be compatible with RC 1.2.1
+- upgraded to be compatible with mysql 5.7
+
+1.0.1 (2016-06-15)
+==================
+- fixed the resizing height of the desktop calendar grid on skins with uibox border
+
+1.0 (2016-06-01)
+================
+- initial release

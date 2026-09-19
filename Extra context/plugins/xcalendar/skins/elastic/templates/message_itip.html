@@ -1,0 +1,103 @@
+<div id="xcalendar-message-itip" class="[~action~]" xmlns:roundcube="http://www.w3.org/1999/XSL/Transform">
+    <div id="itip-content" class="[~class~]">
+        <div class="itip-header">
+            <h3>[~header~]</h3>
+            <roundcube:if condition="env:action == 'request' && env:showUpdate">
+                <div class="header-buttons">
+                    <button type="button" class="btn btn-primary" onclick="xcalendarMail.eventAction('UpdateEvent', '[~data~]')">
+                        <roundcube:label name="xcalendar.itip_update_in_calendar" />
+                    </button>
+                </div>
+            <roundcube:endif />
+
+            <roundcube:if condition="env:action == 'reply' && env:eventExists && env:statusDifferent">
+                <div class="header-buttons">
+                    <button type="button" class="btn btn-primary" onclick="xcalendarMail.eventAction('UpdateReply', '[~data~]')">
+                        <roundcube:label name="xcalendar.itip_update_in_calendar" />
+                    </button>
+                </div>
+            <roundcube:endif />
+
+            <roundcube:if condition="env:action == 'cancel' && env:eventExists">
+                    <div class="header-buttons">
+                        <button type="button" class="btn btn-primary" onclick="xcalendarMail.eventAction('Delete', '[~data~]')">
+                            <roundcube:label name="xcalendar.itip_delete_from_calendar" />
+                        </button>
+                    </div>
+            <roundcube:endif />
+        </div>
+
+        <div class="itip-info">
+            <h4>[~title~]</h4>
+            <p>[~start~]</p>
+
+            <table class="table table-condensed">
+                <tr>
+                    <td><roundcube:label name="xcalendar.organizer" /></td>
+                    <td>[~organizer~]</td>
+                </tr>
+                <roundcube:if condition="env:description">
+                    <tr>
+                        <td><roundcube:label name="xcalendar.description" /></td>
+                        <td>[~description~]</td>
+                    </tr>
+                <roundcube:endif />
+                <roundcube:if condition="env:url">
+                    <tr>
+                        <td><roundcube:label name="xcalendar.url" /></td>
+                        <td>[~url~]</td>
+                    </tr>
+                <roundcube:endif />
+                <tr>
+                    <td><roundcube:label name="xcalendar.attendees" /></td>
+                    <td class="attendees">[~attendees~]</td>
+                </tr>
+                <roundcube:if condition="env:action == 'request'">
+                    <tr class="request-widgets">
+                        <td><roundcube:label name="xcalendar.itip_add_to_calendar" /></td>
+                        <td>[~calendars~]</td>
+                    </tr>
+                    <tr class="request-widgets">
+                        <td><label for="itip-box-[~mimeId~]"><roundcube:label name="xcalendar.itip_reply_to_sender" /></label></td>
+                        <td><input type="checkbox" class="pretty-checkbox send-reply" id="itip-box-[~mimeId~]" value="1" checked="checked" /></td>
+                    </tr>
+                <roundcube:endif />
+            </table>
+        </div>
+
+        <div class="itip-messages">
+            <roundcube:if condition="env:action == 'request'">
+                <div class="message-box request">
+                    <span class="status-accepted"><roundcube:label name="xcalendar.itip_message_invitation_accepted" /></span>
+                    <span class="status-tentative"><roundcube:label name="xcalendar.itip_message_invitation_tentative" /></span>
+                    <span class="status-declined"><roundcube:label name="xcalendar.itip_message_invitation_declined" /></span>
+                    <a href="javascript:void(0)" onclick="xcalendarMail.showResponseControls()">
+                        <roundcube:label name="xcalendar.itip_change_reponse" />
+                    </a>
+                </div>
+            <roundcube:endif />
+
+            <roundcube:if condition="(env:action == 'reply' || env:action == 'cancel') && !env:eventExists">
+                <div class="message-box">
+                    <roundcube:label name="xcalendar.itip_message_event_missing" />
+                </div>
+            <roundcube:endif />
+        </div>
+
+        <!-- ************ buttons ************ -->
+
+        <roundcube:if condition="env:action == 'request'">
+            <div class="request-buttons">
+                <button type="button" class="btn btn-primary" onclick="xcalendarMail.respond(this, 'ACCEPTED', '[~data~]')">
+                    <roundcube:label name="xcalendar.itip_accept" />
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="xcalendarMail.respond(this, 'TENTATIVE', '[~data~]')">
+                    <roundcube:label name="xcalendar.itip_tentative" />
+                </button>
+                <button type="button" class="btn btn-danger" onclick="xcalendarMail.respond(this, 'DECLINED', '[~data~]')">
+                    <roundcube:label name="xcalendar.itip_decline" />
+                </button>
+            </div>
+        <roundcube:endif />
+    </div>
+</div>

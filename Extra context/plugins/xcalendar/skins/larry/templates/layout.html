@@ -1,0 +1,144 @@
+<roundcube:object name="doctype" value="html5" />
+<html>
+<head>
+    <title><roundcube:object name="pagetitle" /></title>
+    <roundcube:include file="/includes/links.html" />
+</head>
+<roundcube:if condition="env:extwin" />
+<body class="xplugin xcalendar extwin">
+<roundcube:else />
+<body class="xplugin xcalendar">
+<roundcube:endif />
+<roundcube:include file="/includes/header.html" />
+
+<div id="mainscreen">
+    <div id='xcalendar-toolbar' class="toolbar">
+        <a role='button' href='#' onclick='xcalendar.editEvent(0)' class='button calendar-add-event'
+           title="<roundcube:label name='xcalendar.create_event' />">
+            <roundcube:label name="xcalendar.create_event_button" />
+        </a>
+        <a role='button' href='#' onclick='xcalendar.changeView("agendaDay")' class='button calendar-day'
+           title="<roundcube:label name='xcalendar.day' />">
+            <roundcube:label name="xcalendar.day" />
+        </a>
+        <a role='button' href='#' onclick='xcalendar.changeView("agendaWeek")' class='button calendar-week'
+           title="<roundcube:label name='xcalendar.week' />">
+            <roundcube:label name="xcalendar.week" />
+        </a>
+        <a role='button' href='#' onclick='xcalendar.changeView("month")' class='button calendar-month'
+           title="<roundcube:label name='xcalendar.month' />">
+            <roundcube:label name="xcalendar.month" />
+        </a>
+        <a role='button' href='#' onclick='xcalendar.changeView("list")' class='button calendar-agenda'
+           title="<roundcube:label name='xcalendar.agenda' />">
+            <roundcube:label name="xcalendar.agenda" />
+        </a>
+        <a role='button' href='#' onclick='xcalendar.showSearchPage()' class='button calendar-search'
+           title="<roundcube:label name='search' />">
+            <roundcube:label name="search" />
+        </a>
+        <roundcube:container name="toolbar" id="xcalendar-toolbar" />
+    </div>
+
+    <div id="mainscreencontent">
+
+        <div class='calendar-sidebar' >
+            <div id='sidebar-calendar-container' class='uibox listbox'>
+                <div id='sidebar-calendar'></div>
+            </div>
+
+            <div id='calendar-list-container' class='calendar-list uibox listbox'
+                 x-data="CalendarListController" x-cloak :class="{ loading: loading }">
+
+                <h2 class='boxtitle calendar-list-header'>
+                    <div class="calendar-list-title">
+                        <roundcube:label name="xcalendar.calendars" />
+                    </div>
+                    <div id="new-calendar-container">
+                        <button class='new-calendar boxtitle-action'
+                                onclick='UI.toggle_popup("add-calendar-menu", event);return false;'></button>
+                        <span class="xbadge" x-show="newSharesCount > 0" x-text="newSharesCount"></span>
+                    </div>
+
+                    <div id='add-calendar-menu' class='popupmenu' x-data="addCalendarMenu()">
+                        <ul class='toolbarmenu'>
+                            <li>
+                                <a href='#' class='active' @mousedown='edit(0, 1)'>
+                                    <roundcube:label name="xcalendar.create_calendar" />
+                                </a>
+                            </li>
+
+                            <li x-show="birthdayCalendarEnabled && !hasBirthdayCalendar">
+                                <a href='#' class='active' @mousedown='edit(0, 5)'>
+                                    <roundcube:label name="xcalendar.add_birthday_calendar" />
+                                </a>
+                            </li>
+
+                            <roundcube:if condition="env:xcalendar_caldav_client_enabled" />
+                            <li>
+                                <a href='#' class='active' @mousedown='edit(0, 4)'>
+                                    <roundcube:label name="xcalendar.add_caldav_calendar" />
+                                </a>
+                            </li>
+                            <roundcube:endif />
+
+                            <roundcube:if condition="env:xcalendar_google_calendar_key" />
+                            <li>
+                                <a href='#' class='active' @mousedown='edit(0, 3)'>
+                                    <roundcube:label name="xcalendar.add_google_calendar" />
+                                </a>
+                            </li>
+                            <li>
+                                <a href='#' class='active' @mousedown='showHolidays()'>
+                                    <roundcube:label name="xcalendar.holiday_calendars" />
+                                </a>
+                            </li>
+                            <roundcube:endif />
+                            <roundcube:if condition="env:xcalendar_calendar_share_enabled" />
+                            <li>
+                                <a href='#' class='active' @mousedown='showSharedCalendars()'>
+                                    <roundcube:label name="xcalendar.shared_calendars" />
+                                    <span class="xbadge" x-show="newSharesCount > 0" x-text="newSharesCount"></span>
+                                </a>
+                            </li>
+                            <roundcube:endif />
+                        </ul>
+                    </div>
+                </h2>
+                <div id='calendar-list-content' class='scroller'>
+                    <ul class='treelist listing flat' role='tree' x-show='!loading'>
+                        <template x-for="calendar in sortedCalendars" :key="calendar.id">
+                            <li role='treeitem' class='calendar-item'>
+                                <a href='#' class='edit' @click='edit(calendar.id)'></a>
+                                <a href='#' class='title' @click='toggle(calendar.id)'
+                                   :class='{ disabled: !calendar.enabled }'>
+                                    <span class='color' :style='{ "background-color": calendar.bg_color }'></span>
+                                    <span class='name' x-text='calendar.name'></span>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div id='main-calendar-container' class='calendar-content'>
+            <div id='calendar-grid-controller' class='uibox' x-data='CalendarGridController'>
+                <div id='calendar-grid'></div>
+            </div>
+
+            <roundcube:include file="../../elastic/templates/calendar_edit.html" />
+            <roundcube:include file="../../elastic/templates/event_edit.html" />
+            <roundcube:include file="../../elastic/templates/event_search.html" />
+            <roundcube:include file="../../elastic/templates/holiday_list.html" />
+            <roundcube:include file="../../elastic/templates/shared_list.html" />
+        </div>
+
+        <roundcube:include file="../../elastic/templates/event_preview.html" />
+    </div>
+</div>
+
+<roundcube:include file="/includes/footer.html" />
+</body>
+</html>

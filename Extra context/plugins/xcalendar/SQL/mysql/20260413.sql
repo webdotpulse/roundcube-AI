@@ -1,0 +1,1 @@
+ALTER TABLE xcalendar_alarms ADD INDEX idx_alarms_user_type_end_time_evid (user_id, alarm_type, event_end, alarm_time, event_id);

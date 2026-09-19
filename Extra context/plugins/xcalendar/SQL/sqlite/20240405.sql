@@ -1,0 +1,1 @@
+ALTER TABLE xcalendar_calendars ADD COLUMN properties TEXT NULL;

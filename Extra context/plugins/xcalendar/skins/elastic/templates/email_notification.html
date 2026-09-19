@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>[+xcalendar.appointment_reminder+]</title>
+    <style>
+        body {
+            background: #eee;
+            color: #333;
+            font-size: 14px;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            height: 100% !important;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 20px;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+            width: 100% !important;
+            line-height: 1.5em;
+            box-sizing: border-box;
+        }
+        a {
+            color: #1162a7;
+        }
+        #page {
+            display: block;
+            max-width: 600px;
+            width: auto;
+            margin: 20px auto 0 auto;
+            padding: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h2 {
+            margin: 0 0 20px 0;
+        }
+        h2 span {
+            color: #c84600;
+        }
+        h3 {
+            font-size: 18px;
+            margin: 0;
+            padding: 12px 0;
+            text-align: center;
+            color: #fff;
+            background: #0075c8;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+        }
+        #content {
+            padding: 20px;
+        }
+        table td {
+            padding: 3px 0;
+        }
+        .label {
+            color: #888;
+            padding-right: 15px;
+        }
+        .going a {
+            display: inline-block;
+            border-radius: 3px;
+            padding: 1px 10px;
+            background-color: #0075c8;
+            color: #fff;
+            text-decoration: none;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id='page'>
+        <h3>[+xcalendar.appointment_reminder+]</h3>
+        <div id='content'>
+            <h2>[~title~]</h2>
+            <table>
+                <tr>
+                    <td class="label">[+xcalendar.mail_start+]</td>
+                    <td>[~start~]</td>
+                </tr>
+                <tr>
+                    <td class="label">[+xcalendar.mail_end+]</td>
+                    <td>[~end~]</td>
+                </tr>
+                <tr>
+                    <td class="label">[+xcalendar.mail_location+]</td>
+                    <td>[~location~]</td>
+                </tr>
+                <tr>
+                    <td class="label">[+xcalendar.mail_description+]</td>
+                    <td>[~description~]</td>
+                </tr>
+                <tr>
+                    <td class="label">[+xcalendar.url+]</td>
+                    <td>[~url~]</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

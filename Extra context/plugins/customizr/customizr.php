@@ -4,15 +4,17 @@
  * Custom styling plugin
  *
  * Displays a custom page where usually the watermark image is shown,
- * allows custom logo, favicon, stylesheets and inline CSS rules,
- * configurable either by config.inc.php or in the webmail Settings interface.
+ * allows custom logo (distinct for mailbox and login view), favicon,
+ * watermark image with file uploads and instant live preview,
+ * stylesheets and inline CSS rules, configurable either by config.inc.php
+ * or in the webmail Settings interface.
  *
  * Configuration options (to be added to main config.inc.php):
  *
  *   // section under Settings > Preferences ('customizr' or 'general')
  *   $config['customizr_settings_section'] = 'customizr';
  *
- *   // define a custom watermark image (relative or absolute URL)
+ *   // define a custom watermark image (relative or absolute URL, or uploaded path)
  *   $config['custom_watermark_image'] = './skins/custom_watermark.png';
  *
  *   // define a custom URI to be displayed instead of the empty watermark page
@@ -21,8 +23,11 @@
  *   // define a custom favicon image (empty string to remove it)
  *   $config['custom_favicon'] = './skins/custom_favicon.ico';
  *
- *   // define a custom logo image
+ *   // define a custom logo image for the mailbox / application view
  *   $config['custom_logo'] = './skins/custom_logo.svg';
+ *
+ *   // define a custom logo image specifically for the login page (empty falls back to custom_logo)
+ *   $config['custom_logo_login'] = './skins/custom_logo_login.svg';
  *
  *   // defines a custom CSS file which is added to every page
  *   $config['custom_stylesheet'] = './skins/custom_stylez.css';
@@ -44,6 +49,7 @@ class customizr extends rcube_plugin
     private $custom_css_inline;
     private $custom_favicon;
     private $custom_logo;
+    private $custom_logo_login;
     private $watermark_uri;
     private $watermark_image;
     private $settings_section;
@@ -61,12 +67,16 @@ class customizr extends rcube_plugin
         $this->custom_css_inline = $this->rcmail->config->get('custom_css');
         $this->custom_favicon = $this->rcmail->config->get('custom_favicon', null);
         $this->custom_logo = $this->rcmail->config->get('custom_logo');
+        $this->custom_logo_login = $this->rcmail->config->get('custom_logo_login');
         $this->watermark_uri = $this->rcmail->config->get('custom_watermark_uri');
         $this->watermark_image = $this->rcmail->config->get('custom_watermark_image');
 
         // Apply custom logo to core Roundcube config if set
-        if (!empty($this->custom_logo)) {
-            $this->rcmail->config->set('skin_logo', $this->custom_logo);
+        // Use login logo when on login task; otherwise use mailbox logo
+        $is_login = ($this->rcmail->task === 'login');
+        $active_logo = ($is_login && !empty($this->custom_logo_login)) ? $this->custom_logo_login : $this->custom_logo;
+        if (!empty($active_logo)) {
+            $this->rcmail->config->set('skin_logo', $active_logo);
         }
 
         // Register settings hooks if on settings task
@@ -76,6 +86,7 @@ class customizr extends rcube_plugin
             }
             $this->add_hook('preferences_list', array($this, 'preferences_list'));
             $this->add_hook('preferences_save', array($this, 'preferences_save'));
+            $this->register_action('plugin.customizr_upload', array($this, 'ajax_upload'));
         }
 
         // Hook render_page if any customizations are active
@@ -83,6 +94,7 @@ class customizr extends rcube_plugin
             || !empty($this->custom_css_inline)
             || !is_null($this->custom_favicon)
             || !empty($this->custom_logo)
+            || !empty($this->custom_logo_login)
             || !empty($this->watermark_uri)
             || !empty($this->watermark_image)
         ) {
@@ -104,6 +116,7 @@ class customizr extends rcube_plugin
             'custom_watermark_uri',
             'custom_favicon',
             'custom_logo',
+            'custom_logo_login',
             'custom_stylesheet',
             'custom_css',
         ];
@@ -117,6 +130,78 @@ class customizr extends rcube_plugin
         }
 
         return $args;
+    }
+
+    /**
+     * Helper to render an image setting field with upload button, preview box, and clear action.
+     */
+    private function render_image_field($field_name, $field_id, $value, $title_label, $desc_text, $accept = 'image/*,.ico,.svg')
+    {
+        $has_value = !empty($value);
+        $escaped_val = htmlspecialchars((string) $value, ENT_QUOTES);
+
+        $input = new html_inputfield([
+            'name' => '_' . $field_name,
+            'id' => $field_id,
+            'size' => 45,
+            'class' => 'form-control customizr-url-input',
+            'style' => 'display: inline-block; width: calc(100% - 210px); min-width: 180px; vertical-align: middle;',
+            'placeholder' => './skins/... or https://...',
+        ]);
+
+        $file_input = html::tag('input', [
+            'type' => 'file',
+            'id' => $field_id . '_file',
+            'name' => '_' . $field_name . '_file',
+            'class' => 'customizr-file-input',
+            'accept' => $accept,
+            'style' => 'display: none;',
+            'onchange' => "customizr_handle_file_select(this, '{$field_id}')",
+        ]);
+
+        $upload_btn = html::tag('button', [
+            'type' => 'button',
+            'class' => 'btn btn-secondary btn-sm customizr-upload-btn',
+            'style' => 'margin-left: 6px; vertical-align: middle;',
+            'onclick' => "document.getElementById('{$field_id}_file').click();",
+        ], rcube::Q($this->gettext('upload_image')));
+
+        $clear_btn = html::tag('button', [
+            'type' => 'button',
+            'id' => $field_id . '_clear',
+            'class' => 'btn btn-outline-danger btn-sm customizr-clear-btn',
+            'style' => 'margin-left: 6px; vertical-align: middle;' . ($has_value ? '' : ' display:none;'),
+            'onclick' => "customizr_clear_field('{$field_id}')",
+        ], rcube::Q($this->gettext('remove_image')));
+
+        $preview_img = html::tag('img', [
+            'id' => $field_id . '_preview',
+            'src' => $has_value ? $escaped_val : '',
+            'alt' => rcube::Q($title_label),
+            'style' => 'max-width: 220px; max-height: 70px; object-fit: contain;' . ($has_value ? '' : ' display:none;'),
+        ]);
+
+        $empty_note = html::tag('span', [
+            'id' => $field_id . '_empty',
+            'class' => 'text-muted small',
+            'style' => 'font-style: italic;' . ($has_value ? ' display:none;' : ''),
+        ], rcube::Q($this->gettext('no_image')));
+
+        $preview_box = html::tag('div', [
+            'id' => $field_id . '_preview_box',
+            'class' => 'customizr-preview-box',
+            'style' => 'margin-top: 8px; padding: 6px 12px; border: 1px dashed #bbb; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; min-width: 140px; min-height: 48px; max-width: 320px; background: repeating-conic-gradient(#f3f3f3 0% 25%, #ffffff 0% 50%) 50% / 16px 16px;',
+        ], $preview_img . $empty_note);
+
+        $desc = html::tag('div', ['class' => 'form-text text-muted small mt-1'], rcube::Q($desc_text));
+
+        return html::tag('div', ['class' => 'customizr-field-wrapper'],
+            html::tag('div', ['class' => 'customizr-controls-row'],
+                $input->show($value) . $file_input . $upload_btn . $clear_btn
+            ) .
+            $preview_box .
+            $desc
+        );
     }
 
     /**
@@ -140,20 +225,15 @@ class customizr extends rcube_plugin
 
         $args['blocks']['customizr']['name'] = $this->gettext('customizr');
 
-        // 1. Watermark Image URL
+        // 1. Watermark Image
         if (!in_array('custom_watermark_image', $dont_override)) {
             $field_id = 'rcmfd_custom_watermark_image';
-            $input = new html_inputfield([
-                'name' => '_custom_watermark_image',
-                'id' => $field_id,
-                'size' => 50,
-                'class' => 'form-control',
-            ]);
             $value = $this->rcmail->config->get('custom_watermark_image', '');
-            $desc = html::tag('div', ['class' => 'form-text text-muted small mt-1'], rcube::Q($this->gettext('custom_watermark_image_desc')));
+            $title = $this->gettext('custom_watermark_image');
+            $desc = $this->gettext('custom_watermark_image_desc');
             $args['blocks']['customizr']['options']['custom_watermark_image'] = [
-                'title' => html::label($field_id, rcube::Q($this->gettext('custom_watermark_image'))),
-                'content' => $input->show($value) . $desc,
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_image_field('custom_watermark_image', $field_id, $value, $title, $desc),
             ];
         }
 
@@ -174,41 +254,43 @@ class customizr extends rcube_plugin
             ];
         }
 
-        // 3. Favicon URL
+        // 3. Favicon
         if (!in_array('custom_favicon', $dont_override)) {
             $field_id = 'rcmfd_custom_favicon';
-            $input = new html_inputfield([
-                'name' => '_custom_favicon',
-                'id' => $field_id,
-                'size' => 50,
-                'class' => 'form-control',
-            ]);
             $value = $this->rcmail->config->get('custom_favicon', '');
-            $desc = html::tag('div', ['class' => 'form-text text-muted small mt-1'], rcube::Q($this->gettext('custom_favicon_desc')));
+            $title = $this->gettext('custom_favicon');
+            $desc = $this->gettext('custom_favicon_desc');
             $args['blocks']['customizr']['options']['custom_favicon'] = [
-                'title' => html::label($field_id, rcube::Q($this->gettext('custom_favicon'))),
-                'content' => $input->show($value) . $desc,
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_image_field('custom_favicon', $field_id, $value, $title, $desc, 'image/*,.ico,.svg'),
             ];
         }
 
-        // 4. Logo URL
+        // 4. Mailbox Logo (App View)
         if (!in_array('custom_logo', $dont_override)) {
             $field_id = 'rcmfd_custom_logo';
-            $input = new html_inputfield([
-                'name' => '_custom_logo',
-                'id' => $field_id,
-                'size' => 50,
-                'class' => 'form-control',
-            ]);
             $value = $this->rcmail->config->get('custom_logo', '');
-            $desc = html::tag('div', ['class' => 'form-text text-muted small mt-1'], rcube::Q($this->gettext('custom_logo_desc')));
+            $title = $this->gettext('custom_logo');
+            $desc = $this->gettext('custom_logo_desc');
             $args['blocks']['customizr']['options']['custom_logo'] = [
-                'title' => html::label($field_id, rcube::Q($this->gettext('custom_logo'))),
-                'content' => $input->show($value) . $desc,
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_image_field('custom_logo', $field_id, $value, $title, $desc),
             ];
         }
 
-        // 5. Custom Stylesheet URL
+        // 5. Login Page Logo
+        if (!in_array('custom_logo_login', $dont_override)) {
+            $field_id = 'rcmfd_custom_logo_login';
+            $value = $this->rcmail->config->get('custom_logo_login', '');
+            $title = $this->gettext('custom_logo_login');
+            $desc = $this->gettext('custom_logo_login_desc');
+            $args['blocks']['customizr']['options']['custom_logo_login'] = [
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_image_field('custom_logo_login', $field_id, $value, $title, $desc),
+            ];
+        }
+
+        // 6. Custom Stylesheet URL
         if (!in_array('custom_stylesheet', $dont_override)) {
             $field_id = 'rcmfd_custom_stylesheet';
             $input = new html_inputfield([
@@ -225,7 +307,7 @@ class customizr extends rcube_plugin
             ];
         }
 
-        // 6. Custom Inline CSS
+        // 7. Custom Inline CSS
         if (!in_array('custom_css', $dont_override)) {
             $field_id = 'rcmfd_custom_css';
             $textarea = new html_textarea([
@@ -244,7 +326,176 @@ class customizr extends rcube_plugin
             ];
         }
 
+        // Inject client-side preview and upload script
+        $script = <<<JS
+function customizr_update_preview(fieldId, url) {
+    var img = document.getElementById(fieldId + '_preview');
+    var empty = document.getElementById(fieldId + '_empty');
+    var clearBtn = document.getElementById(fieldId + '_clear');
+    if (url && url.trim() !== '') {
+        if (img) { img.src = url; img.style.display = 'inline-block'; }
+        if (empty) { empty.style.display = 'none'; }
+        if (clearBtn) { clearBtn.style.display = 'inline-block'; }
+    } else {
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (empty) { empty.style.display = 'inline'; }
+        if (clearBtn) { clearBtn.style.display = 'none'; }
+    }
+}
+
+function customizr_clear_field(fieldId) {
+    var input = document.getElementById(fieldId);
+    var fileInput = document.getElementById(fieldId + '_file');
+    if (input) {
+        input.value = '';
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (fileInput) { fileInput.value = ''; }
+    customizr_update_preview(fieldId, '');
+}
+
+function customizr_handle_file_select(fileInput, fieldId) {
+    if (!fileInput.files || !fileInput.files[0]) return;
+    var file = fileInput.files[0];
+
+    // 1. Instant client-side preview via FileReader
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var dataUrl = e.target.result;
+        customizr_update_preview(fieldId, dataUrl);
+    };
+    reader.readAsDataURL(file);
+
+    // 2. Upload to server via AJAX if rcmail is available
+    if (typeof rcmail !== 'undefined' && rcmail.url) {
+        var formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', rcmail.env.request_token || '');
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', rcmail.url('plugin.customizr_upload'));
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    if (res && res.status === 'success' && res.url) {
+                        var input = document.getElementById(fieldId);
+                        if (input) {
+                            input.value = res.url;
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        customizr_update_preview(fieldId, res.url);
+                        if (rcmail.display_message) {
+                            rcmail.display_message(file.name + ' uploaded successfully', 'confirmation');
+                        }
+                        return;
+                    }
+                } catch(err) {}
+            }
+            // Fallback: put data URL into field if server upload didn't succeed
+            var input = document.getElementById(fieldId);
+            if (input && reader.result) {
+                input.value = reader.result;
+            }
+        };
+        xhr.onerror = function() {
+            var input = document.getElementById(fieldId);
+            if (input && reader.result) {
+                input.value = reader.result;
+            }
+        };
+        xhr.send(formData);
+    }
+
+    // Ensure form has multipart enctype
+    var form = fileInput.closest('form');
+    if (form) { form.setAttribute('enctype', 'multipart/form-data'); }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var inputs = document.querySelectorAll('.customizr-url-input');
+    inputs.forEach(function(inp) {
+        inp.addEventListener('input', function() {
+            customizr_update_preview(inp.id, inp.value);
+        });
+        inp.addEventListener('change', function() {
+            customizr_update_preview(inp.id, inp.value);
+        });
+    });
+    var firstInp = document.querySelector('.customizr-url-input');
+    if (firstInp) {
+        var form = firstInp.closest('form');
+        if (form) { form.setAttribute('enctype', 'multipart/form-data'); }
+    }
+});
+JS;
+
+        if ($this->rcmail->output && method_exists($this->rcmail->output, 'add_script')) {
+            $this->rcmail->output->add_script($script, 'foot');
+        }
+
         return $args;
+    }
+
+    /**
+     * Store an uploaded file safely and return its relative URL or data URI.
+     */
+    public function save_uploaded_file(array $file): ?string
+    {
+        if (empty($file) || $file['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        $allowed_exts = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'webp'];
+        $ext = strtolower(pathinfo($file['name'] ?? '', PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowed_exts)) {
+            return null;
+        }
+
+        $upload_dir = __DIR__ . '/uploads';
+        if (!is_dir($upload_dir)) {
+            @mkdir($upload_dir, 0755, true);
+        }
+
+        // Protective .htaccess preventing execution of arbitrary scripts
+        $htaccess = $upload_dir . '/.htaccess';
+        if (!file_exists($htaccess)) {
+            @file_put_contents($htaccess, "# Disable script execution\n<FilesMatch \"\.(php|phtml|php3|php4|php5|php7|phps|inc|cgi|pl|sh)$\">\nOrder Deny,Allow\nDeny from all\n</FilesMatch>\nOptions -Indexes -ExecCGI\n");
+        }
+
+        $random_bytes = function_exists('random_bytes') ? bin2hex(random_bytes(4)) : substr(md5((string) mt_rand()), 0, 8);
+        $filename = 'custom_' . time() . '_' . $random_bytes . '.' . $ext;
+        $target_path = $upload_dir . '/' . $filename;
+
+        if (is_writable($upload_dir) && @move_uploaded_file($file['tmp_name'], $target_path)) {
+            return './plugins/customizr/uploads/' . $filename;
+        }
+
+        // Fallback to data URI if upload directory is read-only
+        $data = @file_get_contents($file['tmp_name']);
+        if ($data !== false) {
+            $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : $ext));
+            return 'data:' . $mime . ';base64,' . base64_encode($data);
+        }
+
+        return null;
+    }
+
+    /**
+     * AJAX action: plugin.customizr_upload
+     */
+    public function ajax_upload()
+    {
+        $file = !empty($_FILES['file']) ? $_FILES['file'] : (!empty($_FILES['_file']) ? $_FILES['_file'] : null);
+        $url = $this->save_uploaded_file($file);
+
+        header('Content-Type: application/json; charset=UTF-8');
+        if ($url) {
+            echo json_encode(['status' => 'success', 'url' => $url]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'Upload failed or invalid image format']);
+        }
+        exit;
     }
 
     /**
@@ -264,11 +515,22 @@ class customizr extends rcube_plugin
             'custom_watermark_uri',
             'custom_favicon',
             'custom_logo',
+            'custom_logo_login',
             'custom_stylesheet',
         ];
 
         foreach ($text_fields as $field) {
             if (!in_array($field, $dont_override)) {
+                // Check if a direct file was uploaded for this field via multipart form
+                $file_key = '_' . $field . '_file';
+                if (!empty($_FILES[$file_key]) && $_FILES[$file_key]['error'] === UPLOAD_ERR_OK) {
+                    $saved_url = $this->save_uploaded_file($_FILES[$file_key]);
+                    if ($saved_url) {
+                        $args['prefs'][$field] = $saved_url;
+                        continue;
+                    }
+                }
+
                 $val = trim((string) rcube_utils::get_input_value('_' . $field, rcube_utils::INPUT_POST));
                 $args['prefs'][$field] = $val;
             }
@@ -311,11 +573,15 @@ class customizr extends rcube_plugin
             }
         }
 
-        // replace logo image in template if custom logo is set
-        if (!empty($this->custom_logo)) {
+        // replace logo image in template:
+        // on login page, use custom_logo_login if configured; otherwise use custom_logo
+        $is_login = ($this->rcmail->task === 'login');
+        $active_logo = ($is_login && !empty($this->custom_logo_login)) ? $this->custom_logo_login : $this->custom_logo;
+
+        if (!empty($active_logo)) {
             $args['content'] = preg_replace(
                 '!(<img\b[^>]*\bid="logo"[^>]*\bsrc=)["\'][^"\']*["\']!i',
-                '${1}"' . htmlspecialchars($this->custom_logo, ENT_QUOTES) . '"',
+                '${1}"' . htmlspecialchars($active_logo, ENT_QUOTES) . '"',
                 $args['content']
             );
         }

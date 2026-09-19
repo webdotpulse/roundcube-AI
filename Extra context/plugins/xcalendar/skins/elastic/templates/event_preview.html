@@ -1,0 +1,177 @@
+<div id='event-preview-controller' x-data="EventPreviewController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+
+    <div class='restore-popup animation-fade' x-show='restoreId' x-cloak>
+        <roundcube:label name="xcalendar.event_removed" />
+        <a href='#' @click='restore()' class="undo"><roundcube:label name="undo" /></a>
+        <a href='#' @click='hideRestore()' class='hide-popup'></a>
+    </div>
+
+    <div id='event-preview' class='animate-fade' x-show='visible' @click="innerClick = true" x-cloak>
+        <div x-show="data.error">
+            <p><roundcube:label name="xcalendar.unable_to_retrieve_calendar_data" /></p>
+        </div>
+        <div id="event-preview-busy" x-show="(loading || disabled()) && !data.error">
+            <span class="xspinner"></span>
+        </div>
+        <div x-show='!loading && !data.error'>
+            <h3>
+                <span class="title" x-text="data.title"></span>
+                <span class="close" @click="visible = false">&times;</span>
+            </h3>
+
+            <table>
+                <tbody>
+                    <tr>
+                        <td class="title"><roundcube:label name="xcalendar.start" /></td>
+                        <td class="value" x-text="data.start"></td>
+                    </tr>
+                    <tr x-show='data.end'>
+                        <td class="title"><roundcube:label name="xcalendar.end" /></td>
+                        <td class="value" x-text="data.end"></td>
+                    </tr>
+                    <tr x-show='data.location'>
+                        <td class=""><roundcube:label name="xcalendar.location" /></td>
+                        <td class="value">
+                            <template x-if="data.locationIsLink">
+                                <a :href='data.location' target='_blank' rel='noopener' x-text="data.location"></a>
+                            </template>
+                            <template x-if="!data.locationIsLink">
+                                <span x-text="data.location"></span>
+                            </template>
+                        </td>
+                    </tr>
+                    <tr x-show='data.url'>
+                        <td class="title"><roundcube:label name="xcalendar.url" /></td>
+                        <td class="value">
+                            <template x-if="data.urlIsLink">
+                                <a :href='data.url' target='_blank' rel='noopener' x-text="data.url"></a>
+                            </template>
+                            <template x-if="!data.urlIsLink">
+                                <span x-text="data.url"></span>
+                            </template>
+                        </td>
+                    </tr>
+                    <tr x-show="data.email">
+                        <td class="title"><roundcube:label name="email" /></td>
+                        <td class="value">
+                            <a href="javascript:void(0)" @click="compose(data.email)" :title="data.email" x-text="data.email"></a>
+                        </td>
+                    </tr>
+                    <tr x-show="data.calendar_name">
+                        <td class="title"><roundcube:label name="xcalendar.calendar" /></td>
+                        <td class="value" x-text="data.calendar_name"></td>
+                    </tr>
+                    <tr x-show="data.has_attendees">
+                        <td class="title"><roundcube:label name="xcalendar.attendance" /></td>
+                        <td class="value" x-text="getAttendanceString()"></td>
+                    </tr>
+                    <tr x-show="data.show_attendance_response && data.can_edit">
+                        <td class="title"><roundcube:label name="xcalendar.attendance_going" /></td>
+                        <td class="value attendance-response">
+                            <a href="javascript:void(0)" @click="setAttendanceStatus(1)"
+                               x-show="data.attendance_status != 1"><roundcube:label name="xcalendar.attendee_status_yes" /></a>
+                            <span x-show="data.attendance_status == 1"><roundcube:label name="xcalendar.attendee_status_yes" /></span>
+
+                            <a href="javascript:void(0)" @click="setAttendanceStatus(2)"
+                               x-show="data.attendance_status != 2"><roundcube:label name="xcalendar.attendee_status_no" /></a>
+                            <span x-show="data.attendance_status == 2"><roundcube:label name="xcalendar.attendee_status_no" /></span>
+
+                            <a href="javascript:void(0)" @click="setAttendanceStatus(3)"
+                               x-show="data.attendance_status != 3"><roundcube:label name="xcalendar.attendee_status_maybe" /></a>
+                            <span x-show="data.attendance_status == 3"><roundcube:label name="xcalendar.attendee_status_maybe" /></span>
+                        </td>
+                    </tr>
+                    <template x-if="(data.description && data.description.length < 30) || data.descriptionIsLink">
+                        <tr>
+                            <td class="title"><roundcube:label name="xcalendar.description" /></td>
+                            <td class="value">
+                                <template x-if="data.descriptionIsLink">
+                                    <a :href='data.description' target='_blank' rel='noopener' x-text="data.description"></a>
+                                </template>
+                                <template x-if="!data.descriptionIsLink">
+                                    <span x-text="data.description"></span>
+                                </template>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+
+            <template x-if="data.description && data.description.length >= 30 && !data.descriptionIsLink">
+                <div class='description-container'>
+                    <div class="title"><roundcube:label name="xcalendar.description" /></div>
+                    <div class="value" x-html="data.description"></div>
+                </div>
+            </template>
+
+            <div class='formbuttons' x-show='data.can_edit'>
+                <!--setting height and width and removing style=display:none prevents modsecurity's error: Possibly malicious iframe tag-->
+                <iframe id="event-download-frame" class='download-frame' height="30" width="30"></iframe>
+
+                <button type='button' class='btn btn-primary' @click='edit()'>
+                    <roundcube:label name="edit" />
+                </button>
+
+                <button type='button' class='button button-options btn btn-secondary' data-popup='event-options'
+                        onclick="xframework.showLarryPopup('event-options', event)">
+                    <roundcube:label name="options" />
+                </button>
+
+                <!-- the popup menu can be moved out of the Alpine scope by the data-popup library; the inline onclick
+                     handlers reach the controller via window.eventPreview (set in init), and the x-data proxy exposes
+                     `elastic` so the :class binding below survives the move -->
+                <div id='event-options' class='popupmenu' x-data="{
+                    get elastic() { return window.eventPreview?.elastic ?? false; }
+                }">
+                    <ul class='toolbarmenu' role='menu' :class='{ listing: elastic }'>
+                        <li role='menuitem'>
+                            <a href='#' role='button' class='active' onclick="window.eventPreview.edit(true)">
+                                <roundcube:label name="xcalendar.duplicate" />
+                            </a>
+                        </li>
+                        <li role='menuitem'>
+                            <a href='#' role='button' class='active' onclick="window.eventPreview.download()">
+                                <roundcube:label name="download" />
+                            </a>
+                        </li>
+                        <li role='menuitem'>
+                            <a href='#' role='button' class='active' onclick="window.eventPreview.send()">
+                                <roundcube:label name="send" />
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <button type='button' class='btn btn-danger button-remove button-right' @click='remove(false)'
+                        x-show="!loading && !data.repeat?.freq">
+                    <roundcube:label name="delete" />
+                </button>
+
+                <button type='button' class='btn btn-danger button-remove-repeated button-right'
+                        x-show="!loading && data.repeat?.freq"
+                        data-popup='remove-options'
+                        onclick="xframework.showLarryPopup('remove-options', event);">
+                    <roundcube:label name="delete" />
+                </button>
+
+                <!-- same reasoning as the event-options popup above -->
+                <div id='remove-options' class='popupmenu' x-data="{
+                    get elastic() { return window.eventPreview?.elastic ?? false; }
+                }">
+                    <ul class='toolbarmenu' role='menu' :class='{ listing: elastic }'>
+                        <li role='menuitem'>
+                            <a href='#' role='button' class='active' onclick="window.eventPreview.remove(true)">
+                                <roundcube:label name="xcalendar.remove_one" />
+                            </a>
+                        </li>
+                        <li role='menuitem'>
+                            <a href='#' role='button' class='active' onclick="window.eventPreview.remove(false)">
+                                <roundcube:label name="xcalendar.remove_all" />
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS xcalendar_synced (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL DEFAULT 0,
+    calendar_id INT UNSIGNED NOT NULL DEFAULT 0,
+    name VARCHAR(255) NOT NULL DEFAULT '',
+    username VARCHAR(255) NOT NULL DEFAULT '',
+    url VARCHAR(255) NOT NULL DEFAULT '',
+    password VARCHAR(255) NOT NULL DEFAULT '',
+    read_only TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+    connected_at TIMESTAMP NULL DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE username(username),
+    UNIQUE url(url),
+    INDEX user_id(user_id, calendar_id)
+) ENGINE = InnoDB DEFAULT CHARSET utf8 COLLATE utf8_unicode_ci;
+
+ALTER TABLE xcalendar_events ADD vevent MEDIUMTEXT DEFAULT NULL;

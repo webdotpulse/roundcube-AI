@@ -1,0 +1,40 @@
+<div class='xevent-alarm' id='xevent-alarm-[~id~]' xmlns:roundcube="http://www.w3.org/1999/XSL/Transform">
+    <div class='title'>[~title~]</div>
+    <div class='description'>[~description~]</div>
+    <div class='actions'>
+        <button type="button" class="button btn btn-secondary btn-xs dismiss" onclick='xalarm.dismiss([~id~])'>
+            <roundcube:label name="xcalendar.dismiss" />
+        </button>
+        <roundcube:if condition="!empty(env:snooze)" />
+            <button type="button" class="button btn btn-secondary btn-xs snooze" onclick="$('#xsnooze-menu-[~id~]').toggle()">
+                <roundcube:label name="xcalendar.snooze" />
+            </button>
+            <div id='xsnooze-menu-[~id~]' class="snooze-row">
+                <roundcube:if condition="in_array(5, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(5, [~id~])'><roundcube:label name="xcalendar.5_minutes" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(10, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(10, [~id~])'><roundcube:label name="xcalendar.10_minutes" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(20, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(20, [~id~])'><roundcube:label name="xcalendar.20_minutes" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(30, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(30, [~id~])'><roundcube:label name="xcalendar.30_minutes" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(60, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(60, [~id~])'><roundcube:label name="xcalendar.1_hour" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(120, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(120, [~id~])'><roundcube:label name="xcalendar.2_hours" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(1440, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(1440, [~id~])'><roundcube:label name="xcalendar.tomorrow" /></a>
+                <roundcube:endif />
+                <roundcube:if condition="in_array(10080, env:snooze)" />
+                    <a href='javascript:void(0)' onclick='xalarm.snooze(10080, [~id~])'><roundcube:label name="xcalendar.next_week" /></a>
+                <roundcube:endif />
+            </div>
+        <roundcube:endif />
+    </div>
+</div>

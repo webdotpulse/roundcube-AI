@@ -1,0 +1,60 @@
+<div id="shared-calendar-controller" x-data="SharedCalendarController" xmlns:roundcube="http://www.w3.org/1999/xhtml">
+    <div class='editor uibox' :class="{ loading: loading }" x-show="editing" x-cloak>
+        <h2 class='editor-title boxtitle'>
+            <span><roundcube:label name="xcalendar.shared_calendars" /></span>
+        </h2>
+
+        <div class='content-box' x-show='!loading'>
+            <div x-show='!list.length'>
+                <roundcube:label name="xcalendar.no_shared_calendars" />
+            </div>
+
+            <table class='edit-table shared-list-table' x-show='list.length'>
+                <thead>
+                    <tr>
+                        <th><roundcube:label name="xcalendar.calendar_name" /></th>
+                        <th><roundcube:label name="xcalendar.calendar_owner" /></th>
+                        <th><roundcube:label name="xcalendar.shared_date" /></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(item, index) in list" :key="item.calendar_id">
+                        <tr>
+                            <td x-text="item.calendar_name"></td>
+                            <td x-text="item.username"></td>
+                            <td x-text="item.created_at"></td>
+                            <td class='actions'>
+                                <button type="button" class="btn btn-xs btn-primary"
+                                        :class="{busy:action.type == 'add' && action.id == item.calendar_id}"
+                                        @click='add(item.calendar_id)'
+                                        x-show='!item.added'>
+                                    <span><roundcube:label name="xcalendar.add_to_my_calendars" /></span>
+                                </button>
+                                <button type="button" class="btn btn-xs btn-secondary"
+                                        :class="{busy:action.type == 'remove' && action.id == item.calendar_id}"
+                                        @click='remove(item.calendar_id)'
+                                        x-show='item.added'>
+                                    <span><roundcube:label name="xcalendar.remove_from_my_calendars" /></span>
+                                </button>
+                                <button type="button" class="btn btn-xs btn-danger"
+                                        :class="{busy:action.type == 'unshare' && action.id == item.calendar_id}"
+                                        @click='unshare(item.calendar_id, index)'
+                                        x-show='!item.added'>
+                                    <span><roundcube:label name="xcalendar.unshare" /></span>
+                                </button>
+                                <span x-show='sending == item.calendar_id' class='xspinner'></span>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
+        <div class='formbuttons editor-button-bar' x-show='!loading'>
+            <div>
+                <input type='button' class='button mainaction' @click='cancel()' value='<roundcube:label name="close" />'>
+            </div>
+        </div>
+    </div>
+</div>

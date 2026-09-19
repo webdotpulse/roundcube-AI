@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -214,6 +214,59 @@ class RoundcubeExtraContentInstaller
         } else {
             $this->info("  -> Preserving existing user config at {$targetConfigFile}");
         }
+
+        // Special post-install routine for xcalendar
+        if ($type === 'plugin' && $name === 'xcalendar') {
+            $this->postInstallXcalendar($destination, $this->roundcubeDir);
+        }
+    }
+
+    /**
+     * Special post-installation setup, requirements verification, and guidance for xcalendar.
+     */
+    private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring xcalendar plugin ---");
+
+        // 1. Requirements verification (PHP 8.0+ and cURL)
+        if (PHP_VERSION_ID < 80000) {
+            $this->warning("  [!] xcalendar requires PHP 8.0 or higher. Current PHP version: " . PHP_VERSION);
+        } else {
+            $this->success("  [✓] PHP version " . PHP_VERSION . " meets xcalendar requirement (>= 8.0).");
+        }
+
+        if (!extension_loaded('curl')) {
+            $this->warning("  [!] PHP cURL extension is NOT loaded. xcalendar requires cURL for CalDAV synchronization and remote calendars.");
+        } else {
+            $this->success("  [✓] PHP cURL extension is loaded.");
+        }
+
+        // 2. Event attachments directory setup
+        $attachmentsDir = $destination . DIRECTORY_SEPARATOR . 'attachments';
+        if (!is_dir($attachmentsDir)) {
+            if ($this->dryRun) {
+                $this->info("  -> Would create secure event attachments directory: {$attachmentsDir}");
+            } else {
+                if (@mkdir($attachmentsDir, 0775, true)) {
+                    $htaccess = $attachmentsDir . DIRECTORY_SEPARATOR . '.htaccess';
+                    @file_put_contents(
+                        $htaccess,
+                        "# Protect event attachments from direct web access\nOrder Deny,Allow\nDeny from all\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n"
+                    );
+                    $this->success("  -> Created event attachments directory: {$attachmentsDir} (protected by .htaccess)");
+                }
+            }
+        } else {
+            $this->info("  -> Preserving existing attachments directory at {$attachmentsDir}");
+        }
+
+        // 3. Output database & cron job guidance from xcalendar_install.txt
+        $this->info("  [i] Database: xcalendar tables ('xcalendar_*') will be created automatically on first calendar access.");
+        $cronScript = $destination . DIRECTORY_SEPARATOR . 'cron.php';
+        $this->info("  [i] Email Notifications Cron Job (run every 1 minute):");
+        $this->info("        Option 1 (URL):  * * * * * wget -q -O - <roundcube_url>/index.php?xcalendar-cron=1 >/dev/null 2>&1");
+        $this->info("        Option 2 (CLI):  * * * * * php {$cronScript}");
+        $this->info("  [i] License Key: Configure in config/config.inc.php: \$config['xcalendar_license_key'] = '...';");
     }
 
     /**
@@ -266,7 +319,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -276,10 +329,13 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {
+            if ($p === 'lifeprisma_ai' && preg_match("/['\"]roundcube_ai['\"]/", $configContent)) {
+                continue;
+            }
             if (!preg_match("/['\"]" . preg_quote($p, '/') . "['\"]/", $configContent)) {
                 $missingPlugins[] = $p;
             }
@@ -325,13 +381,18 @@ class RoundcubeExtraContentInstaller
         }
 
         if (!empty($missingPlugins)) {
-            if (preg_match('/(\$config\[[\'"]plugins[\'"]\]\s*=\s*\[)([^\]]*)(\];)/s', $content, $m)) {
+            // Support both modern short array [ ... ] and classic array( ... )
+            if (preg_match('/(\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:\[|array\s*\())([^\]\)]*)(\];|\);)/is', $content, $m)) {
+                $openTag = $m[1];
                 $currentPluginsText = $m[2];
+                $closeTag = $m[3];
                 $newEntries = "";
                 foreach ($missingPlugins as $plugin) {
                     $newEntries .= "    '{$plugin}',\n";
                 }
-                $replacement = $m[1] . "\n" . $currentPluginsText . (str_ends_with(trim($currentPluginsText), ',') ? "\n" : ",\n") . $newEntries . $m[3];
+                $trimmedCurrent = trim($currentPluginsText);
+                $trailingComma = (!empty($trimmedCurrent) && !str_ends_with($trimmedCurrent, ',')) ? ",\n" : "\n";
+                $replacement = $openTag . "\n" . $currentPluginsText . $trailingComma . $newEntries . $closeTag;
                 $replacement = preg_replace('/,\s*,\s*/', ",\n", $replacement);
                 $content = str_replace($m[0], $replacement, $content);
                 $modified = true;
@@ -535,9 +596,10 @@ HELP;
 
 // Execution handling:
 // Check if running directly as CLI script or included by Roundcube PluginInstaller
-if (php_sapi_name() === 'cli' || defined('INSTALL_PATH')) {
+$isDirectCli = (php_sapi_name() === 'cli' && !empty($_SERVER['SCRIPT_FILENAME']) && realpath($_SERVER['SCRIPT_FILENAME']) === realpath(__FILE__));
+if ($isDirectCli || defined('INSTALL_PATH')) {
     $exitCode = RoundcubeExtraContentInstaller::run($argv ?? []);
-    if (php_sapi_name() === 'cli' && !defined('INSTALL_PATH')) {
+    if ($isDirectCli && !defined('INSTALL_PATH')) {
         exit($exitCode);
     }
 }

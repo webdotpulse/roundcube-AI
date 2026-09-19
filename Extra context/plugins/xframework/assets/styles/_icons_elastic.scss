@@ -9,6 +9,8 @@
         &.mail:before { @include icons.icon(icons_map.$mail); }
         &.contacts:before { @include icons.icon(icons_map.$user); }
         &.options:before { @include icons.icon(icons_map.$wrench); }
+        &.settings:before,
+        &.button-settings:before { @include icons.icon(icons_map.$gear); }
         &.help:before { @include icons.icon(icons_map.$help); }
         &.logout:before { @include icons.icon(icons_map.$logout); }
         &.about:before { @include icons.icon(icons_map.$information); }
