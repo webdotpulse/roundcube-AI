@@ -31,11 +31,24 @@ var escape_jquery_selector,
   rcm_tb_label_show_add_modal,
   rcm_tb_label_fetch_counts,
   rcm_tb_label_update_count,
+  rcm_tb_label_count_local_messages,
   rcm_tb_label_update_popup_menu,
   TB_LABEL_TAG_SVG,
   slice = [].slice;
 
 TB_LABEL_TAG_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>';
+
+rcm_tb_label_count_local_messages = function (labelKey) {
+  var count = 0;
+  if (window.rcmail && rcmail.env && rcmail.env.messages) {
+    $.each(rcmail.env.messages, function (uid, msg) {
+      if (msg && msg.flags && msg.flags.tb_labels && jQuery.inArray(labelKey, msg.flags.tb_labels) > -1) {
+        count++;
+      }
+    });
+  }
+  return count;
+};
 
 rcm_tb_label_escape_html = function (str) {
   return String(str || "")
@@ -370,12 +383,21 @@ rcm_tb_label_render_sidebar_items = function () {
 
   var labels = (window.rcmail && rcmail.env && rcmail.env.tb_label_custom_labels) || {};
   var colors = (window.rcmail && rcmail.env && rcmail.env.tb_label_colors) || {};
-  var counts = (window.rcmail && rcmail.env && rcmail.env.tb_label_counts) || {};
+  var counts = (window.rcmail && rcmail.env && rcmail.env.tb_label_counts) || null;
+  var del_title = (rcmail.labels && rcmail.labels["thunderbird_labels.delete_label"]) || "Delete label";
 
   $.each(labels, function (key, name) {
     if (key === "LABEL0") return;
     var color = colors[key] || "#757575";
-    var count = parseInt(counts[key] || 0, 10);
+
+    // Determine count: use server count if present; otherwise fallback to local loaded messages count
+    var count = 0;
+    if (counts && typeof counts[key] !== "undefined") {
+      var parsed = parseInt(counts[key], 10);
+      count = (!isNaN(parsed) && parsed >= 0) ? parsed : 0;
+    } else {
+      count = rcm_tb_label_count_local_messages(key);
+    }
     var is_active = rcmail.env.tb_label_active_filter === key;
 
     var count_html = count > 0
@@ -389,12 +411,30 @@ rcm_tb_label_render_sidebar_items = function () {
           '<span class="name tb-label-name">' + rcm_tb_label_escape_html(name) + '</span>' +
           count_html +
         "</a>" +
+        '<button type="button" class="tb-label-delete-btn" title="' + rcm_tb_label_escape_html(del_title) + '" aria-label="' + rcm_tb_label_escape_html(del_title) + '">&times;</button>' +
       "</li>"
     );
 
     item.find("a.tb-label-link").on("click", function (e) {
       e.preventDefault();
       rcm_tb_label_filter_click(key);
+    });
+
+    item.find(".tb-label-delete-btn").on("click", function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var confirm_msg = (rcmail.labels && rcmail.labels["thunderbird_labels.confirm_delete_label"]) || "Are you sure you want to delete this label?";
+      var do_delete = function () {
+        var lock = rcmail.set_busy(true, "loading");
+        rcmail.http_post("plugin.thunderbird_labels.delete_label", { key: key }, lock);
+      };
+      if (rcmail.confirm) {
+        rcmail.confirm(confirm_msg, function () {
+          do_delete();
+        });
+      } else if (window.confirm(confirm_msg)) {
+        do_delete();
+      }
     });
 
     list.append(item);
@@ -639,6 +679,7 @@ rcm_tb_label_update_count = function (labelKey, delta) {
     rcmail.env.tb_label_counts = {};
   }
   var current = parseInt(rcmail.env.tb_label_counts[labelKey] || 0, 10);
+  if (isNaN(current)) current = 0;
   var next = Math.max(0, current + delta);
   rcmail.env.tb_label_counts[labelKey] = next;
 
@@ -1093,6 +1134,22 @@ $(function () {
     } else {
       rcm_tb_label_clear_filter_ui();
     }
+    // Update counts from loaded messages immediately
+    var allLabels = rcmail.env.tb_label_custom_labels || {};
+    $.each(allLabels, function (key) {
+      if (key === "LABEL0") return;
+      var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
+      if (badge.length) {
+        var server_c = (rcmail.env.tb_label_counts && typeof rcmail.env.tb_label_counts[key] !== "undefined")
+          ? parseInt(rcmail.env.tb_label_counts[key], 10) : null;
+        var final_c = (server_c !== null && !isNaN(server_c)) ? server_c : rcm_tb_label_count_local_messages(key);
+        if (final_c > 0) {
+          badge.text(final_c).show();
+        } else {
+          badge.text("").hide();
+        }
+      }
+    });
     rcm_tb_label_fetch_counts();
   });
 
@@ -1106,7 +1163,7 @@ $(function () {
         var count = parseInt((data.counts && data.counts[key]) || 0, 10);
         var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
         if (badge.length) {
-          if (count > 0) {
+          if (count > 0 && !isNaN(count)) {
             badge.text(count).show();
           } else {
             badge.text("").hide();
@@ -1141,6 +1198,12 @@ $(function () {
     if (data && data.labels) {
       rcmail.env.tb_label_custom_labels = data.labels;
       rcmail.env.tb_label_colors = data.colors || {};
+      if (data.key && rcmail.env.tb_label_counts) {
+        delete rcmail.env.tb_label_counts[data.key];
+      }
+      if (data.key && rcmail.env.tb_label_active_filter === data.key) {
+        rcm_tb_label_clear_filter();
+      }
       new rcm_tb_label_css().inject();
       rcm_tb_label_render_sidebar_items();
       rcm_tb_label_update_popup_menu();

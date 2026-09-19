@@ -237,6 +237,9 @@ $rc->config->set('dont_override', [
     'custom_logo_login',
     'custom_stylesheet',
     'custom_css',
+    'custom_sidebar_bg',
+    'custom_topbar_bg',
+    'custom_compose_bg',
 ]);
 $plugin_locked = new customizr();
 $plugin_locked->init();
@@ -272,6 +275,9 @@ assert_true(isset($opts['custom_logo']), "Form includes custom_logo field");
 assert_true(isset($opts['custom_logo_login']), "Form includes custom_logo_login field");
 assert_true(isset($opts['custom_stylesheet']), "Form includes custom_stylesheet field");
 assert_true(isset($opts['custom_css']), "Form includes custom_css field");
+assert_true(isset($opts['custom_sidebar_bg']), "Form includes custom_sidebar_bg field");
+assert_true(isset($opts['custom_topbar_bg']), "Form includes custom_topbar_bg field");
+assert_true(isset($opts['custom_compose_bg']), "Form includes custom_compose_bg field");
 
 // Verify values and preview components in rendered fields
 assert_true(strpos($opts['custom_watermark_image']['content'], 'value="./skins/watermark.png"') !== false, "Watermark image value rendered");
@@ -282,6 +288,9 @@ assert_true(strpos($opts['custom_logo_login']['content'], 'value="./logo_login.p
 assert_true(strpos($opts['custom_logo']['content'], 'customizr-preview-box') !== false, "Logo field has image preview box");
 assert_true(strpos($opts['custom_logo_login']['content'], 'customizr-file-input') !== false, "Logo login field has file upload button");
 assert_true(strpos($opts['custom_logo']['content'], 'customizr-clear-btn') !== false, "Logo field has clear button");
+assert_true(strpos($opts['custom_sidebar_bg']['content'], 'customizr-color-picker') !== false, "Sidebar color field has color picker");
+assert_true(strpos($opts['custom_topbar_bg']['content'], 'customizr-color-picker') !== false, "Topbar color field has color picker");
+assert_true(strpos($opts['custom_compose_bg']['content'], 'customizr-color-picker') !== false, "Compose color field has color picker");
 assert_true(strpos($opts['custom_css']['content'], 'body { color: red; }') !== false, "Inline CSS value rendered");
 assert_true(!empty($rc->output->scripts), "Client-side preview JavaScript added to page output");
 
@@ -310,6 +319,9 @@ $_POST = [
     '_custom_logo_login'      => './new_login_logo.png',
     '_custom_stylesheet'      => './new_styles.css',
     '_custom_css'             => 'h1 > a { font-size: 20px; }',
+    '_custom_sidebar_bg'      => '#2C3E50',
+    '_custom_topbar_bg'       => '#1A73E8',
+    '_custom_compose_bg'      => '#FF5722',
 ];
 
 $plugin = new customizr();
@@ -325,6 +337,15 @@ assert_true(!isset($saved['custom_logo']), "custom_logo rejected because it is i
 assert_true($saved['custom_logo_login'] === './new_login_logo.png', "custom_logo_login saved");
 assert_true($saved['custom_stylesheet'] === './new_styles.css', "custom_stylesheet saved");
 assert_true($saved['custom_css'] === 'h1 > a { font-size: 20px; }', "custom_css saved with raw selectors");
+assert_true($saved['custom_sidebar_bg'] === '#2C3E50', "custom_sidebar_bg saved with valid hex");
+assert_true($saved['custom_topbar_bg'] === '#1A73E8', "custom_topbar_bg saved with valid hex");
+assert_true($saved['custom_compose_bg'] === '#FF5722', "custom_compose_bg saved with valid hex");
+
+// Test invalid color hex values sanitized to empty string
+$_POST['custom_sidebar_bg'] = 'invalid_not_a_hex';
+$_POST['_custom_sidebar_bg'] = 'invalid_not_a_hex';
+$save_invalid = $plugin->preferences_save(['section' => 'customizr', 'prefs' => []]);
+assert_true($save_invalid['prefs']['custom_sidebar_bg'] === '', "invalid color hex reset to empty string");
 
 // Test 4b: File upload handler in preferences_save
 echo "\n--- Test 4b: File Upload and Fallback ---\n";
@@ -374,6 +395,9 @@ $rc->config->set('custom_logo_login', '/login_only_logo.svg');
 $rc->config->set('custom_css', 'a.test { color: green; }');
 $rc->config->set('custom_stylesheet', '/my_styles.css');
 $rc->config->set('custom_watermark_uri', '/custom_empty.html');
+$rc->config->set('custom_sidebar_bg', '#123456');
+$rc->config->set('custom_topbar_bg', '#abcdef');
+$rc->config->set('custom_compose_bg', '#987654');
 
 $plugin_mail = new customizr();
 $plugin_mail->init();
@@ -391,6 +415,10 @@ assert_true(strpos($content_mail, '<img id="logo" src="/mail_logo.svg"') !== fal
 assert_true(strpos($content_mail, '/login_only_logo.svg') === false, "Mailbox view does NOT use login logo");
 assert_true(strpos($content_mail, '<iframe src="/custom_empty.html">') !== false, "Watermark link correctly replaced");
 assert_true(strpos($content_mail, '<style type="text/css">') !== false && strpos($content_mail, 'a.test { color: green; }') !== false, "Inline CSS style tag correctly injected");
+assert_true(strpos($content_mail, 'id="customizr-custom-colors"') !== false, "Custom colors style tag correctly injected");
+assert_true(strpos($content_mail, '#123456') !== false && strpos($content_mail, '#layout-sidebar') !== false, "Custom sidebar color injected in CSS");
+assert_true(strpos($content_mail, '#abcdef') !== false && strpos($content_mail, '.header') !== false, "Custom topbar color injected in CSS");
+assert_true(strpos($content_mail, '#987654') !== false && strpos($content_mail, '#compose-plus') !== false, "Custom compose color injected in CSS");
 assert_true(in_array('/my_styles.css', $rc->output->included_css), "External CSS registered with include_css");
 assert_true($rc->output->env['blankpage'] === '/custom_empty.html', "blankpage env variable set");
 
@@ -441,6 +469,13 @@ $required_keys = [
     'custom_stylesheet_desc',
     'custom_css',
     'custom_css_desc',
+    'custom_sidebar_bg',
+    'custom_sidebar_bg_desc',
+    'custom_topbar_bg',
+    'custom_topbar_bg_desc',
+    'custom_compose_bg',
+    'custom_compose_bg_desc',
+    'clear_color',
 ];
 
 foreach ($langs as $lang) {

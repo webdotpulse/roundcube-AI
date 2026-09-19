@@ -53,6 +53,9 @@ class customizr extends rcube_plugin
     private $watermark_uri;
     private $watermark_image;
     private $settings_section;
+    private $custom_sidebar_bg;
+    private $custom_topbar_bg;
+    private $custom_compose_bg;
 
     /**
      * Resolves an image path: if it is a local upload path (e.g. plugins/customizr/uploads/custom_...),
@@ -118,6 +121,9 @@ class customizr extends rcube_plugin
         $this->custom_logo_login = $this->rcmail->config->get('custom_logo_login');
         $this->watermark_uri = $this->rcmail->config->get('custom_watermark_uri');
         $this->watermark_image = $this->rcmail->config->get('custom_watermark_image');
+        $this->custom_sidebar_bg = $this->rcmail->config->get('custom_sidebar_bg');
+        $this->custom_topbar_bg = $this->rcmail->config->get('custom_topbar_bg');
+        $this->custom_compose_bg = $this->rcmail->config->get('custom_compose_bg');
 
         // Resolve images to data URIs if they reference local uploads
         $this->custom_logo = self::resolve_image_url($this->custom_logo);
@@ -151,6 +157,9 @@ class customizr extends rcube_plugin
             || !empty($this->custom_logo_login)
             || !empty($this->watermark_uri)
             || !empty($this->watermark_image)
+            || !empty($this->custom_sidebar_bg)
+            || !empty($this->custom_topbar_bg)
+            || !empty($this->custom_compose_bg)
         ) {
             $this->add_hook('render_page', array($this, 'render_page'));
             $this->register_action('plugin.watermark', array($this, 'watermark_page'));
@@ -173,6 +182,9 @@ class customizr extends rcube_plugin
             'custom_logo_login',
             'custom_stylesheet',
             'custom_css',
+            'custom_sidebar_bg',
+            'custom_topbar_bg',
+            'custom_compose_bg',
         ];
 
         // Only register section if at least one option is not locked via dont_override
@@ -255,6 +267,54 @@ class customizr extends rcube_plugin
                 $input->show($value) . $file_input . $upload_btn . $clear_btn
             ) .
             $preview_box .
+            $desc
+        );
+    }
+
+    /**
+     * Helper to render a color setting field with color picker, text input, and clear button.
+     */
+    private function render_color_field($field_name, $field_id, $value, $title_label, $desc_text)
+    {
+        $value = trim((string)$value);
+        $escaped_val = htmlspecialchars($value, ENT_QUOTES);
+        $picker_val = (!empty($value) && preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) ? $value : '#ffffff';
+
+        $color_picker = html::tag('input', [
+            'type' => 'color',
+            'id' => $field_id . '_picker',
+            'value' => $picker_val,
+            'class' => 'form-control form-control-color customizr-color-picker',
+            'style' => 'width: 44px; height: 38px; padding: 2px; display: inline-block; vertical-align: middle; cursor: pointer;',
+            'onchange' => "customizr_handle_color_picker_change(this, '{$field_id}')",
+            'oninput' => "customizr_handle_color_picker_change(this, '{$field_id}')",
+        ]);
+
+        $input = new html_inputfield([
+            'name' => '_' . $field_name,
+            'id' => $field_id,
+            'size' => 12,
+            'class' => 'form-control font-monospace customizr-color-input',
+            'style' => 'width: 110px; display: inline-block; vertical-align: middle; margin-left: 8px; text-transform: uppercase;',
+            'placeholder' => '#RRGGBB',
+            'pattern' => '^#[0-9A-Fa-f]{6}$',
+            'oninput' => "customizr_handle_color_text_change(this, '{$field_id}')",
+        ]);
+
+        $clear_btn = html::tag('button', [
+            'type' => 'button',
+            'id' => $field_id . '_clear',
+            'class' => 'btn btn-outline-secondary btn-sm customizr-color-clear-btn',
+            'style' => 'margin-left: 6px; vertical-align: middle;',
+            'onclick' => "customizr_clear_color('{$field_id}')",
+        ], rcube::Q($this->gettext('clear_color')));
+
+        $desc = html::tag('div', ['class' => 'form-text text-muted small mt-1'], rcube::Q($desc_text));
+
+        return html::tag('div', ['class' => 'customizr-field-wrapper'],
+            html::tag('div', ['class' => 'customizr-controls-row'],
+                $color_picker . $input->show($value) . $clear_btn
+            ) .
             $desc
         );
     }
@@ -381,8 +441,74 @@ class customizr extends rcube_plugin
             ];
         }
 
-        // Inject client-side preview and upload script
+        // 8. Custom Sidebar Background
+        if (!in_array('custom_sidebar_bg', $dont_override)) {
+            $field_id = 'rcmfd_custom_sidebar_bg';
+            $value = $this->rcmail->config->get('custom_sidebar_bg', '');
+            $title = $this->gettext('custom_sidebar_bg');
+            $desc = $this->gettext('custom_sidebar_bg_desc');
+            $args['blocks']['customizr']['options']['custom_sidebar_bg'] = [
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_color_field('custom_sidebar_bg', $field_id, $value, $title, $desc),
+            ];
+        }
+
+        // 9. Custom Topbar Background
+        if (!in_array('custom_topbar_bg', $dont_override)) {
+            $field_id = 'rcmfd_custom_topbar_bg';
+            $value = $this->rcmail->config->get('custom_topbar_bg', '');
+            $title = $this->gettext('custom_topbar_bg');
+            $desc = $this->gettext('custom_topbar_bg_desc');
+            $args['blocks']['customizr']['options']['custom_topbar_bg'] = [
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_color_field('custom_topbar_bg', $field_id, $value, $title, $desc),
+            ];
+        }
+
+        // 10. Custom Compose Button Background
+        if (!in_array('custom_compose_bg', $dont_override)) {
+            $field_id = 'rcmfd_custom_compose_bg';
+            $value = $this->rcmail->config->get('custom_compose_bg', '');
+            $title = $this->gettext('custom_compose_bg');
+            $desc = $this->gettext('custom_compose_bg_desc');
+            $args['blocks']['customizr']['options']['custom_compose_bg'] = [
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_color_field('custom_compose_bg', $field_id, $value, $title, $desc),
+            ];
+        }
+
+        // Inject client-side preview, color picker sync, and upload script
         $script = <<<JS
+function customizr_handle_color_picker_change(picker, textId) {
+    var textInput = document.getElementById(textId);
+    if (textInput && picker) {
+        textInput.value = picker.value.toUpperCase();
+        textInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function customizr_handle_color_text_change(textInput, textId) {
+    var picker = document.getElementById(textId + '_picker');
+    if (picker && textInput) {
+        var val = textInput.value.trim();
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            picker.value = val;
+        }
+    }
+}
+
+function customizr_clear_color(textId) {
+    var textInput = document.getElementById(textId);
+    var picker = document.getElementById(textId + '_picker');
+    if (textInput) {
+        textInput.value = '';
+        textInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (picker) {
+        picker.value = '#ffffff';
+    }
+}
+
 function customizr_update_preview(fieldId, url) {
     var img = document.getElementById(fieldId + '_preview');
     var empty = document.getElementById(fieldId + '_empty');
@@ -597,6 +723,26 @@ JS;
             $args['prefs']['custom_css'] = $css_val;
         }
 
+        $color_fields = [
+            'custom_sidebar_bg',
+            'custom_topbar_bg',
+            'custom_compose_bg',
+        ];
+
+        foreach ($color_fields as $field) {
+            if (!in_array($field, $dont_override)) {
+                $val = trim((string) rcube_utils::get_input_value('_' . $field, rcube_utils::INPUT_POST));
+                if ($val === '') {
+                    $val = trim((string) rcube_utils::get_input_value($field, rcube_utils::INPUT_POST));
+                }
+                if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
+                    $args['prefs'][$field] = $val;
+                } else {
+                    $args['prefs'][$field] = '';
+                }
+            }
+        }
+
         return $args;
     }
 
@@ -664,6 +810,22 @@ JS;
         // inject custom inline CSS rules before </head>
         if (!empty($this->custom_css_inline)) {
             $css_tag = html::tag('style', array('type' => 'text/css'), "\n" . $this->custom_css_inline . "\n");
+            $args['content'] = preg_replace('!(</head>)!i', $css_tag . "\n\\1", $args['content']);
+        }
+
+        // inject custom colors (sidebar, topbar, compose button)
+        $color_css = '';
+        if (!empty($this->custom_sidebar_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_sidebar_bg)) {
+            $color_css .= "#layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($this->custom_sidebar_bg, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($this->custom_topbar_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_topbar_bg)) {
+            $color_css .= ".header, #layout div > .header, #layout > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($this->custom_topbar_bg, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($this->custom_compose_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_compose_bg)) {
+            $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($this->custom_compose_bg, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($color_css)) {
+            $css_tag = html::tag('style', ['type' => 'text/css', 'id' => 'customizr-custom-colors'], "\n" . $color_css);
             $args['content'] = preg_replace('!(</head>)!i', $css_tag . "\n\\1", $args['content']);
         }
 

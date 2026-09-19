@@ -436,5 +436,18 @@ assert_true(strpos($css_classic, '.tb-label-count:empty') !== false, "classic tb
 // Count rendering assertions in JS
 assert_true(strpos($js_content, 'count > 0') !== false, "tb_label.js checks count > 0 before rendering badge");
 assert_true(strpos($js_content, 'target_mbox = "INBOX"') !== false, "tb_label.js routes sidebar label click to INBOX");
+assert_true(strpos($js_content, 'tb-label-delete-btn') !== false, "tb_label.js renders tb-label-delete-btn for deleting labels");
+assert_true(strpos($js_content, 'rcm_tb_label_count_local_messages') !== false, "tb_label.js defines rcm_tb_label_count_local_messages helper");
+
+assert_true(strpos($css_content, '.tb-label-delete-btn') !== false, "elastic tb_label.css styles .tb-label-delete-btn");
+assert_true(strpos($css_larry, '.tb-label-delete-btn') !== false, "larry tb_label.css styles .tb-label-delete-btn");
+assert_true(strpos($css_classic, '.tb-label-delete-btn') !== false, "classic tb_label.css styles .tb-label-delete-btn");
+
+// Test session cache invalidation on delete
+$_SESSION['tb_label_counts_test'] = ['data' => [1]];
+rcube_utils::$mock_inputs['key'] = 'LABEL5';
+$plugin->delete_label();
+assert_true(!isset($_SESSION['tb_label_counts_test']), "delete_label clears session count caches");
 
 echo "\n*** ALL THUNDERBIRD LABELS TESTS PASSED (100%) ***\n";
+

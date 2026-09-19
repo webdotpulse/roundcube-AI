@@ -271,11 +271,16 @@ ul.tb-labels-list li a::after,
 
 ul.tb-labels-list li.tb-label-item {
   margin-bottom: 1px;
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 ul.tb-labels-list li.tb-label-item a.tb-label-link {
   display: flex;
   align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 6px 12px;
   border-radius: 0 16px 16px 0;
   text-decoration: none;
@@ -285,6 +290,41 @@ ul.tb-labels-list li.tb-label-item a.tb-label-link {
   transition: background-color 0.15s ease, color 0.15s ease;
   position: relative;
   cursor: pointer;
+}
+
+.tb-label-delete-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #5f6368;
+  font-size: 16px;
+  line-height: 1;
+  padding: 3px 6px;
+  margin-right: 6px;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+ul.tb-labels-list li.tb-label-item:hover .tb-label-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tb-label-delete-btn:hover {
+  color: #d93025;
+  background-color: rgba(217, 48, 37, 0.12);
+}
+
+body.dark-mode .tb-label-delete-btn {
+  color: #9aa0a6;
+}
+
+body.dark-mode .tb-label-delete-btn:hover {
+  color: #f28b82;
+  background-color: rgba(242, 139, 130, 0.16);
 }
 
 body.dark-mode ul.tb-labels-list li.tb-label-item a.tb-label-link {

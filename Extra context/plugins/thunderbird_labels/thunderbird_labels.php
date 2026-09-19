@@ -616,16 +616,83 @@ class thunderbird_labels extends rcube_plugin
 			$counts = $_SESSION[$cache_key]['data'];
 		} else {
 			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+			if (empty($custom_labels) || isset($custom_labels[3])) {
+				$custom_labels = array(
+					'LABEL0' => $this->getText('label0'),
+					'LABEL1' => $this->getText('label1'),
+					'LABEL2' => $this->getText('label2'),
+					'LABEL3' => $this->getText('label3'),
+					'LABEL4' => $this->getText('label4'),
+					'LABEL5' => $this->getText('label5')
+				);
+			}
+
+			$prev_folder = $this->rc->storage->get_folder();
+
 			foreach ($custom_labels as $key => $name) {
 				if ($key === 'LABEL0') continue;
 				try {
-					$search_criteria = "OR KEYWORD \${$key} KEYWORD {$key}";
+					$num = null;
+					if (preg_match('/^LABEL([0-9]+)$/i', $key, $m)) {
+						$num = $m[1];
+					} elseif (is_numeric($key)) {
+						$num = $key;
+					}
+
+					if ($num !== null) {
+						$keywords = array(
+							"\$Label{$num}",
+							"\$label{$num}",
+							"\$LABEL{$num}",
+							"Label{$num}",
+							"label{$num}",
+							"LABEL{$num}",
+						);
+					} else {
+						$keywords = array(
+							"\${$key}",
+							"\$" . ucfirst(strtolower($key)),
+							"\$" . strtolower($key),
+							$key,
+							ucfirst(strtolower($key)),
+							strtolower($key),
+						);
+					}
+					$keywords = array_values(array_unique($keywords));
+					$search_criteria = 'KEYWORD ' . array_pop($keywords);
+					while (!empty($keywords)) {
+						$kw = array_pop($keywords);
+						$search_criteria = "OR KEYWORD {$kw} ({$search_criteria})";
+					}
+
 					$res = $this->rc->storage->search_once($mbox, $search_criteria);
-					$counts[$key] = $res ? $res->count() : 0;
+					if ($res) {
+						if (method_exists($res, 'count')) {
+							$count = (int) $res->count();
+						} elseif (method_exists($res, 'count_messages')) {
+							$count = (int) $res->count_messages();
+						} elseif (method_exists($res, 'get') && is_array($res->get())) {
+							$count = count($res->get());
+						} elseif (is_countable($res)) {
+							$count = count($res);
+						} else {
+							$count = 0;
+						}
+					} else {
+						$count = 0;
+					}
+					$counts[$key] = $count;
 				} catch (\Exception $e) {
 					$counts[$key] = 0;
 				}
 			}
+
+			if ($prev_folder && $prev_folder !== $mbox) {
+				try {
+					$this->rc->storage->set_folder($prev_folder);
+				} catch (\Exception $e) {}
+			}
+
 			$_SESSION[$cache_key] = array(
 				'_ts' => time(),
 				'data' => $counts,
@@ -741,7 +808,24 @@ class thunderbird_labels extends rcube_plugin
 		$key = trim(rcube_utils::get_input_value('key', rcube_utils::INPUT_POST, true));
 		if ($key && $key !== 'LABEL0') {
 			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
-			$colors = (array) $this->rc->config->get('tb_label_colors', array());
+			if (empty($custom_labels) || isset($custom_labels[3])) {
+				$custom_labels = array(
+					'LABEL0' => $this->getText('label0'),
+					'LABEL1' => $this->getText('label1'),
+					'LABEL2' => $this->getText('label2'),
+					'LABEL3' => $this->getText('label3'),
+					'LABEL4' => $this->getText('label4'),
+					'LABEL5' => $this->getText('label5')
+				);
+			}
+			$default_colors = array(
+				'LABEL1' => '#d93025',
+				'LABEL2' => '#e37400',
+				'LABEL3' => '#f29900',
+				'LABEL4' => '#188038',
+				'LABEL5' => '#129eaf',
+			);
+			$colors = array_merge($default_colors, (array) $this->rc->config->get('tb_label_colors', array()));
 
 			if (isset($custom_labels[$key])) {
 				unset($custom_labels[$key]);
@@ -751,6 +835,15 @@ class thunderbird_labels extends rcube_plugin
 					'tb_label_custom_labels' => $custom_labels,
 					'tb_label_colors' => $colors,
 				));
+
+				// Invalidate all session count caches
+				if (!empty($_SESSION) && is_array($_SESSION)) {
+					foreach ($_SESSION as $k => $v) {
+						if (strpos($k, 'tb_label_counts_') === 0) {
+							unset($_SESSION[$k]);
+						}
+					}
+				}
 
 				$this->rc->output->command('plugin.thunderbird_labels.label_deleted', array(
 					'key' => $key,
@@ -762,3 +855,4 @@ class thunderbird_labels extends rcube_plugin
 		$this->rc->output->send();
 	}
 }
+

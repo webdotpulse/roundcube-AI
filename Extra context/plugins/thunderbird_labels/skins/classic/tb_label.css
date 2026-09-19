@@ -263,14 +263,47 @@ ul.tb-labels-list li a::after,
   display: none !important;
 }
 
+ul.tb-labels-list li.tb-label-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 ul.tb-labels-list li.tb-label-item a.tb-label-link {
   display: flex;
   align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
   padding: 5px 10px;
   border-radius: 0 14px 14px 0;
   text-decoration: none;
   color: #333;
   font-size: 12px;
+}
+
+.tb-label-delete-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 5px;
+  margin-right: 4px;
+  cursor: pointer;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+ul.tb-labels-list li.tb-label-item:hover .tb-label-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tb-label-delete-btn:hover {
+  color: #c00;
+  background-color: rgba(204, 0, 0, 0.12);
 }
 
 ul.tb-labels-list li.tb-label-item a.tb-label-link:hover {

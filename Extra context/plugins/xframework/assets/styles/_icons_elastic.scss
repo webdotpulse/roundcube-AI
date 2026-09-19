@@ -12,7 +12,8 @@
         &.settings:before,
         &.button-settings:before { @include icons.icon(icons_map.$gear); }
         &.help:before { @include icons.icon(icons_map.$help); }
-        &.logout:before { @include icons.icon(icons_map.$logout); }
+        &.logout:before,
+        &.button-logout:before { @include icons.icon(icons_map.$logout); }
         &.about:before { @include icons.icon(icons_map.$information); }
         &.refresh:before { @include icons.icon(icons_map.$refresh); }
         &.compose:before { @include icons.icon(icons_map.$create); }

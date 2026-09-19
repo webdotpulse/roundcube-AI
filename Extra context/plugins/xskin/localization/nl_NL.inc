@@ -36,5 +36,12 @@ $labels['font_size_xl'] = 'Grootste';
 $labels['setting_thick_font'] = 'Dik lettertype';
 $labels['setting_font_family'] = 'Lettertype familie';
 $labels['setting_color'] = 'Kleur';
+$labels['setting_custom_sidebar_bg'] = 'Achtergrondkleur zijbalk';
+$labels['setting_custom_sidebar_bg_desc'] = 'Aangepaste achtergrondkleur voor de zijbalk en mappenlijst (bijv. #2c3e50). Leeg laten voor standaard.';
+$labels['setting_custom_topbar_bg'] = 'Achtergrondkleur bovenbalk';
+$labels['setting_custom_topbar_bg_desc'] = 'Aangepaste achtergrondkleur voor de bovenste navigatiebalk (bijv. #ffffff). Leeg laten voor standaard.';
+$labels['setting_custom_compose_bg'] = 'Achtergrondkleur opstelknop';
+$labels['setting_custom_compose_bg_desc'] = 'Aangepaste achtergrondkleur voor de knop Nieuw bericht opstellen (bijv. #1a73e8). Leeg laten voor standaard.';
+$labels['clear_color'] = 'Wissen';
 $labels['save_hint'] = 'Vergeet niet uw instellingen op te slaan door op de knop "Opslaan" hieronder te klikken.';
 

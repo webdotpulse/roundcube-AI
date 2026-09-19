@@ -36,5 +36,12 @@ $labels['font_size_xl'] = 'Le plus grand';
 $labels['setting_thick_font'] = 'Police épaisse';
 $labels['setting_font_family'] = 'Famille de police';
 $labels['setting_color'] = 'Couleur';
+$labels['setting_custom_sidebar_bg'] = 'Couleur de fond de la barre latérale';
+$labels['setting_custom_sidebar_bg_desc'] = 'Couleur de fond personnalisée pour la barre latérale et la liste des dossiers (ex. #2c3e50). Laisser vide pour la valeur par défaut.';
+$labels['setting_custom_topbar_bg'] = 'Couleur de fond de la barre supérieure';
+$labels['setting_custom_topbar_bg_desc'] = 'Couleur de fond personnalisée pour l\'en-tête et la barre de navigation supérieure (ex. #ffffff). Laisser vide pour la valeur par défaut.';
+$labels['setting_custom_compose_bg'] = 'Couleur de fond du bouton Écrire';
+$labels['setting_custom_compose_bg_desc'] = 'Couleur de fond personnalisée pour le bouton de rédaction (ex. #1a73e8). Laisser vide pour la valeur par défaut.';
+$labels['clear_color'] = 'Effacer';
 $labels['save_hint'] = 'N\'oubliez pas de sauvegarder vos paramètres en cliquant sur le bouton \'Enregistrer\' ci-dessous.';
 

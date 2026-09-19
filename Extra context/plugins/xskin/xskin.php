@@ -42,6 +42,9 @@ class xskin extends XFramework\Plugin
         'disable_menu_colors' => ['type' => 'bool', 'default' => false],
         'disable_remote_skin_fonts' => ['type' => 'bool', 'default' => false],
         'fix_plugins' => ['type' => 'array', 'default' => []],
+        'custom_sidebar_bg' => ['type' => 'string', 'default' => ''],
+        'custom_topbar_bg' => ['type' => 'string', 'default' => ''],
+        'custom_compose_bg' => ['type' => 'string', 'default' => ''],
     ];
 
     /**
@@ -83,9 +86,15 @@ class xskin extends XFramework\Plugin
         // include scripts (doing it here so the quick skin change works in elastic/larry)
         $this->includeAsset('assets/scripts/xskin.min.js');
 
-        // return if we're not running a Roundcube Plus skin (but add custom css so it applies to all skins)
+        // return if we're not running a Roundcube Plus skin (but add custom css and colors so it applies to all skins)
         if (!$this->rcpSkin) {
             $this->includeCustomCss();
+            $this->add_hook('render_page', [$this, $this->elastic ? 'elasticRenderPage' : 'larryRenderPage']);
+            if ($this->rcmail->task == 'settings') {
+                $this->add_hook('preferences_sections_list', [$this, 'preferencesSectionsList']);
+                $this->add_hook('preferences_list', [$this, 'preferencesList']);
+                $this->add_hook('preferences_save', [$this, 'preferencesSave']);
+            }
             return;
         }
 
@@ -273,6 +282,7 @@ class xskin extends XFramework\Plugin
     public function elasticRenderPage($arg)
     {
         $this->addLoginRcpBranding($arg);
+        $this->injectCustomColors($arg);
         return $arg;
     }
 
@@ -292,7 +302,39 @@ class xskin extends XFramework\Plugin
             $this->larryModifyPageHtml($arg);
         }
 
+        $this->injectCustomColors($arg);
+
         return $arg;
+    }
+
+    /**
+     * Injects custom background colors for sidebar, topbar, and compose button.
+     */
+    public function injectCustomColors(array &$arg): void
+    {
+        if (str_contains($arg['content'], 'id="customizr-custom-colors"') || str_contains($arg['content'], 'id="xskin-custom-colors"')) {
+            return;
+        }
+
+        $sidebar = $this->rcmail->config->get('custom_sidebar_bg');
+        $topbar = $this->rcmail->config->get('custom_topbar_bg');
+        $compose = $this->rcmail->config->get('custom_compose_bg');
+
+        $color_css = '';
+        if (!empty($sidebar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $sidebar)) {
+            $color_css .= "#layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist { background-color: " . htmlspecialchars($sidebar, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($topbar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $topbar)) {
+            $color_css .= ".header, #layout div > .header, #layout > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($topbar, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($compose) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose)) {
+            $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($compose, ENT_QUOTES) . " !important; }\n";
+        }
+
+        if (!empty($color_css)) {
+            $css_tag = html::tag('style', ['type' => 'text/css', 'id' => 'xskin-custom-colors'], "\n" . $color_css);
+            $arg['content'] = preg_replace('!(</head>)!i', $css_tag . "\n\\1", $arg['content']);
+        }
     }
 
     /**
@@ -573,6 +615,47 @@ class xskin extends XFramework\Plugin
             $pref->html($html, 'xskin_color');
         }
 
+        $colorFields = [
+            'custom_sidebar_bg' => 'setting_custom_sidebar_bg',
+            'custom_topbar_bg' => 'setting_custom_topbar_bg',
+            'custom_compose_bg' => 'setting_custom_compose_bg',
+        ];
+        foreach ($colorFields as $field => $labelKey) {
+            if (!$this->getDontOverride($field)) {
+                $val = (string)$this->rcmail->config->get($field, '');
+                $escapedVal = htmlspecialchars($val, ENT_QUOTES);
+                $pickerVal = (!empty($val) && preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) ? $val : '#ffffff';
+                $html = html::tag('input', [
+                    'type' => 'color',
+                    'id' => $field . '_picker',
+                    'value' => $pickerVal,
+                    'class' => 'form-control form-control-color',
+                    'style' => 'width: 44px; height: 38px; padding: 2px; display: inline-block; vertical-align: middle; cursor: pointer;',
+                    'onchange' => "document.getElementById('{$field}').value = this.value.toUpperCase();",
+                    'oninput' => "document.getElementById('{$field}').value = this.value.toUpperCase();",
+                ]);
+                $html .= html::tag('input', [
+                    'type' => 'text',
+                    'id' => $field,
+                    'name' => $field,
+                    'value' => $escapedVal,
+                    'class' => 'form-control font-monospace',
+                    'style' => 'width: 110px; display: inline-block; vertical-align: middle; margin-left: 8px; text-transform: uppercase;',
+                    'placeholder' => '#RRGGBB',
+                    'pattern' => '^#[0-9A-Fa-f]{6}$',
+                    'oninput' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; }",
+                ]);
+                $html .= html::tag('button', [
+                    'type' => 'button',
+                    'class' => 'btn btn-outline-secondary btn-sm',
+                    'style' => 'margin-left: 6px; vertical-align: middle;',
+                    'onclick' => "document.getElementById('{$field}').value = ''; document.getElementById('{$field}_picker').value = '#ffffff';",
+                ], rcube::Q($this->gettext('clear_color')));
+
+                $pref->html($html, $field, $this->gettext($labelKey), $this->gettext($labelKey . '_desc'));
+            }
+        }
+
         $pref->html(
             html::span(['class' => 'xskin-settings-save-hint'], $this->gettext('save_hint')) .
             "<script>xskin.updateIFrameClasses();</script>",
@@ -598,8 +681,21 @@ class xskin extends XFramework\Plugin
             $arg, $this->configSchema,
             ["xskin_icons_$this->skin", "xskin_list_icons_$this->skin", "xskin_button_icons_$this->skin",
                 "xskin_font_family_$this->skin", "xskin_font_size_$this->skin", "xskin_thick_font_$this->skin",
-                "xskin_color_$this->skin"]
+                "xskin_color_$this->skin", "custom_sidebar_bg", "custom_topbar_bg", "custom_compose_bg"]
         );
+
+        foreach (['custom_sidebar_bg', 'custom_topbar_bg', 'custom_compose_bg'] as $colorField) {
+            $val = trim((string)\rcube_utils::get_input_value($colorField, \rcube_utils::INPUT_POST));
+            if ($val === '') {
+                $val = trim((string)\rcube_utils::get_input_value('_' . $colorField, \rcube_utils::INPUT_POST));
+            }
+            if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
+                $arg['prefs'][$colorField] = $val;
+            } elseif ($val === '') {
+                $arg['prefs'][$colorField] = '';
+            }
+        }
+
         $this->addClasses();
 
         return $arg;
