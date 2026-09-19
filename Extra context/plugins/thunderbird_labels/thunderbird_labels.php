@@ -69,7 +69,7 @@ class thunderbird_labels extends rcube_plugin
 			// JS function "set_flags" => PHP function "set_flags"
 			$this->register_action('plugin.thunderbird_labels.set_flags', array($this, 'set_flags'));
 			$this->register_action('plugin.thunderbird_labels.get_counts', array($this, 'get_counts'));
-			$this->register_action('plugin.thunderbird_labels.add_label', array($this, 'add_label'));
+			$this->register_action('plugin.thunderbird_labels.add_label', array($this, 'action_add_label'));
 			$this->register_action('plugin.thunderbird_labels.update_label', array($this, 'update_label'));
 			$this->register_action('plugin.thunderbird_labels.delete_label', array($this, 'delete_label'));
 
@@ -637,7 +637,7 @@ class thunderbird_labels extends rcube_plugin
 	/**
 	 * Adds a new custom label with name and color
 	 */
-	public function add_label()
+	public function action_add_label()
 	{
 		$name = trim(rcube_utils::get_input_value('name', rcube_utils::INPUT_POST, true));
 		$color = trim(rcube_utils::get_input_value('color', rcube_utils::INPUT_POST, true));

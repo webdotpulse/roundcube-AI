@@ -333,7 +333,7 @@ echo "\n--- Test 4: Dynamic Label Management (add, update, delete) ---\n";
 // Add new label
 rcube_utils::$mock_inputs['name'] = '4: notification';
 rcube_utils::$mock_inputs['color'] = '#188038';
-$plugin->add_label();
+$plugin->action_add_label();
 
 $saved_labels = $rcmail->config->get('tb_label_custom_labels');
 $saved_colors = $rcmail->config->get('tb_label_colors');
