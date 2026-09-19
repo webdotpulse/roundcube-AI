@@ -104,43 +104,62 @@ Directly above the message body for rapid on-demand commands:
 
 ## Installation
 
-### Option 1: Git Clone (Recommended)
+### Option 1: Composer (Recommended — Installs All Skins & Plugins)
+
+On a fresh or existing Roundcube installation, run the following from your Roundcube root directory:
+
+#### 1. Register the repository in Roundcube's Composer
+```bash
+cd /path/to/roundcube/
+composer config repositories.roundcube-ai vcs https://github.com/webdotpulse/roundcube-AI.git
+```
+
+#### 2. Require the package
+```bash
+composer require "webdotpulse/roundcube-ai:dev-main"
+```
+
+> [!TIP]
+> **Automatic Extra Content Deployment:** When Composer completes, the bundled installer automatically deploys all skins and companion plugins directly into your Roundcube installation:
+> - **Skin:** GMail+ deployed to `skins/gmail_plus`
+> - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
+> - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, and `plugins/thunderbird_labels`
+> - Default configuration files (`config.inc.php`) are safely initialized from `.dist` and `.sample` files without overwriting any existing settings.
+
+#### 3. Enable Skin & Plugins in Roundcube
+You can automatically register the skin and plugins in `config/config.inc.php` using the built-in activation helper:
+```bash
+php plugins/roundcube_ai/bin/install-extra.php --activate
+```
+
+Or manually configure your `config/config.inc.php`:
+```php
+// Set GMail+ as active skin
+$config['skin'] = 'gmail_plus';
+
+// Activate plugins (xskin must be loaded before other Roundcube Plus plugins)
+$config['plugins'] = [
+    'xskin',
+    'customizr',
+    'thread_drafts',
+    'thunderbird_labels',
+    'roundcube_ai', // or 'lifeprisma_ai'
+];
+```
+
+---
+
+### Option 2: Git Clone (Manual Installation)
 
 ```bash
 cd /path/to/roundcube/plugins/
 git clone https://github.com/webdotpulse/roundcube-AI.git lifeprisma_ai
 cd lifeprisma_ai
 cp config.inc.php.dist config.inc.php
+
+# Deploy bundled skins and companion plugins
+php bin/install-extra.php --activate
 ```
-
-Enable the plugin in Roundcube's main configuration (`config/config.inc.php`):
-
-```php
-$config['plugins'] = [
-    // ... other plugins
-    'roundcube-labels', // optional companion plugin
-    'lifeprisma_ai',
-];
-```
-
-### Option 2: Composer
-
-```bash
-cd /path/to/roundcube/
-composer require webdotpulse/roundcube-ai
-```
-
-> [!TIP]
-> **Automatic Extra Content Installation:** When running `composer install` or `composer require`, all bundled extra content is automatically deployed into your Roundcube environment:
-> - **Skins:** GMail+ (`skins/gmail_plus`)
-> - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
-> - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, and `plugins/thunderbird_labels`
-> - Default configuration files (`config.inc.php`) are safely initialized without overwriting existing settings.
->
-> You can also run or re-run the installer at any time:
-> ```bash
-> php plugins/lifeprisma_ai/bin/install-extra.php --activate
-> ```
 
 ---
 
