@@ -275,10 +275,44 @@ function lpai_format_size(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 }
 
+function lpai_resolve_label_info(flag) {
+    if (!flag) return null;
+    var numMatch = String(flag).match(/\$?Label([0-9]+)/i);
+    var key = numMatch ? ('LABEL' + numMatch[1]) : String(flag).toUpperCase();
+    var idx = numMatch ? numMatch[1] : '1';
+
+    var customLabels = (window.rcmail && rcmail.env && rcmail.env.tb_label_custom_labels) || {};
+    var customColors = (window.rcmail && rcmail.env && rcmail.env.tb_label_colors) || {};
+
+    if (customLabels[key]) {
+        var rawName = customLabels[key];
+        var name = (rawName && rawName !== key && !/^LABEL[0-9]+$/i.test(rawName)) ? rawName : (LPAI_LABEL_DEF[flag] ? LPAI_LABEL_DEF[flag].name : key);
+        var color = customColors[key] || (LPAI_LABEL_DEF[flag] ? LPAI_LABEL_DEF[flag].color : '#1a73e8');
+        return {
+            name: name,
+            color: color,
+            bg: color + '22',
+            class: 'label-' + idx
+        };
+    }
+
+    if (LPAI_LABEL_DEF[flag]) {
+        return LPAI_LABEL_DEF[flag];
+    }
+
+    return {
+        name: key,
+        color: '#1a73e8',
+        bg: '#e8f0fe',
+        class: 'label-' + idx
+    };
+}
+
 function lpai_sync_message_row_label(uid, labelFlag) {
     if (!uid || !labelFlag) return;
-    var info = LPAI_LABEL_DEF[labelFlag];
-    if (!info) return;
+    var flags = Array.isArray(labelFlag) ? labelFlag : [labelFlag];
+    flags = flags.filter(Boolean);
+    if (!flags.length) return;
 
     var docs = [document];
     try {
@@ -294,21 +328,32 @@ function lpai_sync_message_row_label(uid, labelFlag) {
         var row = doc.getElementById('rcmrow' + uid);
         if (!row) return;
 
-        row.classList.add(info.class);
+        // Clear any previous badges to allow fresh multi-label rendering
+        var existingBadges = row.querySelectorAll('.lpai-row-label-badge');
+        existingBadges.forEach(function(b) { b.remove(); });
 
         var subjectCell = row.querySelector('td.subject') || row.querySelector('.subject') || row;
-        if (subjectCell && !row.querySelector('.lpai-row-label-badge')) {
+        if (!subjectCell) return;
+
+        var insertTarget = subjectCell.querySelector('a') || subjectCell.firstChild;
+
+        flags.forEach(function(flag) {
+            var info = lpai_resolve_label_info(flag);
+            if (!info) return;
+
+            row.classList.add(info.class);
+
             var badge = doc.createElement('span');
             badge.className = 'lpai-row-label-badge ' + info.class;
-            badge.style.cssText = 'display:inline-block;padding:1px 6px;margin-right:6px;border-radius:4px;font-size:11px;font-weight:600;color:' + info.color + ';background:' + info.bg + ';line-height:14px;vertical-align:middle;';
+            badge.style.cssText = 'display:inline-block;padding:1px 6px;margin-right:4px;border-radius:4px;font-size:11px;font-weight:600;color:' + info.color + ';background:' + info.bg + ';border:1px solid ' + info.color + '44;line-height:14px;vertical-align:middle;';
             badge.innerText = info.name;
-            var insertTarget = subjectCell.querySelector('a') || subjectCell.firstChild;
+
             if (insertTarget) {
                 subjectCell.insertBefore(badge, insertTarget);
             } else {
                 subjectCell.appendChild(badge);
             }
-        }
+        });
     });
 }
 
@@ -508,8 +553,8 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
 
     // Label badge (roundcube-labels sync)
     var labelHtml = '';
-    if (assignedLabel && LPAI_LABEL_DEF[assignedLabel]) {
-        var lInfo = LPAI_LABEL_DEF[assignedLabel];
+    var lInfo = lpai_resolve_label_info(assignedLabel);
+    if (lInfo) {
         labelHtml = '<span class="lpai-category-badge lpai-label-badge" style="background:' + lInfo.bg + ';color:' + lInfo.color + ';border:1px solid ' + lInfo.color + '40;" title="Synced via roundcube-labels (' + assignedLabel + ')">&#127991; ' + lpai_escape_html(lInfo.name) + '</span>';
         lpai_sync_message_row_label(rcmail.env.uid, assignedLabel);
     }

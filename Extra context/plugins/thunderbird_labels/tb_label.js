@@ -29,14 +29,19 @@ var escape_jquery_selector,
   rcm_tb_label_clear_filter_ui,
   rcm_tb_label_clear_filter,
   rcm_tb_label_show_add_modal,
+  rcm_tb_label_show_filter_modal,
+  rcm_tb_label_render_filter_rules_table,
+  rcm_tb_label_init_filters,
   rcm_tb_label_fetch_counts,
   rcm_tb_label_update_count,
   rcm_tb_label_count_local_messages,
   rcm_tb_label_update_popup_menu,
   TB_LABEL_TAG_SVG,
+  TB_FILTER_ICON_SVG,
   slice = [].slice;
 
 TB_LABEL_TAG_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M17.63 5.84C17.27 5.33 16.67 5 16 5L5 5.01C3.9 5.01 3 5.9 3 7v10c0 1.1.9 1.99 2 1.99L16 19c.67 0 1.27-.33 1.63-.84L22 12l-4.37-6.16z"/></svg>';
+TB_FILTER_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>';
 
 rcm_tb_label_count_local_messages = function (labelKey) {
   var count = 0;
@@ -356,11 +361,15 @@ rcm_tb_label_init_sidebar = function () {
 
   var labels_title = (rcmail.labels && rcmail.labels["thunderbird_labels.labels_title"]) || "Labels";
   var add_label_title = (rcmail.labels && rcmail.labels["thunderbird_labels.add_label"]) || "Create new label";
+  var filter_rules_title = (rcmail.labels && rcmail.labels["thunderbird_labels.filter_rules"]) || "Filter Rules";
 
   var html = '<div id="tb-labels-sidebar" class="tb-labels-sidebar">' +
              '  <div class="tb-labels-header">' +
              '    <span class="tb-labels-title">' + rcm_tb_label_escape_html(labels_title) + '</span>' +
-             '    <button type="button" class="tb-labels-add-btn" id="tb-labels-add-btn" title="' + rcm_tb_label_escape_html(add_label_title) + '" aria-label="' + rcm_tb_label_escape_html(add_label_title) + '">+</button>' +
+             '    <div class="tb-labels-header-actions">' +
+             '      <button type="button" class="tb-labels-filter-btn" id="tb-labels-filter-btn" title="' + rcm_tb_label_escape_html(filter_rules_title) + '" aria-label="' + rcm_tb_label_escape_html(filter_rules_title) + '">' + TB_FILTER_ICON_SVG + '</button>' +
+             '      <button type="button" class="tb-labels-add-btn" id="tb-labels-add-btn" title="' + rcm_tb_label_escape_html(add_label_title) + '" aria-label="' + rcm_tb_label_escape_html(add_label_title) + '">+</button>' +
+             '    </div>' +
              '  </div>' +
              '  <ul id="tb-labels-list" class="tb-labels-list" role="tree"></ul>' +
              '</div>';
@@ -378,6 +387,13 @@ rcm_tb_label_init_sidebar = function () {
     e.preventDefault();
     e.stopPropagation();
     rcm_tb_label_show_add_modal();
+  });
+
+  // Add click listener to filter rules button
+  $("#tb-labels-filter-btn").off("click").on("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    rcm_tb_label_show_filter_modal();
   });
 
   // When clicking on mailboxlist folder, clear active label filter UI
@@ -410,14 +426,14 @@ rcm_tb_label_render_sidebar_items = function () {
     var count = 0;
     if (counts && typeof counts[key] !== "undefined") {
       var parsed = parseInt(counts[key], 10);
-      count = (!isNaN(parsed) && parsed >= 0) ? parsed : 0;
+      count = (!isNaN(parsed) && parsed > 0) ? parsed : 0;
     } else {
       count = rcm_tb_label_count_local_messages(key);
     }
     var is_active = rcmail.env.tb_label_active_filter === key;
 
     // Show "0" explicitly when there is nothing to show
-    var display_count = (typeof count === "number" && !isNaN(count) && count >= 0) ? count : 0;
+    var display_count = (typeof count === "number" && !isNaN(count) && count > 0) ? count : 0;
     var count_html = '<span class="tb-label-count">' + display_count + '</span>';
 
     var item = $(
@@ -681,6 +697,340 @@ rcm_tb_label_show_add_modal = function () {
 };
 
 // ==========================================
+// Incoming Mail Filter Rules Modal & Table
+// ==========================================
+
+rcm_tb_label_show_filter_modal = function (ruleToEdit) {
+  $("#tb-filter-modal").remove();
+
+  var isEdit = !!(ruleToEdit && ruleToEdit.id);
+  var modal_title = isEdit
+    ? ((rcmail.labels && rcmail.labels["thunderbird_labels.edit_filter_rule"]) || "Edit Filter Rule")
+    : ((rcmail.labels && rcmail.labels["thunderbird_labels.add_filter_rule"]) || "New Filter Rule");
+
+  var ruleName = ruleToEdit ? (ruleToEdit.name || "") : "";
+  var ruleScope = ruleToEdit ? (ruleToEdit.scope || "all") : "all";
+  var ruleEnabled = ruleToEdit ? (ruleToEdit.enabled !== false) : true;
+  var ruleConditions = (ruleToEdit && Array.isArray(ruleToEdit.conditions) && ruleToEdit.conditions.length)
+    ? ruleToEdit.conditions
+    : [{ field: "subject", operator: "contains", value: "" }];
+
+  var ruleActions = (ruleToEdit && ruleToEdit.actions) || {};
+  var selectedLabels = Array.isArray(ruleActions.labels) ? ruleActions.labels : (ruleActions.label ? [ruleActions.label] : []);
+  var targetFolder = ruleActions.folder || "";
+  var markRead = !!ruleActions.mark_read;
+
+  var customLabels = (rcmail.env && rcmail.env.tb_label_custom_labels) || {};
+  var labelColors = (rcmail.env && rcmail.env.tb_label_colors) || {};
+  var mailFolders = (rcmail.env && rcmail.env.tb_label_mail_folders) || [];
+
+  // Build labels checklist HTML (supports MULTIPLE labels!)
+  var labelsHtml = "";
+  $.each(customLabels, function (k, val) {
+    if (k === "LABEL0") return;
+    var dName = (val && val !== k && !/^LABEL[0-9]+$/i.test(val)) ? val : i18n_label(k);
+    var color = labelColors[k] || "#757575";
+    var checked = selectedLabels.indexOf(k) > -1 ? ' checked="checked"' : "";
+    labelsHtml += '<label class="tb-filter-label-chip" style="border-left: 3px solid ' + color + ';">' +
+      '<input type="checkbox" name="tb_filter_labels[]" value="' + k + '"' + checked + '> ' +
+      '<span class="tb-filter-chip-name">' + rcm_tb_label_escape_html(dName) + '</span>' +
+      '</label>';
+  });
+
+  // Build folders dropdown options
+  var folderOpts = '<option value="">-- Do not move --</option>';
+  if (Array.isArray(mailFolders)) {
+    mailFolders.forEach(function (f) {
+      var selected = (f === targetFolder) ? ' selected="selected"' : "";
+      folderOpts += '<option value="' + rcm_tb_label_escape_html(f) + '"' + selected + '>' + rcm_tb_label_escape_html(f) + '</option>';
+    });
+  }
+
+  var cancel_text = (rcmail.labels && rcmail.labels["thunderbird_labels.cancel"]) || "Cancel";
+  var save_text = (rcmail.labels && rcmail.labels["save"]) || "Save";
+
+  var modal = $(
+    '<div id="tb-filter-modal" class="tb-label-modal tb-filter-modal" role="dialog" aria-modal="true">' +
+      '<div class="tb-label-modal-backdrop"></div>' +
+      '<div class="tb-label-modal-dialog">' +
+        '<div class="tb-label-modal-header">' +
+          '<h4>' + rcm_tb_label_escape_html(modal_title) + '</h4>' +
+          '<button type="button" class="tb-modal-close" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div class="tb-label-modal-body">' +
+          '<div class="form-group">' +
+            '<label for="tb-filter-rule-name"><b>' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.rule_name"]) || "Rule Name") + ':</b></label>' +
+            '<input type="text" id="tb-filter-rule-name" class="form-control tb-input" autocomplete="off" value="' + rcm_tb_label_escape_html(ruleName) + '" placeholder="e.g. Work Invoices, VIP Client..." />' +
+          '</div>' +
+
+          '<div class="form-group">' +
+            '<label for="tb-filter-rule-scope"><b>' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.rule_scope"]) || "Conditions") + ':</b></label>' +
+            '<select id="tb-filter-rule-scope" class="form-control tb-select" style="margin-bottom: 10px;">' +
+              '<option value="all"' + (ruleScope === "all" ? ' selected="selected"' : "") + '>' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.rule_scope_all"]) || "Match ALL conditions (AND)") + '</option>' +
+              '<option value="any"' + (ruleScope === "any" ? ' selected="selected"' : "") + '>' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.rule_scope_any"]) || "Match ANY condition (OR)") + '</option>' +
+            '</select>' +
+            '<div id="tb-filter-conditions-list"></div>' +
+            '<button type="button" class="btn btn-sm btn-secondary" id="tb-filter-add-cond-btn" style="margin-top: 6px;">+ Add Condition</button>' +
+          '</div>' +
+
+          '<div class="form-group tb-filter-actions-group">' +
+            '<label><b>Actions:</b></label>' +
+            '<div style="margin-top: 6px;">' +
+              '<div style="font-size: 12px; font-weight: 600; margin-bottom: 4px; color: #5f6368;">' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.action_assign_labels"]) || "Assign label(s)") + ':</div>' +
+              '<div class="tb-filter-labels-checklist">' + labelsHtml + '</div>' +
+            '</div>' +
+
+            '<div style="margin-top: 12px;">' +
+              '<label for="tb-filter-target-folder" style="font-size: 12px; font-weight: 600; color: #5f6368;">' + rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.action_move_folder"]) || "Move to folder") + ':</label>' +
+              '<select id="tb-filter-target-folder" class="form-control tb-select">' + folderOpts + '</select>' +
+            '</div>' +
+
+            '<div style="margin-top: 10px;">' +
+              '<label class="tb-filter-checkbox-label">' +
+                '<input type="checkbox" id="tb-filter-mark-read"' + (markRead ? ' checked="checked"' : "") + '> ' +
+                rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.action_mark_read"]) || "Mark as read") +
+              '</label>' +
+            '</div>' +
+
+            '<div style="margin-top: 6px;">' +
+              '<label class="tb-filter-checkbox-label">' +
+                '<input type="checkbox" id="tb-filter-enabled"' + (ruleEnabled ? ' checked="checked"' : "") + '> Enable this rule' +
+              '</label>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="tb-label-modal-footer">' +
+          '<button type="button" class="btn btn-secondary tb-modal-cancel">' + rcm_tb_label_escape_html(cancel_text) + '</button>' +
+          '<button type="button" class="btn btn-primary tb-modal-submit">' + rcm_tb_label_escape_html(save_text) + '</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  );
+
+  function createConditionRow(cond) {
+    cond = cond || { field: "subject", operator: "contains", value: "" };
+    var row = $(
+      '<div class="tb-cond-row">' +
+        '<select class="form-control tb-cond-field">' +
+          '<option value="subject"' + (cond.field === "subject" ? ' selected="selected"' : "") + '>Subject</option>' +
+          '<option value="from"' + (cond.field === "from" ? ' selected="selected"' : "") + '>From</option>' +
+          '<option value="to"' + (cond.field === "to" ? ' selected="selected"' : "") + '>To</option>' +
+          '<option value="cc"' + (cond.field === "cc" ? ' selected="selected"' : "") + '>Cc</option>' +
+          '<option value="body"' + (cond.field === "body" ? ' selected="selected"' : "") + '>Body</option>' +
+        '</select>' +
+        '<select class="form-control tb-cond-op">' +
+          '<option value="contains"' + (cond.operator === "contains" ? ' selected="selected"' : "") + '>contains</option>' +
+          '<option value="not_contains"' + (cond.operator === "not_contains" || cond.operator === "does_not_contain" ? ' selected="selected"' : "") + '>does not contain</option>' +
+          '<option value="equals"' + (cond.operator === "equals" || cond.operator === "is" ? ' selected="selected"' : "") + '>is exactly</option>' +
+          '<option value="not_equals"' + (cond.operator === "not_equals" || cond.operator === "is_not" ? ' selected="selected"' : "") + '>is not</option>' +
+          '<option value="starts_with"' + (cond.operator === "starts_with" ? ' selected="selected"' : "") + '>starts with</option>' +
+          '<option value="ends_with"' + (cond.operator === "ends_with" ? ' selected="selected"' : "") + '>ends with</option>' +
+          '<option value="regex"' + (cond.operator === "regex" ? ' selected="selected"' : "") + '>regex</option>' +
+        '</select>' +
+        '<input type="text" class="form-control tb-cond-val" placeholder="Value..." value="' + rcm_tb_label_escape_html(cond.value || "") + '" />' +
+        '<button type="button" class="tb-cond-del-btn" title="Remove condition">&times;</button>' +
+      '</div>'
+    );
+    row.find(".tb-cond-del-btn").on("click", function () {
+      if ($("#tb-filter-conditions-list .tb-cond-row").length > 1) {
+        row.remove();
+      } else {
+        row.find(".tb-cond-val").val("");
+      }
+    });
+    return row;
+  }
+
+  var condList = modal.find("#tb-filter-conditions-list");
+  ruleConditions.forEach(function (c) {
+    condList.append(createConditionRow(c));
+  });
+
+  modal.find("#tb-filter-add-cond-btn").on("click", function () {
+    condList.append(createConditionRow());
+  });
+
+  function close_filter_modal() {
+    modal.fadeOut(150, function () { modal.remove(); });
+  }
+
+  modal.find(".tb-modal-close, .tb-modal-cancel, .tb-label-modal-backdrop").on("click", function () {
+    close_filter_modal();
+  });
+
+  function submit_filter() {
+    var name = $.trim(modal.find("#tb-filter-rule-name").val());
+    if (!name) {
+      modal.find("#tb-filter-rule-name").focus();
+      return;
+    }
+
+    var conditions = [];
+    modal.find("#tb-filter-conditions-list .tb-cond-row").each(function () {
+      var f = $(this).find(".tb-cond-field").val();
+      var op = $(this).find(".tb-cond-op").val();
+      var v = $.trim($(this).find(".tb-cond-val").val());
+      if (v) {
+        conditions.push({ field: f, operator: op, value: v });
+      }
+    });
+
+    if (!conditions.length) {
+      alert("Please specify at least one condition value.");
+      return;
+    }
+
+    var chosenLabels = [];
+    modal.find("input[name='tb_filter_labels[]']:checked").each(function () {
+      chosenLabels.push($(this).val());
+    });
+
+    var targetF = modal.find("#tb-filter-target-folder").val();
+    var isMarkRead = modal.find("#tb-filter-mark-read").is(":checked");
+    var isEnabled = modal.find("#tb-filter-enabled").is(":checked");
+    var scopeVal = modal.find("#tb-filter-rule-scope").val();
+
+    var ruleObj = {
+      id: isEdit ? ruleToEdit.id : undefined,
+      name: name,
+      enabled: isEnabled,
+      scope: scopeVal,
+      conditions: conditions,
+      actions: {
+        labels: chosenLabels,
+        folder: targetF,
+        mark_read: isMarkRead
+      }
+    };
+
+    var lock = rcmail.set_busy(true, "loading");
+    rcmail.http_post(
+      "plugin.thunderbird_labels.save_filter",
+      { rule: JSON.stringify(ruleObj) },
+      lock
+    );
+    close_filter_modal();
+  }
+
+  modal.find(".tb-modal-submit").on("click", submit_filter);
+
+  $("body").append(modal);
+  modal.fadeIn(150);
+  setTimeout(function () {
+    modal.find("#tb-filter-rule-name").focus();
+  }, 100);
+};
+
+rcm_tb_label_render_filter_rules_table = function () {
+  var container = $("#tb-label-filter-rules-list");
+  if (!container.length) return;
+  container.empty();
+
+  var rules = (rcmail.env && rcmail.env.tb_label_filters) || [];
+  if (!rules.length) {
+    container.html('<div class="tb-filter-empty" style="padding: 16px; color: #5f6368; font-style: italic;">' +
+      rcm_tb_label_escape_html((rcmail.labels && rcmail.labels["thunderbird_labels.no_filter_rules"]) || "No filter rules defined yet.") +
+      '</div>');
+    return;
+  }
+
+  var customLabels = (rcmail.env && rcmail.env.tb_label_custom_labels) || {};
+  var labelColors = (rcmail.env && rcmail.env.tb_label_colors) || {};
+
+  var table = $('<table class="tb-filter-table"><thead><tr>' +
+    '<th>Rule Name</th>' +
+    '<th>Conditions</th>' +
+    '<th>Actions</th>' +
+    '<th style="text-align:center;">Active</th>' +
+    '<th style="text-align:right;">Actions</th>' +
+    '</tr></thead><tbody></tbody></table>');
+
+  var tbody = table.find("tbody");
+
+  rules.forEach(function (r) {
+    // Conditions summary
+    var condDesc = (r.scope === "any" ? "ANY: " : "ALL: ");
+    var condParts = [];
+    (r.conditions || []).forEach(function (c) {
+      condParts.push(c.field + " " + c.operator + ' "' + c.value + '"');
+    });
+    condDesc += condParts.join(", ") || "(none)";
+
+    // Actions summary
+    var actParts = [];
+    var rLabels = r.actions && (r.actions.labels || (r.actions.label ? [r.actions.label] : []));
+    if (rLabels && rLabels.length) {
+      var badges = rLabels.map(function (k) {
+        var n = customLabels[k] || i18n_label(k);
+        var col = labelColors[k] || "#757575";
+        return '<span style="display:inline-block;padding:1px 6px;margin-right:4px;border-radius:4px;background:' + col + ';color:#fff;font-size:11px;font-weight:600;">' + rcm_tb_label_escape_html(n) + '</span>';
+      }).join("");
+      actParts.push(badges);
+    }
+    if (r.actions && r.actions.folder) {
+      actParts.push('Move: <b>' + rcm_tb_label_escape_html(r.actions.folder) + '</b>');
+    }
+    if (r.actions && r.actions.mark_read) {
+      actParts.push('Mark read');
+    }
+    var actDesc = actParts.join(" | ") || "(none)";
+
+    var tr = $('<tr>' +
+      '<td><b>' + rcm_tb_label_escape_html(r.name) + '</b></td>' +
+      '<td style="font-size: 12px; color: #5f6368;">' + rcm_tb_label_escape_html(condDesc) + '</td>' +
+      '<td>' + actDesc + '</td>' +
+      '<td style="text-align:center;"><input type="checkbox" class="tb-rule-toggle"' + (r.enabled !== false ? ' checked="checked"' : "") + ' /></td>' +
+      '<td style="text-align:right;">' +
+        '<button type="button" class="btn btn-sm btn-secondary tb-rule-edit" style="margin-right: 6px;">Edit</button>' +
+        '<button type="button" class="btn btn-sm btn-danger tb-rule-del">&times;</button>' +
+      '</td>' +
+      '</tr>');
+
+    tr.find(".tb-rule-toggle").on("change", function () {
+      var en = $(this).is(":checked");
+      var lock = rcmail.set_busy(true, "loading");
+      rcmail.http_post("plugin.thunderbird_labels.toggle_filter", { id: r.id, enabled: en ? 1 : 0 }, lock);
+    });
+
+    tr.find(".tb-rule-edit").on("click", function () {
+      rcm_tb_label_show_filter_modal(r);
+    });
+
+    tr.find(".tb-rule-del").on("click", function () {
+      var confirmMsg = (rcmail.labels && rcmail.labels["thunderbird_labels.confirm_delete_rule"]) || "Are you sure you want to delete this filter rule?";
+      var doDel = function () {
+        var lock = rcmail.set_busy(true, "loading");
+        rcmail.http_post("plugin.thunderbird_labels.delete_filter", { id: r.id }, lock);
+      };
+      if (rcmail.confirm) {
+        rcmail.confirm(confirmMsg, doDel);
+      } else if (window.confirm(confirmMsg)) {
+        doDel();
+      }
+    });
+
+    tbody.append(tr);
+  });
+
+  container.append(table);
+};
+
+rcm_tb_label_init_filters = function () {
+  if ($("#tb-label-filter-rules-list").length) {
+    rcm_tb_label_render_filter_rules_table();
+  }
+  $("#tb-label-add-rule-btn").off("click").on("click", function (e) {
+    e.preventDefault();
+    rcm_tb_label_show_filter_modal();
+  });
+  $("#tb-label-apply-rules-btn").off("click").on("click", function (e) {
+    e.preventDefault();
+    var lock = rcmail.set_busy(true, "loading");
+    rcmail.http_post("plugin.thunderbird_labels.apply_filters_now", { mbox: rcmail.env.mailbox || "INBOX" }, lock);
+  });
+};
+
+// ==========================================
 // Counts Management
 // ==========================================
 
@@ -695,13 +1045,13 @@ rcm_tb_label_update_count = function (labelKey, delta) {
     rcmail.env.tb_label_counts = {};
   }
   var current = parseInt(rcmail.env.tb_label_counts[labelKey] || 0, 10);
-  if (isNaN(current)) current = 0;
+  if (isNaN(current) || current < 0) current = 0;
   var next = Math.max(0, current + delta);
   rcmail.env.tb_label_counts[labelKey] = next;
 
   var badge = $("#tb-labels-list li[data-label=\"" + labelKey + "\"] .tb-label-count");
   if (badge.length) {
-    var final_cnt = (typeof next === "number" && !isNaN(next) && next >= 0) ? next : 0;
+    var final_cnt = (typeof next === "number" && !isNaN(next) && next > 0) ? next : 0;
     badge.text(final_cnt).show().css("display", "inline-block");
   }
 };
@@ -1155,8 +1505,8 @@ $(function () {
       if (badge.length) {
         var server_c = (rcmail.env.tb_label_counts && typeof rcmail.env.tb_label_counts[key] !== "undefined")
           ? parseInt(rcmail.env.tb_label_counts[key], 10) : null;
-        var final_c = (server_c !== null && !isNaN(server_c)) ? server_c : rcm_tb_label_count_local_messages(key);
-        var display_c = (final_c !== null && !isNaN(final_c) && final_c >= 0) ? final_c : 0;
+        var final_c = (server_c !== null && !isNaN(server_c) && server_c > 0) ? server_c : rcm_tb_label_count_local_messages(key);
+        var display_c = (final_c !== null && !isNaN(final_c) && final_c > 0) ? final_c : 0;
         badge.text(display_c).show().css("display", "inline-block");
       }
     });
@@ -1174,7 +1524,7 @@ $(function () {
         var count = (raw !== null) ? parseInt(raw, 10) : 0;
         var badge = $("#tb-labels-list li[data-label=\"" + key + "\"] .tb-label-count");
         if (badge.length) {
-          var final_cnt = (!isNaN(count) && count >= 0) ? count : 0;
+          var final_cnt = (!isNaN(count) && count > 0) ? count : 0;
           badge.text(final_cnt).show().css("display", "inline-block");
         }
       });
@@ -1216,6 +1566,53 @@ $(function () {
       rcm_tb_label_render_sidebar_items();
       rcm_tb_label_update_popup_menu();
     }
+  });
+
+  // Filter rules event listeners
+  rcmail.addEventListener("plugin.thunderbird_labels.filter_saved", function (data) {
+    if (data && data.rules) {
+      rcmail.env.tb_label_filters = data.rules;
+      rcm_tb_label_render_filter_rules_table();
+      var msg = (rcmail.labels && rcmail.labels["thunderbird_labels.rule_saved"]) || "Filter rule saved successfully.";
+      rcmail.display_message(msg, "confirmation");
+    }
+  });
+
+  rcmail.addEventListener("plugin.thunderbird_labels.filter_deleted", function (data) {
+    if (data && data.rules) {
+      rcmail.env.tb_label_filters = data.rules;
+      rcm_tb_label_render_filter_rules_table();
+      var msg = (rcmail.labels && rcmail.labels["thunderbird_labels.rule_deleted"]) || "Filter rule deleted.";
+      rcmail.display_message(msg, "confirmation");
+    }
+  });
+
+  rcmail.addEventListener("plugin.thunderbird_labels.filter_toggled", function (data) {
+    if (data && data.rules) {
+      rcmail.env.tb_label_filters = data.rules;
+      rcm_tb_label_render_filter_rules_table();
+    }
+  });
+
+  rcmail.addEventListener("plugin.thunderbird_labels.filters_applied", function (data) {
+    var matched = (data && data.matched) || 0;
+    var processed = (data && data.processed) || 0;
+    var msg = (rcmail.labels && rcmail.labels["thunderbird_labels.filters_applied"]) || "Filters evaluated successfully.";
+    rcmail.display_message(msg + " (" + matched + " matched / " + processed + " evaluated)", "confirmation");
+    rcm_tb_label_fetch_counts();
+    if (rcmail.task === "mail" && rcmail.command) {
+      rcmail.command("checkmail");
+    }
+  });
+
+  rcmail.addEventListener("plugin.thunderbird_labels.filters_list", function (data) {
+    if (data && data.rules) {
+      rcmail.env.tb_label_filters = data.rules;
+    }
+    if (data && data.folders) {
+      rcmail.env.tb_label_mail_folders = data.folders;
+    }
+    rcm_tb_label_render_filter_rules_table();
   });
 
   // Response before refresh
@@ -1279,6 +1676,7 @@ $(function () {
     };
   }
 
-  // Ensure sidebar is initialized
+  // Ensure sidebar and filters are initialized
   setTimeout(rcm_tb_label_init_sidebar, 150);
+  setTimeout(rcm_tb_label_init_filters, 200);
 });

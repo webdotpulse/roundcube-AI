@@ -115,6 +115,14 @@ assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdow
 assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");
 assert_true(strpos($updatedConfig, "\$config['remove_vendor_branding'] = true") !== false, "remove_vendor_branding enabled in config");
 
+// Verify 'xskin' is the FIRST element in $config['plugins']
+preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:array\s*\((.*?)\)|\[(.*?)\])\s*;/is', $updatedConfig, $pm);
+$inner = ($pm[1] !== '') ? $pm[1] : ($pm[2] ?? '');
+preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $inner, $matches);
+$pluginOrder = $matches[1] ?? [];
+assert_true(!empty($pluginOrder) && $pluginOrder[0] === 'xskin', "xskin is at index 0 (the beginning) of plugins array");
+assert_true(array_search('archive', $pluginOrder) > 0, "'archive' appears after 'xskin' in plugins array");
+
 // Test 5: Re-running installer preserves user customized config
 echo "\n--- Test 5: Config Preservation on Update ---\n";
 file_put_contents($tempDir . '/plugins/xcalendar/config.inc.php', "<?php // User modified xcalendar config\n\$config['custom'] = 123;\n");
@@ -132,6 +140,76 @@ $installerUpgrade->parseCliArgs(['--roundcube-path=' . $tempDir, '--activate']);
 $installerUpgrade->execute();
 $upgradedConfig = file_get_contents($tempDir . '/config/config.inc.php');
 assert_true(strpos($upgradedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "Empty license_key automatically upgraded to RCPLUSFREE20266u");
+
+// Test 7: Adding 'xskin' at the beginning when other plugins already exist: $config['plugins'] = array('other_plugin', 'one_more_plugin')
+echo "\n--- Test 7: 'xskin' Added at Beginning of Existing Plugins Array ---\n";
+$test7Dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'rc_test7_' . uniqid();
+@mkdir($test7Dir . '/program/include', 0777, true);
+@mkdir($test7Dir . '/plugins', 0777, true);
+@mkdir($test7Dir . '/skins', 0777, true);
+@mkdir($test7Dir . '/config', 0777, true);
+file_put_contents($test7Dir . '/index.php', "<?php\n");
+file_put_contents($test7Dir . '/program/include/iniset.php', "<?php\n");
+
+$configWithOtherPlugins = <<<PHP
+<?php
+\$config = [];
+\$config['skin'] = 'gmail_plus';
+\$config['license_key'] = 'RCPLUSFREE20266u';
+\$config['remove_vendor_branding'] = true;
+\$config['plugins'] = array('other_plugin', 'one_more_plugin');
+PHP;
+file_put_contents($test7Dir . '/config/config.inc.php', $configWithOtherPlugins);
+
+$installer7 = new RoundcubeExtraContentInstaller(dirname(__DIR__), $test7Dir);
+$installer7->parseCliArgs(['--roundcube-path=' . $test7Dir, '--activate']);
+$installer7->execute();
+
+$res7 = file_get_contents($test7Dir . '/config/config.inc.php');
+preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:array\s*\((.*?)\)|\[(.*?)\])\s*;/is', $res7, $pm7);
+$inner7 = ($pm7[1] !== '') ? $pm7[1] : ($pm7[2] ?? '');
+preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $inner7, $matches7);
+$order7 = $matches7[1] ?? [];
+
+assert_true(!empty($order7) && $order7[0] === 'xskin', "Test 7: 'xskin' is first element in plugins array");
+assert_true(isset($order7[1]) && $order7[1] === 'other_plugin', "Test 7: 'other_plugin' follows 'xskin'");
+assert_true(isset($order7[2]) && $order7[2] === 'one_more_plugin', "Test 7: 'one_more_plugin' follows 'other_plugin'");
+remove_dir_recursive($test7Dir);
+
+// Test 8: Reordering when 'xskin' is already in the array but not at the beginning
+echo "\n--- Test 8: 'xskin' Reordered to Beginning When Found in Middle ---\n";
+$test8Dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'rc_test8_' . uniqid();
+@mkdir($test8Dir . '/program/include', 0777, true);
+@mkdir($test8Dir . '/plugins', 0777, true);
+@mkdir($test8Dir . '/skins', 0777, true);
+@mkdir($test8Dir . '/config', 0777, true);
+file_put_contents($test8Dir . '/index.php', "<?php\n");
+file_put_contents($test8Dir . '/program/include/iniset.php', "<?php\n");
+
+$configXskinMiddle = <<<PHP
+<?php
+\$config = [];
+\$config['skin'] = 'gmail_plus';
+\$config['license_key'] = 'RCPLUSFREE20266u';
+\$config['remove_vendor_branding'] = true;
+\$config['plugins'] = array('first_plugin', 'xskin', 'last_plugin');
+PHP;
+file_put_contents($test8Dir . '/config/config.inc.php', $configXskinMiddle);
+
+$installer8 = new RoundcubeExtraContentInstaller(dirname(__DIR__), $test8Dir);
+$installer8->parseCliArgs(['--roundcube-path=' . $test8Dir, '--activate']);
+$installer8->execute();
+
+$res8 = file_get_contents($test8Dir . '/config/config.inc.php');
+preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:array\s*\((.*?)\)|\[(.*?)\])\s*;/is', $res8, $pm8);
+$inner8 = ($pm8[1] !== '') ? $pm8[1] : ($pm8[2] ?? '');
+preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $inner8, $matches8);
+$order8 = $matches8[1] ?? [];
+
+assert_true(!empty($order8) && $order8[0] === 'xskin', "Test 8: 'xskin' moved to index 0");
+assert_true(count(array_keys($order8, 'xskin')) === 1, "Test 8: 'xskin' appears exactly once");
+assert_true(in_array('first_plugin', $order8, true) && in_array('last_plugin', $order8, true), "Test 8: other plugins preserved");
+remove_dir_recursive($test8Dir);
 
 // Cleanup
 remove_dir_recursive($tempDir);

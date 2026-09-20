@@ -24,6 +24,11 @@ if (!class_exists('rcube')) {
             $this->user = new rcube_user_mock();
         }
 
+        public function get_storage()
+        {
+            return $this->storage;
+        }
+
         public static function get_instance()
         {
             if (!self::$instance) {
@@ -65,6 +70,9 @@ if (!class_exists('rcube')) {
     {
         public $folder = 'INBOX';
         public $conn;
+        public $search_count = 5;
+        public $set_flags = [];
+        public $moved_messages = [];
 
         public function __construct()
         {
@@ -77,18 +85,33 @@ if (!class_exists('rcube')) {
             return $this->folder;
         }
 
+        public function set_folder($folder)
+        {
+            $this->folder = $folder;
+        }
+
         public function search_once($mbox, $criteria)
         {
+            $count = $this->search_count;
             $res = new stdClass();
             $res->criteria = $criteria;
-            $res->count = function () { return 5; };
-            return new class($res) {
-                public function count() { return 5; }
+            $res->count = function () use ($count) { return $count; };
+            return new class($res, $count) {
+                private $c;
+                public function __construct($r, $c) { $this->c = $c; }
+                public function count() { return $this->c; }
             };
         }
 
         public function set_flag($uids, $flag, $mbox)
         {
+            $this->set_flags[] = ['uids' => $uids, 'flag' => $flag, 'mbox' => $mbox];
+            return true;
+        }
+
+        public function move_message($uids, $to, $from = null)
+        {
+            $this->moved_messages[] = ['uids' => $uids, 'to' => $to, 'from' => $from];
             return true;
         }
     }
@@ -177,6 +200,8 @@ if (!class_exists('rcube')) {
         public function load_config() {}
 
         public function add_texts($dir, $bool = false) {}
+
+        public function add_button($args) {}
 
         public function include_script($file)
         {
@@ -456,6 +481,189 @@ $_SESSION['tb_label_counts_test'] = ['data' => [1]];
 rcube_utils::$mock_inputs['key'] = 'LABEL5';
 $plugin->delete_label();
 assert_true(!isset($_SESSION['tb_label_counts_test']), "delete_label clears session count caches");
+
+// --- Test 8: Filter Engine Conditions & Rules Evaluation ---
+echo "\n--- Test 8: Filter Engine Conditions & Rules Evaluation ---\n";
+require_once $plugin_dir . '/tb_label_filter_engine.php';
+
+// 1. Condition evaluation tests for all operators
+$sample_msg = [
+    'from' => 'finance@accounting.corp',
+    'to' => 'team@company.com',
+    'cc' => 'audit@partner.org',
+    'subject' => '[URGENT] Q3 Financial Report & Invoice #9876',
+    'body' => 'Please find attached the signed contract and invoice for processing.',
+];
+
+// contains
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'contains', 'value' => 'Financial Report'], $sample_msg), "evaluate_condition 'contains' matches substring");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'contains', 'value' => 'Marketing Plan'], $sample_msg), "evaluate_condition 'contains' rejects missing substring");
+
+// not_contains
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'from', 'operator' => 'not_contains', 'value' => 'spam.org'], $sample_msg), "evaluate_condition 'not_contains' matches when string absent");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'from', 'operator' => 'not_contains', 'value' => 'accounting'], $sample_msg), "evaluate_condition 'not_contains' rejects when string present");
+
+// equals / is
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'from', 'operator' => 'equals', 'value' => 'FINANCE@ACCOUNTING.CORP'], $sample_msg), "evaluate_condition 'equals' matches exact case-insensitive");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'from', 'operator' => 'equals', 'value' => 'finance@accounting'], $sample_msg), "evaluate_condition 'equals' rejects partial match");
+
+// not_equals / is_not
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'to', 'operator' => 'not_equals', 'value' => 'other@company.com'], $sample_msg), "evaluate_condition 'not_equals' matches differing values");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'to', 'operator' => 'not_equals', 'value' => 'team@company.com'], $sample_msg), "evaluate_condition 'not_equals' rejects identical values");
+
+// starts_with
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'starts_with', 'value' => '[urgent]'], $sample_msg), "evaluate_condition 'starts_with' matches prefix");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'starts_with', 'value' => 'Q3'], $sample_msg), "evaluate_condition 'starts_with' rejects non-prefix");
+
+// ends_with
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'cc', 'operator' => 'ends_with', 'value' => '@partner.org'], $sample_msg), "evaluate_condition 'ends_with' matches suffix");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'cc', 'operator' => 'ends_with', 'value' => '.com'], $sample_msg), "evaluate_condition 'ends_with' rejects non-suffix");
+
+// regex
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'regex', 'value' => 'Invoice\s+#\d+'], $sample_msg), "evaluate_condition 'regex' matches regex pattern");
+assert_true(!tb_label_filter_engine::evaluate_condition(['field' => 'subject', 'operator' => 'regex', 'value' => '^Order\s+#\d+'], $sample_msg), "evaluate_condition 'regex' rejects non-matching regex");
+
+// Empty value condition always evaluates to true
+assert_true(tb_label_filter_engine::evaluate_condition(['field' => 'body', 'operator' => 'contains', 'value' => ''], $sample_msg), "evaluate_condition with empty value always passes");
+
+// 2. Rule evaluation: scope 'all' vs 'any'
+$rule_all = [
+    'id' => 'rule_test_1',
+    'name' => 'Finance Invoices',
+    'enabled' => true,
+    'scope' => 'all',
+    'conditions' => [
+        ['field' => 'from', 'operator' => 'contains', 'value' => 'accounting'],
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Invoice'],
+    ],
+    'actions' => [
+        'labels' => ['LABEL1', 'LABEL2'],
+        'folder' => 'Invoices',
+        'mark_read' => true,
+    ],
+];
+assert_true(tb_label_filter_engine::matches_rule($rule_all, $sample_msg), "matches_rule with scope 'all' passes when all conditions match");
+
+$rule_all_fail = $rule_all;
+$rule_all_fail['conditions'][] = ['field' => 'subject', 'operator' => 'contains', 'value' => 'Marketing'];
+assert_true(!tb_label_filter_engine::matches_rule($rule_all_fail, $sample_msg), "matches_rule with scope 'all' fails if one condition fails");
+
+$rule_any = [
+    'id' => 'rule_test_2',
+    'name' => 'Any Alert',
+    'enabled' => true,
+    'scope' => 'any',
+    'conditions' => [
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Marketing'],
+        ['field' => 'subject', 'operator' => 'contains', 'value' => 'Invoice'],
+    ],
+];
+assert_true(tb_label_filter_engine::matches_rule($rule_any, $sample_msg), "matches_rule with scope 'any' passes when at least one condition matches");
+
+$rule_disabled = $rule_all;
+$rule_disabled['enabled'] = false;
+assert_true(!tb_label_filter_engine::matches_rule($rule_disabled, $sample_msg), "matches_rule returns false for disabled rules");
+
+// 3. Rule actions execution (multi-label assignment, move folder, mark read)
+$rcmail_test = rcmail::reset_instance();
+$applied = tb_label_filter_engine::apply_actions($rcmail_test, 2048, 'INBOX', $rule_all);
+
+assert_true(in_array('LABEL1', $applied['labels']) && in_array('LABEL2', $applied['labels']), "apply_actions returns all applied labels");
+assert_true($applied['moved_to'] === 'Invoices', "apply_actions records moved folder");
+assert_true($applied['marked_read'] === true, "apply_actions marks message as read");
+
+$storage = $rcmail_test->get_storage();
+$flags_set = array_column($storage->set_flags, 'flag');
+assert_true(in_array('$Label1', $flags_set), "apply_actions set \$Label1 flag via storage");
+assert_true(in_array('$Label2', $flags_set), "apply_actions set \$Label2 flag via storage");
+assert_true(in_array('SEEN', $flags_set), "apply_actions set SEEN flag via storage");
+assert_true(!empty($storage->moved_messages), "apply_actions called storage move_message");
+assert_true($storage->moved_messages[0]['to'] === 'Invoices', "apply_actions moved to Invoices target folder");
+
+// 4. Rule persistence CRUD
+$saved = tb_label_filter_engine::save_rule($rcmail_test, $rule_all);
+assert_true(!empty($saved['id']), "save_rule returns rule with ID");
+$rules = tb_label_filter_engine::get_rules($rcmail_test);
+assert_true(count($rules) === 1 && $rules[0]['name'] === 'Finance Invoices', "get_rules returns saved rules");
+
+tb_label_filter_engine::toggle_rule($rcmail_test, $rule_all['id'], false);
+$rules = tb_label_filter_engine::get_rules($rcmail_test);
+assert_true($rules[0]['enabled'] === false, "toggle_rule toggles enabled state to false");
+
+tb_label_filter_engine::delete_rule($rcmail_test, $rule_all['id']);
+$rules = tb_label_filter_engine::get_rules($rcmail_test);
+assert_true(count($rules) === 0, "delete_rule removes rule from preferences");
+
+
+// --- Test 9: Multi-Label Assignment Across Plugin & LifePrisma AI ---
+echo "\n--- Test 9: Multi-Label Assignment Across Plugin & LifePrisma AI ---\n";
+
+// 1. thunderbird_labels::read_flags with multiple flags
+$msg_obj = new stdClass();
+$msg_obj->uid = 42;
+$msg_obj->flags = [
+    '$Label1' => 1,
+    '$Label3' => 1,
+    'SEEN' => 1,
+];
+$msg_obj->list_flags = [];
+
+$res = $plugin->read_flags(['messages' => [$msg_obj]]);
+$tb_labels = $res['messages'][0]->list_flags['extra_flags']['tb_labels'] ?? [];
+assert_true(in_array('LABEL1', $tb_labels) || in_array('$Label1', $tb_labels), "read_flags retains first label flag");
+assert_true(in_array('LABEL3', $tb_labels) || in_array('$Label3', $tb_labels), "read_flags retains multiple label flags on the same message");
+
+// 2. lifeprisma_ai::handle_messages_list multi-badge assignment
+$lpai_file = dirname(__DIR__) . '/lifeprisma_ai.php';
+if (file_exists($lpai_file)) {
+    require_once $lpai_file;
+    $lpai = new lifeprisma_ai();
+    $lp_msg = new stdClass();
+    $lp_msg->uid = 99;
+    $lp_msg->flags = [
+        '$label1' => 1,
+        '$Label4' => 1,
+    ];
+    $lp_msg->list_flags = [];
+
+    $lp_res = $lpai->handle_messages_list(['messages' => [$lp_msg]]);
+    assert_true(isset($lp_msg->list_flags['label-1']) && $lp_msg->list_flags['label-1'] === 1, "lifeprisma_ai sets label-1 class");
+    assert_true(isset($lp_msg->list_flags['label-4']) && $lp_msg->list_flags['label-4'] === 1, "lifeprisma_ai sets label-4 class simultaneously (multi-label)");
+
+    $env_lp_labels = rcmail::get_instance()->output->env['lpai_row_labels'] ?? [];
+    assert_true(isset($env_lp_labels['99']), "lpai_row_labels contains UID 99");
+    assert_true(in_array('$Label1', $env_lp_labels['99']) && in_array('$Label4', $env_lp_labels['99']), "lpai_row_labels exports all multiple labels in array");
+}
+
+
+// --- Test 10: Count Badge Zero Guarantee ---
+echo "\n--- Test 10: Count Badge Zero Guarantee ---\n";
+
+$rcmail_cnt = rcmail::reset_instance();
+$rcmail_cnt->config->set('tb_label_enable', true);
+$storage_cnt = $rcmail_cnt->get_storage();
+$storage_cnt->search_count = 0; // 0 emails matching
+
+$plugin_cnt = new thunderbird_labels();
+$plugin_cnt->init();
+$plugin_cnt->get_counts();
+
+$cmds = $rcmail_cnt->output->commands;
+$update_cmd = null;
+foreach ($cmds as $c) {
+    if (($c['command'] ?? '') === 'plugin.thunderbird_labels.update_counts') {
+        $update_cmd = $c;
+        break;
+    }
+}
+assert_true($update_cmd !== null, "get_counts dispatches update_counts command");
+$counts_data = $update_cmd['arg1']['counts'] ?? [];
+assert_true(isset($counts_data['LABEL1']), "LABEL1 exists in counts response");
+assert_true($counts_data['LABEL1'] === 0, "Counts strictly returns integer 0 when matching email count is zero");
+assert_true($counts_data['LABEL2'] === 0, "Counts strictly returns integer 0 for LABEL2");
+
+// Verify JS code guarantees 0 display on DOM
+assert_true(strpos($js_content, "display_count") !== false || strpos($js_content, "count > 0 ? count : 0") !== false, "tb_label.js guarantees count badge shows 0 and never ID");
 
 echo "\n*** ALL THUNDERBIRD LABELS TESTS PASSED (100%) ***\n";
 

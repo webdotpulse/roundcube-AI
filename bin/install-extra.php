@@ -347,15 +347,33 @@ class RoundcubeExtraContentInstaller
             }
         }
 
+        // Parse existing plugins from $config['plugins'] array to verify ordering
+        $existingPlugins = [];
+        $hasPluginsArray = false;
+        if (preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:array\s*\((.*?)\)|\[(.*?)\])\s*;/is', $configContent, $pm)) {
+            $hasPluginsArray = true;
+            $inner = ($pm[1] !== '') ? $pm[1] : ($pm[2] ?? '');
+            if (preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $inner, $matches)) {
+                $existingPlugins = $matches[1] ?? [];
+            }
+        }
+
+        // 'xskin' must be placed at the beginning of $config['plugins'] whenever plugins exist
+        $xskinIsFirst = (!empty($existingPlugins) && $existingPlugins[0] === 'xskin');
+        $needsXskinAtBeginning = !empty($existingPlugins) && !$xskinIsFirst;
+
         $hasGmailPlusSkin = preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]gmail_plus['\"]/", $configContent);
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
         $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent) && !$hasEmptyLicenseKey;
         $hasRemoveVendorBranding = preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $configContent);
 
-        $needsConfigUpdate = !empty($missingPlugins) || !$hasGmailPlusSkin || !$hasLicenseKey || !$hasRemoveVendorBranding;
+        $needsConfigUpdate = !empty($missingPlugins) || $needsXskinAtBeginning || !$hasGmailPlusSkin || !$hasLicenseKey || !$hasRemoveVendorBranding;
 
         if ($needsConfigUpdate) {
             $this->info("Roundcube Configuration Status:");
+            if ($needsXskinAtBeginning) {
+                $this->info("  Plugin 'xskin' must be placed at the beginning of \$config['plugins'] (found: " . implode(', ', $existingPlugins) . ")");
+            }
             if (!empty($missingPlugins)) {
                 $this->info("  Plugins available to activate in \$config['plugins']: " . implode(', ', $missingPlugins));
             }
@@ -376,18 +394,20 @@ class RoundcubeExtraContentInstaller
                     $missingPlugins,
                     !$hasGmailPlusSkin,
                     !$hasLicenseKey,
-                    !$hasRemoveVendorBranding
+                    !$hasRemoveVendorBranding,
+                    $needsXskinAtBeginning
                 );
             } else {
                 $this->info("  (Run with --activate to automatically enable them in config.inc.php)");
             }
         } else {
-            $this->success("Roundcube configuration already has gmail_plus skin, companion plugins, and license settings configured!");
+            $this->success("Roundcube configuration already has gmail_plus skin, companion plugins (with 'xskin' first), and license settings configured!");
         }
     }
 
     /**
      * Automatically update config/config.inc.php to enable plugins, skin, license key, and branding settings.
+     * Ensures 'xskin' is always placed at the very beginning of $config['plugins'].
      */
     private function updateRoundcubeConfig(
         string $configFile,
@@ -395,7 +415,8 @@ class RoundcubeExtraContentInstaller
         array $missingPlugins,
         bool $enableSkin,
         bool $addLicenseKey = false,
-        bool $addRemoveVendorBranding = false
+        bool $addRemoveVendorBranding = false,
+        bool $forceXskinFirst = false
     ): void {
         $modified = false;
 
@@ -410,23 +431,94 @@ class RoundcubeExtraContentInstaller
             $this->success("  -> Set \$config['skin'] = 'gmail_plus' in config.inc.php");
         }
 
-        if (!empty($missingPlugins)) {
-            // Support both modern short array [ ... ] and classic array( ... )
-            if (preg_match('/(\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:\[|array\s*\())([^\]\)]*)(\];|\);)/is', $content, $m)) {
-                $openTag = $m[1];
-                $currentPluginsText = $m[2];
-                $closeTag = $m[3];
-                $newEntries = "";
-                foreach ($missingPlugins as $plugin) {
-                    $newEntries .= "    '{$plugin}',\n";
+        // Configure plugins array, ensuring 'xskin' is placed at the beginning
+        if (!empty($missingPlugins) || $forceXskinFirst) {
+            if (preg_match('/(\$config\[[\'"]plugins[\'"]\]\s*=\s*)(array\s*\((.*?)\)|\[(.*?)\])(\s*;)/is', $content, $m)) {
+                $openPrefix = $m[1];
+                $arrayExpr = $m[2];
+                $innerContent = ($m[3] !== '') ? $m[3] : ($m[4] ?? '');
+                $semicolon = $m[5];
+
+                $usesArrayKeyword = (stripos(ltrim($arrayExpr), 'array') === 0);
+                $isMultiLine = (strpos($arrayExpr, "\n") !== false);
+
+                preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $innerContent, $pm);
+                $existingPlugins = $pm[1] ?? [];
+
+                // Filter out 'xskin' from existing plugins so it is always placed first (index 0)
+                $otherExisting = array_values(array_filter($existingPlugins, fn($p) => $p !== 'xskin'));
+
+                // 'xskin' is ALWAYS at the beginning
+                $finalPlugins = ['xskin'];
+
+                // Append all other existing plugins, preserving their original order
+                foreach ($otherExisting as $p) {
+                    if (!in_array($p, $finalPlugins, true)) {
+                        $finalPlugins[] = $p;
+                    }
                 }
-                $trimmedCurrent = trim($currentPluginsText);
-                $trailingComma = (!empty($trimmedCurrent) && !str_ends_with($trimmedCurrent, ',')) ? ",\n" : "\n";
-                $replacement = $openTag . "\n" . $currentPluginsText . $trailingComma . $newEntries . $closeTag;
-                $replacement = preg_replace('/,\s*,\s*/', ",\n", $replacement);
-                $content = str_replace($m[0], $replacement, $content);
+
+                // Append any missing companion plugins to be activated
+                foreach ($missingPlugins as $p) {
+                    if ($p === 'xskin') {
+                        continue;
+                    }
+                    if ($p === 'lifeprisma_ai' && (in_array('roundcube_ai', $finalPlugins, true) || in_array('lifeprisma_ai', $finalPlugins, true))) {
+                        continue;
+                    }
+                    if ($p === 'roundcube_ai' && (in_array('lifeprisma_ai', $finalPlugins, true) || in_array('roundcube_ai', $finalPlugins, true))) {
+                        continue;
+                    }
+                    if (!in_array($p, $finalPlugins, true)) {
+                        $finalPlugins[] = $p;
+                    }
+                }
+
+                // Format the array (single-line or multiline matching existing style)
+                if ($usesArrayKeyword) {
+                    if ($isMultiLine || count($finalPlugins) > 4) {
+                        $newArray = "array(\n";
+                        foreach ($finalPlugins as $p) {
+                            $newArray .= "    '{$p}',\n";
+                        }
+                        $newArray .= ")";
+                    } else {
+                        $newArray = "array('" . implode("', '", $finalPlugins) . "')";
+                    }
+                } else {
+                    if ($isMultiLine || count($finalPlugins) > 4) {
+                        $newArray = "[\n";
+                        foreach ($finalPlugins as $p) {
+                            $newArray .= "    '{$p}',\n";
+                        }
+                        $newArray .= "]";
+                    } else {
+                        $newArray = "['" . implode("', '", $finalPlugins) . "']";
+                    }
+                }
+
+                $replacement = $openPrefix . $newArray . $semicolon;
+                if ($content !== str_replace($m[0], $replacement, $content)) {
+                    $content = str_replace($m[0], $replacement, $content);
+                    $modified = true;
+                    $this->success("  -> Configured \$config['plugins'] with 'xskin' at the beginning: " . implode(', ', $finalPlugins));
+                }
+            } elseif (!preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=/i', $content)) {
+                // $config['plugins'] was completely missing from config
+                $finalPlugins = ['xskin'];
+                foreach ($missingPlugins as $p) {
+                    if ($p !== 'xskin' && !in_array($p, $finalPlugins, true)) {
+                        $finalPlugins[] = $p;
+                    }
+                }
+                $content .= "\n// Default plugins configured by Roundcube AI installer (xskin must be loaded first)\n";
+                $content .= "\$config['plugins'] = array(\n";
+                foreach ($finalPlugins as $p) {
+                    $content .= "    '{$p}',\n";
+                }
+                $content .= ");\n";
                 $modified = true;
-                $this->success("  -> Added missing plugins (" . implode(', ', $missingPlugins) . ") to \$config['plugins']");
+                $this->success("  -> Initialized \$config['plugins'] with 'xskin' at the beginning: " . implode(', ', $finalPlugins));
             }
         }
 

@@ -951,25 +951,35 @@ Body:
         }
 
         $row_labels = [];
-        $label_flags = ['$label1', '$label2', '$label3', '$label4', '$label5'];
 
         foreach ($args['messages'] as $header) {
             if (empty($header) || empty($header->uid)) continue;
 
             if (!empty($header->flags) && is_array($header->flags)) {
+                $uid_str = (string) $header->uid;
                 foreach ($header->flags as $flag_name => $val) {
                     $flag_lower = strtolower((string) $flag_name);
-                    if (in_array($flag_lower, $label_flags, true)) {
-                        $idx = substr($flag_lower, 6);
+                    $idx = null;
+                    if (preg_match('/^\$label([0-9]+)$/i', $flag_lower, $m)) {
+                        $idx = $m[1];
+                    } elseif (preg_match('/^label([0-9]+)$/i', $flag_lower, $m)) {
+                        $idx = $m[1];
+                    }
+
+                    if ($idx !== null) {
                         $canonical = '$Label' . $idx;
-                        $row_labels[(string) $header->uid] = $canonical;
+                        if (!isset($row_labels[$uid_str])) {
+                            $row_labels[$uid_str] = [];
+                        }
+                        if (!in_array($canonical, $row_labels[$uid_str], true)) {
+                            $row_labels[$uid_str][] = $canonical;
+                        }
 
                         // Ensure row receives CSS classes in standard Roundcube rendering
                         if (!is_array($header->list_flags)) {
                             $header->list_flags = [];
                         }
                         $header->list_flags['label-' . $idx] = 1;
-                        break;
                     }
                 }
             }

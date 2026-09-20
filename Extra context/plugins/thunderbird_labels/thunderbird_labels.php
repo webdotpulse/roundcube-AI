@@ -8,6 +8,8 @@
  * @author Michael Kefeder
  * @url https://github.com/mike-kfed/roundcube-thunderbird_labels
  */
+require_once __DIR__ . '/tb_label_filter_engine.php';
+
 class thunderbird_labels extends rcube_plugin
 {
 	public $task = 'mail|settings';
@@ -62,7 +64,6 @@ class thunderbird_labels extends rcube_plugin
 			);
 			$this->message_tb_labels = array();
 
-
 			$html = $this->template_file2html('toolbar');
 			if ($html)
 				$this->api->add_content($html, 'toolbar');
@@ -72,6 +73,13 @@ class thunderbird_labels extends rcube_plugin
 			$this->register_action('plugin.thunderbird_labels.add_label', array($this, 'action_add_label'));
 			$this->register_action('plugin.thunderbird_labels.update_label', array($this, 'update_label'));
 			$this->register_action('plugin.thunderbird_labels.delete_label', array($this, 'delete_label'));
+			$this->register_action('plugin.thunderbird_labels.get_filters', array($this, 'action_get_filters'));
+			$this->register_action('plugin.thunderbird_labels.save_filter', array($this, 'action_save_filter'));
+			$this->register_action('plugin.thunderbird_labels.delete_filter', array($this, 'action_delete_filter'));
+			$this->register_action('plugin.thunderbird_labels.toggle_filter', array($this, 'action_toggle_filter'));
+			$this->register_action('plugin.thunderbird_labels.apply_filters_now', array($this, 'action_apply_filters_now'));
+
+			$this->add_hook('new_messages', array($this, 'handle_new_messages'));
 
 			if (method_exists($this, 'require_plugin')
 				&& in_array('contextmenu', $this->rc->config->get('plugins'))
@@ -85,9 +93,15 @@ class thunderbird_labels extends rcube_plugin
 		elseif ($this->rc->task == 'settings')
 		{
 			$this->include_stylesheet($this->local_skin_path() . '/tb_label.css');
+			$this->include_script('tb_label.js');
 			$this->add_hook('preferences_list', array($this, 'prefs_list'));
 			$this->add_hook('preferences_sections_list', array($this, 'prefs_section'));
 			$this->add_hook('preferences_save', array($this, 'prefs_save'));
+			$this->register_action('plugin.thunderbird_labels.get_filters', array($this, 'action_get_filters'));
+			$this->register_action('plugin.thunderbird_labels.save_filter', array($this, 'action_save_filter'));
+			$this->register_action('plugin.thunderbird_labels.delete_filter', array($this, 'action_delete_filter'));
+			$this->register_action('plugin.thunderbird_labels.toggle_filter', array($this, 'action_toggle_filter'));
+			$this->register_action('plugin.thunderbird_labels.apply_filters_now', array($this, 'action_apply_filters_now'));
 		}
 	}
 
@@ -165,8 +179,20 @@ class thunderbird_labels extends rcube_plugin
 		$this->rc->output->set_env('tb_label_colors', $colors);
 
 		$cache_key = 'tb_label_counts_' . md5('INBOX');
-		if (isset($_SESSION[$cache_key]) && is_array($_SESSION[$cache_key]) && !empty($_SESSION[$cache_key]['data'])) {
-			$this->rc->output->set_env('tb_label_counts', $_SESSION[$cache_key]['data']);
+		if (isset($_SESSION[$cache_key]) && is_array($_SESSION[$cache_key]) && !empty($_SESSION[$cache_key]['data']) && is_array($_SESSION[$cache_key]['data'])) {
+			$sanitized = [];
+			foreach ($_SESSION[$cache_key]['data'] as $k => $v) {
+				$sanitized[$k] = (is_numeric($v) && (int)$v >= 0) ? (int)$v : 0;
+			}
+			$this->rc->output->set_env('tb_label_counts', $sanitized);
+		}
+
+		// Pass filter rules and folders to JS environment
+		$this->rc->output->set_env('tb_label_filters', tb_label_filter_engine::get_rules($this->rc));
+		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
+			try {
+				$this->rc->output->set_env('tb_label_mail_folders', $this->rc->storage->list_folders());
+			} catch (\Throwable $e) {}
 		}
 	}
 
@@ -261,6 +287,49 @@ class thunderbird_labels extends rcube_plugin
 				);
 			}
 		}
+
+		$rules = tb_label_filter_engine::get_rules($this->rc);
+		$this->rc->output->set_env('tb_label_filters', $rules);
+		$folders = [];
+		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
+			try {
+				$folders = $this->rc->storage->list_folders();
+			} catch (\Throwable $e) {}
+		}
+		$this->rc->output->set_env('tb_label_mail_folders', $folders);
+
+		$filter_title = $this->getLabelText('filter_rules');
+		if (empty($filter_title) || $filter_title === 'filter_rules') {
+			$filter_title = 'Incoming Mail Filters & Rules';
+		}
+		$add_rule_label = $this->getLabelText('add_filter_rule');
+		if (empty($add_rule_label) || $add_rule_label === 'add_filter_rule') {
+			$add_rule_label = 'New Filter Rule';
+		}
+		$apply_rules_label = $this->getLabelText('apply_filters_now');
+		if (empty($apply_rules_label) || $apply_rules_label === 'apply_filters_now') {
+			$apply_rules_label = 'Run Filters Now';
+		}
+
+		$args['blocks']['tb_label_filters'] = array(
+			'name' => $filter_title,
+			'options' => array(
+				'rules_table' => array(
+					'title' => $filter_title,
+					'content' => '<div id="tb-label-filter-rules-container" class="tb-label-filter-rules-container">' .
+						'<div class="tb-filter-actions-bar" style="margin-bottom:12px;">' .
+							'<button type="button" class="button btn btn-primary" id="tb-label-add-rule-btn">' .
+								htmlspecialchars($add_rule_label) .
+							'</button> ' .
+							'<button type="button" class="button btn btn-secondary" id="tb-label-apply-rules-btn" style="margin-left:8px;">' .
+								htmlspecialchars($apply_rules_label) .
+							'</button>' .
+						'</div>' .
+						'<div id="tb-label-filter-rules-list"></div>' .
+					'</div>'
+				)
+			)
+		);
 
 		return $args;
 	}
@@ -526,6 +595,12 @@ class thunderbird_labels extends rcube_plugin
 				$RCMAIL->output->set_env('custom_flags', $this->custom_flags($data['PERMANENTFLAGS']));
 			}
 		}
+
+		// Evaluate incoming mail filter rules on current mailbox
+		try {
+			tb_label_filter_engine::process_mailbox($this->rc, $mbox_name ?: 'INBOX');
+		} catch (\Exception $e) {}
+
 		return $params;
 	}
 
@@ -673,48 +748,23 @@ class thunderbird_labels extends rcube_plugin
 					}
 
 					if ($num !== null) {
-						$keywords = array(
-							"\$Label{$num}",
-							"\$label{$num}",
-							"\$LABEL{$num}",
-							"Label{$num}",
-							"label{$num}",
-							"LABEL{$num}",
-						);
+						$search_criteria = "OR KEYWORD \$Label{$num} KEYWORD Label{$num}";
 					} else {
-						$keywords = array(
-							"\${$key}",
-							"\$" . ucfirst(strtolower($key)),
-							"\$" . strtolower($key),
-							$key,
-							ucfirst(strtolower($key)),
-							strtolower($key),
-						);
-					}
-					$keywords = array_values(array_unique($keywords));
-					$search_criteria = 'KEYWORD ' . array_pop($keywords);
-					while (!empty($keywords)) {
-						$kw = array_pop($keywords);
-						$search_criteria = "OR KEYWORD {$kw} ({$search_criteria})";
+						$search_criteria = "OR KEYWORD \${$key} KEYWORD {$key}";
 					}
 
 					$res = $this->rc->storage->search_once($mbox, $search_criteria);
-					if ($res) {
+					$count = 0;
+					if ($res && (!method_exists($res, 'is_error') || !$res->is_error()) && (!method_exists($res, 'is_empty') || !$res->is_empty())) {
 						if (method_exists($res, 'count')) {
 							$count = (int) $res->count();
 						} elseif (method_exists($res, 'count_messages')) {
 							$count = (int) $res->count_messages();
-						} elseif (method_exists($res, 'get') && is_array($res->get())) {
-							$count = count($res->get());
 						} elseif (is_countable($res)) {
 							$count = count($res);
-						} else {
-							$count = 0;
 						}
-					} else {
-						$count = 0;
 					}
-					$counts[$key] = $count;
+					$counts[$key] = ($count > 0) ? $count : 0;
 				} catch (\Exception $e) {
 					$counts[$key] = 0;
 				}
@@ -879,6 +929,132 @@ class thunderbird_labels extends rcube_plugin
 			}
 		}
 		$this->rc->output->send();
+	}
+
+	/**
+	 * Returns filter rules and available options (folders, labels)
+	 */
+	public function action_get_filters()
+	{
+		$rules = tb_label_filter_engine::get_rules($this->rc);
+		$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
+		if (empty($custom_labels) || isset($custom_labels[3])) {
+			$custom_labels = $this->getDefaultLabels();
+		}
+		$colors = (array) $this->rc->config->get('tb_label_colors', array());
+		$folders = [];
+		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
+			try {
+				$folders = $this->rc->storage->list_folders();
+			} catch (\Throwable $e) {}
+		}
+
+		$this->rc->output->command('plugin.thunderbird_labels.filters_list', array(
+			'rules' => $rules,
+			'labels' => $custom_labels,
+			'colors' => $colors,
+			'folders' => $folders,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Creates or updates a filter rule
+	 */
+	public function action_save_filter()
+	{
+		$rule_json = rcube_utils::get_input_value('rule', rcube_utils::INPUT_POST, true);
+		$rule = is_string($rule_json) ? json_decode($rule_json, true) : (array) $rule_json;
+
+		if (!is_array($rule) || empty($rule['name'])) {
+			$this->rc->output->show_message('error', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
+		$saved = tb_label_filter_engine::save_rule($this->rc, $rule);
+		$rules = tb_label_filter_engine::get_rules($this->rc);
+
+		$this->rc->output->command('plugin.thunderbird_labels.filter_saved', array(
+			'rule' => $saved,
+			'rules' => $rules,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Deletes a filter rule by ID
+	 */
+	public function action_delete_filter()
+	{
+		$rule_id = trim(rcube_utils::get_input_value('id', rcube_utils::INPUT_POST, true));
+		if (!empty($rule_id)) {
+			tb_label_filter_engine::delete_rule($this->rc, $rule_id);
+		}
+		$rules = tb_label_filter_engine::get_rules($this->rc);
+
+		$this->rc->output->command('plugin.thunderbird_labels.filter_deleted', array(
+			'id' => $rule_id,
+			'rules' => $rules,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Toggles enabled state of a filter rule
+	 */
+	public function action_toggle_filter()
+	{
+		$rule_id = trim(rcube_utils::get_input_value('id', rcube_utils::INPUT_POST, true));
+		$enabled = rcube_utils::get_input_value('enabled', rcube_utils::INPUT_POST);
+		$enabled = ($enabled !== null && $enabled !== '') ? (bool)$enabled : null;
+
+		if (!empty($rule_id)) {
+			tb_label_filter_engine::toggle_rule($this->rc, $rule_id, $enabled);
+		}
+		$rules = tb_label_filter_engine::get_rules($this->rc);
+
+		$this->rc->output->command('plugin.thunderbird_labels.filter_toggled', array(
+			'id' => $rule_id,
+			'rules' => $rules,
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Manually applies active filter rules to a mailbox
+	 */
+	public function action_apply_filters_now()
+	{
+		$mbox = rcube_utils::get_input_value('mbox', rcube_utils::INPUT_POST, true) ?: 'INBOX';
+		$results = tb_label_filter_engine::process_mailbox($this->rc, $mbox);
+
+		// Clear cached counts so updates reflect immediately
+		if (!empty($_SESSION) && is_array($_SESSION)) {
+			foreach ($_SESSION as $k => $v) {
+				if (strpos($k, 'tb_label_counts_') === 0) {
+					unset($_SESSION[$k]);
+				}
+			}
+		}
+
+		$this->rc->output->command('plugin.thunderbird_labels.filters_applied', array(
+			'mbox' => $mbox,
+			'processed' => $results['processed'] ?? 0,
+			'matched' => $results['matched'] ?? 0,
+			'details' => $results['details'] ?? [],
+		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Hook triggered on newly received messages
+	 */
+	public function handle_new_messages($args)
+	{
+		$mbox = $args['mailbox'] ?? 'INBOX';
+		tb_label_filter_engine::process_mailbox($this->rc, $mbox);
+		return $args;
 	}
 }
 

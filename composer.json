@@ -68,6 +68,9 @@
         ],
         "post-update-cmd": [
             "@php bin/install-extra.php --activate"
+        ],
+        "post-create-project-cmd": [
+            "@php bin/install-extra.php --activate"
         ]
     }
 }
