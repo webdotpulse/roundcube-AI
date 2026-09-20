@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Configuration file for roundcube_attachments plugin
+ */
+
+$config = [];
+
+// Base directory to store server attachments.
+// Default: null (uses plugins/roundcube_attachments/data)
+$config['roundcube_attachments_dir'] = null;
+
+// Maximum allowed attachment file size in bytes.
+// Default: 26214400 (25 MB)
+$config['roundcube_attachments_max_filesize'] = 25 * 1024 * 1024;
+
+// Denied file extensions for security (never allowed to be stored or executed)
+$config['roundcube_attachments_denied_extensions'] = [
+    'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phtml', 'phar',
+    'sh', 'bash', 'zsh', 'exe', 'bat', 'cmd', 'com', 'msi', 'bin',
+    'cgi', 'pl', 'py', 'rb', 'jar', 'vbs', 'ps1'
+];
+
+// Enable integration with Roundcube canned responses (reactions):
+// allows setting default subjects and attachments per reaction.
+// Default: true
+$config['roundcube_attachments_enable_responses'] = true;

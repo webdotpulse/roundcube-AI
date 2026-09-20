@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -235,6 +235,11 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'xmultibox') {
             $this->postInstallXmultibox($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for roundcube_attachments
+        if ($type === 'plugin' && $name === 'roundcube_attachments') {
+            $this->postInstallRoundcubeAttachments($destination, $this->roundcubeDir);
+        }
     }
 
     /**
@@ -358,6 +363,30 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup and security verification for roundcube_attachments.
+     */
+    private function postInstallRoundcubeAttachments(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring roundcube_attachments plugin ---");
+        $dataDir = $destination . DIRECTORY_SEPARATOR . 'data';
+        if (!is_dir($dataDir) && !$this->dryRun) {
+            @mkdir($dataDir, 0750, true);
+        }
+
+        if (!$this->dryRun) {
+            $htaccess = $dataDir . DIRECTORY_SEPARATOR . '.htaccess';
+            if (!file_exists($htaccess)) {
+                @file_put_contents($htaccess, "# Deny direct web access to server attachments\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\n");
+            }
+            $indexPhp = $dataDir . DIRECTORY_SEPARATOR . 'index.php';
+            if (!file_exists($indexPhp)) {
+                @file_put_contents($indexPhp, "<?php http_response_code(403); exit('Access denied.'); ?>\n");
+            }
+            $this->success("  [✓] Server attachments data directory initialized and secured at {$dataDir}");
+        }
+    }
+
+    /**
      * Special post-installation setup, requirements verification, and guidance for xcalendar.
      */
     private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
@@ -455,7 +484,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -465,7 +494,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

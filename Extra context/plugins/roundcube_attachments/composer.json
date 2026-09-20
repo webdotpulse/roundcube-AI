@@ -1,0 +1,23 @@
+{
+    "name": "webdotpulse/roundcube-attachments",
+    "type": "roundcube-plugin",
+    "description": "Roundcube Webmail plugin to save attachments on the server, easily attach them to compose emails, and assign attachments and subjects to canned responses (reactions).",
+    "keywords": ["roundcube", "mail", "plugin", "attachments", "server-attachments", "responses", "canned-responses", "templates"],
+    "homepage": "https://github.com/webdotpulse/roundcube-AI",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Webdotpulse",
+            "email": "info@webdotpulse.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}
