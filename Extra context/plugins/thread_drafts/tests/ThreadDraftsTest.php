@@ -10,6 +10,83 @@ if (file_exists($rc_path . '/program/include/iniset.php')) {
     require_once $rc_path . '/program/include/iniset.php';
 }
 
+if (!class_exists('rcube_plugin')) {
+    abstract class rcube_plugin
+    {
+        public function load_config(): void {}
+        public function add_texts($dir, $bool): void {}
+        public function add_hook($hook, $callback): void {}
+        public function include_script($file): void {}
+        public function include_stylesheet($file): void {}
+        public function gettext($key): string { return $key; }
+    }
+}
+
+if (!class_exists('rcube')) {
+    class rcube
+    {
+        public $storage;
+        public $task = 'mail';
+        public $action = '';
+        public $config;
+
+        public function __construct()
+        {
+            $this->config = new class {
+                public function get($key, $default = null) { return $default; }
+            };
+        }
+
+        public static function get_instance() { return new self(); }
+
+        public static function Q($str): string
+        {
+            return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
+        }
+
+        public static function SQ($str): string
+        {
+            return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
+        }
+    }
+    class rcmail extends rcube {}
+}
+
+if (!class_exists('rcube_message_header')) {
+    class rcube_message_header
+    {
+        public $uid;
+        public $subject;
+        public $msgid;
+        public $in_reply_to;
+        public $references;
+        public $depth = 0;
+        public $has_children = false;
+        public $parent_uid;
+        public $folder;
+        public $size = 0;
+        public array $flags = [];
+        public array $list_flags = [];
+        public $list_cols = [];
+        public $to;
+
+        public function get($key)
+        {
+            return $this->$key ?? null;
+        }
+    }
+}
+
+if (!class_exists('rcube_mime')) {
+    class rcube_mime
+    {
+        public static function decode_header($s): string
+        {
+            return (string)$s;
+        }
+    }
+}
+
 require_once __DIR__ . '/../thread_drafts.php';
 
 /**

@@ -329,7 +329,11 @@ class thread_drafts extends rcube_plugin
             return '';
         }
 
-        $subject = trim(rcube_mime::decode_header($subject));
+        if (class_exists('rcube_mime') && method_exists('rcube_mime', 'decode_header')) {
+            $subject = trim(rcube_mime::decode_header($subject));
+        } else {
+            $subject = trim($subject);
+        }
 
         // Remove prefixes like Re:, Fwd:, [Ticket #123], etc. iteratively
         while (preg_match('/^\s*(\[[^\]]*\]|\((?:re|fwd|fw)\)|\b(?:re|fwd|fw|aw|antw|wg)\b\s*:\s*)/i', $subject, $m)) {
@@ -553,23 +557,30 @@ class thread_drafts extends rcube_plugin
         }
 
         // Format smart From/To column for draft
-        $recipient = !empty($h->to) ? $h->to : $h->get('to');
+        $recipient = !empty($h->to) ? $h->to : (method_exists($h, 'get') ? $h->get('to') : '');
         if (!empty($recipient)) {
             $to_formatted = '';
             if (class_exists('rcmail_action_mail_index') && defined('INTL_IDNA_VARIANT_UTS46')) {
                 try {
-                    $to_formatted = rcmail_action_mail_index::address_string($recipient, 3, false, null, $h->charset, null, false);
+                    $to_formatted = rcmail_action_mail_index::address_string($recipient, 3, false, null, $h->charset ?? 'UTF-8', null, false);
                 } catch (\Throwable $e) {
                     $to_formatted = '';
                 }
             }
             if (empty($to_formatted)) {
-                $to_formatted = class_exists('rcube') ? rcube::SQ($recipient) : htmlspecialchars($recipient, ENT_QUOTES);
+                if (class_exists('rcube') && method_exists('rcube', 'SQ')) {
+                    $to_formatted = rcube::SQ($recipient);
+                } elseif (class_exists('rcube') && method_exists('rcube', 'Q')) {
+                    $to_formatted = rcube::Q($recipient);
+                } else {
+                    $to_formatted = htmlspecialchars((string)$recipient, ENT_QUOTES, 'UTF-8');
+                }
             }
             $h->list_cols['fromto'] = $to_formatted;
         } else {
             $draft_label = method_exists($this, 'gettext') ? $this->gettext('draft') : 'Draft';
-            $h->list_cols['fromto'] = '<em>' . (class_exists('rcube') ? rcube::Q($draft_label) : htmlspecialchars($draft_label)) . '</em>';
+            $escaped_label = (class_exists('rcube') && method_exists('rcube', 'Q')) ? rcube::Q($draft_label) : htmlspecialchars($draft_label, ENT_QUOTES, 'UTF-8');
+            $h->list_cols['fromto'] = '<em>' . $escaped_label . '</em>';
         }
 
         return $h;

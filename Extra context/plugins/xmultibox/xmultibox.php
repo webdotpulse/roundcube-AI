@@ -204,7 +204,7 @@ class xmultibox extends XFramework\Plugin
         // the identity, so the message can be properly saved to drafts and edited
         if (!empty($_GET['xesid']) &&
             ($record = $this->db->row("xemail_schedule_queue", ["message_id" => $_GET['xesid'], "user_id" => $this->userId])) &&
-            ($serverConfig = json_decode($record['server_config'] ?? false, true)) &&
+            ($serverConfig = json_decode((string)($record['server_config'] ?? ''), true)) &&
             is_array($serverConfig) &&
             !empty($serverConfig['identity_id'])
         ) {

@@ -25,7 +25,11 @@
         "roundcube_loader",
         "page-loader",
         "xmultibox",
-        "xsignature"
+        "xsignature",
+        "newsletter",
+        "email_scheduler",
+        "twofactor_auth",
+        "roundcube_attachments"
     ],
     "authors": [
         {
@@ -46,11 +50,16 @@
         "roundcubeplus/xcalendar": "self.version",
         "webdotpulse/roundcube-loader": "self.version",
         "roundcubeplus/xmultibox": "self.version",
-        "roundcubeplus/xsignature": "self.version"
+        "roundcubeplus/xsignature": "self.version",
+        "webdotpulse/newsletter": "self.version",
+        "roundcubeplus/email_scheduler": "self.version",
+        "roundcubeplus/twofactor_auth": "self.version",
+        "roundcubeplus/roundcube_attachments": "self.version"
     },
     "suggest": {
         "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars",
-        "ext-gd": "Required by xsignature for image signature generation"
+        "ext-gd": "Required by xsignature for image signature generation",
+        "ext-openssl": "Required for cryptographic tokens and authentication in newsletter, xcalendar, and twofactor_auth"
     },
     "require": {
         "php": ">=8.0",
