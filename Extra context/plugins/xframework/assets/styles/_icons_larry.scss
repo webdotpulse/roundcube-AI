@@ -15,6 +15,7 @@
             a.button-xresell:before { @include icons.icon(icons_map.$plus-square); }
             a.button-apps:before { @include icons.icon(icons_map.$plus-square); }
             a.button-settings:before { @include icons.icon(icons_map.$wrench); }
+            a.button-newsletter:before { @include icons.icon(icons_map.$newspaper); }
             a.button-logout:before { @include icons.icon(icons_map.$logout); }
             .minmodetoggle:before { @include icons.icon(icons_map.$caret-up); }
         }

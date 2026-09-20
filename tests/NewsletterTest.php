@@ -415,4 +415,36 @@ assert_test(str_contains($newsletterCss, '.newsletter-studio-wrapper') && str_co
 $renderedUi = $newsletter->render_newsletter_ui();
 assert_test(str_contains($renderedUi, 'class="newsletter-studio-wrapper content formcontent scroller boxcontent uibox"'), "render_newsletter_ui includes content, formcontent, and scroller classes");
 
-echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (11/11) ***\n";
+// --------------------------------------------------------------------------
+// Test Suite 11: Sidebar Newsletter xicon & Styling Uniformity
+// --------------------------------------------------------------------------
+echo "\n--- Test Suite 11: Sidebar Newsletter xicon & Styling Uniformity ---\n";
+
+// 1. Emoji removal and font icon assertion
+assert_test(!str_contains($newsletterCss, '📬'), "newsletter.css does not contain emoji '📬'");
+assert_test(str_contains($newsletterCss, 'font-family: RcpIconFont') || str_contains($newsletterCss, "font-family: 'RcpIconFont'"), "newsletter.css references RcpIconFont");
+
+// 2. Glyph codes for all 4 Roundcube Plus ranges + base
+assert_test(str_contains($newsletterCss, '\eac8'), "newsletter.css defines base newspaper glyph (\\eac8)");
+assert_test(str_contains($newsletterCss, 'html.xicons-traditional') && str_contains($newsletterCss, '\eb90'), "newsletter.css defines traditional xicon variant (\\eb90)");
+assert_test(str_contains($newsletterCss, 'html.xicons-outlined') && str_contains($newsletterCss, '\ec58'), "newsletter.css defines outlined xicon variant (\\ec58)");
+assert_test(str_contains($newsletterCss, 'html.xicons-material') && str_contains($newsletterCss, '\ed20'), "newsletter.css defines material xicon variant (\\ed20)");
+assert_test(str_contains($newsletterCss, 'html.xicons-cartoon') && str_contains($newsletterCss, '\ede8'), "newsletter.css defines cartoon xicon variant (\\ede8)");
+
+// 3. Taskbar button classes and global stylesheet inclusion
+assert_test(str_contains($taskbarBtn['args']['class'], 'newsletter') && str_contains($taskbarBtn['args']['class'], 'button-newsletter'), "Taskbar button includes both 'button-newsletter' and 'newsletter' classes");
+assert_test(str_contains($taskbarBtn['args']['innerclass'], 'inner'), "Taskbar button includes 'inner' class for tooltip uniformity");
+assert_test(in_array('newsletter.css', $newsletter->styles, true), "newsletter.php includes newsletter.css globally");
+assert_test($newsletter->task === '?(?!logout).*', "newsletter.php defines global task expression for all webmail pages");
+
+// 4. xframework icon definitions
+$iconsElastic = file_get_contents(dirname(__DIR__) . '/Extra context/plugins/xframework/assets/styles/_icons_elastic.scss');
+assert_test(str_contains($iconsElastic, '&.newsletter:before') && str_contains($iconsElastic, 'icons_map.$newspaper'), "_icons_elastic.scss maps taskmenu newsletter to \$newspaper icon");
+
+$iconsCommon = file_get_contents(dirname(__DIR__) . '/Extra context/plugins/xframework/assets/styles/_icons_common.scss');
+assert_test(str_contains($iconsCommon, 'newsletter: icons_map.$newspaper'), "_icons_common.scss includes newsletter in \$plugins list");
+
+$elasticCss = file_get_contents(dirname(__DIR__) . '/Extra context/plugins/xframework/assets/styles/elastic.css');
+assert_test(str_contains($elasticCss, '.xskin #taskmenu a.newsletter:before'), "elastic.css compiles .xskin #taskmenu a.newsletter:before rules");
+
+echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (12/12) ***\n";

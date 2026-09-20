@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 class newsletter extends rcube_plugin
 {
-    public $task = 'newsletter|mail|settings';
+    public $task = '?(?!logout).*';
 
     /** @var rcmail */
     protected $rcmail;
@@ -49,9 +49,9 @@ class newsletter extends rcube_plugin
         $this->add_button([
             'command' => 'newsletter',
             'task' => 'newsletter',
-            'class' => 'button-newsletter',
-            'classsel' => 'button-newsletter button-selected',
-            'innerclass' => 'button-inner',
+            'class' => 'button-newsletter newsletter',
+            'classsel' => 'button-newsletter newsletter button-selected selected',
+            'innerclass' => 'button-inner inner',
             'label' => 'newsletter.newsletter',
             'title' => 'newsletter.campaign_composer',
             'type' => 'link',
@@ -78,9 +78,11 @@ class newsletter extends rcube_plugin
             $this->add_hook('message_compose', [$this, 'hook_message_compose']);
         }
 
-        // Include client UI assets
-        if ($this->rcmail->task === 'newsletter' || $this->rcmail->task === 'mail') {
-            $this->include_stylesheet('newsletter.css');
+        // Always include taskbar stylesheet so newsletter icon and tooltip are uniformly styled on every view
+        $this->include_stylesheet('newsletter.css');
+
+        // Include client studio script only on newsletter studio task
+        if ($this->rcmail->task === 'newsletter') {
             $this->include_script('newsletter.js');
         }
     }

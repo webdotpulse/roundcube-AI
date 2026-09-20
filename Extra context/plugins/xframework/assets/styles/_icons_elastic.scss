@@ -21,6 +21,8 @@
         &.tasklist:before { @include icons.icon(icons_map.$list); }
         &.files:before { @include icons.icon(icons_map.$text-file); }
         &.notes:before { @include icons.icon(icons_map.$text-file); }
+        &.newsletter:before,
+        &.button-newsletter:before { @include icons.icon(icons_map.$newspaper); }
     }
 
     .menu a {

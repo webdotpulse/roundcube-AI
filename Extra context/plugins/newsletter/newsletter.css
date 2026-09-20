@@ -8,13 +8,114 @@
 /* ==========================================================================
    1. Taskbar Navigation Button Styling
    ========================================================================== */
+/* Scoped @font-face for Roundcube Plus icon font */
+@font-face {
+    font-family: 'RcpIconFont';
+    src: url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff2') format('woff2'),
+         url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff') format('woff'),
+         url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
 .button-newsletter::before,
+.button-newsletter:before,
 #taskmenu a.button-newsletter::before,
-#layout-menu a.button-newsletter::before {
-    content: "📬" !important;
-    font-size: 20px !important;
-    display: inline-block !important;
-    line-height: 1 !important;
+#taskmenu a.button-newsletter:before,
+#taskmenu a.newsletter::before,
+#taskmenu a.newsletter:before,
+#layout-menu a.button-newsletter::before,
+#layout-menu a.button-newsletter:before,
+#layout-menu a.newsletter::before,
+#layout-menu a.newsletter:before {
+    font-family: RcpIconFont, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    background-image: none !important;
+    text-indent: 0 !important;
+    line-height: 1em !important;
+    content: "\eac8" !important;
+}
+
+/* Standalone / fallback sizing if rendered outside #taskmenu */
+.button-newsletter::before,
+.button-newsletter:before {
+    display: inline-block;
+    font-size: 1.5em;
+}
+
+/* Ensure taskmenu button inherits skin layout, alignment, and hover behavior */
+#taskmenu a.button-newsletter,
+#taskmenu a.newsletter,
+#layout-menu a.button-newsletter,
+#layout-menu a.newsletter {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Roundcube Plus xicon Theme Variants (Uniform with sidebar icons) */
+/* 1. Traditional */
+html.xicons-traditional .button-newsletter::before,
+html.xicons-traditional .button-newsletter:before,
+html.xicons-traditional #taskmenu a.button-newsletter::before,
+html.xicons-traditional #taskmenu a.button-newsletter:before,
+html.xicons-traditional #taskmenu a.newsletter::before,
+html.xicons-traditional #taskmenu a.newsletter:before,
+html.xicons-traditional #layout-menu a.button-newsletter::before,
+html.xicons-traditional #layout-menu a.button-newsletter:before,
+html.xicons-traditional #layout-menu a.newsletter::before,
+html.xicons-traditional #layout-menu a.newsletter:before {
+    content: "\eb90" !important;
+}
+
+/* 2. Outlined */
+html.xicons-outlined .button-newsletter::before,
+html.xicons-outlined .button-newsletter:before,
+html.xicons-outlined #taskmenu a.button-newsletter::before,
+html.xicons-outlined #taskmenu a.button-newsletter:before,
+html.xicons-outlined #taskmenu a.newsletter::before,
+html.xicons-outlined #taskmenu a.newsletter:before,
+html.xicons-outlined #layout-menu a.button-newsletter::before,
+html.xicons-outlined #layout-menu a.button-newsletter:before,
+html.xicons-outlined #layout-menu a.newsletter::before,
+html.xicons-outlined #layout-menu a.newsletter:before {
+    content: "\ec58" !important;
+}
+
+/* 3. Material */
+html.xicons-material .button-newsletter::before,
+html.xicons-material .button-newsletter:before,
+html.xicons-material #taskmenu a.button-newsletter::before,
+html.xicons-material #taskmenu a.button-newsletter:before,
+html.xicons-material #taskmenu a.newsletter::before,
+html.xicons-material #taskmenu a.newsletter:before,
+html.xicons-material #layout-menu a.button-newsletter::before,
+html.xicons-material #layout-menu a.button-newsletter:before,
+html.xicons-material #layout-menu a.newsletter::before,
+html.xicons-material #layout-menu a.newsletter:before {
+    content: "\ed20" !important;
+}
+
+/* 4. Cartoon */
+html.xicons-cartoon .button-newsletter::before,
+html.xicons-cartoon .button-newsletter:before,
+html.xicons-cartoon #taskmenu a.button-newsletter::before,
+html.xicons-cartoon #taskmenu a.button-newsletter:before,
+html.xicons-cartoon #taskmenu a.newsletter::before,
+html.xicons-cartoon #taskmenu a.newsletter:before,
+html.xicons-cartoon #layout-menu a.button-newsletter::before,
+html.xicons-cartoon #layout-menu a.button-newsletter:before,
+html.xicons-cartoon #layout-menu a.newsletter::before,
+html.xicons-cartoon #layout-menu a.newsletter:before {
+    content: "\ede8" !important;
 }
 
 /* ==========================================================================
