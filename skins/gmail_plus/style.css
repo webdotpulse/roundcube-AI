@@ -1535,3 +1535,29 @@ body.dark-mode .lpai-qa-menu-item:hover,
     }
 }
 
+/* Remove About button from sidebar and layout menu */
+#layout-menu a.about,
+#layout-menu a.button-about,
+#layout-menu a[onclick*="about_dialog"],
+#layout-menu a[href="#about"],
+#taskmenu a.about,
+#taskmenu a.button-about,
+#taskmenu a[onclick*="about_dialog"],
+#taskmenu a[href="#about"],
+.special-buttons a.about,
+.special-buttons a.button-about,
+.special-buttons a[onclick*="about_dialog"],
+.special-buttons a[href="#about"],
+a.button-about,
+a.about[onclick*="about_dialog"] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+}
+

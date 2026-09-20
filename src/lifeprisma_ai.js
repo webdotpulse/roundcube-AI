@@ -379,6 +379,10 @@ function lpai_setup_sidebar_button() {
         var oldBtns = doc.querySelectorAll('.lpai-floating-btn');
         oldBtns.forEach(function(b) { b.remove(); });
 
+        // Remove About button from sidebar
+        var aboutBtns = doc.querySelectorAll('#layout-menu a.about, #layout-menu a.button-about, #taskmenu a.about, #taskmenu a.button-about, .special-buttons a.about, .special-buttons a.button-about, a.button-about, a.about[onclick*="about"], [data-target="about"]');
+        aboutBtns.forEach(function(b) { b.remove(); });
+
         // Replace any lingering [Gemini] or Gemini text spans anywhere in sidebar buttons
         var innerSpans = doc.querySelectorAll('a.button-gemini-ai .inner, #taskmenu-gemini-btn .inner, a[href="#gemini"] .inner');
         innerSpans.forEach(function(span) {

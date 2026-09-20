@@ -411,36 +411,50 @@ window.rcmail = {
 <script src="file://{$jsPath}"></script>
 </head>
 <body>
-<!-- Compose Window Elements -->
+<!-- Sidebar Menu with About Button -->
+<div id="layout-menu">
+    <div class="special-buttons">
+        <a class="button-theme-toggle" href="#">Dark</a>
+        <a class="about button-about" href="#about" onclick="UI.about_dialog(this)">About</a>
+        <a class="button-logout logout" href="#">Logout</a>
+    </div>
+</div>
+
+<!-- Compose Window Elements matching Elastic & Gmail Plus skin -->
 <div id="compose-toolbar">
     <a href="#" class="button attach">Attach</a>
 </div>
 <div id="composeform">
     <input type="text" id="_subject" name="_subject" value="">
     <div id="compose-attachments">
-        <div class="box-header">Attachments</div>
+        <div class="header">Opties en bijlages</div>
+        <div class="file-upload">
+            <div class="hint">Maximum toegestane bestandsgrootte is 75 MB</div>
+            <div class="buttons">
+                <button type="button" class="btn btn-secondary attach">Bijlage toevoegen</button>
+                <button type="button" class="btn btn-secondary attach vcard">vCard toevoegen</button>
+            </div>
+        </div>
     </div>
 </div>
 
-<!-- Settings -> Responses Form Elements -->
+<!-- Settings -> Responses Form Elements (Roundcube native <form id="form">, NOT responseform) -->
 <div id="settings-responses-area" style="margin-top:50px;">
-    <form id="responseform">
+    <form id="form" class="propform" method="post">
         <div class="form-group row">
-            <label for="ffname" class="col-sm-2 col-form-label">Name</label>
+            <label for="ffname" class="col-sm-2 col-form-label">Naam</label>
             <div class="col-sm-10">
-                <input type="text" id="ffname" name="_name" value="Quick Reply">
+                <input type="text" id="ffname" name="_name" value="Tarieven beheer laadpunt">
             </div>
         </div>
         <div class="form-group row">
-            <label for="fftext" class="col-sm-2 col-form-label">Text</label>
+            <label for="fftext" class="col-sm-2 col-form-label">Tekst</label>
             <div class="col-sm-10">
-                <textarea id="fftext" name="_text">Thank you for your inquiry.</textarea>
+                <textarea id="fftext" name="_text">Beste, hieronder vindt u een overzicht van de kosten.</textarea>
             </div>
         </div>
-        <div class="form-group row">
-            <div class="col-sm-10 offset-sm-2">
-                <input type="checkbox" id="ffis_html" name="_is_html">
-            </div>
+        <div class="formbuttons">
+            <button type="submit" class="btn btn-primary mainaction">Opslaan</button>
         </div>
     </form>
 </div>
@@ -451,19 +465,25 @@ window.onload = function() {
         window.__init_cb();
     }
 
-    // 1. Check Compose Button
-    var btn = document.getElementById('rc-server-att-compose-btn');
-    console.log("CHROME_COMPOSE_BTN:" + (btn ? "yes" : "no"));
+    // 1. Check Compose Button Deduplication
+    var composeBtns = document.querySelectorAll('#rc-server-att-compose-btn');
+    console.log("CHROME_COMPOSE_BTNS_COUNT:" + composeBtns.length);
+
+    var headerBtns = document.querySelectorAll('#compose-attachments .header button');
+    console.log("CHROME_HEADER_BTNS_COUNT:" + headerBtns.length);
+
+    var vcardBtns = document.querySelectorAll('#compose-attachments button.vcard');
+    console.log("CHROME_VCARD_BTNS_COUNT:" + vcardBtns.length);
 
     // 2. Open Modal via Click
-    if (btn) btn.click();
+    if (composeBtns.length) composeBtns[0].click();
     var modal = document.getElementById('rc-server-att-modal');
     console.log("CHROME_MODAL_EXISTS:" + (modal ? "yes" : "no"));
 
     var search = document.getElementById('rc-server-att-search');
     console.log("CHROME_MODAL_SEARCH:" + (search ? "yes" : "no"));
 
-    // 3. Check Response Edit Form Injections
+    // 3. Check Response Edit Form Injections on native <form id="form">
     var subjectEl = document.getElementById('ffsubject');
     console.log("CHROME_SUBJECT_EXISTS:" + (subjectEl ? "yes" : "no"));
     console.log("CHROME_SUBJECT_VAL:" + (subjectEl ? subjectEl.value : ""));
@@ -483,7 +503,11 @@ window.onload = function() {
     var chipNameEl = document.querySelector('#rc-reaction-attached-list .rc-chip-name');
     console.log("CHROME_CHIP_NAME:" + (chipNameEl ? chipNameEl.textContent : ""));
 
-    // 4. Test rcmail.insert_response interceptor
+    // 4. Check About Button Removal
+    var aboutLink = document.querySelector('#layout-menu a.about, a.button-about');
+    console.log("CHROME_ABOUT_EXISTS:" + (aboutLink ? "yes" : "no"));
+
+    // 5. Test rcmail.insert_response interceptor
     var subInput = document.getElementById('_subject');
     if (subInput) subInput.value = '';
 
@@ -512,7 +536,9 @@ HTML;
     $output = shell_exec($cmd);
     @unlink($testHtmlFile);
 
-    $compose_btn = false;
+    $compose_btns_count = 0;
+    $header_btns_count = 0;
+    $vcard_btns_count = 0;
     $modal_exists = false;
     $modal_search = false;
     $subject_exists = false;
@@ -522,13 +548,16 @@ HTML;
     $upload_btn = false;
     $chips_count = 0;
     $chip_name = '';
+    $about_exists = true;
     $intercepted_subject = '';
     $orig_insert_called = false;
     $http_action = '';
 
     if ($output) {
         foreach (explode("\n", $output) as $line) {
-            if (preg_match('/CHROME_COMPOSE_BTN:(.*?)"/', $line, $m)) $compose_btn = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_COMPOSE_BTNS_COUNT:(.*?)"/', $line, $m)) $compose_btns_count = (int) trim($m[1]);
+            if (preg_match('/CHROME_HEADER_BTNS_COUNT:(.*?)"/', $line, $m)) $header_btns_count = (int) trim($m[1]);
+            if (preg_match('/CHROME_VCARD_BTNS_COUNT:(.*?)"/', $line, $m)) $vcard_btns_count = (int) trim($m[1]);
             if (preg_match('/CHROME_MODAL_EXISTS:(.*?)"/', $line, $m)) $modal_exists = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_MODAL_SEARCH:(.*?)"/', $line, $m)) $modal_search = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_SUBJECT_EXISTS:(.*?)"/', $line, $m)) $subject_exists = (trim($m[1]) === 'yes');
@@ -538,13 +567,16 @@ HTML;
             if (preg_match('/CHROME_UPLOAD_BTN:(.*?)"/', $line, $m)) $upload_btn = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_CHIPS_COUNT:(.*?)"/', $line, $m)) $chips_count = (int) trim($m[1]);
             if (preg_match('/CHROME_CHIP_NAME:(.*?)"/', $line, $m)) $chip_name = trim($m[1]);
+            if (preg_match('/CHROME_ABOUT_EXISTS:(.*?)"/', $line, $m)) $about_exists = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_INTERCEPTED_SUBJECT:(.*?)"/', $line, $m)) $intercepted_subject = trim($m[1]);
             if (preg_match('/CHROME_ORIG_INSERT_CALLED:(.*?)"/', $line, $m)) $orig_insert_called = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_HTTP_ACTION:(.*?)"/', $line, $m)) $http_action = trim($m[1]);
         }
     }
 
-    assert_true($compose_btn, "Browser DOM: Server Attachments button rendered in compose");
+    assert_true($compose_btns_count === 1, "Browser DOM: Exactly 1 Server Attachments button rendered (no duplicates)");
+    assert_true($header_btns_count === 0, "Browser DOM: No buttons erroneously injected into attachments header");
+    assert_true($vcard_btns_count === 1, "Browser DOM: Exactly 1 vCard button present (no duplicates)");
     assert_true($modal_exists, "Browser DOM: Server Attachments modal container rendered");
     assert_true($modal_search, "Browser DOM: Search field rendered in modal");
     assert_true($subject_exists, "Browser DOM: #ffsubject field rendered in reaction form");
@@ -554,6 +586,7 @@ HTML;
     assert_true($upload_btn, "Browser DOM: 'Upload & Attach' button rendered");
     assert_true($chips_count === 1, "Browser DOM: Attached file chip rendered");
     assert_true($chip_name === 'Brochure.pdf', "Browser DOM: Attached file chip displays correct filename");
+    assert_true(!$about_exists, "Browser DOM: About button successfully removed from sidebar");
     assert_true($intercepted_subject === 'Automatic Intercepted Subject', "Browser JS: insert_response auto-populates #_subject");
     assert_true($orig_insert_called, "Browser JS: original insert_response invoked");
     assert_true($http_action === 'plugin.roundcube_attachments_attach_to_compose', "Browser JS: auto-attaches reaction files via AJAX");

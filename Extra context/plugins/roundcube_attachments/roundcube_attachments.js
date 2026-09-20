@@ -2,9 +2,10 @@
  * Frontend JavaScript for roundcube_attachments plugin
  *
  * Handles:
- * 1. Server attachments modal & file management in compose window.
+ * 1. Server attachments modal & file management in compose window (clean singleton injection, no duplicates).
  * 2. Automatic insertion of subject & attachments when inserting canned responses (reactions).
  * 3. Subject field & attachment manager injection in Settings -> Responses (responseedit).
+ * 4. Removal of the About button from the right sidebar.
  */
 
 (function(window, document, $) {
@@ -36,16 +37,43 @@
     }
 
     // ========================================================
-    // 1. Compose Window: Server Attachments Modal & Interceptor
+    // 0. Remove About Button from Right Sidebar
+    // ========================================================
+
+    function removeAboutButton() {
+        var selectors = '#layout-menu a.about, #layout-menu a.button-about, #taskmenu a.about, #taskmenu a.button-about, .special-buttons a.about, .special-buttons a.button-about, a.button-about, a.about[onclick*="about_dialog"], a[href="#about"]';
+        var docs = [document];
+        try {
+            if (window.parent && window.parent.document && window.parent.document !== document) {
+                docs.push(window.parent.document);
+            }
+            if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+                docs.push(window.top.document);
+            }
+        } catch (e) {}
+
+        docs.forEach(function(d) {
+            try {
+                var items = d.querySelectorAll(selectors);
+                for (var i = 0; i < items.length; i++) {
+                    items[i].remove();
+                }
+            } catch (e) {}
+        });
+    }
+
+    // ========================================================
+    // 1. Compose Window: Server Attachments Modal & Clean Injection
     // ========================================================
 
     function initCompose() {
         var env = rcmail.env;
-        if (env.action !== 'compose' && !$('#compose-attachments, #composeattachments, .compose-attachments, form#form').length) {
+        var isCompose = (env.action === 'compose') || $('#compose-attachments, #composeattachments, .compose-attachments, form#form').length > 0;
+        if (!isCompose) {
             return;
         }
 
-        // Add "Server Attachments" button into compose attachments area
+        // Add "Server Attachments" button into compose attachments area (guaranteed singleton)
         injectComposeButton();
 
         // Hook rcmail.insert_response to automatically apply subject and attachments
@@ -53,35 +81,51 @@
     }
 
     function injectComposeButton() {
-        if ($('#rc-server-att-compose-btn').length) {
+        var label = rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments';
+
+        // 1. Clean up any misplaced or duplicated toolbars / buttons
+        $('.rc-server-att-toolbar').remove();
+        $('#compose-attachments > button#rc-server-att-compose-btn').remove();
+        $('#compose-attachments .header #rc-server-att-compose-btn').remove();
+
+        // Clean up any duplicate vcard button accidentally appended to header
+        $('#compose-attachments .header button.vcard, #compose-attachments > button.vcard').remove();
+
+        // Remove any unstyled stray buttons that match the label text outside #rc-server-att-compose-btn
+        $('button').filter(function() {
+            return $(this).attr('id') !== 'rc-server-att-compose-btn' && $(this).text().trim() === label;
+        }).remove();
+
+        // 2. Check if the properly placed button already exists
+        if ($('#rc-server-att-compose-btn').length > 0) {
             return;
         }
 
-        var label = rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments';
-        var btnHtml = '<button type="button" id="rc-server-att-compose-btn" class="btn btn-secondary rc-btn-server-att" title="' + label + '">'
+        var btnHtml = '<button type="button" id="rc-server-att-compose-btn" class="btn btn-secondary attach rc-btn-server-att" title="' + label + '">'
             + '<span class="rc-att-btn-icon">📁</span> '
             + '<span class="rc-att-btn-text">' + label + '</span>'
             + '</button>';
 
-        // Try injecting next to upload/attach button or inside attachment box
-        var $attachBox = $('#compose-attachments, #composeattachments, .compose-attachments, .attachmentslist');
-        var $uploadBtn = $('#attach-btn, .attach-btn, a.button.attach, button.attach, #compose-toolbar a.attach');
+        // 3. Target the primary attachment button or the buttons container inside the dropzone
+        var $attachBtn = $('#compose-attachments button.attach, .compose-attachments button.attach, .upload-form button.attach').not('.vcard, .rc-btn-server-att');
+        var $btnGroup = $('#compose-attachments .buttons, .compose-attachments .buttons, .upload-form .buttons');
 
-        if ($attachBox.length) {
-            var $actions = $attachBox.find('.btn-group, .buttons, .header, .box-header').first();
-            if ($actions.length) {
-                $actions.append(btnHtml);
-            } else {
-                $attachBox.prepend('<div class="rc-server-att-toolbar" style="margin-bottom:8px;">' + btnHtml + '</div>');
-            }
-        } else if ($uploadBtn.length) {
-            $uploadBtn.first().after(btnHtml);
+        if ($attachBtn.length) {
+            // Insert directly next to "Bijlage toevoegen"
+            $attachBtn.first().after(' ' + btnHtml);
+        } else if ($btnGroup.length) {
+            // Append into the buttons group
+            $btnGroup.first().append(' ' + btnHtml);
         } else {
-            // Fallback: prepend to compose form or toolbar
-            $('#compose-toolbar, #messagetoolbar, #composeform').first().append(btnHtml);
+            // Fallback: toolbar or compose form
+            var $toolbar = $('#compose-toolbar, #messagetoolbar');
+            if ($toolbar.length) {
+                $toolbar.append(btnHtml);
+            }
         }
 
-        $(document).on('click', '#rc-server-att-compose-btn', function(e) {
+        // Delegate click handler cleanly
+        $(document).off('click.rc_server_att', '#rc-server-att-compose-btn').on('click.rc_server_att', '#rc-server-att-compose-btn', function(e) {
             e.preventDefault();
             openServerAttachmentsModal('compose');
         });
@@ -96,14 +140,12 @@
 
         var orig_insert_response = rcmail.insert_response;
         rcmail.insert_response = function(response) {
-            // When response is loaded as an object
             if (typeof response === 'object' && response !== null) {
                 // 1. Auto-set Subject if provided
                 if (response.subject && response.subject.trim() !== '') {
                     var $subject = $('#_subject, input[name="_subject"]');
                     if ($subject.length) {
                         var curVal = ($subject.val() || '').trim();
-                        // If subject is empty or user confirms replacement
                         if (!curVal) {
                             $subject.val(response.subject).trigger('change');
                         }
@@ -406,39 +448,87 @@
     // ========================================================
 
     function initResponses() {
-        // Check current document or iframe
-        injectResponsesFormFields(document);
+        checkAndInjectResponses(document);
 
+        // Check if on settings/responses list page with preferences-frame iframe
         var iframe = document.getElementById('preferences-frame');
         if (iframe) {
             $(iframe).on('load', function() {
-                try {
-                    var doc = iframe.contentDocument || iframe.contentWindow.document;
-                    if (doc) {
-                        injectResponsesFormFields(doc);
-                    }
-                } catch (e) {}
+                [40, 150, 400].forEach(function(delay) {
+                    setTimeout(function() {
+                        try {
+                            var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                            if (doc) {
+                                checkAndInjectResponses(doc);
+                                observeResponseDoc(doc);
+                            }
+                        } catch (e) {}
+                    }, delay);
+                });
             });
+
             try {
-                var doc = iframe.contentDocument || iframe.contentWindow.document;
-                if (doc && doc.readyState === 'complete') {
-                    injectResponsesFormFields(doc);
+                var doc = iframe.contentDocument || (iframe.contentWindow && iframe.contentWindow.document);
+                if (doc) {
+                    checkAndInjectResponses(doc);
+                    observeResponseDoc(doc);
                 }
             } catch (e) {}
         }
+
+        // Observe main document for dynamic AJAX/pjax view updates
+        observeResponseDoc(document);
+    }
+
+    function observeResponseDoc(doc) {
+        if (!doc || doc.__rc_att_observed || !window.MutationObserver) {
+            return;
+        }
+        doc.__rc_att_observed = true;
+
+        var target = doc.getElementById('layout-content') || doc.body;
+        if (!target) return;
+
+        var observer = new MutationObserver(function() {
+            if (doc.getElementById('fftext') || doc.getElementById('ffname')) {
+                if (!doc.getElementById('rc-reaction-attachments-container') || !doc.getElementById('ffsubject')) {
+                    checkAndInjectResponses(doc);
+                }
+            }
+            removeAboutButton();
+        });
+
+        observer.observe(target, { childList: true, subtree: true });
+    }
+
+    function checkAndInjectResponses(doc) {
+        if (!doc) return;
+        var $doc = $(doc);
+
+        // Robust check: if response edit fields (#fftext or #ffname) exist
+        if (!$doc.find('#fftext, #ffname').length) {
+            return;
+        }
+
+        injectResponsesFormFields(doc);
     }
 
     function injectResponsesFormFields(doc) {
         var $doc = $(doc);
-        var $form = $doc.find('form#responseform, form[name="responseform"]');
-        if (!$form.length) {
-            return;
-        }
-
         var pluginEnv = rcmail.env.roundcube_attachments || {};
         var responseMeta = pluginEnv.response_meta || { subject: '', attachments: [], files: [] };
 
-        // 1. Inject Subject Field if not present
+        // Determine current response ID from input, environment, or URL
+        var currentId = $doc.find('input[name="_id"], #ffid').val() || pluginEnv.response_id || '';
+        if (!currentId) {
+            var searchStr = (doc.location && doc.location.search) || window.location.search || '';
+            var idMatch = searchStr.match(/[?&]_id=([^&]+)/);
+            if (idMatch) {
+                currentId = decodeURIComponent(idMatch[1]);
+            }
+        }
+
+        // 1. Inject Subject Field directly below Name (#ffname) if not present
         if (!$doc.find('#ffsubject').length) {
             var labelSubject = rcmail.gettext('reaction_subject', 'roundcube_attachments') || 'Subject';
             var placeholderSubject = rcmail.gettext('reaction_subject_placeholder', 'roundcube_attachments') || 'Optional subject for this reaction';
@@ -446,34 +536,44 @@
 
             var $nameInput = $doc.find('#ffname');
             if ($nameInput.length) {
-                var $row = $nameInput.closest('.form-group.row, tr');
-                if ($row.length) {
-                    if ($row.is('tr')) {
-                        var trHtml = '<tr id="rc-att-subject-row">'
-                            + '<th class="title"><label for="ffsubject">' + labelSubject + '</label></th>'
-                            + '<td><input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
-                            + '</tr>';
-                        $row.after(trHtml);
-                    } else {
-                        var divHtml = '<div class="form-group row" id="rc-att-subject-group">'
-                            + '<label for="ffsubject" class="col-sm-2 col-form-label">' + labelSubject + '</label>'
-                            + '<div class="col-sm-10">'
-                            + '  <input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '">'
-                            + '</div>'
-                            + '</div>';
-                        $row.after(divHtml);
-                    }
+                var $nameRow = $nameInput.closest('.form-group, tr, .row');
+                if (!$nameRow.length) {
+                    $nameRow = $nameInput.parent();
+                }
+
+                if ($nameRow.is('tr')) {
+                    var trHtml = '<tr id="rc-att-subject-row">'
+                        + '<th class="title"><label for="ffsubject">' + labelSubject + '</label></th>'
+                        + '<td><input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
+                        + '</tr>';
+                    $nameRow.after(trHtml);
+                } else {
+                    var divHtml = '<div class="form-group row" id="rc-att-subject-group">'
+                        + '<label for="ffsubject" class="col-sm-2 col-form-label">' + labelSubject + '</label>'
+                        + '<div class="col-sm-10">'
+                        + '  <input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '">'
+                        + '</div>'
+                        + '</div>';
+                    $nameRow.after(divHtml);
                 }
             }
         }
 
         // 2. Inject Attachments Management Section if not present
         if (!$doc.find('#rc-reaction-attachments-container').length) {
-            injectReactionAttachmentsSection($doc, $form, responseMeta);
+            injectReactionAttachmentsSection($doc, responseMeta);
         }
+
+        // 3. If a response ID exists, ensure its latest metadata (subject & attachments) is loaded
+        if (currentId) {
+            loadResponseMetaDynamically($doc, currentId);
+        }
+
+        // 4. Hook form submission to guarantee subject & attachments persistence
+        hookResponseFormSubmit($doc, currentId);
     }
 
-    function injectReactionAttachmentsSection($doc, $form, responseMeta) {
+    function injectReactionAttachmentsSection($doc, responseMeta) {
         var labelAtt = rcmail.gettext('reaction_attachments', 'roundcube_attachments') || 'Attachments';
         var descAtt = rcmail.gettext('reaction_attachments_desc', 'roundcube_attachments') || 'Attachments automatically added when inserting this reaction into an email';
         var btnAddServer = rcmail.gettext('add_server_attachment', 'roundcube_attachments') || 'Attach from Server';
@@ -482,7 +582,7 @@
         var initialIds = responseMeta.attachments || [];
         var initialFiles = responseMeta.files || [];
 
-        var html = '<div id="rc-reaction-attachments-container" class="rc-reaction-attachments-box">'
+        var boxHtml = '<div id="rc-reaction-attachments-container" class="rc-reaction-attachments-box">'
             + '  <div class="rc-reaction-att-header">'
             + '    <label class="rc-reaction-att-label">📎 ' + labelAtt + '</label>'
             + '    <div class="rc-reaction-att-desc text-muted">' + descAtt + '</div>'
@@ -496,31 +596,39 @@
             + '  </div>'
             + '</div>';
 
-        // Insert container inside form table or after editor/toggle row
-        var $toggleRow = $doc.find('#ffis_html').closest('.form-group.row, tr');
-        var $textRow = $doc.find('#fftext').closest('.form-group.row, tr');
+        // Insert container directly before the save button row, or right after editor
+        var $saveBtn = $doc.find('.formbuttons, button.mainaction, input.mainaction, button[type="submit"], input[type="submit"]');
+        var $saveRow = $saveBtn.closest('.formbuttons, .form-group, tr, div');
+        var $editorContainer = $doc.find('.tox-tinymce, .mce-tinymce, #fftext').closest('.form-group, tr, td, div');
 
-        if ($toggleRow.length) {
-            if ($toggleRow.is('tr')) {
-                $toggleRow.after('<tr><th></th><td>' + html + '</td></tr>');
+        if ($saveRow.length) {
+            if ($saveRow.is('tr')) {
+                $saveRow.first().before('<tr id="rc-att-box-row"><th></th><td>' + boxHtml + '</td></tr>');
+            } else if ($saveRow.hasClass('form-group') || $saveRow.hasClass('row') || $saveRow.hasClass('formbuttons')) {
+                $saveRow.first().before('<div class="form-group row" id="rc-att-box-group"><div class="col-sm-10 offset-sm-2">' + boxHtml + '</div></div>');
             } else {
-                $toggleRow.after('<div class="form-group row"><div class="col-sm-10 offset-sm-2">' + html + '</div></div>');
+                $saveRow.first().before(boxHtml);
             }
-        } else if ($textRow.length) {
-            if ($textRow.is('tr')) {
-                $textRow.after('<tr><th></th><td>' + html + '</td></tr>');
+        } else if ($editorContainer.length) {
+            if ($editorContainer.is('tr')) {
+                $editorContainer.first().after('<tr id="rc-att-box-row"><th></th><td>' + boxHtml + '</td></tr>');
             } else {
-                $textRow.after('<div class="form-group row"><div class="col-sm-10 offset-sm-2">' + html + '</div></div>');
+                $editorContainer.first().after('<div class="form-group row" id="rc-att-box-group"><div class="col-sm-10 offset-sm-2">' + boxHtml + '</div></div>');
             }
         } else {
-            $form.append(html);
+            var $form = $doc.find('form').first();
+            if ($form.length) {
+                $form.append(boxHtml);
+            } else {
+                $doc.find('#fftext').parent().append(boxHtml);
+            }
         }
 
         // Render initial files
         renderReactionAttachedItems($doc, initialFiles, initialIds);
 
         // Bind Add from Server button
-        $doc.on('click', '#rc-btn-reaction-add-server', function(e) {
+        $doc.off('click.rc_reaction_server', '#rc-btn-reaction-add-server').on('click.rc_reaction_server', '#rc-btn-reaction-add-server', function(e) {
             e.preventDefault();
             openServerAttachmentsModal('reaction', function(selectedIds, selectedRecords) {
                 var curIds = getReactionCurrentIds($doc);
@@ -535,12 +643,12 @@
         });
 
         // Bind Upload & Attach button
-        $doc.on('click', '#rc-btn-reaction-upload', function(e) {
+        $doc.off('click.rc_reaction_upload', '#rc-btn-reaction-upload').on('click.rc_reaction_upload', '#rc-btn-reaction-upload', function(e) {
             e.preventDefault();
             $doc.find('#rc-reaction-file-input').val('').trigger('click');
         });
 
-        $doc.on('change', '#rc-reaction-file-input', function() {
+        $doc.off('change.rc_reaction_file', '#rc-reaction-file-input').on('change.rc_reaction_file', '#rc-reaction-file-input', function() {
             var files = this.files;
             if (!files || !files.length) return;
 
@@ -557,7 +665,7 @@
         });
 
         // Remove item button
-        $doc.on('click', '.rc-reaction-att-remove', function() {
+        $doc.off('click.rc_reaction_remove', '.rc-reaction-att-remove').on('click.rc_reaction_remove', '.rc-reaction-att-remove', function() {
             var id = $(this).data('id');
             var curIds = getReactionCurrentIds($doc);
             var idx = curIds.indexOf(id);
@@ -566,6 +674,55 @@
                 setReactionCurrentIds($doc, curIds);
             }
             $(this).closest('.rc-reaction-att-chip').remove();
+        });
+    }
+
+    function loadResponseMetaDynamically($doc, responseId) {
+        if (!responseId || $doc.data('rc_att_loaded_id') === responseId) {
+            return;
+        }
+        $doc.data('rc_att_loaded_id', responseId);
+
+        $.ajax({
+            url: rcmail.url('plugin.roundcube_attachments_get_meta'),
+            type: 'GET',
+            data: { response_id: responseId },
+            dataType: 'json',
+            success: function(res) {
+                if (res && res.status === 'success') {
+                    if (res.subject && !$doc.find('#ffsubject').val()) {
+                        $doc.find('#ffsubject').val(res.subject);
+                    }
+                    if (res.attachments && res.attachments.length) {
+                        setReactionCurrentIds($doc, res.attachments);
+                        renderReactionAttachedItems($doc, res.files || [], res.attachments);
+                    }
+                }
+            }
+        });
+    }
+
+    function hookResponseFormSubmit($doc, initialId) {
+        var $form = $doc.find('form').filter(':has(#fftext, #ffname)').first();
+        if (!$form.length) return;
+
+        $form.off('submit.rc_att_meta').on('submit.rc_att_meta', function() {
+            var currentId = $doc.find('input[name="_id"], #ffid').val() || initialId;
+            var currentSubject = $doc.find('#ffsubject').val() || '';
+            var currentAtts = getReactionCurrentIds($doc);
+
+            if (currentId) {
+                $.ajax({
+                    url: rcmail.url('plugin.roundcube_attachments_save_meta'),
+                    type: 'POST',
+                    data: {
+                        response_id: currentId,
+                        subject: currentSubject,
+                        attachments: JSON.stringify(currentAtts),
+                        _token: rcmail.env.request_token
+                    }
+                });
+            }
         });
     }
 
@@ -609,18 +766,19 @@
     }
 
     // ========================================================
-    // Initialization
+    // 4. Initialization & Event Bindings
     // ========================================================
 
     rcmail.addEventListener('init', function() {
         initCompose();
         initResponses();
+        removeAboutButton();
     });
 
-    // Run response injection checks dynamically
     $(document).ready(function() {
         initCompose();
         initResponses();
+        removeAboutButton();
     });
 
 })(window, window.document, window.jQuery);

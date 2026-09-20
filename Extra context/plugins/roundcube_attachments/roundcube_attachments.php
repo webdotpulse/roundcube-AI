@@ -39,6 +39,7 @@ class roundcube_attachments extends rcube_plugin
         $this->register_action('plugin.roundcube_attachments_download', [$this, 'action_download']);
         $this->register_action('plugin.roundcube_attachments_attach_to_compose', [$this, 'action_attach_to_compose']);
         $this->register_action('plugin.roundcube_attachments_save_meta', [$this, 'action_save_meta']);
+        $this->register_action('plugin.roundcube_attachments_get_meta', [$this, 'action_get_meta']);
 
         // Register hooks
         $this->add_hook('get_compose_response', [$this, 'hook_get_compose_response']);
@@ -480,14 +481,15 @@ class roundcube_attachments extends rcube_plugin
         $task = $this->rc->task;
 
         $is_compose = ($task === 'mail' && $action === 'compose');
-        $is_responses = ($task === 'settings' && in_array($action, ['responses', 'responseedit', 'response-edit', 'add-response', 'edit-response'], true))
+        $is_responses = ($task === 'settings' && (strpos($action, 'response') !== false || in_array($action, ['responses', 'responseedit', 'response-edit', 'response-add', 'add-response', 'edit-response'], true)))
             || in_array($template, ['responses', 'responseedit'], true);
 
         if ($is_compose || $is_responses) {
             $this->include_script('roundcube_attachments.js');
             $this->include_stylesheet('roundcube_attachments.css');
 
-            $current_response_id = rcube_utils::get_input_string('_id', rcube_utils::INPUT_GP);
+            $current_response_id = rcube_utils::get_input_string('_id', rcube_utils::INPUT_GP)
+                ?: rcube_utils::get_input_string('id', rcube_utils::INPUT_GP);
             $current_meta = $current_response_id ? $this->get_response_meta($current_response_id) : ['subject' => '', 'attachments' => []];
 
             $all_files = $this->load_meta();
@@ -783,6 +785,46 @@ class roundcube_attachments extends rcube_plugin
 
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode(['status' => $saved ? 'success' : 'error']);
+        exit;
+    }
+
+    /**
+     * AJAX Action: Get metadata (subject & attachments) for a canned response
+     */
+    public function action_get_meta(): void
+    {
+        $this->rc->output->reset();
+        $id = rcube_utils::get_input_string('response_id', rcube_utils::INPUT_GP)
+            ?: rcube_utils::get_input_string('_id', rcube_utils::INPUT_GP);
+
+        if (empty($id)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Missing response ID']);
+            exit;
+        }
+
+        $meta = $this->get_response_meta($id);
+        $all_files = $this->load_meta();
+        $files = [];
+        foreach ($meta['attachments'] as $att_id) {
+            if (isset($all_files[$att_id])) {
+                $files[] = [
+                    'id' => $att_id,
+                    'name' => $all_files[$att_id]['name'],
+                    'size' => $all_files[$att_id]['size'],
+                    'mimetype' => $all_files[$att_id]['mimetype'],
+                ];
+            }
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'success',
+            'response_id' => $id,
+            'subject' => $meta['subject'] ?? '',
+            'attachments' => $meta['attachments'] ?? [],
+            'files' => $files,
+        ]);
         exit;
     }
 }
