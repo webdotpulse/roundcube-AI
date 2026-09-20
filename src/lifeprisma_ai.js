@@ -1232,6 +1232,16 @@ function lpai_add_response_quick_actions(doc) {
     // Insert at top of td container containing fftext
     var container = ta.closest('td') || ta.parentNode;
     container.insertBefore(bar, container.firstElementChild);
+
+    // Guarantee the editor container and row span full available width across columns
+    if (container && container.tagName === 'TD') {
+        container.setAttribute('colspan', '2');
+        container.classList.add('col-sm-12', 'html-editor');
+        var editorTr = container.closest('tr');
+        if (editorTr) {
+            editorTr.classList.add('form-group', 'row', 'rc-response-editor-row');
+        }
+    }
 }
 
 function lpai_response_quick(action, btn, doc) {

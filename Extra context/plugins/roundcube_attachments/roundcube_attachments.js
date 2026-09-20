@@ -573,9 +573,9 @@
             var existingSubject = responseMeta.subject || '';
 
             if (isTable) {
-                var trHtml = '<tr id="rc-att-subject-row" class="rc-att-row">'
-                    + '<th class="title"><label for="ffsubject">' + labelSubject + '</label></th>'
-                    + '<td><input type="text" id="ffsubject" name="_subject" class="form-control rc-response-input" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
+                var trHtml = '<tr id="rc-att-subject-row" class="rc-att-row form-group row">'
+                    + '<th class="title col-sm-2 col-form-label"><label for="ffsubject">' + labelSubject + '</label></th>'
+                    + '<td class="col-sm-10"><input type="text" id="ffsubject" name="_subject" class="form-control rc-response-input" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
                     + '</tr>';
                 $nameRow.after(trHtml);
             } else {
@@ -592,6 +592,16 @@
         // 2. Inject Attachments Section directly below Subject (BEFORE the editor)
         if (!$doc.find('#rc-reaction-attachments-container').length) {
             injectReactionAttachmentsSection($doc, responseMeta, isTable);
+        }
+
+        // Ensure editor container and row span full available width across columns
+        var $editorTd = $doc.find('#fftext').closest('td');
+        if ($editorTd.length) {
+            $editorTd.attr('colspan', '2').addClass('col-sm-12 html-editor');
+            var $editorTr = $editorTd.closest('tr');
+            if ($editorTr.length) {
+                $editorTr.addClass('form-group row rc-response-editor-row');
+            }
         }
 
         // 3. If a response ID exists, ensure its latest metadata (subject & attachments) is loaded
@@ -627,21 +637,21 @@
         var $subjectRow = $doc.find('#rc-att-subject-row, #rc-att-subject-group');
         if ($subjectRow.length) {
             if (isTable || $subjectRow.is('tr')) {
-                $subjectRow.after('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
+                $subjectRow.after('<tr id="rc-att-box-row" class="rc-att-row form-group row"><th class="title col-sm-2 col-form-label"><label>' + labelAtt + '</label></th><td class="col-sm-10">' + boxHtml + '</td></tr>');
             } else {
                 $subjectRow.after('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
             }
         } else {
             var $editorContainer = $doc.find('.tox-tinymce, .mce-tinymce, #fftext').closest('.form-group, tr, td, div');
             if ($editorContainer.length && $editorContainer.is('tr')) {
-                $editorContainer.before('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
+                $editorContainer.before('<tr id="rc-att-box-row" class="rc-att-row form-group row"><th class="title col-sm-2 col-form-label"><label>' + labelAtt + '</label></th><td class="col-sm-10">' + boxHtml + '</td></tr>');
             } else if ($editorContainer.length) {
                 $editorContainer.before('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
             } else {
                 var $saveBtn = $doc.find('.formbuttons, button.mainaction, input.mainaction, button[type="submit"], input[type="submit"]');
                 var $saveRow = $saveBtn.closest('.formbuttons, .form-group, tr, div');
                 if ($saveRow.length && $saveRow.is('tr')) {
-                    $saveRow.first().before('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
+                    $saveRow.first().before('<tr id="rc-att-box-row" class="rc-att-row form-group row"><th class="title col-sm-2 col-form-label"><label>' + labelAtt + '</label></th><td class="col-sm-10">' + boxHtml + '</td></tr>');
                 } else if ($saveRow.length) {
                     $saveRow.first().before('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
                 }

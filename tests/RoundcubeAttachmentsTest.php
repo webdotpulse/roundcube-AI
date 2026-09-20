@@ -603,6 +603,12 @@ window.onload = function() {
     console.log("CHROME_SUB_BEFORE_ATT:" + (subBeforeAtt ? "yes" : "no"));
     console.log("CHROME_ATT_BEFORE_EDITOR:" + (attBeforeEditor ? "yes" : "no"));
 
+    // Check horizontal layout alignment: Subject input aligns with Name input
+    var nameRect = nameEl ? nameEl.getBoundingClientRect() : null;
+    var subRect = subjectEl ? subjectEl.getBoundingClientRect() : null;
+    var inputsAligned = !!(nameRect && subRect && Math.abs(nameRect.left - subRect.left) < 5);
+    console.log("CHROME_INPUTS_ALIGNED:" + (inputsAligned ? "yes" : "no"));
+
     // 4. Check About Button Removal
     var aboutLink = document.querySelector('#layout-menu a.about, a.button-about');
     console.log("CHROME_ABOUT_EXISTS:" + (aboutLink ? "yes" : "no"));
@@ -733,6 +739,7 @@ HTML;
             if (preg_match('/CHROME_NAME_BEFORE_SUB:(.*?)"/', $line, $m)) $name_before_sub = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_SUB_BEFORE_ATT:(.*?)"/', $line, $m)) $sub_before_att = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_ATT_BEFORE_EDITOR:(.*?)"/', $line, $m)) $att_before_editor = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_INPUTS_ALIGNED:(.*?)"/', $line, $m)) $inputs_aligned = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_ABOUT_EXISTS:(.*?)"/', $line, $m)) $about_exists = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_INTERCEPTED_SUBJECT:(.*?)"/', $line, $m)) $intercepted_subject = trim($m[1]);
             if (preg_match('/CHROME_ORIG_INSERT_CALLED:(.*?)"/', $line, $m)) $orig_insert_called = (trim($m[1]) === 'yes');
@@ -767,6 +774,7 @@ HTML;
     assert_true($name_before_sub, "Browser DOM: Subject field is positioned directly below Name field");
     assert_true($sub_before_att, "Browser DOM: Attachments container is positioned directly below Subject field");
     assert_true($att_before_editor, "Browser DOM: Attachments container is positioned before the body text editor");
+    assert_true($inputs_aligned, "Browser Layout: Name and Subject inputs are horizontally aligned");
     assert_true(!$about_exists, "Browser DOM: About button successfully removed from sidebar");
     assert_true($intercepted_subject === 'Automatic Intercepted Subject', "Browser JS: insert_response auto-populates #_subject");
     assert_true($orig_insert_called, "Browser JS: original insert_response invoked");

@@ -321,65 +321,214 @@ input#rc-server-att-search:focus {
 }
 
 /* =======================================================
-   Settings -> Reactions (Responses) Enhancements
+   Settings -> Reactions (Responses) Enhancements & Layout
    ======================================================= */
 
-/* Response Form Rows & Alignment */
+/* 1. Form Container & Responsive Table Unification */
+.formcontent table.propform:has(#ffname),
+#responseform table.propform,
+table.propform:has(#ffname) {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+}
+
+table.propform:has(#ffname) > tbody,
+.formcontent table.propform:has(#ffname) > tbody,
+#responseform table.propform > tbody {
+    display: block !important;
+    width: 100% !important;
+}
+
+/* 2. Response Form Rows (Name, Subject, Attachments) as Flex Containers */
+table.propform:has(#ffname) > tbody > tr,
+.propform tr.rc-att-row,
+#rc-att-subject-row,
+#rc-att-box-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 0 14px 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* Label Cells: Name, Subject, Attachments cleanly aligned on left */
+table.propform:has(#ffname) > tbody > tr > th.title,
+table.propform:has(#ffname) > tbody > tr > td.title,
+table.propform:has(#ffname) > tbody > tr:not(:has(#fftext)) > td:first-child,
 #rc-att-subject-row th.title,
-#rc-att-box-row th.title {
-    vertical-align: middle;
-    padding: 8px 16px 8px 0;
-    font-weight: 600;
-    color: #374151;
-    font-size: 0.95rem;
-    white-space: nowrap;
+#rc-att-box-row th.title,
+#rc-att-subject-group > label,
+#rc-att-box-group > label {
+    flex: 0 0 130px !important;
+    max-width: 130px !important;
+    width: 130px !important;
+    padding: 8px 12px 8px 0 !important;
+    margin: 0 !important;
+    text-align: left !important;
+    font-weight: 600 !important;
+    color: #374151 !important;
+    font-size: 0.95rem !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
+/* Value / Control Cells */
+table.propform:has(#ffname) > tbody > tr > td:last-child:not(.col-sm-12):not(.html-editor),
 #rc-att-subject-row td,
-#rc-att-box-row td {
-    vertical-align: middle;
-    padding: 6px 0;
+#rc-att-box-row td,
+#rc-att-subject-group > div,
+#rc-att-box-group > div {
+    flex: 1 1 calc(100% - 130px) !important;
+    max-width: calc(100% - 130px) !important;
+    width: calc(100% - 130px) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    align-items: center !important;
 }
 
-/* Response Subject Input */
+/* 3. Name & Subject Text Inputs: Full Available Width */
+table.propform:has(#ffname) input#ffname,
 #rc-att-subject-row input#ffsubject,
 #rc-att-subject-group input#ffsubject,
 input#ffsubject.rc-response-input {
-    width: 100%;
-    height: 40px;
-    padding: 8px 14px;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: #1f2937;
-    background-color: #ffffff;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 40px !important;
+    padding: 8px 14px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5 !important;
+    color: #1f2937 !important;
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    box-sizing: border-box !important;
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out !important;
 }
 
+table.propform:has(#ffname) input#ffname:focus,
 #rc-att-subject-row input#ffsubject:focus,
 #rc-att-subject-group input#ffsubject:focus,
 input#ffsubject.rc-response-input:focus {
-    border-color: #1a73e8;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18);
+    border-color: #1a73e8 !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18) !important;
 }
 
-/* Response Attachments Container */
+/* 4. Full Width Editor & Toolbar Row */
+table.propform:has(#ffname) > tbody > tr:has(#fftext),
+table.propform:has(#ffname) > tbody > tr:has(.mce_editor),
+table.propform:has(#ffname) > tbody > tr:has(.tox-tinymce),
+table.propform:has(#ffname) > tbody > tr.rc-response-editor-row {
+    display: block !important;
+    width: 100% !important;
+    margin-top: 14px !important;
+    margin-bottom: 10px !important;
+}
+
+table.propform:has(#ffname) > tbody > tr:has(#fftext) > th.title,
+table.propform:has(#ffname) > tbody > tr:has(#fftext) > td.title,
+table.propform:has(#ffname) > tbody > tr.rc-response-editor-row > th.title,
+table.propform:has(#ffname) > tbody > tr.rc-response-editor-row > td.title {
+    display: none !important;
+}
+
+table.propform:has(#ffname) > tbody > tr:has(#fftext) > td,
+table.propform:has(#ffname) > tbody > tr > td.html-editor,
+table.propform:has(#ffname) > tbody > tr > td.col-sm-12,
+table.propform:has(#ffname) > tbody > tr.rc-response-editor-row > td {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+}
+
+/* Gemini Toolbar full width */
+.lpai-qa-bar.lpai-qa-bar-response {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 8px 0 12px 0 !important;
+}
+
+/* Editor (TinyMCE or Plain Textarea) full width */
+.tox.tox-tinymce,
+.mce-tinymce,
+#fftext.form-control,
+textarea#fftext {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 380px !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+}
+
+/* 5. Response Attachments Container */
 .rc-reaction-attachments-box {
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
 }
 
 .rc-reaction-att-row-content {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-    min-height: 40px;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    min-height: 40px !important;
+    width: 100% !important;
+}
+
+.rc-reaction-att-actions {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+}
+
+.btn-reaction-att {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 7px 14px !important;
+    border-radius: 8px !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    background: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+    color: #374151 !important;
+}
+
+.btn-reaction-att:hover {
+    background: #e5e7eb !important;
+    border-color: #9ca3af !important;
+    color: #1f2937 !important;
+}
+
+.btn-reaction-att-primary {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1e293b !important;
+}
+
+.btn-reaction-att-primary:hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
 }
 
 /* Reaction Attached Chips List */
@@ -584,31 +733,53 @@ input#ffsubject.rc-response-input:focus {
     body.dark-mode #rc-att-subject-row th.title,
     html.dark-mode #rc-att-box-row th.title,
     body.dark-mode #rc-att-box-row th.title,
+    html.dark-mode table.propform:has(#ffname) th.title,
+    body.dark-mode table.propform:has(#ffname) th.title,
+    html.dark-mode table.propform:has(#ffname) td.title,
+    body.dark-mode table.propform:has(#ffname) td.title,
     html.dark-mode #rc-att-subject-group label,
     body.dark-mode #rc-att-subject-group label,
     html.dark-mode #rc-att-box-group label,
     body.dark-mode #rc-att-box-group label {
-        color: #c4c6d0;
+        color: #e2e3e8 !important;
     }
 
+    html.dark-mode table.propform:has(#ffname) input#ffname,
+    body.dark-mode table.propform:has(#ffname) input#ffname,
     html.dark-mode #rc-att-subject-row input#ffsubject,
     body.dark-mode #rc-att-subject-row input#ffsubject,
     html.dark-mode #rc-att-subject-group input#ffsubject,
     body.dark-mode #rc-att-subject-group input#ffsubject,
     html.dark-mode input#ffsubject.rc-response-input,
     body.dark-mode input#ffsubject.rc-response-input {
-        background: #1e1f23;
-        border-color: #373a43;
-        color: #f1f3f4;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        background: #1e1f23 !important;
+        border-color: #373a43 !important;
+        color: #f1f3f4 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
     }
 
+    html.dark-mode table.propform:has(#ffname) input#ffname:focus,
+    body.dark-mode table.propform:has(#ffname) input#ffname:focus,
     html.dark-mode #rc-att-subject-row input#ffsubject:focus,
     body.dark-mode #rc-att-subject-row input#ffsubject:focus,
     html.dark-mode input#ffsubject.rc-response-input:focus,
     body.dark-mode input#ffsubject.rc-response-input:focus {
-        border-color: #8ab4f8;
-        box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.25);
+        border-color: #8ab4f8 !important;
+        box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.25) !important;
+    }
+
+    html.dark-mode .btn-reaction-att,
+    body.dark-mode .btn-reaction-att {
+        background: #282a30 !important;
+        border-color: #3e424c !important;
+        color: #e2e3e8 !important;
+    }
+
+    html.dark-mode .btn-reaction-att:hover,
+    body.dark-mode .btn-reaction-att:hover {
+        background: #32353d !important;
+        border-color: #5f6368 !important;
+        color: #ffffff !important;
     }
 
     html.dark-mode .rc-reaction-att-chip,
