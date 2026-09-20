@@ -29,7 +29,8 @@
         "newsletter",
         "email_scheduler",
         "twofactor_auth",
-        "roundcube_attachments"
+        "roundcube_attachments",
+        "vacation_forward"
     ],
     "authors": [
         {
@@ -54,7 +55,8 @@
         "webdotpulse/newsletter": "self.version",
         "roundcubeplus/email_scheduler": "self.version",
         "roundcubeplus/twofactor_auth": "self.version",
-        "roundcubeplus/roundcube_attachments": "self.version"
+        "roundcubeplus/roundcube_attachments": "self.version",
+        "roundcubeplus/vacation_forward": "self.version"
     },
     "suggest": {
         "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars",

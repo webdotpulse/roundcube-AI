@@ -1,0 +1,19 @@
+<?php
+
+/**
+ * Vacation & Mail Forwarding Plugin Configuration
+ */
+
+// Secret key to authorize web-triggered cron executions (?_action=plugin.vacation_forward-cron&secret=...)
+// Leave empty to allow unauthenticated web trigger or rely purely on CLI cron
+$config['vacation_forward_cron_secret'] = '';
+
+// Database table used to store auto-reply and forwarding logs and rate-limiting history
+$config['vacation_forward_table'] = 'vacation_forward_logs';
+
+// Default per-sender auto-reply throttle interval
+// Supported values: '1_hour', '6_hours', '12_hours', '1_day', '2_days', '3_days', '7_days', '14_days', 'unlimited'
+$config['vacation_forward_default_throttle'] = '1_day';
+
+// Maximum unseen messages to process per mailbox check
+$config['vacation_forward_max_batch'] = 5;

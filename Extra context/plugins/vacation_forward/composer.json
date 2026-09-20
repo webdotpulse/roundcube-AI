@@ -1,0 +1,19 @@
+{
+    "name": "roundcubeplus/vacation_forward",
+    "type": "roundcube-plugin",
+    "description": "Advanced Vacation Out-of-Office and Mail Forwarding plugin for Roundcube Webmail with multi-language templates, scheduling, and rate limiting.",
+    "keywords": [
+        "roundcube",
+        "plugin",
+        "vacation",
+        "forward",
+        "autoresponder",
+        "out-of-office",
+        "auto-reply"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": ">=8.0",
+        "roundcube/plugin-installer": ">=0.1.3"
+    }
+}

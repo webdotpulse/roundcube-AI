@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -260,6 +260,11 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'newsletter') {
             $this->postInstallNewsletter($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for vacation_forward
+        if ($type === 'plugin' && $name === 'vacation_forward') {
+            $this->postInstallVacationForward($destination, $this->roundcubeDir);
+        }
     }
 
     /**
@@ -454,6 +459,17 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup for vacation_forward plugin.
+     */
+    private function postInstallVacationForward(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring vacation_forward plugin ---");
+        $this->success("  [✓] Vacation Out-of-Office & Mail Forwarding plugin configured.");
+        $this->info("  [i] Multi-language templates, auto-responder, and forwarding ready.");
+        $this->info("  [i] CLI batch cron worker available at: php {$destination}/cron.php");
+    }
+
+    /**
      * Special post-installation setup, requirements verification, and guidance for xcalendar.
      */
     private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
@@ -551,7 +567,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -561,7 +577,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {
