@@ -36,6 +36,13 @@
         return '📎';
     }
 
+    function safeSetBusy(busy, msg, lock) {
+        if (window.rcmail && typeof window.rcmail.set_busy === 'function') {
+            return window.rcmail.set_busy(busy, msg, lock);
+        }
+        return null;
+    }
+
     // ========================================================
     // 0. Remove About Button from Right Sidebar
     // ========================================================
@@ -83,8 +90,8 @@
     function injectComposeButton() {
         var label = rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments';
 
-        // 1. Clean up any misplaced or duplicated toolbars / buttons
-        $('.rc-server-att-toolbar').remove();
+        // 1. Clean up any misplaced or duplicated toolbars / buttons in compose area
+        $('#compose-attachments .rc-server-att-toolbar, #composeform .rc-server-att-toolbar').remove();
         $('#compose-attachments > button#rc-server-att-compose-btn').remove();
         $('#compose-attachments .header #rc-server-att-compose-btn').remove();
 
@@ -173,7 +180,7 @@
         var composeId = rcmail.env.compose_id;
         var uploadId = 'rcm_att_' + (new Date()).getTime();
 
-        var lock = rcmail.set_busy(true, 'uploading');
+        var lock = safeSetBusy(true, 'uploading');
         rcmail.http_post('plugin.roundcube_attachments_attach_to_compose', {
             composeId: composeId,
             uploadId: uploadId,
@@ -219,183 +226,194 @@
             return;
         }
 
-        var title = rcmail.gettext('select_attachments', 'roundcube_attachments') || 'Select Server Attachments';
-        var btnAttach = rcmail.gettext('attach_selected', 'roundcube_attachments') || 'Attach Selected';
-        var btnUpload = rcmail.gettext('upload_to_server', 'roundcube_attachments') || 'Upload to Server';
-        var searchPlaceholder = rcmail.gettext('search_placeholder', 'roundcube_attachments') || 'Search saved attachments...';
-
-        var html = '<div id="rc-server-att-overlay" class="rc-att-overlay" style="display:none;"></div>'
-            + '<div id="rc-server-att-modal" class="rc-att-modal" style="display:none;">'
-            + '  <div class="rc-att-modal-header">'
-            + '    <div class="rc-att-modal-title">📁 ' + title + '</div>'
-            + '    <button type="button" class="rc-att-modal-close" id="rc-server-att-close">&times;</button>'
+        var modalHtml = '<div id="rc-server-att-overlay" class="rc-server-att-overlay" style="display:none;"></div>'
+            + '<div id="rc-server-att-modal" class="rc-server-att-modal" style="display:none;" role="dialog" aria-modal="true">'
+            + '  <div class="rc-server-att-modal-header">'
+            + '    <h3 class="rc-server-att-modal-title">' + (rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments') + '</h3>'
+            + '    <button type="button" class="rc-server-att-close" id="rc-server-att-close-btn">&times;</button>'
             + '  </div>'
-            + '  <div class="rc-att-modal-toolbar">'
-            + '    <input type="text" id="rc-server-att-search" class="form-control" placeholder="' + searchPlaceholder + '">'
-            + '    <button type="button" id="rc-server-att-upload-btn" class="btn btn-outline-primary rc-btn-upload">⬆️ ' + btnUpload + '</button>'
-            + '    <input type="file" id="rc-server-att-file-input" multiple style="display:none;">'
-            + '  </div>'
-            + '  <div class="rc-att-modal-body">'
-            + '    <div id="rc-server-att-loading" class="rc-att-loading" style="display:none;">Loading...</div>'
-            + '    <div id="rc-server-att-empty" class="rc-att-empty" style="display:none;">'
-            +        (rcmail.gettext('no_attachments_found', 'roundcube_attachments') || 'No saved attachments found.')
+            + '  <div class="rc-server-att-modal-body">'
+            + '    <div class="rc-server-att-toolbar">'
+            + '      <div class="rc-server-att-search-box">'
+            + '        <input type="text" id="rc-server-att-search" placeholder="' + (rcmail.gettext('search_placeholder', 'roundcube_attachments') || 'Search files...') + '" class="rc-server-att-search-input">'
+            + '      </div>'
+            + '      <div class="rc-server-att-actions">'
+            + '        <input type="file" id="rc-server-att-file-input" style="display:none;" multiple>'
+            + '        <button type="button" class="btn btn-secondary rc-btn-upload" id="rc-server-att-upload-btn">'
+            + '          <span class="icon">⬆</span> ' + (rcmail.gettext('upload_file', 'roundcube_attachments') || 'Upload File')
+            + '        </button>'
+            + '      </div>'
             + '    </div>'
-            + '    <div id="rc-server-att-list" class="rc-att-file-list"></div>'
-            + '  </div>'
-            + '  <div class="rc-att-modal-footer">'
-            + '    <span id="rc-server-att-selected-count" class="rc-att-selected-count">0 selected</span>'
-            + '    <div class="rc-att-modal-footer-btns">'
-            + '      <button type="button" class="btn btn-secondary" id="rc-server-att-cancel">Cancel</button>'
-            + '      <button type="button" class="btn btn-primary" id="rc-server-att-attach-btn" disabled>' + btnAttach + '</button>'
+            + '    <div id="rc-server-att-list-container" class="rc-server-att-list-container">'
+            + '      <div id="rc-server-att-loading" class="rc-server-att-loading" style="display:none;">'
+            + '        <span>' + (rcmail.gettext('loading', 'roundcube_attachments') || 'Loading...') + '</span>'
+            + '      </div>'
+            + '      <div id="rc-server-att-empty" class="rc-server-att-empty" style="display:none;">'
+            + '        <p>' + (rcmail.gettext('no_attachments_found', 'roundcube_attachments') || 'No server attachments found') + '</p>'
+            + '      </div>'
+            + '      <ul id="rc-server-att-list" class="rc-server-att-list"></ul>'
             + '    </div>'
+            + '  </div>'
+            + '  <div class="rc-server-att-modal-footer">'
+            + '    <button type="button" class="btn btn-secondary" id="rc-server-att-cancel-btn">' + (rcmail.gettext('cancel', 'roundcube_attachments') || 'Cancel') + '</button>'
+            + '    <button type="button" class="btn btn-primary" id="rc-server-att-attach-btn" disabled>' + (rcmail.gettext('attach_selected', 'roundcube_attachments') || 'Attach Selected') + '</button>'
             + '  </div>'
             + '</div>';
 
-        $('body').append(html);
+        $('body').append(modalHtml);
 
         // Bind modal event listeners
-        $('#rc-server-att-close, #rc-server-att-cancel, #rc-server-att-overlay').on('click', closeServerAttachmentsModal);
+        $('#rc-server-att-close-btn, #rc-server-att-cancel-btn, #rc-server-att-overlay').on('click', function() {
+            closeServerAttachmentsModal();
+        });
 
+        // Search filter in modal
         $('#rc-server-att-search').on('input', function() {
             var q = $(this).val().toLowerCase().trim();
-            $('#rc-server-att-list .rc-att-item').each(function() {
-                var name = $(this).find('.rc-att-item-name').text().toLowerCase();
-                $(this).toggle(name.indexOf(q) !== -1);
+            $('#rc-server-att-list li').each(function() {
+                var name = $(this).data('name') || '';
+                var desc = $(this).data('description') || '';
+                if (!q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
             });
         });
 
-        // Trigger file input
+        // Upload button triggers hidden file input
         $('#rc-server-att-upload-btn').on('click', function() {
-            $('#rc-server-att-file-input').val('').trigger('click');
+            $('#rc-server-att-file-input').val('').click();
         });
 
-        // Handle file upload
         $('#rc-server-att-file-input').on('change', function() {
-            var files = this.files;
-            if (!files || !files.length) return;
-            uploadFilesToServer(files);
-        });
-
-        // Item checkbox change
-        $(document).on('change', '#rc-server-att-list input.rc-att-checkbox', function() {
-            updateSelectedCount();
-        });
-
-        // Click on item row toggles checkbox
-        $(document).on('click', '#rc-server-att-list .rc-att-item', function(e) {
-            if ($(e.target).is('input, button, a, .rc-att-del-btn')) return;
-            var $chk = $(this).find('input.rc-att-checkbox');
-            $chk.prop('checked', !$chk.prop('checked')).trigger('change');
-        });
-
-        // Delete button
-        $(document).on('click', '.rc-att-del-btn', function(e) {
-            e.stopPropagation();
-            var id = $(this).data('id');
-            var name = $(this).data('name');
-            var confirmMsg = rcmail.gettext('delete_confirm', 'roundcube_attachments') || 'Are you sure you want to delete this saved attachment?';
-            if (confirm(confirmMsg + '\n\n' + name)) {
-                deleteServerAttachment(id);
+            if (this.files && this.files.length) {
+                uploadServerFiles(this.files);
             }
         });
 
-        // Attach Selected button
+        // Attach selected button
         $('#rc-server-att-attach-btn').on('click', function() {
             var selectedIds = [];
-            var selectedRecords = [];
-            $('#rc-server-att-list input.rc-att-checkbox:checked').each(function() {
-                var id = $(this).val();
-                selectedIds.push(id);
-                selectedRecords.push($(this).closest('.rc-att-item').data('record'));
+            var selectedFiles = [];
+            $('#rc-server-att-list input[type="checkbox"]:checked').each(function() {
+                var fid = $(this).val();
+                selectedIds.push(fid);
+                selectedFiles.push($(this).closest('li').data('file'));
             });
 
-            if (!selectedIds.length) return;
+            if (!selectedIds.length) {
+                return;
+            }
 
-            var $modal = $('#rc-server-att-modal');
-            var context = $modal.data('context');
-            var onSelect = $modal.data('onSelect');
+            var context = $('#rc-server-att-modal').data('context');
+            var onSelect = $('#rc-server-att-modal').data('onSelect');
 
             if (typeof onSelect === 'function') {
-                onSelect(selectedIds, selectedRecords);
-                closeServerAttachmentsModal();
+                onSelect(selectedIds, selectedFiles);
             } else if (context === 'compose') {
-                attachFilesToCompose(selectedIds, function() {
-                    closeServerAttachmentsModal();
-                });
-            } else {
-                closeServerAttachmentsModal();
+                attachFilesToCompose(selectedIds);
             }
-        });
-    }
 
-    function updateSelectedCount() {
-        var count = $('#rc-server-att-list input.rc-att-checkbox:checked').length;
-        $('#rc-server-att-selected-count').text(count + ' selected');
-        $('#rc-server-att-attach-btn').prop('disabled', count === 0);
+            closeServerAttachmentsModal();
+        });
     }
 
     function loadServerAttachmentsList() {
-        var $list = $('#rc-server-att-list').empty();
-        var $loading = $('#rc-server-att-loading').show();
-        var $empty = $('#rc-server-att-empty').hide();
+        $('#rc-server-att-loading').show();
+        $('#rc-server-att-empty').hide();
+        $('#rc-server-att-list').empty();
 
         $.ajax({
             url: rcmail.url('plugin.roundcube_attachments_list'),
             type: 'GET',
             dataType: 'json',
             success: function(res) {
-                $loading.hide();
-                if (res && res.status === 'success' && res.files && res.files.length) {
-                    window.__rc_server_files_cache = res.files;
+                $('#rc-server-att-loading').hide();
+                if (res && res.status === 'success' && res.files) {
                     renderServerAttachmentsList(res.files);
                 } else {
-                    $empty.show();
+                    $('#rc-server-att-empty').show();
                 }
             },
             error: function() {
-                $loading.hide();
-                $empty.show();
+                $('#rc-server-att-loading').hide();
+                $('#rc-server-att-empty').show();
             }
         });
     }
 
     function renderServerAttachmentsList(files) {
-        var $list = $('#rc-server-att-list').empty();
-        var deleteLabel = rcmail.gettext('delete_attachment', 'roundcube_attachments') || 'Delete';
+        var $list = $('#rc-server-att-list');
+        $list.empty();
+
+        if (!files || !files.length) {
+            $('#rc-server-att-empty').show();
+            return;
+        }
+
+        $('#rc-server-att-empty').hide();
 
         files.forEach(function(file) {
-            var icon = getFileIcon(file.mimetype, file.name);
-            var sizeStr = formatBytes(file.size);
-            var dateStr = file.created ? new Date(file.created * 1000).toLocaleDateString() : '';
+            var id = file.id;
+            var name = file.name;
+            var desc = file.description || '';
+            var size = formatBytes(file.size);
+            var date = file.created ? new Date(file.created * 1000).toLocaleDateString() : '';
+            var icon = getFileIcon(file.mimetype, name);
 
-            var $item = $('<div class="rc-att-item"></div>').data('record', file);
-            var html = '<div class="rc-att-item-left">'
-                + '  <input type="checkbox" class="rc-att-checkbox" value="' + file.id + '">'
+            var descHtml = desc ? '<div class="rc-att-item-desc text-muted">' + $('<div>').text(desc).html() + '</div>' : '';
+
+            var $li = $('<li class="rc-server-att-item">'
+                + '<label class="rc-att-item-label">'
+                + '  <input type="checkbox" value="' + id + '" class="rc-att-item-checkbox">'
                 + '  <span class="rc-att-item-icon">' + icon + '</span>'
                 + '  <div class="rc-att-item-details">'
-                + '    <div class="rc-att-item-name" title="' + file.name + '">' + file.name + '</div>'
-                + '    <div class="rc-att-item-meta">' + sizeStr + (dateStr ? ' • ' + dateStr : '') + '</div>'
+                + '    <span class="rc-att-item-name font-weight-bold">' + $('<div>').text(name).html() + '</span>'
+                +      descHtml
+                + '    <span class="rc-att-item-meta text-muted">' + size + (date ? ' &bull; ' + date : '') + '</span>'
                 + '  </div>'
-                + '</div>'
+                + '</label>'
                 + '<div class="rc-att-item-actions">'
-                + '  <a href="' + rcmail.url('plugin.roundcube_attachments_download', {_id: file.id}) + '" target="_blank" class="btn btn-sm btn-link" title="Preview/Download">⬇️</a>'
-                + '  <button type="button" class="btn btn-sm btn-link text-danger rc-att-del-btn" data-id="' + file.id + '" data-name="' + file.name + '" title="' + deleteLabel + '">🗑️</button>'
-                + '</div>';
+                + '  <a href="' + rcmail.url('plugin.roundcube_attachments_download', { _id: id }) + '" target="_blank" class="rc-btn-download" title="' + (rcmail.gettext('download', 'roundcube_attachments') || 'Download') + '">⬇</a>'
+                + '  <button type="button" class="rc-btn-delete-item" data-id="' + id + '" title="' + (rcmail.gettext('delete_attachment', 'roundcube_attachments') || 'Delete') + '">🗑</button>'
+                + '</div>'
+                + '</li>');
 
-            $item.html(html);
-            $list.append($item);
+            $li.data('name', (name || '').toLowerCase());
+            $li.data('description', (desc || '').toLowerCase());
+            $li.data('file', file);
+            $list.append($li);
         });
 
-        updateSelectedCount();
+        // Checkbox change updates attach button state
+        $list.find('input[type="checkbox"]').on('change', function() {
+            var anyChecked = $list.find('input[type="checkbox"]:checked').length > 0;
+            $('#rc-server-att-attach-btn').prop('disabled', !anyChecked);
+        });
+
+        // Delete button inside modal list
+        $list.find('.rc-btn-delete-item').on('click', function(e) {
+            e.stopPropagation();
+            var id = $(this).data('id');
+            var confirmMsg = rcmail.gettext('confirm_delete', 'roundcube_attachments') || 'Are you sure you want to delete this attachment from the server?';
+            if (window.confirm(confirmMsg)) {
+                deleteServerAttachment(id);
+            }
+        });
     }
 
-    function uploadFilesToServer(files, onUploadedCallback) {
+    function uploadServerFiles(files, onUploadedCallback) {
+        if (!files || !files.length) {
+            return;
+        }
+
         var formData = new FormData();
         for (var i = 0; i < files.length; i++) {
             formData.append('_attachments[]', files[i]);
         }
 
-        var lock = rcmail.set_busy(true, 'uploading');
+        var lock = safeSetBusy(true, 'uploading');
         $.ajax({
             url: rcmail.url('plugin.roundcube_attachments_upload'),
             type: 'POST',
@@ -404,7 +422,7 @@
             contentType: false,
             dataType: 'json',
             success: function(res) {
-                rcmail.set_busy(false, null, lock);
+                safeSetBusy(false, null, lock);
                 if (res && res.status === 'success') {
                     rcmail.display_message(res.message || 'Attachment saved', 'confirmation');
                     loadServerAttachmentsList();
@@ -416,21 +434,21 @@
                 }
             },
             error: function() {
-                rcmail.set_busy(false, null, lock);
+                safeSetBusy(false, null, lock);
                 rcmail.display_message('Upload error', 'error');
             }
         });
     }
 
     function deleteServerAttachment(id) {
-        var lock = rcmail.set_busy(true, 'loading');
+        var lock = safeSetBusy(true, 'loading');
         $.ajax({
             url: rcmail.url('plugin.roundcube_attachments_delete'),
             type: 'POST',
             data: { _id: id },
             dataType: 'json',
             success: function(res) {
-                rcmail.set_busy(false, null, lock);
+                safeSetBusy(false, null, lock);
                 if (res && res.status === 'success') {
                     loadServerAttachmentsList();
                 } else {
@@ -438,7 +456,7 @@
                 }
             },
             error: function() {
-                rcmail.set_busy(false, null, lock);
+                safeSetBusy(false, null, lock);
             }
         });
     }
@@ -755,14 +773,340 @@
         var $list = $doc.find('#rc-reaction-attached-list');
         var icon = getFileIcon(file.mimetype, file.name);
         var sizeStr = file.size ? ' (' + formatBytes(file.size) + ')' : '';
+        var descHtml = file.description ? ' • <span class="rc-chip-desc text-muted font-italic" title="' + $('<div>').text(file.description).html() + '">' + $('<div>').text(file.description).html() + '</span>' : '';
 
         var $chip = $('<div class="rc-reaction-att-chip" data-id="' + file.id + '"></div>');
         $chip.html('<span class="rc-chip-icon">' + icon + '</span>'
             + '<span class="rc-chip-name" title="' + file.name + '">' + file.name + '</span>'
+            + descHtml
             + '<span class="rc-chip-size text-muted">' + sizeStr + '</span>'
             + '<button type="button" class="rc-reaction-att-remove" data-id="' + file.id + '" title="Remove">&times;</button>');
 
         $list.append($chip);
+    }
+
+    // ========================================================
+    // 3.5. Native Settings Page Controller (Serverbijlagen)
+    // ========================================================
+
+    function initSettingsPage(targetDoc) {
+        var doc = targetDoc || document;
+        var $doc = $(doc);
+        var $container = $doc.find('#rc-server-att-settings');
+
+        if (!$container.length || $container.data('rc-settings-inited')) {
+            return;
+        }
+        $container.data('rc-settings-inited', true);
+
+        // 1. Live Search & Filter
+        var $search = $container.find('#rc-settings-search');
+        var $clearBtn = $container.find('#rc-settings-search-clear');
+        var $table = $container.find('#rc-server-att-table');
+        var $tbody = $container.find('#rc-server-att-tbody');
+        var $empty = $container.find('#rc-server-att-empty');
+
+        function filterRows(e) {
+            var inputVal = (e && e.target && e.target.value !== undefined)
+                ? e.target.value
+                : ($container.find('#rc-settings-search').val() || '');
+            var q = inputVal.toLowerCase().trim();
+            $clearBtn.toggle(q.length > 0);
+
+            var visibleCount = 0;
+            $tbody.find('tr.rc-server-att-row').each(function() {
+                var $row = $(this);
+                var name = ($row.attr('data-name') || '').toLowerCase();
+                var desc = ($row.attr('data-description') || '').toLowerCase();
+                if (!q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1) {
+                    $row.show();
+                    visibleCount++;
+                } else {
+                    $row.hide();
+                }
+            });
+
+            if (visibleCount === 0) {
+                $table.hide();
+                $empty.show();
+            } else {
+                $table.show();
+                $empty.hide();
+            }
+        }
+
+        $container.on('input keyup change', '#rc-settings-search', filterRows);
+        $search.on('input keyup change', filterRows);
+        $clearBtn.on('click', function() {
+            $search.val('').trigger('input').focus();
+        });
+
+        // 2. Toggle Upload Dropzone Panel
+        var $dropzonePanel = $container.find('#rc-server-att-dropzone-panel');
+        $container.on('click', '#rc-btn-toggle-upload, .rc-btn-empty-upload', function() {
+            $dropzonePanel.toggle();
+            if ($dropzonePanel.is(':visible')) {
+                $dropzonePanel.find('#rc-settings-file-desc').focus();
+            }
+        });
+
+        // 3. Dropzone & File Input Uploading
+        var $fileInput = $container.find('#rc-settings-file-input');
+        var $dropzone = $container.find('#rc-server-att-dropzone');
+        var $progressBar = $container.find('#rc-settings-upload-progress');
+        var $progressInner = $progressBar.find('.progress-bar');
+        var $uploadStatus = $container.find('#rc-settings-upload-status');
+
+        $container.on('click', '#rc-settings-browse-btn', function() {
+            $fileInput.trigger('click');
+        });
+
+        $dropzone.on('dragover dragenter', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $dropzone.addClass('rc-dragover border-primary');
+        });
+
+        $dropzone.on('dragleave dragend drop', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            $dropzone.removeClass('rc-dragover border-primary');
+        });
+
+        $dropzone.on('drop', function(e) {
+            var dt = e.originalEvent && e.originalEvent.dataTransfer;
+            if (dt && dt.files && dt.files.length) {
+                handleSettingsUpload(dt.files);
+            }
+        });
+
+        $fileInput.on('change', function() {
+            if (this.files && this.files.length) {
+                handleSettingsUpload(this.files);
+            }
+        });
+
+        function handleSettingsUpload(files) {
+            if (!files || !files.length) return;
+
+            var desc = ($container.find('#rc-settings-file-desc').val() || '').trim();
+            var formData = new FormData();
+            for (var i = 0; i < files.length; i++) {
+                formData.append('_attachments[]', files[i]);
+            }
+            if (desc) {
+                formData.append('description', desc);
+            }
+            formData.append('_token', rcmail.env.request_token);
+
+            $progressBar.show();
+            $progressInner.css('width', '0%').attr('aria-valuenow', 0);
+            $uploadStatus.text('Uploading ' + files.length + ' file(s)...');
+
+            $.ajax({
+                url: './?_task=settings&_action=plugin.roundcube_attachments_upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                xhr: function() {
+                    var xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(evt) {
+                        if (evt.lengthComputable) {
+                            var pct = Math.round((evt.loaded / evt.total) * 100);
+                            $progressInner.css('width', pct + '%').attr('aria-valuenow', pct);
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(res) {
+                    $progressBar.hide();
+                    $uploadStatus.empty();
+                    $fileInput.val('');
+                    $container.find('#rc-settings-file-desc').val('');
+
+                    if (res && res.status === 'success') {
+                        rcmail.display_message(res.message || 'File(s) uploaded successfully', 'confirmation');
+                        if (res.files && res.files.length) {
+                            res.files.forEach(function(f) {
+                                if (f.html_row) {
+                                    var $newRow = $(f.html_row).hide();
+                                    $tbody.prepend($newRow);
+                                    $newRow.fadeIn(400);
+                                }
+                            });
+                            $table.show();
+                            $empty.hide();
+                            updateSettingsStats();
+                        }
+                    } else {
+                        rcmail.display_message((res && res.message) || 'Upload failed', 'error');
+                    }
+                },
+                error: function() {
+                    $progressBar.hide();
+                    $uploadStatus.empty();
+                    $fileInput.val('');
+                    rcmail.display_message('Upload failed. Check server connection.', 'error');
+                }
+            });
+        }
+
+        // 4. Inline Description Editing
+        $container.on('click', '.rc-desc-view, .rc-btn-edit-desc', function(e) {
+            e.stopPropagation();
+            var $row = $(this).closest('tr');
+            var $view = $row.find('.rc-desc-view');
+            var $edit = $row.find('.rc-desc-edit');
+            var $input = $row.find('.rc-desc-input');
+
+            $view.hide();
+            $edit.show();
+            $input.focus().select();
+        });
+
+        $container.on('click', '.rc-btn-cancel-desc', function(e) {
+            e.stopPropagation();
+            var $row = $(this).closest('tr');
+            var $view = $row.find('.rc-desc-view');
+            var $edit = $row.find('.rc-desc-edit');
+            var currentText = $row.attr('data-description') || '';
+
+            $row.find('.rc-desc-input').val(currentText);
+            $edit.hide();
+            $view.show();
+        });
+
+        $container.on('keydown', '.rc-desc-input', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $(this).closest('tr').find('.rc-btn-save-desc').trigger('click');
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                $(this).closest('tr').find('.rc-btn-cancel-desc').trigger('click');
+            }
+        });
+
+        $container.on('click', '.rc-btn-save-desc', function(e) {
+            e.stopPropagation();
+            var $btn = $(this);
+            var $row = $btn.closest('tr');
+            var id = $row.attr('data-id');
+            var $input = $row.find('.rc-desc-input');
+            var newDesc = ($input.val() || '').trim();
+            var $view = $row.find('.rc-desc-view');
+            var $edit = $row.find('.rc-desc-edit');
+            var $textSpan = $row.find('.rc-desc-text');
+
+            $btn.prop('disabled', true).text('…');
+
+            $.ajax({
+                url: './?_task=settings&_action=plugin.roundcube_attachments_update_file',
+                type: 'POST',
+                data: {
+                    _id: id,
+                    description: newDesc,
+                    _token: rcmail.env.request_token
+                },
+                dataType: 'json',
+                success: function(res) {
+                    $btn.prop('disabled', false).text('✓');
+                    if (res && res.status === 'success') {
+                        $row.attr('data-description', newDesc.toLowerCase());
+                        if (newDesc) {
+                            $textSpan.text(newDesc).removeClass('text-muted font-italic');
+                        } else {
+                            var noDescText = rcmail.gettext('no_description', 'roundcube_attachments') || 'No description';
+                            $textSpan.html('<span class="text-muted font-italic">' + $('<div>').text(noDescText).html() + '</span>');
+                        }
+                        $edit.hide();
+                        $view.show();
+                        rcmail.display_message(res.message || 'Description updated', 'confirmation');
+                    } else {
+                        rcmail.display_message((res && res.message) || 'Failed to update description', 'error');
+                    }
+                },
+                error: function() {
+                    $btn.prop('disabled', false).text('✓');
+                    rcmail.display_message('Server error while saving description', 'error');
+                }
+            });
+        });
+
+        // 5. Delete File
+        $container.on('click', '.rc-btn-delete', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var $btn = $(this);
+            var $row = $btn.closest('tr');
+            var id = $row.attr('data-id');
+            var name = $row.find('.rc-file-link').text() || 'this file';
+            var confirmMsg = rcmail.gettext('delete_confirm', 'roundcube_attachments') || ('Are you sure you want to delete ' + name + '?');
+
+            if (!window.confirm(confirmMsg)) {
+                return;
+            }
+
+            $btn.prop('disabled', true);
+            $.ajax({
+                url: './?_task=settings&_action=plugin.roundcube_attachments_delete',
+                type: 'POST',
+                data: {
+                    _id: id,
+                    _token: rcmail.env.request_token
+                },
+                dataType: 'json',
+                success: function(res) {
+                    if (res && res.status === 'success') {
+                        $row.fadeOut(300, function() {
+                            $(this).remove();
+                            updateSettingsStats();
+                            if ($tbody.find('tr.rc-server-att-row').length === 0) {
+                                $table.hide();
+                                $empty.show();
+                            }
+                        });
+                        rcmail.display_message(res.message || 'File deleted', 'confirmation');
+                    } else {
+                        $btn.prop('disabled', false);
+                        rcmail.display_message((res && res.message) || 'Failed to delete file', 'error');
+                    }
+                },
+                error: function() {
+                    $btn.prop('disabled', false);
+                    rcmail.display_message('Error deleting file', 'error');
+                }
+            });
+        });
+
+        // 6. Update Stats Helper
+        function updateSettingsStats() {
+            var $rows = $tbody.find('tr.rc-server-att-row');
+            var totalCount = $rows.length;
+            var totalBytes = 0;
+
+            $rows.each(function() {
+                var sz = parseInt($(this).attr('data-size'), 10) || 0;
+                totalBytes += sz;
+            });
+
+            $container.find('#rc-stat-count .stat-number').text(totalCount);
+            $container.find('#rc-stat-size .stat-number').text(formatBytes(totalBytes));
+        }
+    }
+
+    function checkAndInitSettings() {
+        initSettingsPage(document);
+        var iframes = document.querySelectorAll('iframe#preferences-frame, iframe[name="preferences-frame"], iframe');
+        for (var i = 0; i < iframes.length; i++) {
+            try {
+                var fdoc = iframes[i].contentDocument || iframes[i].contentWindow.document;
+                if (fdoc) {
+                    initSettingsPage(fdoc);
+                }
+            } catch (e) {}
+        }
     }
 
     // ========================================================
@@ -772,13 +1116,16 @@
     rcmail.addEventListener('init', function() {
         initCompose();
         initResponses();
+        checkAndInitSettings();
         removeAboutButton();
     });
 
     $(document).ready(function() {
         initCompose();
         initResponses();
+        checkAndInitSettings();
         removeAboutButton();
     });
 
 })(window, window.document, window.jQuery);
+

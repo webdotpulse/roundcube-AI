@@ -32,6 +32,16 @@ function assert_true(bool $cond, string $desc): void
 echo "=== ROUNDCUBE ATTACHMENTS & REACTIONS TEST SUITE ===\n\n";
 
 // Setup Mock Roundcube Environment if not already loaded
+if (!class_exists('html')) {
+    class html
+    {
+        public static function quote($str)
+        {
+            return htmlspecialchars((string)$str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        }
+    }
+}
+
 if (!class_exists('rcube')) {
     class rcube
     {
@@ -179,7 +189,11 @@ assert_true(isset($plugin->actions['plugin.roundcube_attachments_delete']), "Act
 assert_true(isset($plugin->actions['plugin.roundcube_attachments_download']), "Action plugin.roundcube_attachments_download registered");
 assert_true(isset($plugin->actions['plugin.roundcube_attachments_attach_to_compose']), "Action plugin.roundcube_attachments_attach_to_compose registered");
 assert_true(isset($plugin->actions['plugin.roundcube_attachments_save_meta']), "Action plugin.roundcube_attachments_save_meta registered");
+assert_true(isset($plugin->actions['plugin.roundcube_attachments_get_meta']), "Action plugin.roundcube_attachments_get_meta registered");
+assert_true(isset($plugin->actions['plugin.roundcube_attachments_update_file']), "Action plugin.roundcube_attachments_update_file registered");
+assert_true(isset($plugin->actions['plugin.roundcube_attachments']), "Action plugin.roundcube_attachments registered");
 
+assert_true(isset($plugin->hooks['settings_actions']), "Hook settings_actions registered");
 assert_true(isset($plugin->hooks['get_compose_response']), "Hook get_compose_response registered");
 assert_true(isset($plugin->hooks['get_compose_responses']), "Hook get_compose_responses registered");
 assert_true(isset($plugin->hooks['response_create']), "Hook response_create registered");
@@ -351,9 +365,67 @@ assert_true($hasDisplayMsg, "display_message confirmation command dispatched");
 assert_true($hasAdd2List, "add2attachment_list UI update command dispatched");
 
 // ==========================================
-// Test 5: Headless Chrome Browser Integration Test
+// Test 5: Native Settings Page & File Descriptions
 // ==========================================
-echo "\n--- Test 5: Headless Chrome UI Validation ---\n";
+echo "\n--- Test 5: Native Settings Page & File Descriptions ---\n";
+
+// Test settings_actions hook
+$settings_args = $plugin->settings_actions(['actions' => []]);
+assert_true(!empty($settings_args['actions']), "settings_actions hook returns actions array");
+$found_action = false;
+foreach ($settings_args['actions'] as $act) {
+    if (($act['action'] ?? '') === 'plugin.roundcube_attachments') {
+        $found_action = true;
+        assert_true(($act['class'] ?? '') === 'server-attachments', "settings action class is server-attachments");
+        assert_true(($act['label'] ?? '') === 'roundcube_attachments.server_attachments', "settings action label matches");
+    }
+}
+assert_true($found_action, "settings_actions hook includes plugin.roundcube_attachments");
+
+// Test saving attachment with description
+$desc_res = $plugin->save_attachment('rates_2026.pdf', '%PDF-sample-rates', 'application/pdf', 'Tarievenoverzicht 2026 voor beheer');
+assert_true($desc_res['status'], "save_attachment with description succeeds");
+$desc_att_id = $desc_res['record']['id'];
+assert_true($desc_res['record']['description'] === 'Tarievenoverzicht 2026 voor beheer', "Stored record contains description");
+
+// Test listing attachments includes description
+$all_list = $plugin->list_attachments();
+$found_item = null;
+foreach ($all_list as $item) {
+    if ($item['id'] === $desc_att_id) {
+        $found_item = $item;
+        break;
+    }
+}
+assert_true($found_item !== null, "Attachment with description found in list_attachments");
+assert_true(($found_item['description'] ?? '') === 'Tarievenoverzicht 2026 voor beheer', "list_attachments preserves description");
+
+// Test updating attachment description
+$update_ok = $plugin->update_attachment_description($desc_att_id, 'Bijgewerkt tarievenoverzicht 2026');
+assert_true($update_ok, "update_attachment_description returns true");
+
+$meta_after = $plugin->load_meta();
+assert_true(($meta_after[$desc_att_id]['description'] ?? '') === 'Bijgewerkt tarievenoverzicht 2026', "Metadata persistence confirmed for updated description");
+
+// Test rendering settings view HTML
+$settings_html = $plugin->render_settings_view();
+assert_true(strpos($settings_html, 'id="rc-server-att-settings"') !== false, "Settings view contains #rc-server-att-settings container");
+assert_true(strpos($settings_html, 'id="rc-settings-search"') !== false, "Settings view contains search bar");
+assert_true(strpos($settings_html, 'id="rc-server-att-dropzone"') !== false, "Settings view contains upload dropzone");
+assert_true(strpos($settings_html, 'id="rc-server-att-table"') !== false, "Settings view contains file table");
+assert_true(strpos($settings_html, 'Bijgewerkt tarievenoverzicht 2026') !== false, "Settings view renders file description");
+assert_true(strpos($settings_html, 'rc-btn-edit-desc') !== false, "Settings view renders edit description button");
+assert_true(strpos($settings_html, 'rc-btn-delete') !== false, "Settings view renders delete button");
+
+// Test helper methods
+assert_true($plugin->format_filesize(1024) === '1 KB', "format_filesize formats KB correctly");
+assert_true($plugin->format_filesize(1024 * 1024 * 3) === '3 MB', "format_filesize formats MB correctly");
+assert_true($plugin->get_file_icon('document.pdf', 'application/pdf') === '📄', "get_file_icon identifies PDF");
+
+// ==========================================
+// Test 6: Headless Chrome Browser Integration Test
+// ==========================================
+echo "\n--- Test 6: Headless Chrome UI Validation ---\n";
 
 $chrome = exec('which google-chrome-stable 2>/dev/null') ?: exec('which google-chrome 2>/dev/null') ?: exec('which chromium 2>/dev/null');
 
@@ -382,6 +454,7 @@ window.rcmail = {
     env: {
         action: 'compose',
         compose_id: 'comp123',
+        request_token: 'test_token_123',
         roundcube_attachments: {
             enabled: true,
             is_compose: true,
@@ -389,22 +462,24 @@ window.rcmail = {
             response_meta: {
                 subject: 'Initial Reaction Subject',
                 attachments: ['att_1'],
-                files: [{ id: 'att_1', name: 'Brochure.pdf', size: 45000, mimetype: 'application/pdf' }]
+                files: [{ id: 'att_1', name: 'Brochure.pdf', size: 45000, mimetype: 'application/pdf', description: 'Bedrijfspresentatie' }]
             }
         }
     },
     gettext: function(k) { return k; },
-    url: function(a) { return a; },
-    set_busy: function() { return 1; },
-    display_message: function(m, t) { window.__last_msg = m; },
+    url: function(a, p) { return './?' + a + (p ? '&' + $.param(p) : ''); },
     addEventListener: function(evt, cb) {
         if (evt === 'init') { window.__init_cb = cb; }
     },
+    set_busy: function(busy, msg, lock) { return 'lock_123'; },
     http_post: function(action, data) {
         window.__last_http_post = { action: action, data: data };
     },
     insert_response: function(res) {
         window.__orig_insert_called = true;
+    },
+    display_message: function(msg, type) {
+        window.__last_msg = { msg: msg, type: type };
     }
 };
 </script>
@@ -457,6 +532,11 @@ window.rcmail = {
             <button type="submit" class="btn btn-primary mainaction">Opslaan</button>
         </div>
     </form>
+</div>
+
+<!-- Settings -> Serverbijlagen Native Settings Page Content -->
+<div id="settings-serverbijlagen-area" style="margin-top:50px;">
+{$settings_html}
 </div>
 
 <script>
@@ -524,6 +604,55 @@ window.onload = function() {
 
     var httpAction = window.__last_http_post ? window.__last_http_post.action : '';
     console.log("CHROME_HTTP_ACTION:" + httpAction);
+
+    // 6. Test Settings Page DOM & Interactivity
+    var settingsContainer = document.querySelector('#rc-server-att-settings');
+    console.log("CHROME_SETTINGS_EXISTS:" + (settingsContainer ? "yes" : "no"));
+
+    var settingRows = document.querySelectorAll('#rc-server-att-table tbody tr.rc-server-att-row');
+    console.log("CHROME_SETTINGS_ROWS:" + settingRows.length);
+
+    // Toggle description edit
+    var editBtn = document.querySelector('.rc-btn-edit-desc');
+    if (editBtn) editBtn.click();
+    var editBox = document.querySelector('.rc-desc-edit');
+    console.log("CHROME_DESC_EDIT_VISIBLE:" + (editBox && editBox.style.display !== 'none' ? "yes" : "no"));
+
+    var cancelBtn = document.querySelector('.rc-btn-cancel-desc');
+    if (cancelBtn) cancelBtn.click();
+    var descView = document.querySelector('.rc-desc-view');
+    console.log("CHROME_DESC_VIEW_VISIBLE:" + (descView && descView.style.display !== 'none' ? "yes" : "no"));
+
+    // Search filter test
+    var searchInput = document.querySelector('#rc-settings-search');
+    if (searchInput) {
+        searchInput.value = 'tarieven';
+        $(searchInput).trigger('input');
+    }
+    var visibleRowsMatching = $('#rc-server-att-table tbody tr.rc-server-att-row:visible').length;
+    console.log("CHROME_SETTINGS_MATCHING_ROWS:" + visibleRowsMatching);
+
+    if (searchInput) {
+        searchInput.value = 'nonexistentxyz123';
+        $(searchInput).trigger('input');
+    }
+    var visibleRowsNone = $('#rc-server-att-table tbody tr.rc-server-att-row:visible').length;
+    console.log("CHROME_SETTINGS_NONE_ROWS:" + visibleRowsNone);
+
+    var emptyStateVisible = $('#rc-server-att-empty').is(':visible');
+    console.log("CHROME_EMPTY_STATE_VISIBLE:" + (emptyStateVisible ? "yes" : "no"));
+
+    // Reset search
+    if (searchInput) {
+        searchInput.value = '';
+        $(searchInput).trigger('input');
+    }
+
+    // Toggle upload dropzone
+    var toggleUploadBtn = document.querySelector('#rc-btn-toggle-upload');
+    if (toggleUploadBtn) toggleUploadBtn.click();
+    var dropzonePanel = document.querySelector('#rc-server-att-dropzone-panel');
+    console.log("CHROME_DROPZONE_TOGGLED:" + (dropzonePanel && dropzonePanel.style.display !== 'none' ? "yes" : "no"));
 };
 </script>
 </body>
@@ -552,6 +681,14 @@ HTML;
     $intercepted_subject = '';
     $orig_insert_called = false;
     $http_action = '';
+    $settings_exists = false;
+    $settings_rows = 0;
+    $desc_edit_visible = false;
+    $desc_view_visible = false;
+    $settings_matching_rows = 0;
+    $settings_none_rows = 0;
+    $empty_state_visible = false;
+    $dropzone_toggled = false;
 
     if ($output) {
         foreach (explode("\n", $output) as $line) {
@@ -571,6 +708,15 @@ HTML;
             if (preg_match('/CHROME_INTERCEPTED_SUBJECT:(.*?)"/', $line, $m)) $intercepted_subject = trim($m[1]);
             if (preg_match('/CHROME_ORIG_INSERT_CALLED:(.*?)"/', $line, $m)) $orig_insert_called = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_HTTP_ACTION:(.*?)"/', $line, $m)) $http_action = trim($m[1]);
+
+            if (preg_match('/CHROME_SETTINGS_EXISTS:(.*?)"/', $line, $m)) $settings_exists = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_SETTINGS_ROWS:(.*?)"/', $line, $m)) $settings_rows = (int) trim($m[1]);
+            if (preg_match('/CHROME_DESC_EDIT_VISIBLE:(.*?)"/', $line, $m)) $desc_edit_visible = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_DESC_VIEW_VISIBLE:(.*?)"/', $line, $m)) $desc_view_visible = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_SETTINGS_MATCHING_ROWS:(.*?)"/', $line, $m)) $settings_matching_rows = (int) trim($m[1]);
+            if (preg_match('/CHROME_SETTINGS_NONE_ROWS:(.*?)"/', $line, $m)) $settings_none_rows = (int) trim($m[1]);
+            if (preg_match('/CHROME_EMPTY_STATE_VISIBLE:(.*?)"/', $line, $m)) $empty_state_visible = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_DROPZONE_TOGGLED:(.*?)"/', $line, $m)) $dropzone_toggled = (trim($m[1]) === 'yes');
         }
     }
 
@@ -590,6 +736,15 @@ HTML;
     assert_true($intercepted_subject === 'Automatic Intercepted Subject', "Browser JS: insert_response auto-populates #_subject");
     assert_true($orig_insert_called, "Browser JS: original insert_response invoked");
     assert_true($http_action === 'plugin.roundcube_attachments_attach_to_compose', "Browser JS: auto-attaches reaction files via AJAX");
+
+    assert_true($settings_exists, "Browser DOM: #rc-server-att-settings native settings page rendered");
+    assert_true($settings_rows >= 1, "Browser DOM: Settings file table rendered rows");
+    assert_true($desc_edit_visible, "Browser DOM: Clicking edit button displays inline description input");
+    assert_true($desc_view_visible, "Browser DOM: Clicking cancel button restores description view");
+    assert_true($settings_matching_rows >= 1, "Browser JS: Live search filters rows correctly for matching query");
+    assert_true($settings_none_rows === 0, "Browser JS: Live search hides all rows for non-matching query");
+    assert_true($empty_state_visible, "Browser JS: Empty state shown when 0 rows match search");
+    assert_true($dropzone_toggled, "Browser JS: Toggle upload button reveals dropzone panel");
 } else {
     echo "Notice: Chrome binary not found, skipping headless browser test.\n";
 }

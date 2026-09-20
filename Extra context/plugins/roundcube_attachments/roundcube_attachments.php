@@ -40,8 +40,13 @@ class roundcube_attachments extends rcube_plugin
         $this->register_action('plugin.roundcube_attachments_attach_to_compose', [$this, 'action_attach_to_compose']);
         $this->register_action('plugin.roundcube_attachments_save_meta', [$this, 'action_save_meta']);
         $this->register_action('plugin.roundcube_attachments_get_meta', [$this, 'action_get_meta']);
+        $this->register_action('plugin.roundcube_attachments_update_file', [$this, 'action_update_file']);
+
+        // Settings main action
+        $this->register_action('plugin.roundcube_attachments', [$this, 'action_settings']);
 
         // Register hooks
+        $this->add_hook('settings_actions', [$this, 'settings_actions']);
         $this->add_hook('get_compose_response', [$this, 'hook_get_compose_response']);
         $this->add_hook('get_compose_responses', [$this, 'hook_get_compose_responses']);
         $this->add_hook('response_create', [$this, 'hook_response_create']);
@@ -167,7 +172,7 @@ class roundcube_attachments extends rcube_plugin
     /**
      * Store an attachment file on the server.
      */
-    public function save_attachment(string $filename, string $content, ?string $mimetype = null): array
+    public function save_attachment(string $filename, string $content, ?string $mimetype = null, ?string $description = null): array
     {
         $max_size = (int) $this->rc->config->get('roundcube_attachments_max_filesize', 25 * 1024 * 1024);
         if (strlen($content) > $max_size) {
@@ -204,10 +209,12 @@ class roundcube_attachments extends rcube_plugin
         $record = [
             'id' => $id,
             'name' => $safe_name,
+            'description' => trim((string)$description),
             'storage_name' => $storage_name,
             'size' => strlen($content),
             'mimetype' => $mimetype ?: 'application/octet-stream',
             'created' => time(),
+            'updated' => time(),
         ];
 
         $meta = $this->load_meta();
@@ -215,6 +222,26 @@ class roundcube_attachments extends rcube_plugin
         $this->save_meta($meta);
 
         return ['status' => true, 'record' => $record];
+    }
+
+    /**
+     * Update an attachment's description.
+     */
+    public function update_attachment_description(string $id, string $description): bool
+    {
+        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $id)) {
+            return false;
+        }
+
+        $meta = $this->load_meta();
+        if (!isset($meta[$id])) {
+            return false;
+        }
+
+        $meta[$id]['description'] = trim($description);
+        $meta[$id]['updated'] = time();
+
+        return $this->save_meta($meta);
     }
 
     /**
@@ -370,6 +397,7 @@ class roundcube_attachments extends rcube_plugin
                     $files_meta[] = [
                         'id' => $att_id,
                         'name' => $all_files[$att_id]['name'],
+                        'description' => $all_files[$att_id]['description'] ?? '',
                         'size' => $all_files[$att_id]['size'],
                         'mimetype' => $all_files[$att_id]['mimetype'],
                     ];
@@ -483,8 +511,9 @@ class roundcube_attachments extends rcube_plugin
         $is_compose = ($task === 'mail' && $action === 'compose');
         $is_responses = ($task === 'settings' && (strpos($action, 'response') !== false || in_array($action, ['responses', 'responseedit', 'response-edit', 'response-add', 'add-response', 'edit-response'], true)))
             || in_array($template, ['responses', 'responseedit'], true);
+        $is_settings = ($task === 'settings' && (strpos($action, 'roundcube_attachments') !== false || strpos($template, 'roundcube_attachments') !== false));
 
-        if ($is_compose || $is_responses) {
+        if ($is_compose || $is_responses || $is_settings) {
             $this->include_script('roundcube_attachments.js');
             $this->include_stylesheet('roundcube_attachments.css');
 
@@ -560,6 +589,9 @@ class roundcube_attachments extends rcube_plugin
         $is_array = is_array($files['tmp_name']);
         $count = $is_array ? count($files['tmp_name']) : 1;
 
+        $raw_desc = rcube_utils::get_input_value('description', rcube_utils::INPUT_POST);
+        $descriptions = is_array($raw_desc) ? $raw_desc : [$raw_desc];
+
         for ($i = 0; $i < $count; $i++) {
             $tmp_name = $is_array ? $files['tmp_name'][$i] : $files['tmp_name'];
             $orig_name = $is_array ? $files['name'][$i] : $files['name'];
@@ -577,9 +609,12 @@ class roundcube_attachments extends rcube_plugin
                 continue;
             }
 
-            $res = $this->save_attachment($orig_name, $content, $mime);
+            $file_desc = isset($descriptions[$i]) ? (string)$descriptions[$i] : (string)($descriptions[0] ?? '');
+            $res = $this->save_attachment($orig_name, $content, $mime, $file_desc);
             if ($res['status']) {
-                $uploaded_files[] = $res['record'];
+                $rec = $res['record'];
+                $rec['html_row'] = $this->render_file_row($rec);
+                $uploaded_files[] = $rec;
             } else {
                 $errors[] = $this->gettext($res['error']) . " ({$orig_name})";
             }
@@ -811,6 +846,7 @@ class roundcube_attachments extends rcube_plugin
                 $files[] = [
                     'id' => $att_id,
                     'name' => $all_files[$att_id]['name'],
+                    'description' => $all_files[$att_id]['description'] ?? '',
                     'size' => $all_files[$att_id]['size'],
                     'mimetype' => $all_files[$att_id]['mimetype'],
                 ];
@@ -827,4 +863,257 @@ class roundcube_attachments extends rcube_plugin
         ]);
         exit;
     }
+
+    /**
+     * Hook: settings_actions
+     * Registers Serverbijlagen (Server Attachments) in Roundcube's settings navigation menu.
+     */
+    public function settings_actions(array $args): array
+    {
+        $args['actions'][] = [
+            'action' => 'plugin.roundcube_attachments',
+            'class'  => 'server-attachments',
+            'label'  => 'roundcube_attachments.server_attachments',
+            'title'  => 'roundcube_attachments.server_attachments',
+            'domain' => 'roundcube_attachments',
+        ];
+        return $args;
+    }
+
+    /**
+     * Action: Settings page for Serverbijlagen
+     */
+    public function action_settings(): void
+    {
+        $this->rc->output->set_pagetitle($this->gettext('server_attachments'));
+        $this->include_script('roundcube_attachments.js');
+        $this->include_stylesheet('roundcube_attachments.css');
+
+        $this->register_handler('plugin.body', [$this, 'render_settings_view']);
+        $this->rc->output->send('plugin');
+    }
+
+    /**
+     * Safe HTML quote helper compatible with both Roundcube runtime and test suites.
+     */
+    public static function quote(?string $str): string
+    {
+        if (class_exists('html') && method_exists('html', 'quote')) {
+            return html::quote((string)$str);
+        }
+        return htmlspecialchars((string)$str, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    /**
+     * Render the native settings page HTML for Serverbijlagen
+     */
+    public function render_settings_view(): string
+    {
+        $files = $this->list_attachments();
+        $total_files = count($files);
+        $total_bytes = 0;
+        foreach ($files as $f) {
+            $total_bytes += (int)($f['size'] ?? 0);
+        }
+
+        $formatted_total_size = $this->format_filesize($total_bytes);
+
+        $html = '<div id="rc-server-att-settings" class="rc-server-att-settings-container boxcontent uibox">';
+
+        // Header / Summary Card
+        $html .= '<div class="rc-server-att-header card mb-4 p-3">';
+        $html .= '  <div class="d-flex justify-content-between align-items-center flex-wrap">';
+        $html .= '    <div>';
+        $html .= '      <h2 class="rc-server-att-title mb-1"><span class="icon">📁</span> ' . self::quote($this->gettext('settings_title')) . '</h2>';
+        $html .= '      <p class="text-muted mb-0">' . self::quote($this->gettext('settings_description')) . '</p>';
+        $html .= '    </div>';
+        $html .= '    <div class="rc-server-att-stats mt-2 mt-md-0">';
+        $html .= '      <span class="badge badge-primary px-3 py-2 mr-2" id="rc-stat-count"><span class="stat-number">' . $total_files . '</span> ' . self::quote($this->gettext('total_files')) . '</span>';
+        $html .= '      <span class="badge badge-secondary px-3 py-2" id="rc-stat-size"><span class="stat-number">' . $formatted_total_size . '</span> ' . self::quote($this->gettext('storage_used')) . '</span>';
+        $html .= '    </div>';
+        $html .= '  </div>';
+        $html .= '</div>';
+
+        // Action Toolbar
+        $html .= '<div class="rc-server-att-toolbar d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">';
+        $html .= '  <div class="rc-server-att-search-box flex-grow-1 mr-3">';
+        $html .= '    <div class="input-group">';
+        $html .= '      <div class="input-group-prepend"><span class="input-group-text">🔍</span></div>';
+        $html .= '      <input type="text" id="rc-settings-search" class="form-control" placeholder="' . self::quote($this->gettext('search_placeholder')) . '" autocomplete="off">';
+        $html .= '      <div class="input-group-append"><button type="button" id="rc-settings-search-clear" class="btn btn-outline-secondary" style="display:none;">✕</button></div>';
+        $html .= '    </div>';
+        $html .= '  </div>';
+        $html .= '  <div class="rc-server-att-actions mt-2 mt-sm-0">';
+        $html .= '    <button type="button" id="rc-btn-toggle-upload" class="btn btn-primary"><span class="icon">⬆</span> ' . self::quote($this->gettext('upload_file')) . '</button>';
+        $html .= '  </div>';
+        $html .= '</div>';
+
+        // Dropzone / Upload Panel
+        $html .= '<div id="rc-server-att-dropzone-panel" class="card mb-4" style="display:none;">';
+        $html .= '  <div class="card-body">';
+        $html .= '    <div id="rc-server-att-dropzone" class="rc-dropzone text-center p-4 border border-dashed rounded">';
+        $html .= '      <div class="rc-dropzone-icon mb-2">☁️</div>';
+        $html .= '      <p class="rc-dropzone-text mb-2 font-weight-bold">' . self::quote($this->gettext('drop_files_here')) . '</p>';
+        $html .= '      <input type="file" id="rc-settings-file-input" class="d-none" multiple>';
+        $html .= '      <button type="button" id="rc-settings-browse-btn" class="btn btn-sm btn-outline-primary mb-3">' . self::quote($this->gettext('upload_file')) . '</button>';
+        $html .= '      <div class="row justify-content-center">';
+        $html .= '        <div class="col-md-6 col-sm-8">';
+        $html .= '          <div class="form-group mb-2 text-left">';
+        $html .= '            <label for="rc-settings-file-desc" class="small text-muted">' . self::quote($this->gettext('upload_with_description')) . '</label>';
+        $html .= '            <input type="text" id="rc-settings-file-desc" class="form-control form-control-sm" placeholder="' . self::quote($this->gettext('file_description_placeholder')) . '">';
+        $html .= '          </div>';
+        $html .= '        </div>';
+        $html .= '      </div>';
+        $html .= '      <div id="rc-settings-upload-progress" class="progress mt-3" style="display:none; height: 6px;">';
+        $html .= '        <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" style="width: 0%"></div>';
+        $html .= '      </div>';
+        $html .= '      <div id="rc-settings-upload-status" class="small text-muted mt-2"></div>';
+        $html .= '    </div>';
+        $html .= '  </div>';
+        $html .= '</div>';
+
+        // Table / Listing Container
+        $html .= '<div class="card rc-server-att-table-card">';
+        $html .= '  <div class="table-responsive">';
+        $html .= '    <table id="rc-server-att-table" class="table table-hover table-striped mb-0">';
+        $html .= '      <thead class="thead-light">';
+        $html .= '        <tr>';
+        $html .= '          <th style="width: 40px;"></th>';
+        $html .= '          <th style="min-width: 200px;">' . self::quote($this->gettext('file_name')) . '</th>';
+        $html .= '          <th style="min-width: 260px;">' . self::quote($this->gettext('file_description')) . '</th>';
+        $html .= '          <th style="width: 110px;">' . self::quote($this->gettext('file_size')) . '</th>';
+        $html .= '          <th style="width: 160px;">' . self::quote($this->gettext('file_date')) . '</th>';
+        $html .= '          <th style="width: 140px; text-align: right;">' . self::quote($this->gettext('actions')) . '</th>';
+        $html .= '        </tr>';
+        $html .= '      </thead>';
+        $html .= '      <tbody id="rc-server-att-tbody">';
+
+        foreach ($files as $file) {
+            $html .= $this->render_file_row($file);
+        }
+
+        $html .= '      </tbody>';
+        $html .= '    </table>';
+        $html .= '  </div>';
+
+        // Empty state
+        $empty_style = empty($files) ? '' : 'style="display:none;"';
+        $html .= '  <div id="rc-server-att-empty" class="text-center p-5 text-muted" ' . $empty_style . '>';
+        $html .= '    <div class="mb-3" style="font-size: 3rem;">📂</div>';
+        $html .= '    <h4 class="mb-2 font-weight-normal">' . self::quote($this->gettext('no_attachments_found')) . '</h4>';
+        $html .= '    <p class="mb-3">' . self::quote($this->gettext('settings_description')) . '</p>';
+        $html .= '    <button type="button" class="btn btn-primary rc-btn-empty-upload">' . self::quote($this->gettext('upload_file')) . '</button>';
+        $html .= '  </div>';
+
+        $html .= '</div>'; // end table card
+        $html .= '</div>'; // end container
+
+        return $html;
+    }
+
+    /**
+     * Render a single file row for the settings table.
+     */
+    public function render_file_row(array $file): string
+    {
+        $id = self::quote($file['id'] ?? '');
+        $name = self::quote($file['name'] ?? '');
+        $desc = self::quote($file['description'] ?? '');
+        $size_bytes = (int)($file['size'] ?? 0);
+        $size = $this->format_filesize($size_bytes);
+        $mimetype = self::quote($file['mimetype'] ?? 'application/octet-stream');
+        $created = !empty($file['created']) ? date('d-m-Y H:i', (int)$file['created']) : '-';
+        $icon = $this->get_file_icon($name, $mimetype);
+        $download_url = './?_task=settings&_action=plugin.roundcube_attachments_download&_id=' . urlencode($file['id'] ?? '');
+
+        $has_desc = !empty(trim($file['description'] ?? ''));
+        $desc_display = $has_desc ? $desc : '<span class="text-muted font-italic">' . self::quote($this->gettext('no_description')) . '</span>';
+
+        $row = '<tr class="rc-server-att-row" data-id="' . $id . '" data-name="' . strtolower($name) . '" data-description="' . strtolower($desc) . '" data-size="' . $size_bytes . '">';
+        $row .= '  <td class="text-center"><span class="rc-file-icon">' . $icon . '</span></td>';
+        $row .= '  <td class="rc-col-filename">';
+        $row .= '    <a href="' . $download_url . '" target="_blank" class="font-weight-bold rc-file-link" title="' . $name . '">' . $name . '</a>';
+        $row .= '    <div class="small text-muted">' . $mimetype . '</div>';
+        $row .= '  </td>';
+        $row .= '  <td class="rc-col-description">';
+        $row .= '    <div class="rc-desc-view d-flex align-items-center justify-content-between" title="' . self::quote($this->gettext('edit_description')) . '">';
+        $row .= '      <span class="rc-desc-text text-break">' . $desc_display . '</span>';
+        $row .= '      <button type="button" class="btn btn-sm btn-link rc-btn-edit-desc text-muted p-0 ml-2" title="' . self::quote($this->gettext('edit_description')) . '">✏️</button>';
+        $row .= '    </div>';
+        $row .= '    <div class="rc-desc-edit" style="display: none;">';
+        $row .= '      <div class="input-group input-group-sm">';
+        $row .= '        <input type="text" class="form-control form-control-sm rc-desc-input" value="' . $desc . '" placeholder="' . self::quote($this->gettext('file_description_placeholder')) . '">';
+        $row .= '        <div class="input-group-append">';
+        $row .= '          <button type="button" class="btn btn-success rc-btn-save-desc" title="' . self::quote($this->gettext('save_description')) . '">✓</button>';
+        $row .= '          <button type="button" class="btn btn-secondary rc-btn-cancel-desc" title="' . self::quote($this->gettext('cancel')) . '">✕</button>';
+        $row .= '        </div>';
+        $row .= '      </div>';
+        $row .= '    </div>';
+        $row .= '  </td>';
+        $row .= '  <td class="rc-col-size text-nowrap">' . $size . '</td>';
+        $row .= '  <td class="rc-col-date text-nowrap">' . $created . '</td>';
+        $row .= '  <td class="rc-col-actions text-right text-nowrap">';
+        $row .= '    <a href="' . $download_url . '" class="btn btn-sm btn-outline-secondary rc-btn-download mr-1" title="' . self::quote($this->gettext('download')) . '" download>⬇</a>';
+        $row .= '    <button type="button" class="btn btn-sm btn-outline-danger rc-btn-delete" title="' . self::quote($this->gettext('delete_attachment')) . '">🗑</button>';
+        $row .= '  </td>';
+        $row .= '</tr>';
+
+        return $row;
+    }
+
+    /**
+     * File icon helper.
+     */
+    public function get_file_icon(string $filename, string $mimetype): string
+    {
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (in_array($ext, ['pdf'], true)) return '📄';
+        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'], true)) return '🖼️';
+        if (in_array($ext, ['doc', 'docx', 'odt', 'rtf'], true)) return '📝';
+        if (in_array($ext, ['xls', 'xlsx', 'ods', 'csv'], true)) return '📊';
+        if (in_array($ext, ['zip', 'rar', 'tar', 'gz', '7z'], true)) return '📦';
+        if (in_array($ext, ['txt', 'md', 'log'], true)) return '📃';
+        if (in_array($ext, ['mp3', 'wav', 'ogg'], true)) return '🎵';
+        if (in_array($ext, ['mp4', 'webm', 'mov', 'avi'], true)) return '🎬';
+        return '📎';
+    }
+
+    /**
+     * Format byte count into human-readable size.
+     */
+    public function format_filesize(int $bytes): string
+    {
+        if ($bytes <= 0) return '0 B';
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $i = (int) floor(log($bytes, 1024));
+        $i = min($i, count($units) - 1);
+        $size = $bytes / (1024 ** $i);
+        return round($size, 1) . ' ' . $units[$i];
+    }
+
+    /**
+     * AJAX Action: Update an attachment's description
+     */
+    public function action_update_file(): void
+    {
+        $this->rc->output->reset();
+        $id = rcube_utils::get_input_string('_id', rcube_utils::INPUT_POST);
+        $description = rcube_utils::get_input_string('description', rcube_utils::INPUT_POST);
+
+        if (empty($id) || !$this->update_attachment_description($id, (string)$description)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => $this->gettext('error_not_found')]);
+            exit;
+        }
+
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'status' => 'success',
+            'message' => $this->gettext('description_updated_success'),
+            'id' => $id,
+            'description' => trim((string)$description),
+        ]);
+        exit;
+    }
 }
+

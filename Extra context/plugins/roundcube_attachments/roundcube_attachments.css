@@ -456,3 +456,234 @@ a.about[onclick*="about_dialog"] {
     visibility: hidden !important;
     pointer-events: none !important;
 }
+
+/* =======================================================
+   Native Settings Page: Serverbijlagen
+   ======================================================= */
+.rc-server-att-settings-container {
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.rc-server-att-header {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.rc-server-att-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.rc-server-att-stats .badge {
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 20px;
+}
+
+.rc-server-att-stats .stat-number {
+    font-weight: 700;
+}
+
+.rc-server-att-toolbar {
+    margin-top: 10px;
+}
+
+.rc-server-att-search-box .input-group-text {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.rc-server-att-search-box input#rc-settings-search {
+    border-color: #cbd5e1;
+    font-size: 0.9rem;
+    border-radius: 0 6px 6px 0;
+}
+
+.rc-server-att-search-box input#rc-settings-search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+#rc-server-att-dropzone-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.rc-dropzone {
+    background: #f8fafc;
+    border: 2px dashed #cbd5e1 !important;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.rc-dropzone:hover,
+.rc-dropzone.rc-dragover {
+    background: #eff6ff;
+    border-color: #3b82f6 !important;
+}
+
+.rc-dropzone-icon {
+    font-size: 2.2rem;
+}
+
+.rc-dropzone-text {
+    font-size: 1rem;
+    color: #334155;
+}
+
+.rc-server-att-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+#rc-server-att-table {
+    margin-bottom: 0;
+}
+
+#rc-server-att-table thead th {
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 12px 14px;
+}
+
+#rc-server-att-table tbody tr.rc-server-att-row td {
+    padding: 12px 14px;
+    vertical-align: middle;
+    border-top: 1px solid #f1f5f9;
+    transition: background-color 0.15s;
+}
+
+#rc-server-att-table tbody tr.rc-server-att-row:hover {
+    background-color: #f8fafc;
+}
+
+.rc-file-icon {
+    font-size: 1.35rem;
+    display: inline-block;
+}
+
+.rc-file-link {
+    color: #1e293b;
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.rc-file-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
+
+.rc-col-description .rc-desc-view {
+    cursor: pointer;
+    min-height: 28px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: background-color 0.15s;
+}
+
+.rc-col-description .rc-desc-view:hover {
+    background-color: #edf2f7;
+}
+
+.rc-col-description .rc-desc-view:hover .rc-btn-edit-desc {
+    opacity: 1;
+}
+
+.rc-col-description .rc-btn-edit-desc {
+    opacity: 0.3;
+    transition: opacity 0.15s;
+    font-size: 0.85rem;
+}
+
+.rc-col-size,
+.rc-col-date {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+
+.rc-col-actions .btn {
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+
+#rc-server-att-empty {
+    background: #fafafa;
+}
+
+/* Dark Mode for Settings Page */
+html.dark-mode .rc-server-att-header,
+body.dark-mode .rc-server-att-header,
+html.dark-mode .rc-server-att-table-card,
+body.dark-mode .rc-server-att-table-card,
+html.dark-mode #rc-server-att-dropzone-panel,
+body.dark-mode #rc-server-att-dropzone-panel {
+    background: #1e293b;
+    border-color: #334155;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+html.dark-mode .rc-server-att-title,
+body.dark-mode .rc-server-att-title,
+html.dark-mode .rc-file-link,
+body.dark-mode .rc-file-link {
+    color: #f1f5f9;
+}
+
+html.dark-mode #rc-server-att-table thead th,
+body.dark-mode #rc-server-att-table thead th {
+    background: #0f172a;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+html.dark-mode #rc-server-att-table tbody tr.rc-server-att-row td,
+body.dark-mode #rc-server-att-table tbody tr.rc-server-att-row td {
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+html.dark-mode #rc-server-att-table tbody tr.rc-server-att-row:hover,
+body.dark-mode #rc-server-att-table tbody tr.rc-server-att-row:hover {
+    background-color: #243044;
+}
+
+html.dark-mode .rc-dropzone,
+body.dark-mode .rc-dropzone {
+    background: #0f172a;
+    border-color: #475569 !important;
+}
+
+html.dark-mode .rc-dropzone:hover,
+body.dark-mode .rc-dropzone:hover,
+html.dark-mode .rc-dropzone.rc-dragover,
+body.dark-mode .rc-dropzone.rc-dragover {
+    background: #1e293b;
+    border-color: #38bdf8 !important;
+}
+
+html.dark-mode .rc-col-description .rc-desc-view:hover,
+body.dark-mode .rc-col-description .rc-desc-view:hover {
+    background-color: #334155;
+}
+
+html.dark-mode #rc-server-att-empty,
+body.dark-mode #rc-server-att-empty {
+    background: #1e293b;
+}
+
