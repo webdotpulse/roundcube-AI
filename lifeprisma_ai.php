@@ -21,8 +21,6 @@ class lifeprisma_ai extends rcube_plugin
         $skin_path = $this->local_skin_path();
         if (($active_skin === 'gmail_plus' || strpos($active_skin, 'gmail') !== false) && is_dir($this->home . '/skins/gmail_plus')) {
             $skin_path = 'skins/gmail_plus';
-        } elseif (($active_skin === 'material' || strpos($active_skin, 'material') !== false) && is_dir($this->home . '/skins/material')) {
-            $skin_path = 'skins/material';
         }
         if (file_exists($this->home . "/{$skin_path}/style.min.css")) {
             $this->include_stylesheet("{$skin_path}/style.min.css");
@@ -2331,29 +2329,35 @@ Body:
         <div id="lpai-controls">
             <div class="lpai-control-group">
                 <label for="lpai-model-select">Model</label>
-                <select id="lpai-model-select" class="lpai-select">' . $model_options . '</select>
+                <div class="lpai-custom-select" data-select-id="lpai-model-select">
+                    <select id="lpai-model-select" class="lpai-select">' . $model_options . '</select>
+                </div>
             </div>
             <div class="lpai-control-group">
                 <label for="lpai-tone-select">Tone</label>
-                <select id="lpai-tone-select" class="lpai-select">
-                    <option value="professional">Professional</option>
-                    <option value="concise">Concise</option>
-                    <option value="friendly">Friendly</option>
-                    <option value="formal">Formal</option>
-                    <option value="direct">Direct</option>
-                </select>
+                <div class="lpai-custom-select" data-select-id="lpai-tone-select">
+                    <select id="lpai-tone-select" class="lpai-select">
+                        <option value="professional">Professional</option>
+                        <option value="concise">Concise</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="formal">Formal</option>
+                        <option value="direct">Direct</option>
+                    </select>
+                </div>
             </div>
             <div class="lpai-control-group">
                 <label for="lpai-lang-select">Language</label>
-                <select id="lpai-lang-select" class="lpai-select">
-                    <option value="English">English</option>
-                    <option value="Dutch">Dutch</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="French">French</option>
-                    <option value="German">German</option>
-                    <option value="Portuguese">Portuguese</option>
-                    <option value="Italian">Italian</option>
-                </select>
+                <div class="lpai-custom-select" data-select-id="lpai-lang-select">
+                    <select id="lpai-lang-select" class="lpai-select">
+                        <option value="English">English</option>
+                        <option value="Dutch">Dutch</option>
+                        <option value="Spanish">Spanish</option>
+                        <option value="French">French</option>
+                        <option value="German">German</option>
+                        <option value="Portuguese">Portuguese</option>
+                        <option value="Italian">Italian</option>
+                    </select>
+                </div>
             </div>
         </div>
 

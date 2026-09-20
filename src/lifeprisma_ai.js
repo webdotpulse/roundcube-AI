@@ -1646,6 +1646,189 @@ function lpai_get_modal_doc() {
     return document;
 }
 
+function lpai_close_all_custom_dropdowns() {
+    var doc = lpai_get_modal_doc();
+    doc.querySelectorAll('.lpai-custom-select.open').forEach(function(cs) {
+        cs.classList.remove('open');
+        var dd = cs.querySelector('.lpai-custom-dropdown');
+        if (dd) dd.style.display = 'none';
+        var tr = cs.querySelector('.lpai-custom-select-trigger');
+        if (tr) tr.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function lpai_init_custom_selects() {
+    var doc = lpai_get_modal_doc();
+    var selects = doc.querySelectorAll('.lpai-select');
+    selects.forEach(function(sel) {
+        if (!sel.id) return;
+        var parent = sel.closest('.lpai-custom-select');
+        if (!parent) {
+            if (sel.parentElement && sel.parentElement.classList.contains('lpai-custom-select')) {
+                parent = sel.parentElement;
+            } else {
+                var wrapper = doc.createElement('div');
+                wrapper.className = 'lpai-custom-select';
+                wrapper.dataset.selectId = sel.id;
+                sel.parentNode.insertBefore(wrapper, sel);
+                wrapper.appendChild(sel);
+                parent = wrapper;
+            }
+        }
+
+        var trigger = parent.querySelector('.lpai-custom-select-trigger');
+        var dropdown = parent.querySelector('.lpai-custom-dropdown');
+
+        if (!trigger) {
+            trigger = doc.createElement('button');
+            trigger.type = 'button';
+            trigger.className = 'lpai-custom-select-trigger';
+            trigger.setAttribute('aria-haspopup', 'listbox');
+            trigger.setAttribute('aria-expanded', 'false');
+
+            var labelSpan = doc.createElement('span');
+            labelSpan.className = 'lpai-custom-select-label';
+            var selectedOpt = sel.options[sel.selectedIndex] || sel.options[0];
+            labelSpan.textContent = selectedOpt ? selectedOpt.text : '';
+
+            var arrowSvg = '<svg class="lpai-custom-select-arrow" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>';
+            trigger.appendChild(labelSpan);
+            trigger.insertAdjacentHTML('beforeend', arrowSvg);
+            parent.insertBefore(trigger, sel);
+        }
+
+        if (!dropdown) {
+            dropdown = doc.createElement('div');
+            dropdown.className = 'lpai-custom-dropdown';
+            dropdown.setAttribute('role', 'listbox');
+            dropdown.style.display = 'none';
+            parent.insertBefore(dropdown, sel);
+        }
+
+        dropdown.innerHTML = '';
+        Array.from(sel.options).forEach(function(opt) {
+            var item = doc.createElement('div');
+            item.className = 'lpai-dropdown-option' + (opt.value === sel.value ? ' selected' : '');
+            item.dataset.value = opt.value;
+            item.setAttribute('role', 'option');
+            item.setAttribute('tabindex', '0');
+
+            var textSpan = doc.createElement('span');
+            textSpan.textContent = opt.text;
+            item.appendChild(textSpan);
+
+            var checkSvg = '<svg class="lpai-option-check" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            item.insertAdjacentHTML('beforeend', checkSvg);
+
+            item.addEventListener('click', function(e) {
+                e.stopPropagation();
+                sel.value = opt.value;
+                if (sel.id === 'lpai-model-select') {
+                    lpai_options.model = sel.value;
+                    var modalDoc = lpai_get_modal_doc();
+                    var tag = modalDoc ? modalDoc.querySelector('.lpai-model-tag') : null;
+                    if (tag) tag.textContent = sel.value;
+                } else if (sel.id === 'lpai-tone-select') {
+                    lpai_options.tone = sel.value;
+                } else if (sel.id === 'lpai-lang-select') {
+                    lpai_options.language = sel.value;
+                }
+                lpai_save_prefs();
+                lpai_sync_custom_ui_for_select(sel);
+                sel.dispatchEvent(new Event('change', { bubbles: true }));
+                lpai_close_all_custom_dropdowns();
+                trigger.focus();
+            });
+
+            item.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    item.click();
+                }
+            });
+
+            dropdown.appendChild(item);
+        });
+
+        if (!trigger._lpai_bound) {
+            trigger._lpai_bound = true;
+            trigger.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var isOpen = parent.classList.contains('open');
+                lpai_close_all_custom_dropdowns();
+                if (!isOpen) {
+                    parent.classList.add('open');
+                    dropdown.style.display = 'block';
+                    trigger.setAttribute('aria-expanded', 'true');
+                    var selItem = dropdown.querySelector('.lpai-dropdown-option.selected');
+                    if (selItem) selItem.scrollIntoView({ block: 'nearest' });
+                }
+            });
+
+            trigger.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp' || e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    if (!parent.classList.contains('open')) {
+                        trigger.click();
+                    } else {
+                        var items = Array.from(dropdown.querySelectorAll('.lpai-dropdown-option'));
+                        var idx = items.findIndex(function(it) { return it.dataset.value === sel.value; });
+                        if (e.key === 'ArrowDown') {
+                            var nextIdx = (idx + 1) % items.length;
+                            items[nextIdx].click();
+                        } else if (e.key === 'ArrowUp') {
+                            var prevIdx = (idx - 1 + items.length) % items.length;
+                            items[prevIdx].click();
+                        }
+                    }
+                }
+            });
+        }
+
+        if (!sel._lpai_bound) {
+            sel._lpai_bound = true;
+            sel.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                trigger.click();
+            });
+            sel.addEventListener('change', function() {
+                if (sel.id === 'lpai-model-select') {
+                    lpai_options.model = sel.value;
+                    var modalDoc = lpai_get_modal_doc();
+                    var tag = modalDoc ? modalDoc.querySelector('.lpai-model-tag') : null;
+                    if (tag) tag.textContent = sel.value;
+                } else if (sel.id === 'lpai-tone-select') {
+                    lpai_options.tone = sel.value;
+                } else if (sel.id === 'lpai-lang-select') {
+                    lpai_options.language = sel.value;
+                }
+                lpai_save_prefs();
+                lpai_sync_custom_ui_for_select(sel);
+            });
+        }
+    });
+}
+
+function lpai_sync_custom_ui_for_select(sel) {
+    if (!sel) return;
+    var parent = sel.closest ? sel.closest('.lpai-custom-select') : null;
+    if (!parent) return;
+    var labelEl = parent.querySelector('.lpai-custom-select-label');
+    var opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    if (labelEl && opt) {
+        labelEl.textContent = opt.text;
+    }
+    var items = parent.querySelectorAll('.lpai-dropdown-option');
+    items.forEach(function(it) {
+        var isSel = (it.dataset.value === sel.value);
+        it.classList.toggle('selected', isSel);
+        it.setAttribute('aria-selected', isSel ? 'true' : 'false');
+    });
+}
+
 function lpai_sync_select_elements() {
     var doc = lpai_get_modal_doc();
     var mSel = doc.getElementById('lpai-model-select');
@@ -1665,6 +1848,10 @@ function lpai_sync_select_elements() {
     if (tag) {
         tag.textContent = (mSel && mSel.value) ? mSel.value : lpai_options.model;
     }
+
+    [mSel, tSel, lSel].forEach(function(sel) {
+        lpai_sync_custom_ui_for_select(sel);
+    });
 }
 
 function lpai_open_panel(context) {
@@ -1687,6 +1874,7 @@ function lpai_open_panel(context) {
     panel.style.display = 'flex';
     overlay.style.display = 'block';
 
+    lpai_init_custom_selects();
     lpai_sync_select_elements();
 
     var doc = panel.ownerDocument || document;
@@ -1712,6 +1900,7 @@ function lpai_open_panel(context) {
 }
 
 function lpai_close_panel() {
+    lpai_close_all_custom_dropdowns();
     var els = lpai_get_modal_elements();
     var panel = els.panel;
     var overlay = els.overlay;
@@ -1901,16 +2090,22 @@ function lpai_bind_events() {
                 var modalDoc = lpai_get_modal_doc();
                 var tag = modalDoc.querySelector('.lpai-model-tag');
                 if (tag) tag.textContent = t.value;
+                lpai_sync_custom_ui_for_select(t);
             } else if (t.id === 'lpai-tone-select') {
                 lpai_options.tone = t.value;
                 lpai_save_prefs();
+                lpai_sync_custom_ui_for_select(t);
             } else if (t.id === 'lpai-lang-select') {
                 lpai_options.language = t.value;
                 lpai_save_prefs();
+                lpai_sync_custom_ui_for_select(t);
             }
         });
 
         d.addEventListener('click', function(e) {
+            if (!e.target.closest || !e.target.closest('.lpai-custom-select')) {
+                lpai_close_all_custom_dropdowns();
+            }
             if (e.target.id === 'lpai-close' || e.target.id === 'lpai-overlay' || (e.target.closest && e.target.closest('#lpai-close'))) {
                 lpai_close_panel();
             }
@@ -1945,6 +2140,12 @@ function lpai_bind_events() {
                 lpai_submit();
             }
             if (e.key === 'Escape') {
+                var doc = lpai_get_modal_doc();
+                var anyOpen = doc.querySelector('.lpai-custom-select.open');
+                if (anyOpen) {
+                    lpai_close_all_custom_dropdowns();
+                    return;
+                }
                 lpai_close_panel();
             }
             if (e.altKey && (e.key === 'a' || e.key === 'A')) {

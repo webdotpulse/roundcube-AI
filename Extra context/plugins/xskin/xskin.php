@@ -338,18 +338,18 @@ class xskin extends XFramework\Plugin
         }
         if (!empty($btn_primary) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $btn_primary)) {
             $escColor = htmlspecialchars($btn_primary, ENT_QUOTES);
-            $color_css .= ":root, html, body { --md-btn-primary-bg: {$escColor} !important; }\n";
-            $color_css .= ".btn-primary, button.mainaction, input[type=\"submit\"].mainaction, .formbuttons .btn-primary, .formbuttons input.mainaction, .ui-dialog .ui-dialog-buttonpane button.ui-button-primary, .btn-material-primary { background-color: {$escColor} !important; }\n";
+            $color_css .= ":root, html, body { --btn-primary-bg: {$escColor} !important; --md-btn-primary-bg: {$escColor} !important; }\n";
+            $color_css .= "html body[class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html [class*=\"xcolor-\"] body .btn.btn-primary:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .floating-action-buttons a.button, html body [class*=\"xcolor-\"] .floating-action-buttons a.button, html body[class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body [class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body[class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body [class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body .btn-primary, html body .btn.btn-primary, html body button.mainaction, html body input[type=\"submit\"].mainaction, html body .formbuttons .btn-primary, html body .formbuttons input.mainaction, html body .formbuttons button.mainaction, html body .floating-action-buttons a.button, html body #compose-plus, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-primary { background-color: {$escColor} !important; border-color: {$escColor} !important; color: #ffffff !important; }\n";
         }
         if (!empty($btn_secondary) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $btn_secondary)) {
             $escSecColor = htmlspecialchars($btn_secondary, ENT_QUOTES);
-            $color_css .= ":root, html, body { --md-btn-secondary-bg: {$escSecColor} !important; }\n";
-            $color_css .= ".btn-secondary, .btn-outline-secondary, button.cancel, .formbuttons .btn-secondary, .formbuttons button.cancel, .ui-dialog .ui-dialog-buttonpane button.ui-button-secondary, .btn-material-secondary { background-color: {$escSecColor} !important; }\n";
+            $color_css .= ":root, html, body { --btn-secondary-bg: {$escSecColor} !important; --md-btn-secondary-bg: {$escSecColor} !important; }\n";
+            $color_css .= "html body .btn-secondary, html body .btn.btn-secondary, html body .btn-outline-secondary, html body button.cancel, html body a.button.cancel, html body .formbuttons .btn-secondary, html body .formbuttons button.cancel, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-secondary { background-color: {$escSecColor} !important; }\n";
         }
         if (!empty($btn_radius) && preg_match('/^[0-9]+px$/', $btn_radius)) {
             $escRadius = htmlspecialchars($btn_radius, ENT_QUOTES);
-            $color_css .= ":root, html, body { --md-btn-radius: {$escRadius} !important; }\n";
-            $color_css .= ".btn-primary, .btn-secondary, button.mainaction, .btn, .formbuttons .btn-primary, .formbuttons .btn-secondary, .btn-material-primary, .btn-material-secondary { border-radius: {$escRadius} !important; }\n";
+            $color_css .= ":root, html, body { --btn-radius: {$escRadius} !important; --md-btn-radius: {$escRadius} !important; }\n";
+            $color_css .= "html body .btn, html body .btn-primary, html body .btn-secondary, html body button.mainaction, html body input[type=\"submit\"].mainaction, html body a.button, html body .formbuttons .btn, html body .formbuttons .btn-primary, html body .formbuttons .btn-secondary, html body .formbuttons input.mainaction, html body .formbuttons button.mainaction, html body #compose-plus, html body .floating-action-buttons a.button { border-radius: {$escRadius} !important; }\n";
         }
 
         if (!empty($color_css)) {
@@ -644,7 +644,7 @@ class xskin extends XFramework\Plugin
             'custom_btn_secondary_bg' => 'setting_custom_btn_secondary_bg',
         ];
 
-        $materialSwatches = [
+        $buttonSwatches = [
             '#1A73E8' => 'Blue',
             '#3F51B5' => 'Indigo',
             '#7C3AED' => 'Purple',
@@ -689,10 +689,10 @@ class xskin extends XFramework\Plugin
                     'onclick' => "document.getElementById('{$field}').value = ''; document.getElementById('{$field}_picker').value = '#ffffff'; xskin.applyCustomColor('{$field}', '');",
                 ], rcube::Q($this->gettext('clear_color')));
 
-                // Add quick Material swatches for primary button color
+                // Add quick color swatches for primary button color
                 if ($field === 'custom_btn_primary_bg') {
                     $swatchHtml = '<div style="margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">';
-                    foreach ($materialSwatches as $hex => $name) {
+                    foreach ($buttonSwatches as $hex => $name) {
                         $swatchHtml .= html::tag('button', [
                             'type' => 'button',
                             'title' => $name,
@@ -733,13 +733,13 @@ class xskin extends XFramework\Plugin
 
         // Interactive Live Button Preview
         $previewHtml = '
-        <div id="material-btn-preview-card" style="padding: 16px 20px; background: #f8f9fa; border: 1px solid #e0e2ec; border-radius: 16px; margin: 12px 0 16px 0; max-width: 680px;">
+        <div id="xskin-btn-preview-card" class="xskin-btn-preview-card material-btn-preview-card" style="padding: 16px 20px; background: #f8f9fa; border: 1px solid #e0e2ec; border-radius: 12px; margin: 12px 0 16px 0; max-width: 680px;">
             <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #535f70; text-transform: uppercase; margin-bottom: 12px;">' . rcube::Q($this->gettext('button_preview')) . '</div>
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn-primary" id="preview-primary-btn" style="background-color: var(--md-btn-primary-bg, #1a73e8); color: #fff; border-radius: var(--md-btn-radius, 20px); border: none; padding: 8px 24px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">Primary Action</button>
-                <button type="button" class="btn btn-secondary" id="preview-secondary-btn" style="background-color: var(--md-btn-secondary-bg, #e8f0fe); color: var(--md-btn-secondary-text, #1a73e8); border-radius: var(--md-btn-radius, 20px); border: 1px solid #c4c7c5; padding: 8px 20px; font-weight: 500; cursor: pointer;">Secondary</button>
-                <a class="button compose" id="preview-fab-btn" style="background-color: var(--md-btn-primary-bg, #1a73e8); color: #fff; border-radius: var(--md-btn-radius, 24px); padding: 8px 20px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
-                    <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 6px;">edit</span> Compose
+                <button type="button" class="btn btn-primary" id="preview-primary-btn" style="background-color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); color: #fff; border-radius: var(--btn-radius, var(--md-btn-radius, 20px)); border: none; padding: 8px 24px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">Primary Action</button>
+                <button type="button" class="btn btn-secondary" id="preview-secondary-btn" style="background-color: var(--btn-secondary-bg, var(--md-btn-secondary-bg, #e8f0fe)); color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); border-radius: var(--btn-radius, var(--md-btn-radius, 20px)); border: 1px solid #c4c7c5; padding: 8px 20px; font-weight: 500; cursor: pointer;">Secondary</button>
+                <a class="button compose" id="preview-fab-btn" style="background-color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); color: #fff; border-radius: var(--btn-radius, var(--md-btn-radius, 24px)); padding: 8px 20px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                    <svg style="width: 18px; height: 18px; margin-right: 6px; fill: currentColor; vertical-align: middle;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Compose
                 </a>
             </div>
         </div>';
@@ -757,17 +757,17 @@ class xskin extends XFramework\Plugin
                     custom_topbar_bg: 'html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header',
                     custom_sidebar_bg: 'html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist',
                     custom_compose_bg: '#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose',
-                    custom_btn_primary_bg: '.btn-primary, button.mainaction, input[type=\"submit\"].mainaction, .formbuttons .btn-primary, .formbuttons input.mainaction, .btn-material-primary, #preview-primary-btn, #preview-fab-btn',
-                    custom_btn_secondary_bg: '.btn-secondary, .btn-outline-secondary, button.cancel, .formbuttons .btn-secondary, .formbuttons button.cancel, .btn-material-secondary, #preview-secondary-btn'
+                    custom_btn_primary_bg: 'html body[class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html [class*=\"xcolor-\"] body .btn.btn-primary:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .floating-action-buttons a.button, html body [class*=\"xcolor-\"] .floating-action-buttons a.button, html body[class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body [class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body[class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body [class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body .btn-primary, html body .btn.btn-primary, html body button.mainaction, html body input[type=\"submit\"].mainaction, html body .formbuttons .btn-primary, html body .formbuttons input.mainaction, html body .formbuttons button.mainaction, html body .floating-action-buttons a.button, html body #compose-plus, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-primary, #preview-primary-btn, #preview-fab-btn',
+                    custom_btn_secondary_bg: 'html body .btn-secondary, html body .btn.btn-secondary, html body .btn-outline-secondary, html body button.cancel, html body a.button.cancel, html body .formbuttons .btn-secondary, html body .formbuttons button.cancel, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-secondary, #preview-secondary-btn'
                 };
                 var sel = selMap[field];
                 if (!sel) return;
                 var cssText = '';
                 if (hex) {
                     if (field === 'custom_btn_primary_bg') {
-                        cssText = ':root, html, body { --md-btn-primary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
+                        cssText = ':root, html, body { --btn-primary-bg: ' + hex + ' !important; --md-btn-primary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; border-color: ' + hex + ' !important; color: #ffffff !important; }';
                     } else if (field === 'custom_btn_secondary_bg') {
-                        cssText = ':root, html, body { --md-btn-secondary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
+                        cssText = ':root, html, body { --btn-secondary-bg: ' + hex + ' !important; --md-btn-secondary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
                     } else {
                         cssText = sel + ' { background-color: ' + hex + ' !important; }';
                     }
@@ -800,7 +800,8 @@ class xskin extends XFramework\Plugin
             xskin.applyCustomRadius = function(val) {
                 var rad = (val || '').trim();
                 var styleId = 'xskin-live-custom_btn_radius';
-                var cssText = rad ? (':root, html, body { --md-btn-radius: ' + rad + ' !important; } .btn-primary, .btn-secondary, button.mainaction, #preview-primary-btn, #preview-secondary-btn, #preview-fab-btn { border-radius: ' + rad + ' !important; }') : '';
+                var sel = 'html body .btn, html body .btn-primary, html body .btn-secondary, html body button.mainaction, html body input[type=\"submit\"].mainaction, html body a.button, html body .formbuttons .btn, html body .formbuttons .btn-primary, html body .formbuttons .btn-secondary, html body .formbuttons input.mainaction, html body .formbuttons button.mainaction, html body #compose-plus, html body .floating-action-buttons a.button, #preview-primary-btn, #preview-secondary-btn, #preview-fab-btn';
+                var cssText = rad ? (':root, html, body { --btn-radius: ' + rad + ' !important; --md-btn-radius: ' + rad + ' !important; } ' + sel + ' { border-radius: ' + rad + ' !important; }') : '';
                 function applyToDoc(d) {
                     if (!d || !d.head) return;
                     var el = d.getElementById(styleId);

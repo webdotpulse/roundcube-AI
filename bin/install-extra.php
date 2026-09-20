@@ -528,7 +528,7 @@ class RoundcubeExtraContentInstaller
 
         $targetSkin = $this->selectedSkin;
         $hasTargetSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]" . preg_quote($targetSkin, '/') . "['\"]/", $configContent);
-        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus|material)['\"]/", $configContent);
+        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus)['\"]/", $configContent);
         $skinNeedsUpdate = $this->skinExplicitlySet ? !$hasTargetSkin : !$hasAnyBundledSkin;
 
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
@@ -892,7 +892,7 @@ Usage:
 Options:
   --roundcube-path=DIR   Specify target Roundcube root directory
   --target=DIR           Alias for --roundcube-path
-  --skin=SKIN            Skin to activate with --activate ('material' or 'gmail_plus', default: 'gmail_plus')
+  --skin=SKIN            Skin to activate with --activate (default: 'gmail_plus')
   --activate             Automatically enable plugins, skin, license_key and branding removal in config/config.inc.php
   --dry-run              Simulate installation without making filesystem changes
   --verbose, -v          Verbose output

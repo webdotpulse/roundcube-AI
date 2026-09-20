@@ -248,6 +248,129 @@
     margin: 0 !important;
 }
 
+/* Custom Select Dropdown Container */
+.lpai-custom-select {
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.lpai-custom-select-trigger {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 38px !important;
+    padding: 6px 12px !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 9px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    background-color: #ffffff !important;
+    cursor: pointer !important;
+    transition: border-color 0.15s, box-shadow 0.15s !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    z-index: 12 !important;
+    position: relative !important;
+    text-align: left !important;
+}
+
+.lpai-custom-select-trigger:hover {
+    border-color: #d1d5db !important;
+}
+
+.lpai-custom-select.open .lpai-custom-select-trigger,
+.lpai-custom-select-trigger:focus {
+    border-color: #9333ea !important;
+    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.15) !important;
+}
+
+.lpai-custom-select-label {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex: 1 1 auto !important;
+}
+
+.lpai-custom-select-arrow {
+    width: 16px !important;
+    height: 16px !important;
+    stroke: #6b7280 !important;
+    flex-shrink: 0 !important;
+    transition: transform 0.2s ease !important;
+}
+
+.lpai-custom-select.open .lpai-custom-select-arrow {
+    transform: rotate(180deg) !important;
+    stroke: #9333ea !important;
+}
+
+.lpai-custom-dropdown {
+    position: absolute !important;
+    top: calc(100% + 4px) !important;
+    left: 0 !important;
+    right: 0 !important;
+    background: #ffffff !important;
+    border: 1.5px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08) !important;
+    max-height: 220px !important;
+    overflow-y: auto !important;
+    z-index: 100 !important;
+    padding: 4px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    animation: lpai-dropdown-pop 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes lpai-dropdown-pop {
+    0% { opacity: 0; transform: translateY(-4px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.lpai-dropdown-option {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 8px 10px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: background-color 0.12s, color 0.12s !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.lpai-dropdown-option:hover,
+.lpai-dropdown-option.focused {
+    background-color: #f3e8ff !important;
+    color: #7e22ce !important;
+}
+
+.lpai-dropdown-option.selected {
+    background-color: #ede9fe !important;
+    color: #6b21a8 !important;
+    font-weight: 600 !important;
+}
+
+.lpai-dropdown-option .lpai-option-check {
+    display: none !important;
+    width: 14px !important;
+    height: 14px !important;
+    stroke: #7e22ce !important;
+}
+
+.lpai-dropdown-option.selected .lpai-option-check {
+    display: inline-block !important;
+}
+
+/* Native Select Element Styling */
 select.lpai-select,
 #lpai-model-select,
 #lpai-tone-select,
@@ -274,6 +397,15 @@ select.lpai-select,
     transition: border-color 0.15s, box-shadow 0.15s !important;
     box-sizing: border-box !important;
     outline: none !important;
+}
+
+.lpai-custom-select select.lpai-select {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    opacity: 0 !important;
+    pointer-events: auto !important;
+    z-index: 10 !important;
 }
 
 select.lpai-select option,
@@ -1087,6 +1219,73 @@ html.dark-mode .lpai-action-btn.active,
     background: #3b0764 !important;
     color: #d8b4fe !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark-mode .lpai-custom-select-trigger,
+body.dark-mode .lpai-custom-select-trigger,
+.dark-mode .lpai-custom-select-trigger {
+    background-color: #27272a !important;
+    border-color: #3f3f46 !important;
+    color: #f3f4f6 !important;
+}
+
+html.dark-mode .lpai-custom-select.open .lpai-custom-select-trigger,
+body.dark-mode .lpai-custom-select.open .lpai-custom-select-trigger,
+.dark-mode .lpai-custom-select.open .lpai-custom-select-trigger,
+html.dark-mode .lpai-custom-select-trigger:focus,
+body.dark-mode .lpai-custom-select-trigger:focus,
+.dark-mode .lpai-custom-select-trigger:focus {
+    border-color: #c084fc !important;
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.25) !important;
+}
+
+html.dark-mode .lpai-custom-select-arrow,
+body.dark-mode .lpai-custom-select-arrow,
+.dark-mode .lpai-custom-select-arrow {
+    stroke: #94a3b8 !important;
+}
+
+html.dark-mode .lpai-custom-select.open .lpai-custom-select-arrow,
+body.dark-mode .lpai-custom-select.open .lpai-custom-select-arrow,
+.dark-mode .lpai-custom-select.open .lpai-custom-select-arrow {
+    stroke: #c084fc !important;
+}
+
+html.dark-mode .lpai-custom-dropdown,
+body.dark-mode .lpai-custom-dropdown,
+.dark-mode .lpai-custom-dropdown {
+    background-color: #27272a !important;
+    border-color: #3f3f46 !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark-mode .lpai-dropdown-option,
+body.dark-mode .lpai-dropdown-option,
+.dark-mode .lpai-dropdown-option {
+    color: #cbd5e1 !important;
+}
+
+html.dark-mode .lpai-dropdown-option:hover,
+html.dark-mode .lpai-dropdown-option.focused,
+body.dark-mode .lpai-dropdown-option:hover,
+body.dark-mode .lpai-dropdown-option.focused,
+.dark-mode .lpai-dropdown-option:hover,
+.dark-mode .lpai-dropdown-option.focused {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    color: #e9d5ff !important;
+}
+
+html.dark-mode .lpai-dropdown-option.selected,
+body.dark-mode .lpai-dropdown-option.selected,
+.dark-mode .lpai-dropdown-option.selected {
+    background-color: rgba(168, 85, 247, 0.28) !important;
+    color: #f3e8ff !important;
+}
+
+html.dark-mode .lpai-dropdown-option .lpai-option-check,
+body.dark-mode .lpai-dropdown-option .lpai-option-check,
+.dark-mode .lpai-dropdown-option .lpai-option-check {
+    stroke: #c084fc !important;
 }
 
 html.dark-mode select.lpai-select,
