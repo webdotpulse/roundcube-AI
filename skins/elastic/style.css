@@ -618,12 +618,10 @@ select.lpai-select:focus,
 /* ============================================================
    Purple Gemini Sidebar Icon Button (#taskmenu)
    ============================================================ */
-#taskmenu a.button-gemini-ai,
-#layout-menu #taskmenu a.button-gemini-ai,
-.button-gemini-ai {
+#taskmenu a.button-gemini-ai, #layout-menu #taskmenu a.button-gemini-ai, .button-gemini-ai{
     display: block !important;
     text-align: center !important;
-    padding: 0.85rem 0 !important;
+    padding: 1.2rem 0 !important;
     color: #9333ea !important;
     text-decoration: none !important;
     cursor: pointer !important;
