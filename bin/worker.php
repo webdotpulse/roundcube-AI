@@ -152,11 +152,15 @@ function lpai_worker_load_config($custom_config = null) {
 // ============================================================
 // AI Learned Memory Loader
 // ============================================================
-function lpai_worker_load_memory($config) {
-    $candidates = [
-        dirname(__DIR__) . '/data/ai_memory.json',
-        dirname(__DIR__) . '/.ai_memory.json',
-    ];
+function lpai_worker_load_memory($config, $account_id = null) {
+    $candidates = [];
+    if (!empty($account_id)) {
+        $user_hash = md5("lpai_user_mem_" . $account_id);
+        $candidates[] = dirname(__DIR__) . '/data/memory/user_' . $user_hash . '.json';
+    }
+    $candidates[] = dirname(__DIR__) . '/data/ai_memory.json';
+    $candidates[] = dirname(__DIR__) . '/.ai_memory.json';
+
     foreach ($candidates as $file) {
         if (file_exists($file)) {
             $content = @file_get_contents($file);
@@ -209,7 +213,7 @@ class LpaiWorkerState {
             $filtered = array_slice($filtered, -800, null, true);
         }
         $this->state = $filtered;
-        file_put_contents($this->filepath, json_encode($this->state, JSON_PRETTY_PRINT));
+        file_put_contents($this->filepath, json_encode($this->state, JSON_PRETTY_PRINT), LOCK_EX);
     }
 
     public function is_processed($account, $mbox, $uid) {
@@ -239,12 +243,12 @@ class LpaiImapClient {
         $this->verbose = $verbose;
     }
 
-    public function connect($host_uri, $timeout = 20) {
+    public function connect($host_uri, $timeout = 20, $ssl_verify = true) {
         $context = stream_context_create([
             'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'allow_self_signed' => true,
+                'verify_peer' => (bool) $ssl_verify,
+                'verify_peer_name' => (bool) $ssl_verify,
+                'allow_self_signed' => !$ssl_verify,
             ]
         ]);
 
@@ -611,6 +615,12 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg_
     $date = date('r');
     $re_subject = (stripos($subject, 'Re:') === 0) ? $subject : 'Re: ' . $subject;
 
+    // Sanitize headers against CRLF injection
+    $clean_to = preg_replace('/[\r\n]+/', ' ', trim($to));
+    $clean_from = preg_replace('/[\r\n]+/', ' ', trim($my_email));
+    $clean_subj = preg_replace('/[\r\n]+/', ' ', trim($re_subject));
+    $encoded_subj = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($clean_subj, 'UTF-8') : $clean_subj;
+
     // Quote original message body
     $quoted = '';
     if (!empty($orig_body)) {
@@ -625,9 +635,9 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg_
 
     $headers = [];
     $headers[] = "Date: $date";
-    $headers[] = "From: <$my_email>";
-    $headers[] = "To: $to";
-    $headers[] = "Subject: $re_subject";
+    $headers[] = "From: <$clean_from>";
+    $headers[] = "To: $clean_to";
+    $headers[] = "Subject: $encoded_subj";
     $headers[] = "MIME-Version: 1.0";
     $headers[] = "Content-Type: text/plain; charset=utf-8";
     $headers[] = "Content-Transfer-Encoding: 8bit";
@@ -635,8 +645,9 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg_
     $headers[] = "X-Mailer: Gemini Executive Assistant (Autonomous 24/7)";
 
     if (!empty($orig_msg_id)) {
-        $headers[] = "In-Reply-To: $orig_msg_id";
-        $headers[] = "References: $orig_msg_id";
+        $clean_msg_id = preg_replace('/[\r\n]+/', '', trim($orig_msg_id));
+        $headers[] = "In-Reply-To: $clean_msg_id";
+        $headers[] = "References: $clean_msg_id";
     }
 
     return implode("\r\n", $headers) . "\r\n\r\n" . $full_body;
@@ -690,9 +701,10 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
         $now = date('Y-m-d H:i:s');
         echo "[$now] [INFO] Processing account: $email on $host\n";
 
+        $ssl_verify = $config['lifeprisma_ai_worker_imap_ssl_verify'] ?? true;
         $client = new LpaiImapClient($is_verbose);
         try {
-            $client->connect($host);
+            $client->connect($host, 20, $ssl_verify);
             if (!$client->login($login_user, $login_pass)) {
                 echo "[$now] [ERROR] IMAP login failed for account: $email\n";
                 $client->close();
@@ -823,7 +835,7 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                 $tone = $config['lifeprisma_ai_default_tone'] ?? 'professional';
 
                 // Load learned Q&A memory to replicate answers to similar client questions
-                $memories = lpai_worker_load_memory($config);
+                $memories = lpai_worker_load_memory($config, $email);
                 $memory_prompt = '';
                 if (!empty($memories)) {
                     $memory_prompt .= "\n\nORGANIZATIONAL KNOWLEDGE & PAST VERIFIED CLIENT ANSWERS:\n";
@@ -896,34 +908,36 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 // ============================================================
 // Main Execution Loop
 // ============================================================
-$state_file = __DIR__ . '/.worker_state.json';
-$state = new LpaiWorkerState($state_file);
+if (isset($argv[0]) && realpath($argv[0]) === realpath(__FILE__)) {
+    $state_file = __DIR__ . '/.worker_state.json';
+    $state = new LpaiWorkerState($state_file);
 
-if ($is_reset_state) {
-    $state->reset();
-    echo "[INFO] Worker state reset successfully. All unseen emails will be re-processed.\n";
-}
-
-$config = lpai_worker_load_config($custom_config);
-$loaded_cfg = $config['_loaded_from'] ?? 'default fallbacks';
-
-$model = $config['lifeprisma_ai_gemini_model'] ?? 'gemini-3.8-flash';
-echo "===========================================================\n";
-echo "Gemini Executive Assistant — 24/7 CLI Background Worker\n";
-echo "Model: $model | Mode: " . ($is_daemon ? "Daemon (interval: {$poll_interval}s)" : "Single Pass") . "\n";
-echo "Config: $loaded_cfg\n";
-if ($is_dry_run) echo "DRY RUN MODE ENABLED — No changes will be written to IMAP\n";
-echo "===========================================================\n";
-
-if ($is_daemon) {
-    while ($keep_running) {
-        lpai_worker_execute_pass($config, $state, $target_account, $is_dry_run, $is_verbose);
-        for ($i = 0; $i < $poll_interval && $keep_running; $i++) {
-            sleep(1);
-        }
+    if ($is_reset_state) {
+        $state->reset();
+        echo "[INFO] Worker state reset successfully. All unseen emails will be re-processed.\n";
     }
-    echo "[INFO] Daemon stopped gracefully.\n";
-} else {
-    lpai_worker_execute_pass($config, $state, $target_account, $is_dry_run, $is_verbose);
-    echo "[INFO] Worker pass finished.\n";
+
+    $config = lpai_worker_load_config($custom_config);
+    $loaded_cfg = $config['_loaded_from'] ?? 'default fallbacks';
+
+    $model = $config['lifeprisma_ai_gemini_model'] ?? 'gemini-3.8-flash';
+    echo "===========================================================\n";
+    echo "Gemini Executive Assistant — 24/7 CLI Background Worker\n";
+    echo "Model: $model | Mode: " . ($is_daemon ? "Daemon (interval: {$poll_interval}s)" : "Single Pass") . "\n";
+    echo "Config: $loaded_cfg\n";
+    if ($is_dry_run) echo "DRY RUN MODE ENABLED — No changes will be written to IMAP\n";
+    echo "===========================================================\n";
+
+    if ($is_daemon) {
+        while ($keep_running) {
+            lpai_worker_execute_pass($config, $state, $target_account, $is_dry_run, $is_verbose);
+            for ($i = 0; $i < $poll_interval && $keep_running; $i++) {
+                sleep(1);
+            }
+        }
+        echo "[INFO] Daemon stopped gracefully.\n";
+    } else {
+        lpai_worker_execute_pass($config, $state, $target_account, $is_dry_run, $is_verbose);
+        echo "[INFO] Worker pass finished.\n";
+    }
 }

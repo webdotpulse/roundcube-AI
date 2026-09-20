@@ -1473,14 +1473,24 @@ function lpai_estimate_cost(model, inpTokens, outTokens) {
     var out = Number(outTokens) || 0;
     if (inp === 0 && out === 0) return null;
 
-    var rates = [0.30, 2.50]; // Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash default ($ per 1M tokens)
-    if (model && model.indexOf('lite') >= 0) {
+    var rates = null;
+    var geminiEnv = (window.rcmail && rcmail.env && rcmail.env.lpai_gemini) || {};
+    var pricingTable = geminiEnv.pricing || {};
+    if (model && pricingTable[model]) {
+        var mRates = pricingTable[model];
+        rates = [Number(mRates.input) || 0, Number(mRates.output) || 0];
+    }
+
+    if (!rates && model && model.indexOf('lite') >= 0) {
         rates = [0.075, 0.30];
-    } else if (model && model.indexOf('pro') >= 0) {
+    } else if (!rates && model && model.indexOf('pro') >= 0) {
         rates = [1.25, 10.00];
+    } else if (!rates) {
+        rates = [0.30, 2.50]; // Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash default ($ per 1M tokens)
     }
 
     var cost = (inp * rates[0] + out * rates[1]) / 1000000;
+    if (cost === 0) return '$0.00';
     if (cost < 0.0001) return '$' + cost.toFixed(6);
     return '$' + cost.toFixed(4);
 }

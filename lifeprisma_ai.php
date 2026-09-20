@@ -680,6 +680,7 @@ Body:
             'model' => $model,
             'messages' => $messages,
             'stream' => true,
+            'stream_options' => ['include_usage' => true],
             'max_tokens' => $max_tokens,
             'temperature' => $temperature,
         ];
@@ -714,7 +715,7 @@ Body:
             CURLOPT_TIMEOUT => 90,
             CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
             CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
-            CURLOPT_WRITEFUNCTION => function ($ch, $data) use (&$stream_buffer, &$stream_first_chunk, &$stream_error, $model, $action) {
+            CURLOPT_WRITEFUNCTION => function ($ch, $data) use (&$stream_buffer, &$stream_first_chunk, &$stream_error, &$stream_tokens, $model, $action) {
                 if ($stream_first_chunk) {
                     $stream_first_chunk = false;
                     $trimmed = trim($data);
@@ -731,6 +732,14 @@ Body:
                 }
 
                 $stream_buffer .= $data;
+                // Protect against unbounded memory consumption if upstream omits newlines
+                if (strlen($stream_buffer) > 65536) {
+                    $stream_error = true;
+                    echo "data: " . json_encode(['type' => 'error', 'message' => 'Stream buffer overflow']) . "\n\n";
+                    flush();
+                    return 0;
+                }
+
                 $lines = explode("\n", $stream_buffer);
                 $stream_buffer = array_pop($lines); // Retain incomplete line
 
@@ -744,6 +753,10 @@ Body:
                         continue;
                     }
                     $chunk = json_decode($json_str, true);
+                    if (isset($chunk['usage'])) {
+                        $stream_tokens['input'] = (int) ($chunk['usage']['prompt_tokens'] ?? $chunk['usage']['promptTokens'] ?? $stream_tokens['input']);
+                        $stream_tokens['output'] = (int) ($chunk['usage']['completion_tokens'] ?? $chunk['usage']['completionTokens'] ?? $stream_tokens['output']);
+                    }
                     if (isset($chunk['choices'][0]['delta']['content'])) {
                         $delta = $chunk['choices'][0]['delta']['content'];
                         echo "data: " . json_encode(['type' => 'delta', 'text' => $delta]) . "\n\n";
@@ -1713,6 +1726,11 @@ Body:
 
     private function get_usage_stats()
     {
+        $cached = $this->cache_get('admin_usage_stats');
+        if (is_array($cached) && isset($cached['total_users'])) {
+            return $cached;
+        }
+
         $rcmail = rcmail::get_instance();
         $db = $rcmail->get_dbh();
         $table = method_exists($db, 'table_name') ? $db->table_name('users') : 'users';
@@ -1725,10 +1743,12 @@ Body:
         $row = ($result && !is_bool($result)) ? $db->fetch_assoc($result) : null;
         $active_users = $row['active_users'] ?? 0;
 
-        return [
+        $stats = [
             'total_users' => (int) $total_users,
             'active_users' => (int) $active_users,
         ];
+        $this->cache_set('admin_usage_stats', $stats, 3600);
+        return $stats;
     }
 
     private function is_admin()
@@ -1773,9 +1793,15 @@ Body:
             return true;
         }
 
-        // Validate IP to prevent SSRF if custom endpoint
-        if (filter_var($host, FILTER_VALIDATE_IP)) {
-            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+        // Validate IP or resolve hostname to check against private/reserved IP ranges (SSRF protection)
+        $resolved_ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+        if (empty($resolved_ip) || ($resolved_ip === $host && !filter_var($host, FILTER_VALIDATE_IP))) {
+            return false;
+        }
+
+        if (filter_var($resolved_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            $this->ai_log("[SECURITY] Blocked SSRF attempt resolving to private/reserved IP: " . $resolved_ip . " (host: {$host})");
+            return false;
         }
 
         return true;
@@ -1801,15 +1827,18 @@ Body:
             }
         }
 
-        if (!$is_bg && $max_per_min > 0) {
-            $history = $_SESSION['lpai_req_hist'] ?? [];
+        $hist_key = $is_bg ? 'lpai_bg_hist' : 'lpai_req_hist';
+        $effective_max = $is_bg ? max(10, $max_per_min * 2) : $max_per_min;
+
+        if ($effective_max > 0) {
+            $history = $_SESSION[$hist_key] ?? [];
             if (!is_array($history)) $history = [];
             $history = array_values(array_filter($history, function ($t) use ($now) {
                 return ($now - (float) $t) < 60.0;
             }));
-            if (count($history) >= $max_per_min) return false;
+            if (count($history) >= $effective_max) return false;
             $history[] = $now;
-            $_SESSION['lpai_req_hist'] = $history;
+            $_SESSION[$hist_key] = $history;
         }
 
         $_SESSION[$session_key] = $now;
@@ -2084,12 +2113,25 @@ Body:
             }
 
             $clean_tpl_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $tpl_id);
-            $upload_dir = $this->home . '/data/attachments/templates/' . $clean_tpl_id;
-            if (!is_dir($upload_dir)) {
-                @mkdir($upload_dir, 0755, true);
+            $orig_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $disallowed_exts = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phar', 'inc', 'sh', 'cgi', 'pl', 'py', 'exe', 'htaccess', 'svg'];
+            if (in_array($orig_ext, $disallowed_exts, true) || empty($orig_ext)) {
+                echo json_encode(['status' => 'error', 'message' => 'Disallowed or dangerous file extension']);
+                exit;
             }
 
-            $safe_name = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
+            $allowed_exts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'png', 'jpg', 'jpeg', 'gif', 'zip'];
+            if (!in_array($orig_ext, $allowed_exts, true)) {
+                echo json_encode(['status' => 'error', 'message' => 'File type not permitted']);
+                exit;
+            }
+
+            $upload_dir = $this->home . '/data/attachments/templates/' . $clean_tpl_id;
+            if (!is_dir($upload_dir)) {
+                @mkdir($upload_dir, 0750, true);
+            }
+
+            $safe_name = md5(uniqid((string) microtime(true), true)) . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
             $target_path = $upload_dir . '/' . $safe_name;
 
             if (!move_uploaded_file($file['tmp_name'], $target_path)) {
@@ -2342,11 +2384,20 @@ Body:
      */
     public function get_memory_file()
     {
-        $dir = $this->home . '/data';
+        $rcmail = rcmail::get_instance();
+        $user_id = ($rcmail->user && isset($rcmail->user->ID)) ? (int) $rcmail->user->ID : 0;
+
+        $dir = $this->home . '/data/memory';
         if (!is_dir($dir)) {
-            @mkdir($dir, 0755, true);
+            @mkdir($dir, 0750, true);
         }
-        return $dir . '/ai_memory.json';
+
+        if ($user_id > 0) {
+            $user_hash = md5("lpai_user_mem_" . $user_id);
+            return $dir . '/user_' . $user_hash . '.json';
+        }
+
+        return $this->home . '/data/ai_memory.json';
     }
 
     public function load_ai_memory()
@@ -2378,7 +2429,7 @@ Body:
         $words = array_filter($words, function ($w) {
             return mb_strlen($w) >= 3 && !in_array($w, ['the','and','for','with','this','that','from','have','your','will','what','when','where','how','can','you','our','are','het','een','van','voor','met','dat','die','wat','wie','hoe','zou','kun']);
         });
-        if (empty($words)) return array_slice($memories, 0, $limit);
+        if (empty($words)) return [];
 
         $scored = [];
         foreach ($memories as $item) {
@@ -2395,7 +2446,7 @@ Body:
         }
 
         if (empty($scored)) {
-            return array_slice($memories, -($limit));
+            return [];
         }
 
         usort($scored, function ($a, $b) {
@@ -2577,15 +2628,34 @@ Body:
                 if (!isset($args['attachments']) || !is_array($args['attachments'])) {
                     $args['attachments'] = [];
                 }
+                $rcmail = rcmail::get_instance();
+                $att_dir = $this->home . '/data/attachments';
+                if (!is_dir($att_dir)) {
+                    @mkdir($att_dir, 0750, true);
+                }
+                $base_allowed = realpath($att_dir);
+                $temp_dir = realpath($rcmail->config->get('temp_dir', sys_get_temp_dir()));
+
                 foreach ($data['attachments'] as $att) {
                     $full_path = $att['path'] ?? '';
-                    if (!empty($full_path) && strpos($full_path, '/') !== 0) {
-                        $full_path = $this->home . '/' . $full_path;
+                    if (empty($full_path)) continue;
+
+                    $target = (strpos($full_path, '/') === 0) ? $full_path : ($this->home . '/' . $full_path);
+                    $resolved = realpath($target);
+
+                    // Strictly confine attachments to data/attachments or Roundcube's temp_dir
+                    $is_in_base = ($base_allowed && $resolved && strpos($resolved, $base_allowed) === 0);
+                    $is_in_temp = ($temp_dir && $resolved && strpos($resolved, $temp_dir) === 0);
+
+                    if (!$resolved || (!$is_in_base && !$is_in_temp)) {
+                        $this->ai_log("[SECURITY] Blocked unauthorized compose attachment path traversal: " . $full_path);
+                        continue;
                     }
-                    if (file_exists($full_path)) {
+
+                    if (file_exists($resolved)) {
                         $args['attachments'][] = [
-                            'path' => $full_path,
-                            'name' => $att['name'] ?? basename($full_path),
+                            'path' => $resolved,
+                            'name' => $att['name'] ?? basename($resolved),
                             'mimetype' => $att['mimetype'] ?? 'application/octet-stream',
                         ];
                     }
