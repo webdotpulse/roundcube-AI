@@ -71,6 +71,9 @@ $installer->parseCliArgs(['--dry-run', '--roundcube-path=' . $tempDir]);
 $ret = $installer->execute();
 assert_true($ret === 0, "Installer returns exit code 0 on dry run");
 assert_true(!is_dir($tempDir . '/plugins/xcalendar'), "Dry-run does NOT create xcalendar in plugins");
+assert_true(!is_dir($tempDir . '/plugins/xmultibox'), "Dry-run does NOT create xmultibox in plugins");
+assert_true(!is_dir($tempDir . '/plugins/xsignature'), "Dry-run does NOT create xsignature in plugins");
+assert_true(!is_dir($tempDir . '/data/xsignature'), "Dry-run does NOT create data/xsignature directory");
 assert_true(!is_dir($tempDir . '/skins/gmail_plus'), "Dry-run does NOT create gmail_plus in skins");
 
 // Test 2: Full Installation with --activate
@@ -92,6 +95,9 @@ assert_true(is_dir($tempDir . '/plugins/thunderbird_labels'), "Plugin 'thunderbi
 assert_true(is_dir($tempDir . '/plugins/xcalendar'), "Plugin 'xcalendar' installed in plugins/");
 assert_true(is_dir($tempDir . '/plugins/roundcube_loader'), "Plugin 'roundcube_loader' installed in plugins/");
 assert_true(file_exists($tempDir . '/plugins/roundcube_loader/config.inc.php'), "roundcube_loader config.inc.php initialized from dist");
+assert_true(is_dir($tempDir . '/plugins/xmultibox'), "Plugin 'xmultibox' installed in plugins/");
+assert_true(is_dir($tempDir . '/plugins/xsignature'), "Plugin 'xsignature' installed in plugins/");
+assert_true(file_exists($tempDir . '/plugins/xsignature/config.inc.php'), "xsignature config.inc.php initialized from dist");
 
 // Test 3: xcalendar Specific Post-Install Verifications
 echo "\n--- Test 3: xcalendar Specific Post-Install Verifications ---\n";
@@ -102,6 +108,11 @@ assert_true(file_exists($tempDir . '/plugins/xcalendar/attachments/.htaccess'), 
 $htaccessContent = file_get_contents($tempDir . '/plugins/xcalendar/attachments/.htaccess');
 assert_true(strpos($htaccessContent, 'Deny from all') !== false, "Attachments .htaccess prevents direct web access");
 
+// Test 3b: xsignature Specific Post-Install Verifications
+echo "\n--- Test 3b: xsignature Specific Post-Install Verifications ---\n";
+assert_true(file_exists($tempDir . '/plugins/xsignature/config.inc.php'), "xsignature config.inc.php exists");
+assert_true(is_dir($tempDir . '/data/xsignature'), "xsignature data/xsignature logo directory created");
+
 // Test 4: Configuration Activation Verification
 echo "\n--- Test 4: Configuration Activation Verification ---\n";
 $updatedConfig = file_get_contents($tempDir . '/config/config.inc.php');
@@ -110,6 +121,8 @@ assert_true(strpos($updatedConfig, "'xcalendar'") !== false, "xcalendar added to
 assert_true(strpos($updatedConfig, "'xskin'") !== false, "xskin added to plugins array in config");
 assert_true(strpos($updatedConfig, "'customizr'") !== false, "customizr added to plugins array in config");
 assert_true(strpos($updatedConfig, "'roundcube_loader'") !== false, "roundcube_loader added to plugins array in config");
+assert_true(strpos($updatedConfig, "'xmultibox'") !== false, "xmultibox added to plugins array in config");
+assert_true(strpos($updatedConfig, "'xsignature'") !== false, "xsignature added to plugins array in config");
 assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' plugin preserved in config");
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
 assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");
@@ -126,11 +139,14 @@ assert_true(array_search('archive', $pluginOrder) > 0, "'archive' appears after 
 // Test 5: Re-running installer preserves user customized config
 echo "\n--- Test 5: Config Preservation on Update ---\n";
 file_put_contents($tempDir . '/plugins/xcalendar/config.inc.php', "<?php // User modified xcalendar config\n\$config['custom'] = 123;\n");
+file_put_contents($tempDir . '/plugins/xsignature/config.inc.php', "<?php // User modified xsignature config\n\$config['custom_sig'] = 456;\n");
 $installerUpdate = new RoundcubeExtraContentInstaller(dirname(__DIR__), $tempDir);
 $installerUpdate->parseCliArgs(['--roundcube-path=' . $tempDir]);
 $installerUpdate->execute();
 $preservedConfig = file_get_contents($tempDir . '/plugins/xcalendar/config.inc.php');
 assert_true(strpos($preservedConfig, "\$config['custom'] = 123;") !== false, "Preserves modified user config in plugins/xcalendar/config.inc.php");
+$preservedSigConfig = file_get_contents($tempDir . '/plugins/xsignature/config.inc.php');
+assert_true(strpos($preservedSigConfig, "\$config['custom_sig'] = 456;") !== false, "Preserves modified user config in plugins/xsignature/config.inc.php");
 
 // Test 6: Upgrading empty license_key to RCPLUSFREE20266u
 echo "\n--- Test 6: Empty License Key Upgrade Verification ---\n";

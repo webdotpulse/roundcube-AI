@@ -123,7 +123,7 @@ composer require "webdotpulse/roundcube-ai:dev-main"
 > **Automatic Extra Content Deployment & Activation:** When Composer completes, the bundled installer automatically deploys all skins and companion plugins directly into your Roundcube installation:
 > - **Skin:** GMail+ deployed to `skins/gmail_plus`
 > - **Roundcube Plus Framework:** `plugins/xskin` and `plugins/xframework`
-> - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, `plugins/thunderbird_labels`, and `plugins/xcalendar`
+> - **Companion Plugins:** `plugins/customizr`, `plugins/thread_drafts`, `plugins/thunderbird_labels`, `plugins/xcalendar`, `plugins/roundcube_loader`, `plugins/xmultibox`, and `plugins/xsignature`
 > - **Zero-Config Licensing & Clean UI:** Automatically configures `$config['license_key'] = 'RCPLUSFREE20266u'` (compatible with all legacy and updated checks) and `$config['remove_vendor_branding'] = true;` (removes vendor branding from login screen).
 > - Default configuration files (`config.inc.php`) are safely initialized from `.dist` and `.sample` files without overwriting any existing settings.
 
@@ -145,6 +145,9 @@ $config['plugins'] = [
     'thread_drafts',
     'thunderbird_labels',
     'xcalendar',
+    'roundcube_loader',
+    'xmultibox',
+    'xsignature',
     'roundcube_ai', // or 'lifeprisma_ai'
 ];
 

@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -225,6 +225,79 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'xcalendar') {
             $this->postInstallXcalendar($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for xsignature
+        if ($type === 'plugin' && $name === 'xsignature') {
+            $this->postInstallXsignature($destination, $this->roundcubeDir);
+        }
+
+        // Special post-install routine for xmultibox
+        if ($type === 'plugin' && $name === 'xmultibox') {
+            $this->postInstallXmultibox($destination, $this->roundcubeDir);
+        }
+    }
+
+    /**
+     * Special post-installation setup, requirements verification, and guidance for xsignature.
+     */
+    private function postInstallXsignature(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring xsignature plugin ---");
+
+        // 1. Requirements verification (PHP 8.0+ and GD extension)
+        if (PHP_VERSION_ID < 80000) {
+            $this->warning("  [!] xsignature requires PHP 8.0 or higher. Current PHP version: " . PHP_VERSION);
+        } else {
+            $this->success("  [✓] PHP version " . PHP_VERSION . " meets xsignature requirement (>= 8.0).");
+        }
+
+        if (!extension_loaded('gd')) {
+            $this->warning("  [!] PHP GD extension is NOT loaded. xsignature requires GD (GD2) for signature image generation.");
+        } else {
+            $this->success("  [✓] PHP GD extension is loaded.");
+        }
+
+        // 2. Default signature logo directory setup
+        $targetDir = $roundcubeDir ?? $this->findRoundcubeDir();
+        if ($targetDir) {
+            $logoDir = $targetDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'xsignature';
+            if (!is_dir($logoDir)) {
+                if ($this->dryRun) {
+                    $this->info("  -> Would create signature logos directory: {$logoDir}");
+                } else {
+                    if (@mkdir($logoDir, 0775, true)) {
+                        $this->success("  -> Created signature logos directory: {$logoDir}");
+                    }
+                }
+            } else {
+                $this->info("  -> Preserving existing signature logos directory at {$logoDir}");
+            }
+        }
+
+        // 3. Database & license guidance
+        $this->info("  [i] Database: xsignature columns in 'identities' table are created automatically on first access to Settings > Identities.");
+        $this->info("  [i] Signature Builder: Available under Settings > Identities > [Identity] > 'Enable Signature Builder'.");
+        $this->info("  [i] License Key & Branding: Configured automatically in config/config.inc.php (\$config['license_key'] = 'RCPLUSFREE20266u'; \$config['remove_vendor_branding'] = true;).");
+    }
+
+    /**
+     * Special post-installation setup, requirements verification, and guidance for xmultibox.
+     */
+    private function postInstallXmultibox(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring xmultibox plugin ---");
+
+        // 1. Requirements verification (PHP 8.0+)
+        if (PHP_VERSION_ID < 80000) {
+            $this->warning("  [!] xmultibox requires PHP 8.0 or higher. Current PHP version: " . PHP_VERSION);
+        } else {
+            $this->success("  [✓] PHP version " . PHP_VERSION . " meets xmultibox requirement (>= 8.0).");
+        }
+
+        // 2. Database & multi-identity guidance
+        $this->info("  [i] Database: xmultibox columns in 'identities' table are created automatically on first access to Settings > Identities.");
+        $this->info("  [i] Multi-account: Navigate to Settings > Identities to configure custom IMAP/SMTP servers.");
+        $this->info("  [i] License Key & Branding: Configured automatically in config/config.inc.php (\$config['license_key'] = 'RCPLUSFREE20266u'; \$config['remove_vendor_branding'] = true;).");
     }
 
     /**
@@ -325,7 +398,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -335,7 +408,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

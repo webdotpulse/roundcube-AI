@@ -23,7 +23,9 @@
         "thunderbird_labels",
         "xcalendar",
         "roundcube_loader",
-        "page-loader"
+        "page-loader",
+        "xmultibox",
+        "xsignature"
     ],
     "authors": [
         {
@@ -42,10 +44,13 @@
         "lifeprisma/roundcube-ai": "self.version",
         "webdotpulse/lifeprisma-ai": "self.version",
         "roundcubeplus/xcalendar": "self.version",
-        "webdotpulse/roundcube-loader": "self.version"
+        "webdotpulse/roundcube-loader": "self.version",
+        "roundcubeplus/xmultibox": "self.version",
+        "roundcubeplus/xsignature": "self.version"
     },
     "suggest": {
-        "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars"
+        "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars",
+        "ext-gd": "Required by xsignature for image signature generation"
     },
     "require": {
         "php": ">=8.0",
