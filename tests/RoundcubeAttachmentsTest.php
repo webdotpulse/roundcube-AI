@@ -558,7 +558,17 @@ window.onload = function() {
     // 2. Open Modal via Click
     if (composeBtns.length) composeBtns[0].click();
     var modal = document.getElementById('rc-server-att-modal');
+    var overlay = document.getElementById('rc-server-att-overlay');
     console.log("CHROME_MODAL_EXISTS:" + (modal ? "yes" : "no"));
+
+    var modalVisible = modal && ($(modal).is(':visible') || window.getComputedStyle(modal).display !== 'none');
+    console.log("CHROME_MODAL_VISIBLE:" + (modalVisible ? "yes" : "no"));
+
+    var modalFixed = modal && window.getComputedStyle(modal).position === 'fixed';
+    console.log("CHROME_MODAL_FIXED:" + (modalFixed ? "yes" : "no"));
+
+    var overlayVisible = overlay && ($(overlay).is(':visible') || window.getComputedStyle(overlay).display !== 'none');
+    console.log("CHROME_OVERLAY_VISIBLE:" + (overlayVisible ? "yes" : "no"));
 
     var search = document.getElementById('rc-server-att-search');
     console.log("CHROME_MODAL_SEARCH:" + (search ? "yes" : "no"));
@@ -679,6 +689,9 @@ HTML;
     $header_btns_count = 0;
     $vcard_btns_count = 0;
     $modal_exists = false;
+    $modal_visible = false;
+    $modal_fixed = false;
+    $overlay_visible = false;
     $modal_search = false;
     $subject_exists = false;
     $subject_val = '';
@@ -706,6 +719,9 @@ HTML;
             if (preg_match('/CHROME_HEADER_BTNS_COUNT:(.*?)"/', $line, $m)) $header_btns_count = (int) trim($m[1]);
             if (preg_match('/CHROME_VCARD_BTNS_COUNT:(.*?)"/', $line, $m)) $vcard_btns_count = (int) trim($m[1]);
             if (preg_match('/CHROME_MODAL_EXISTS:(.*?)"/', $line, $m)) $modal_exists = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_MODAL_VISIBLE:(.*?)"/', $line, $m)) $modal_visible = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_MODAL_FIXED:(.*?)"/', $line, $m)) $modal_fixed = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_OVERLAY_VISIBLE:(.*?)"/', $line, $m)) $overlay_visible = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_MODAL_SEARCH:(.*?)"/', $line, $m)) $modal_search = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_SUBJECT_EXISTS:(.*?)"/', $line, $m)) $subject_exists = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_SUBJECT_VAL:(.*?)"/', $line, $m)) $subject_val = trim($m[1]);
@@ -737,6 +753,9 @@ HTML;
     assert_true($header_btns_count === 0, "Browser DOM: No buttons erroneously injected into attachments header");
     assert_true($vcard_btns_count === 1, "Browser DOM: Exactly 1 vCard button present (no duplicates)");
     assert_true($modal_exists, "Browser DOM: Server Attachments modal container rendered");
+    assert_true($modal_visible, "Browser DOM: Server Attachments modal is visible upon clicking compose button");
+    assert_true($modal_fixed, "Browser CSS: Server Attachments modal has position: fixed");
+    assert_true($overlay_visible, "Browser DOM: Server Attachments overlay is visible");
     assert_true($modal_search, "Browser DOM: Search field rendered in modal");
     assert_true($subject_exists, "Browser DOM: #ffsubject field rendered in reaction form");
     assert_true($subject_val === 'Initial Reaction Subject', "Browser DOM: #ffsubject populated with reaction subject");

@@ -74,8 +74,11 @@
     // ========================================================
 
     function initCompose() {
-        var env = rcmail.env;
-        var isCompose = (env.action === 'compose') || $('#compose-attachments, #composeattachments, .compose-attachments, form#form').length > 0;
+        var env = rcmail.env || {};
+        var isCompose = (env.action === 'compose')
+            || (env.task === 'mail' && (env.action === 'compose' || (env.action && env.action.indexOf('compose') !== -1)))
+            || $('#compose-attachments, #composeattachments, .compose-attachments, #composeform, #compose-form').length > 0;
+
         if (!isCompose) {
             return;
         }
@@ -103,12 +106,17 @@
             return $(this).attr('id') !== 'rc-server-att-compose-btn' && $(this).text().trim() === label;
         }).remove();
 
-        // 2. Check if the properly placed button already exists
+        // 2. If properly placed button already exists, ensure click handler is bound
         if ($('#rc-server-att-compose-btn').length > 0) {
+            $('#rc-server-att-compose-btn').off('click.rc_direct').on('click.rc_direct', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                openServerAttachmentsModal('compose');
+            });
             return;
         }
 
-        var btnHtml = '<button type="button" id="rc-server-att-compose-btn" class="btn btn-secondary attach rc-btn-server-att" title="' + label + '">'
+        var btnHtml = '<button type="button" id="rc-server-att-compose-btn" class="btn btn-secondary attach rc-btn-server-att" title="' + label + '" onclick="window.__rc_open_server_attachments &amp;&amp; window.__rc_open_server_attachments(event, \'compose\')">'
             + '<span class="rc-att-btn-icon">📁</span> '
             + '<span class="rc-att-btn-text">' + label + '</span>'
             + '</button>';
@@ -131,9 +139,10 @@
             }
         }
 
-        // Delegate click handler cleanly
-        $(document).off('click.rc_server_att', '#rc-server-att-compose-btn').on('click.rc_server_att', '#rc-server-att-compose-btn', function(e) {
+        // Direct click handler on the newly injected button
+        $('#rc-server-att-compose-btn').off('click.rc_direct').on('click.rc_direct', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             openServerAttachmentsModal('compose');
         });
     }
@@ -212,13 +221,13 @@
         // Load files from server
         loadServerAttachmentsList();
 
-        $overlay.fadeIn(150);
-        $modal.fadeIn(150);
+        $overlay.stop(true, true).css({ display: 'block', opacity: 0 }).fadeTo(150, 1);
+        $modal.stop(true, true).css({ display: 'flex', opacity: 0 }).fadeTo(150, 1);
     }
 
     function closeServerAttachmentsModal() {
-        $('#rc-server-att-overlay').fadeOut(150);
-        $('#rc-server-att-modal').fadeOut(150);
+        $('#rc-server-att-overlay').stop(true, true).fadeOut(150);
+        $('#rc-server-att-modal').stop(true, true).fadeOut(150);
     }
 
     function ensureModalHtml() {
@@ -226,14 +235,14 @@
             return;
         }
 
-        var modalHtml = '<div id="rc-server-att-overlay" class="rc-server-att-overlay" style="display:none;"></div>'
-            + '<div id="rc-server-att-modal" class="rc-server-att-modal" style="display:none;" role="dialog" aria-modal="true">'
-            + '  <div class="rc-server-att-modal-header">'
-            + '    <h3 class="rc-server-att-modal-title">' + (rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments') + '</h3>'
-            + '    <button type="button" class="rc-server-att-close" id="rc-server-att-close-btn">&times;</button>'
+        var modalHtml = '<div id="rc-server-att-overlay" class="rc-server-att-overlay rc-att-overlay" style="display:none;"></div>'
+            + '<div id="rc-server-att-modal" class="rc-server-att-modal rc-att-modal" style="display:none;" role="dialog" aria-modal="true">'
+            + '  <div class="rc-server-att-modal-header rc-att-modal-header">'
+            + '    <h3 class="rc-server-att-modal-title rc-att-modal-title"><span class="rc-modal-title-icon">📁</span> ' + (rcmail.gettext('server_attachments', 'roundcube_attachments') || 'Server Attachments') + '</h3>'
+            + '    <button type="button" class="rc-server-att-close rc-att-modal-close" id="rc-server-att-close-btn" aria-label="Close">&times;</button>'
             + '  </div>'
-            + '  <div class="rc-server-att-modal-body">'
-            + '    <div class="rc-server-att-toolbar">'
+            + '  <div class="rc-server-att-modal-body rc-att-modal-body">'
+            + '    <div class="rc-server-att-toolbar rc-att-modal-toolbar">'
             + '      <div class="rc-server-att-search-box">'
             + '        <input type="text" id="rc-server-att-search" placeholder="' + (rcmail.gettext('search_placeholder', 'roundcube_attachments') || 'Search files...') + '" class="rc-server-att-search-input">'
             + '      </div>'
@@ -245,16 +254,16 @@
             + '      </div>'
             + '    </div>'
             + '    <div id="rc-server-att-list-container" class="rc-server-att-list-container">'
-            + '      <div id="rc-server-att-loading" class="rc-server-att-loading" style="display:none;">'
+            + '      <div id="rc-server-att-loading" class="rc-server-att-loading rc-att-loading" style="display:none;">'
             + '        <span>' + (rcmail.gettext('loading', 'roundcube_attachments') || 'Loading...') + '</span>'
             + '      </div>'
-            + '      <div id="rc-server-att-empty" class="rc-server-att-empty" style="display:none;">'
+            + '      <div id="rc-server-att-empty" class="rc-server-att-empty rc-att-empty" style="display:none;">'
             + '        <p>' + (rcmail.gettext('no_attachments_found', 'roundcube_attachments') || 'No server attachments found') + '</p>'
             + '      </div>'
-            + '      <ul id="rc-server-att-list" class="rc-server-att-list"></ul>'
+            + '      <ul id="rc-server-att-list" class="rc-server-att-list rc-att-file-list"></ul>'
             + '    </div>'
             + '  </div>'
-            + '  <div class="rc-server-att-modal-footer">'
+            + '  <div class="rc-server-att-modal-footer rc-att-modal-footer">'
             + '    <button type="button" class="btn btn-secondary" id="rc-server-att-cancel-btn">' + (rcmail.gettext('cancel', 'roundcube_attachments') || 'Cancel') + '</button>'
             + '    <button type="button" class="btn btn-primary" id="rc-server-att-attach-btn" disabled>' + (rcmail.gettext('attach_selected', 'roundcube_attachments') || 'Attach Selected') + '</button>'
             + '  </div>'
@@ -364,9 +373,9 @@
 
             var descHtml = desc ? '<div class="rc-att-item-desc text-muted">' + $('<div>').text(desc).html() + '</div>' : '';
 
-            var $li = $('<li class="rc-server-att-item">'
+            var $li = $('<li class="rc-server-att-item rc-att-item">'
                 + '<label class="rc-att-item-label">'
-                + '  <input type="checkbox" value="' + id + '" class="rc-att-item-checkbox">'
+                + '  <input type="checkbox" value="' + id + '" class="rc-server-att-item-checkbox rc-att-item-checkbox rc-att-checkbox">'
                 + '  <span class="rc-att-item-icon">' + icon + '</span>'
                 + '  <div class="rc-att-item-details">'
                 + '    <span class="rc-att-item-name font-weight-bold">' + $('<div>').text(name).html() + '</span>'
@@ -1111,6 +1120,49 @@
     // 4. Initialization & Event Bindings
     // ========================================================
 
+    // Expose helpers on window
+    window.__rc_open_server_attachments = function(e, context) {
+        if (e) {
+            if (typeof e.preventDefault === 'function') e.preventDefault();
+            if (typeof e.stopPropagation === 'function') e.stopPropagation();
+        }
+        openServerAttachmentsModal(context || 'compose');
+        return false;
+    };
+    window.openServerAttachmentsModal = openServerAttachmentsModal;
+    window.closeServerAttachmentsModal = closeServerAttachmentsModal;
+
+    // Register Roundcube commands
+    if (typeof rcmail.register_command === 'function') {
+        rcmail.register_command('plugin.roundcube_attachments_open', function(props, obj, event) {
+            openServerAttachmentsModal('compose');
+        }, true);
+        rcmail.register_command('plugin.roundcube_attachments', function(props, obj, event) {
+            openServerAttachmentsModal('compose');
+        }, true);
+    }
+    if (typeof rcmail.enable_command === 'function') {
+        rcmail.enable_command('plugin.roundcube_attachments_open', true);
+        rcmail.enable_command('plugin.roundcube_attachments', true);
+    }
+
+    // Global delegated click listener (fires regardless of dynamic DOM updates)
+    $(document).off('click.rc_server_att', '#rc-server-att-compose-btn, .rc-btn-server-att')
+               .on('click.rc_server_att', '#rc-server-att-compose-btn, .rc-btn-server-att', function(e) {
+                   e.preventDefault();
+                   e.stopPropagation();
+                   openServerAttachmentsModal('compose');
+               });
+
+    // Close on Escape key press
+    $(document).off('keydown.rc_server_att_esc').on('keydown.rc_server_att_esc', function(e) {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            if ($('#rc-server-att-modal').is(':visible')) {
+                closeServerAttachmentsModal();
+            }
+        }
+    });
+
     rcmail.addEventListener('init', function() {
         initCompose();
         initResponses();
@@ -1118,11 +1170,26 @@
         removeAboutButton();
     });
 
+    rcmail.addEventListener('actionafter', function() {
+        initCompose();
+        initResponses();
+        checkAndInitSettings();
+        removeAboutButton();
+    });
+
+    rcmail.addEventListener('responseafter', function() {
+        initCompose();
+        initResponses();
+        checkAndInitSettings();
+    });
+
     $(document).ready(function() {
         initCompose();
         initResponses();
         checkAndInitSettings();
         removeAboutButton();
+        setTimeout(initCompose, 200);
+        setTimeout(initCompose, 1000);
     });
 
 })(window, window.document, window.jQuery);

@@ -53,6 +53,7 @@ class roundcube_attachments extends rcube_plugin
         $this->add_hook('response_update', [$this, 'hook_response_update']);
         $this->add_hook('response_delete', [$this, 'hook_response_delete']);
         $this->add_hook('render_page', [$this, 'hook_render_page']);
+        $this->add_hook('message_compose', [$this, 'hook_message_compose']);
     }
 
     /**
@@ -504,11 +505,11 @@ class roundcube_attachments extends rcube_plugin
             }
         }
 
-        $template = $args['template'] ?? '';
-        $action = $this->rc->action;
-        $task = $this->rc->task;
+        $template = (string) ($args['template'] ?? '');
+        $action = (string) ($this->rc->action ?? '');
+        $task = (string) ($this->rc->task ?? '');
 
-        $is_compose = ($task === 'mail' && $action === 'compose');
+        $is_compose = ($task === 'mail' && ($action === 'compose' || $template === 'compose' || strpos($action, 'compose') !== false));
         $is_responses = ($task === 'settings' && (strpos($action, 'response') !== false || in_array($action, ['responses', 'responseedit', 'response-edit', 'response-add', 'add-response', 'edit-response'], true)))
             || in_array($template, ['responses', 'responseedit'], true);
         $is_settings = ($task === 'settings' && (strpos($action, 'roundcube_attachments') !== false || strpos($template, 'roundcube_attachments') !== false));
@@ -548,6 +549,17 @@ class roundcube_attachments extends rcube_plugin
             ]);
         }
 
+        return $args;
+    }
+
+    /**
+     * Hook: message_compose
+     * Ensures scripts and stylesheets are loaded on any compose session
+     */
+    public function hook_message_compose(array $args): array
+    {
+        $this->include_script('roundcube_attachments.js');
+        $this->include_stylesheet('roundcube_attachments.css');
         return $args;
     }
 
