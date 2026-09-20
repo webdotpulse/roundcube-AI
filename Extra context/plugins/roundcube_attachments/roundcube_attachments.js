@@ -546,40 +546,43 @@
             }
         }
 
+        var $nameInput = $doc.find('#ffname');
+        if (!$nameInput.length) {
+            return;
+        }
+
+        var $nameRow = $nameInput.closest('.form-group, tr, .row');
+        if (!$nameRow.length) {
+            $nameRow = $nameInput.parent();
+        }
+        var isTable = $nameRow.is('tr');
+
         // 1. Inject Subject Field directly below Name (#ffname) if not present
         if (!$doc.find('#ffsubject').length) {
             var labelSubject = rcmail.gettext('reaction_subject', 'roundcube_attachments') || 'Subject';
             var placeholderSubject = rcmail.gettext('reaction_subject_placeholder', 'roundcube_attachments') || 'Optional subject for this reaction';
             var existingSubject = responseMeta.subject || '';
 
-            var $nameInput = $doc.find('#ffname');
-            if ($nameInput.length) {
-                var $nameRow = $nameInput.closest('.form-group, tr, .row');
-                if (!$nameRow.length) {
-                    $nameRow = $nameInput.parent();
-                }
-
-                if ($nameRow.is('tr')) {
-                    var trHtml = '<tr id="rc-att-subject-row">'
-                        + '<th class="title"><label for="ffsubject">' + labelSubject + '</label></th>'
-                        + '<td><input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
-                        + '</tr>';
-                    $nameRow.after(trHtml);
-                } else {
-                    var divHtml = '<div class="form-group row" id="rc-att-subject-group">'
-                        + '<label for="ffsubject" class="col-sm-2 col-form-label">' + labelSubject + '</label>'
-                        + '<div class="col-sm-10">'
-                        + '  <input type="text" id="ffsubject" name="_subject" class="form-control" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '">'
-                        + '</div>'
-                        + '</div>';
-                    $nameRow.after(divHtml);
-                }
+            if (isTable) {
+                var trHtml = '<tr id="rc-att-subject-row" class="rc-att-row">'
+                    + '<th class="title"><label for="ffsubject">' + labelSubject + '</label></th>'
+                    + '<td><input type="text" id="ffsubject" name="_subject" class="form-control rc-response-input" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '"></td>'
+                    + '</tr>';
+                $nameRow.after(trHtml);
+            } else {
+                var divHtml = '<div class="form-group row rc-att-row" id="rc-att-subject-group">'
+                    + '<label for="ffsubject" class="col-sm-2 col-form-label">' + labelSubject + '</label>'
+                    + '<div class="col-sm-10">'
+                    + '  <input type="text" id="ffsubject" name="_subject" class="form-control rc-response-input" placeholder="' + placeholderSubject + '" value="' + $('<div>').text(existingSubject).html() + '">'
+                    + '</div>'
+                    + '</div>';
+                $nameRow.after(divHtml);
             }
         }
 
-        // 2. Inject Attachments Management Section if not present
+        // 2. Inject Attachments Section directly below Subject (BEFORE the editor)
         if (!$doc.find('#rc-reaction-attachments-container').length) {
-            injectReactionAttachmentsSection($doc, responseMeta);
+            injectReactionAttachmentsSection($doc, responseMeta, isTable);
         }
 
         // 3. If a response ID exists, ensure its latest metadata (subject & attachments) is loaded
@@ -591,7 +594,7 @@
         hookResponseFormSubmit($doc, currentId);
     }
 
-    function injectReactionAttachmentsSection($doc, responseMeta) {
+    function injectReactionAttachmentsSection($doc, responseMeta, isTable) {
         var labelAtt = rcmail.gettext('reaction_attachments', 'roundcube_attachments') || 'Attachments';
         var descAtt = rcmail.gettext('reaction_attachments_desc', 'roundcube_attachments') || 'Attachments automatically added when inserting this reaction into an email';
         var btnAddServer = rcmail.gettext('add_server_attachment', 'roundcube_attachments') || 'Attach from Server';
@@ -601,44 +604,38 @@
         var initialFiles = responseMeta.files || [];
 
         var boxHtml = '<div id="rc-reaction-attachments-container" class="rc-reaction-attachments-box">'
-            + '  <div class="rc-reaction-att-header">'
-            + '    <label class="rc-reaction-att-label">📎 ' + labelAtt + '</label>'
-            + '    <div class="rc-reaction-att-desc text-muted">' + descAtt + '</div>'
-            + '  </div>'
-            + '  <div id="rc-reaction-attached-list" class="rc-reaction-attached-list"></div>'
-            + '  <input type="hidden" id="ffattachments" name="_attachments" value="' + $('<div>').text(JSON.stringify(initialIds)).html() + '">'
-            + '  <div class="rc-reaction-att-actions">'
-            + '    <button type="button" id="rc-btn-reaction-add-server" class="btn btn-outline-secondary btn-sm">📁 ' + btnAddServer + '</button>'
-            + '    <button type="button" id="rc-btn-reaction-upload" class="btn btn-outline-primary btn-sm">⬆️ ' + btnUploadNew + '</button>'
-            + '    <input type="file" id="rc-reaction-file-input" multiple style="display:none;">'
+            + '  <div class="rc-reaction-att-row-content">'
+            + '    <div id="rc-reaction-attached-list" class="rc-reaction-attached-list"></div>'
+            + '    <input type="hidden" id="ffattachments" name="_attachments" value="' + $('<div>').text(JSON.stringify(initialIds)).html() + '">'
+            + '    <div class="rc-reaction-att-actions">'
+            + '      <button type="button" id="rc-btn-reaction-add-server" class="btn btn-reaction-att btn-reaction-att-primary">📁 ' + btnAddServer + '</button>'
+            + '      <button type="button" id="rc-btn-reaction-upload" class="btn btn-reaction-att">⬆️ ' + btnUploadNew + '</button>'
+            + '      <input type="file" id="rc-reaction-file-input" multiple style="display:none;">'
+            + '    </div>'
             + '  </div>'
             + '</div>';
 
-        // Insert container directly before the save button row, or right after editor
-        var $saveBtn = $doc.find('.formbuttons, button.mainaction, input.mainaction, button[type="submit"], input[type="submit"]');
-        var $saveRow = $saveBtn.closest('.formbuttons, .form-group, tr, div');
-        var $editorContainer = $doc.find('.tox-tinymce, .mce-tinymce, #fftext').closest('.form-group, tr, td, div');
-
-        if ($saveRow.length) {
-            if ($saveRow.is('tr')) {
-                $saveRow.first().before('<tr id="rc-att-box-row"><th></th><td>' + boxHtml + '</td></tr>');
-            } else if ($saveRow.hasClass('form-group') || $saveRow.hasClass('row') || $saveRow.hasClass('formbuttons')) {
-                $saveRow.first().before('<div class="form-group row" id="rc-att-box-group"><div class="col-sm-10 offset-sm-2">' + boxHtml + '</div></div>');
+        var $subjectRow = $doc.find('#rc-att-subject-row, #rc-att-subject-group');
+        if ($subjectRow.length) {
+            if (isTable || $subjectRow.is('tr')) {
+                $subjectRow.after('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
             } else {
-                $saveRow.first().before(boxHtml);
-            }
-        } else if ($editorContainer.length) {
-            if ($editorContainer.is('tr')) {
-                $editorContainer.first().after('<tr id="rc-att-box-row"><th></th><td>' + boxHtml + '</td></tr>');
-            } else {
-                $editorContainer.first().after('<div class="form-group row" id="rc-att-box-group"><div class="col-sm-10 offset-sm-2">' + boxHtml + '</div></div>');
+                $subjectRow.after('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
             }
         } else {
-            var $form = $doc.find('form').first();
-            if ($form.length) {
-                $form.append(boxHtml);
+            var $editorContainer = $doc.find('.tox-tinymce, .mce-tinymce, #fftext').closest('.form-group, tr, td, div');
+            if ($editorContainer.length && $editorContainer.is('tr')) {
+                $editorContainer.before('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
+            } else if ($editorContainer.length) {
+                $editorContainer.before('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
             } else {
-                $doc.find('#fftext').parent().append(boxHtml);
+                var $saveBtn = $doc.find('.formbuttons, button.mainaction, input.mainaction, button[type="submit"], input[type="submit"]');
+                var $saveRow = $saveBtn.closest('.formbuttons, .form-group, tr, div');
+                if ($saveRow.length && $saveRow.is('tr')) {
+                    $saveRow.first().before('<tr id="rc-att-box-row" class="rc-att-row"><th class="title"><label>' + labelAtt + '</label></th><td>' + boxHtml + '</td></tr>');
+                } else if ($saveRow.length) {
+                    $saveRow.first().before('<div class="form-group row rc-att-row" id="rc-att-box-group"><label class="col-sm-2 col-form-label">' + labelAtt + '</label><div class="col-sm-10">' + boxHtml + '</div></div>');
+                }
             }
         }
 
@@ -764,20 +761,21 @@
         files.forEach(function(f) { fileMap[f.id] = f; });
 
         ids.forEach(function(id) {
-            var file = fileMap[id] || { id: id, name: id, size: 0, mimetype: '' };
+            var file = fileMap[id] || { id: id, filename: id, name: id, size: 0, mimetype: '' };
             addReactionAttachedItem($doc, file);
         });
     }
 
     function addReactionAttachedItem($doc, file) {
         var $list = $doc.find('#rc-reaction-attached-list');
-        var icon = getFileIcon(file.mimetype, file.name);
+        var fileName = file.filename || file.name || file.id || 'attachment';
+        var icon = getFileIcon(file.mimetype, fileName);
         var sizeStr = file.size ? ' (' + formatBytes(file.size) + ')' : '';
         var descHtml = file.description ? ' • <span class="rc-chip-desc text-muted font-italic" title="' + $('<div>').text(file.description).html() + '">' + $('<div>').text(file.description).html() + '</span>' : '';
 
         var $chip = $('<div class="rc-reaction-att-chip" data-id="' + file.id + '"></div>');
         $chip.html('<span class="rc-chip-icon">' + icon + '</span>'
-            + '<span class="rc-chip-name" title="' + file.name + '">' + file.name + '</span>'
+            + '<span class="rc-chip-name" title="' + fileName + '">' + fileName + '</span>'
             + descHtml
             + '<span class="rc-chip-size text-muted">' + sizeStr + '</span>'
             + '<button type="button" class="rc-reaction-att-remove" data-id="' + file.id + '" title="Remove">&times;</button>');

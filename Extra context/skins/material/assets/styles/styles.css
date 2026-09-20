@@ -575,3 +575,47 @@ html.dark-mode .btn-secondary:hover,
 html.dark-mode .btn-material-secondary:hover {
     filter: brightness(1.15);
 }
+
+/* Material 3 Responses / Reactions Form Styling */
+.propform #rc-att-subject-row th.title,
+.propform #rc-att-box-row th.title {
+    font-family: var(--md-font-family);
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+
+.propform input#ffsubject.rc-response-input,
+.propform #rc-att-subject-row input#ffsubject {
+    font-family: var(--md-font-family);
+    border-radius: var(--md-btn-radius, 8px);
+    background-color: var(--md-sys-color-surface-container);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface);
+}
+
+.propform input#ffsubject.rc-response-input:focus,
+.propform #rc-att-subject-row input#ffsubject:focus {
+    border-color: var(--md-sys-color-primary);
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.2);
+}
+
+.rc-reaction-att-chip {
+    border-radius: var(--md-btn-radius, 20px) !important;
+}
+
+.btn-reaction-att {
+    border-radius: var(--md-btn-radius, 20px) !important;
+}
+
+.btn-reaction-att-primary {
+    background-color: rgba(26, 115, 232, 0.12) !important;
+    color: var(--md-sys-color-primary) !important;
+    border-color: rgba(26, 115, 232, 0.25) !important;
+}
+
+html.dark-mode .btn-reaction-att-primary {
+    background-color: rgba(138, 180, 248, 0.16) !important;
+    color: #8ab4f8 !important;
+    border-color: rgba(138, 180, 248, 0.3) !important;
+}
+

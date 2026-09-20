@@ -246,73 +246,99 @@
    Settings -> Reactions (Responses) Enhancements
    ======================================================= */
 
+/* Response Form Rows & Alignment */
+#rc-att-subject-row th.title,
+#rc-att-box-row th.title {
+    vertical-align: middle;
+    padding: 8px 16px 8px 0;
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+
+#rc-att-subject-row td,
+#rc-att-box-row td {
+    vertical-align: middle;
+    padding: 6px 0;
+}
+
 /* Response Subject Input */
 #rc-att-subject-row input#ffsubject,
-#rc-att-subject-group input#ffsubject {
+#rc-att-subject-group input#ffsubject,
+input#ffsubject.rc-response-input {
+    width: 100%;
+    height: 40px;
+    padding: 8px 14px;
     font-size: 0.95rem;
+    line-height: 1.5;
+    color: #1f2937;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+#rc-att-subject-row input#ffsubject:focus,
+#rc-att-subject-group input#ffsubject:focus,
+input#ffsubject.rc-response-input:focus {
+    border-color: #1a73e8;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.18);
 }
 
 /* Response Attachments Container */
 .rc-reaction-attachments-box {
-    margin-top: 8px;
-    margin-bottom: 8px;
-    padding: 14px 16px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
 }
 
-.rc-reaction-att-header {
-    margin-bottom: 10px;
-}
-
-.rc-reaction-att-label {
-    font-weight: 600;
-    font-size: 0.95rem;
-    color: #1e293b;
-    margin-bottom: 2px;
-    display: block;
-}
-
-.rc-reaction-att-desc {
-    font-size: 0.8rem;
-    color: #64748b;
+.rc-reaction-att-row-content {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 40px;
 }
 
 /* Reaction Attached Chips List */
 .rc-reaction-attached-list {
-    display: flex;
+    display: inline-flex;
+    align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 12px;
-    min-height: 28px;
 }
 
 .rc-reaction-att-chip {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 6px 12px;
-    background: #ffffff;
-    border: 1px solid #cbd5e1;
+    padding: 5px 12px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
     border-radius: 20px;
     font-size: 0.85rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-    transition: border-color 0.15s, box-shadow 0.15s;
+    color: #1f2937;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .rc-reaction-att-chip:hover {
-    border-color: #94a3b8;
+    border-color: #cbd5e1;
+    background: #e5e7eb;
 }
 
 .rc-reaction-att-chip .rc-chip-icon {
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
 
 .rc-reaction-att-chip .rc-chip-name {
     font-weight: 500;
-    color: #1e293b;
-    max-width: 180px;
+    color: #1f2937;
+    max-width: 220px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -320,13 +346,22 @@
 
 .rc-reaction-att-chip .rc-chip-size {
     font-size: 0.75rem;
-    color: #64748b;
+    color: #6b7280;
+}
+
+.rc-reaction-att-chip .rc-chip-desc {
+    font-size: 0.75rem;
+    color: #6b7280;
+    max-width: 140px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .rc-reaction-att-chip .rc-reaction-att-remove {
     background: none;
     border: none;
-    color: #94a3b8;
+    color: #9ca3af;
     font-size: 1.1rem;
     line-height: 1;
     cursor: pointer;
@@ -341,15 +376,44 @@
 }
 
 .rc-reaction-att-actions {
-    display: flex;
-    gap: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.rc-reaction-att-actions .btn {
-    border-radius: 6px;
+.rc-reaction-att-actions .btn-reaction-att,
+.btn-reaction-att {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
     font-size: 0.85rem;
-    padding: 6px 12px;
     font-weight: 500;
+    border-radius: 20px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.btn-reaction-att:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #111827;
+}
+
+.btn-reaction-att-primary {
+    background: #e8f0fe;
+    border-color: #c2d7fa;
+    color: #1a73e8;
+}
+
+.btn-reaction-att-primary:hover {
+    background: #d2e3fc;
+    border-color: #aecbfa;
+    color: #1557b0;
 }
 
 /* =======================================================
@@ -412,20 +476,100 @@
         border-color: #334155;
     }
 
-    html.dark-mode .rc-reaction-att-label,
-    body.dark-mode .rc-reaction-att-label {
-        color: #f1f5f9;
+    html.dark-mode #rc-att-subject-row th.title,
+    body.dark-mode #rc-att-subject-row th.title,
+    html.dark-mode #rc-att-box-row th.title,
+    body.dark-mode #rc-att-box-row th.title,
+    html.dark-mode #rc-att-subject-group label,
+    body.dark-mode #rc-att-subject-group label,
+    html.dark-mode #rc-att-box-group label,
+    body.dark-mode #rc-att-box-group label {
+        color: #c4c6d0;
+    }
+
+    html.dark-mode #rc-att-subject-row input#ffsubject,
+    body.dark-mode #rc-att-subject-row input#ffsubject,
+    html.dark-mode #rc-att-subject-group input#ffsubject,
+    body.dark-mode #rc-att-subject-group input#ffsubject,
+    html.dark-mode input#ffsubject.rc-response-input,
+    body.dark-mode input#ffsubject.rc-response-input {
+        background: #1e1f23;
+        border-color: #373a43;
+        color: #f1f3f4;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    html.dark-mode #rc-att-subject-row input#ffsubject:focus,
+    body.dark-mode #rc-att-subject-row input#ffsubject:focus,
+    html.dark-mode input#ffsubject.rc-response-input:focus,
+    body.dark-mode input#ffsubject.rc-response-input:focus {
+        border-color: #8ab4f8;
+        box-shadow: 0 0 0 3px rgba(138, 180, 248, 0.25);
     }
 
     html.dark-mode .rc-reaction-att-chip,
     body.dark-mode .rc-reaction-att-chip {
-        background: #1e293b;
-        border-color: #475569;
+        background: #282a30;
+        border-color: #3e424c;
+        color: #e2e3e8;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    html.dark-mode .rc-reaction-att-chip:hover,
+    body.dark-mode .rc-reaction-att-chip:hover {
+        background: #32353d;
+        border-color: #5f6368;
     }
 
     html.dark-mode .rc-reaction-att-chip .rc-chip-name,
     body.dark-mode .rc-reaction-att-chip .rc-chip-name {
-        color: #f1f5f9;
+        color: #e2e3e8;
+    }
+
+    html.dark-mode .rc-reaction-att-chip .rc-chip-size,
+    body.dark-mode .rc-reaction-att-chip .rc-chip-size,
+    html.dark-mode .rc-reaction-att-chip .rc-chip-desc,
+    body.dark-mode .rc-reaction-att-chip .rc-chip-desc {
+        color: #9aa0a6;
+    }
+
+    html.dark-mode .rc-reaction-att-chip .rc-reaction-att-remove,
+    body.dark-mode .rc-reaction-att-chip .rc-reaction-att-remove {
+        color: #9aa0a6;
+    }
+
+    html.dark-mode .rc-reaction-att-chip .rc-reaction-att-remove:hover,
+    body.dark-mode .rc-reaction-att-chip .rc-reaction-att-remove:hover {
+        color: #f28b82;
+    }
+
+    html.dark-mode .btn-reaction-att,
+    body.dark-mode .btn-reaction-att {
+        background: #1e1f23;
+        border-color: #3e424c;
+        color: #c4c6d0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    html.dark-mode .btn-reaction-att:hover,
+    body.dark-mode .btn-reaction-att:hover {
+        background: #282a30;
+        border-color: #5f6368;
+        color: #ffffff;
+    }
+
+    html.dark-mode .btn-reaction-att-primary,
+    body.dark-mode .btn-reaction-att-primary {
+        background: #1f3760;
+        border-color: #2b4c80;
+        color: #8ab4f8;
+    }
+
+    html.dark-mode .btn-reaction-att-primary:hover,
+    body.dark-mode .btn-reaction-att-primary:hover {
+        background: #2b4c80;
+        border-color: #3b66aa;
+        color: #aecbfa;
     }
 }
 

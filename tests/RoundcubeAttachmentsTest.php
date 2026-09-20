@@ -583,6 +583,16 @@ window.onload = function() {
     var chipNameEl = document.querySelector('#rc-reaction-attached-list .rc-chip-name');
     console.log("CHROME_CHIP_NAME:" + (chipNameEl ? chipNameEl.textContent : ""));
 
+    // Check DOM Order: ffname precedes ffsubject precedes attachments precedes fftext editor
+    var nameEl = document.getElementById('ffname');
+    var textEl = document.getElementById('fftext');
+    var nameBeforeSub = nameEl && subjectEl && !!(nameEl.compareDocumentPosition(subjectEl) & Node.DOCUMENT_POSITION_FOLLOWING);
+    var subBeforeAtt = subjectEl && attContainer && !!(subjectEl.compareDocumentPosition(attContainer) & Node.DOCUMENT_POSITION_FOLLOWING);
+    var attBeforeEditor = attContainer && textEl && !!(attContainer.compareDocumentPosition(textEl) & Node.DOCUMENT_POSITION_FOLLOWING);
+    console.log("CHROME_NAME_BEFORE_SUB:" + (nameBeforeSub ? "yes" : "no"));
+    console.log("CHROME_SUB_BEFORE_ATT:" + (subBeforeAtt ? "yes" : "no"));
+    console.log("CHROME_ATT_BEFORE_EDITOR:" + (attBeforeEditor ? "yes" : "no"));
+
     // 4. Check About Button Removal
     var aboutLink = document.querySelector('#layout-menu a.about, a.button-about');
     console.log("CHROME_ABOUT_EXISTS:" + (aboutLink ? "yes" : "no"));
@@ -704,6 +714,9 @@ HTML;
             if (preg_match('/CHROME_UPLOAD_BTN:(.*?)"/', $line, $m)) $upload_btn = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_CHIPS_COUNT:(.*?)"/', $line, $m)) $chips_count = (int) trim($m[1]);
             if (preg_match('/CHROME_CHIP_NAME:(.*?)"/', $line, $m)) $chip_name = trim($m[1]);
+            if (preg_match('/CHROME_NAME_BEFORE_SUB:(.*?)"/', $line, $m)) $name_before_sub = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_SUB_BEFORE_ATT:(.*?)"/', $line, $m)) $sub_before_att = (trim($m[1]) === 'yes');
+            if (preg_match('/CHROME_ATT_BEFORE_EDITOR:(.*?)"/', $line, $m)) $att_before_editor = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_ABOUT_EXISTS:(.*?)"/', $line, $m)) $about_exists = (trim($m[1]) === 'yes');
             if (preg_match('/CHROME_INTERCEPTED_SUBJECT:(.*?)"/', $line, $m)) $intercepted_subject = trim($m[1]);
             if (preg_match('/CHROME_ORIG_INSERT_CALLED:(.*?)"/', $line, $m)) $orig_insert_called = (trim($m[1]) === 'yes');
@@ -732,6 +745,9 @@ HTML;
     assert_true($upload_btn, "Browser DOM: 'Upload & Attach' button rendered");
     assert_true($chips_count === 1, "Browser DOM: Attached file chip rendered");
     assert_true($chip_name === 'Brochure.pdf', "Browser DOM: Attached file chip displays correct filename");
+    assert_true($name_before_sub, "Browser DOM: Subject field is positioned directly below Name field");
+    assert_true($sub_before_att, "Browser DOM: Attachments container is positioned directly below Subject field");
+    assert_true($att_before_editor, "Browser DOM: Attachments container is positioned before the body text editor");
     assert_true(!$about_exists, "Browser DOM: About button successfully removed from sidebar");
     assert_true($intercepted_subject === 'Automatic Intercepted Subject', "Browser JS: insert_response auto-populates #_subject");
     assert_true($orig_insert_called, "Browser JS: original insert_response invoked");
