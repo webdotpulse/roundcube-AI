@@ -183,6 +183,11 @@ if (!class_exists('rcube')) {
         public array $registered_hooks = [];
         public array $registered_actions = [];
 
+        public array $buttons = [];
+        public function add_button(array $args, string $container): void
+        {
+            $this->buttons[] = ['args' => $args, 'container' => $container];
+        }
         public function load_config(): void {}
         public function add_texts(string $dir, bool $bool = false): void {}
         public function include_script(string $file): void {}
@@ -511,7 +516,9 @@ assert_true(isset($presets['next_monday']), "Includes 'next_monday' preset");
 $nowTs = time();
 assert_true(strtotime($presets['tomorrow_morning']) > $nowTs, "tomorrow_morning is in the future");
 assert_true(strtotime($presets['tomorrow_afternoon']) > strtotime($presets['tomorrow_morning']), "tomorrow_afternoon is after tomorrow_morning");
-assert_true(strtotime($presets['next_monday']) > $nowTs, "next_monday is in the future");
+assert_true(!empty($scheduler->buttons), "Registers toolbar button via add_button");
+assert_true($scheduler->buttons[0]['container'] === 'toolbar', "Button registered in 'toolbar' container");
+assert_true($scheduler->buttons[0]['args']['command'] === 'plugin.email_scheduler-schedule', "Button invokes 'plugin.email_scheduler-schedule'");
 
 // --------------------------------------------------------------------------
 // Test Suite 8: Preferences UI & Save

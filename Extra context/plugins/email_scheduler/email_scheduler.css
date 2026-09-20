@@ -130,3 +130,81 @@
     font-size: 14px;
     color: #5f6368;
 }
+
+/* Compose Form Buttons (Send Later & Save Draft) */
+.formbuttons .send-later-btn,
+.formbuttons .save-draft-btn {
+    margin-left: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    font-weight: 500 !important;
+    font-size: 0.95rem !important;
+    padding: 0.42rem 0.95rem !important;
+    border-radius: 0.25rem !important;
+    cursor: pointer !important;
+    border: 1px solid #dadce0 !important;
+    background-color: #f8f9fa !important;
+    color: #3c4043 !important;
+    transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, color 0.15s ease-in-out !important;
+    text-decoration: none !important;
+}
+
+.formbuttons .send-later-btn .inner,
+.formbuttons .save-draft-btn .inner {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.formbuttons .send-later-btn:hover,
+.formbuttons .send-later-btn:focus {
+    background-color: #e8eaed !important;
+    border-color: #bdc1c6 !important;
+    color: #202124 !important;
+}
+
+.formbuttons .save-draft-btn:hover,
+.formbuttons .save-draft-btn:focus {
+    background-color: #e8eaed !important;
+    border-color: #bdc1c6 !important;
+    color: #202124 !important;
+}
+
+/* Toolbar Buttons in #messagetoolbar / .toolbar.menu */
+.toolbar a.button.send.schedule,
+#messagetoolbar a.send.schedule,
+.toolbar a.button.save.draft,
+#messagetoolbar a.save.draft {
+    display: inline-flex !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.toolbar a.button.send.schedule .inner,
+#messagetoolbar a.send.schedule .inner,
+.toolbar a.button.save.draft .inner,
+#messagetoolbar a.save.draft .inner {
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+/* Dark Mode Theme Support */
+html.dark-mode .formbuttons .send-later-btn,
+html.dark-mode .formbuttons .save-draft-btn {
+    background-color: #2d3235 !important;
+    border-color: #4a5054 !important;
+    color: #e8eaed !important;
+}
+
+html.dark-mode .formbuttons .send-later-btn:hover,
+html.dark-mode .formbuttons .send-later-btn:focus,
+html.dark-mode .formbuttons .save-draft-btn:hover,
+html.dark-mode .formbuttons .save-draft-btn:focus {
+    background-color: #383e42 !important;
+    border-color: #60676b !important;
+    color: #ffffff !important;
+}
+

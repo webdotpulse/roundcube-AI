@@ -1,5 +1,11 @@
 /**
  * Email Scheduler & Undo Send Plugin Client Script
+ *
+ * Implements:
+ * - "Send Later" and "Save" (Save Draft) button injections in Compose toolbar and formbuttons
+ * - "Schedule Delivery" modal with presets (Tomorrow morning/afternoon, Monday, custom date/time)
+ * - Undo Send live animated countdown toast with one-click cancellation
+ * - Seamless integration with Elastic, Gmail Plus, Larry, and Classic skins
  */
 
 (function(window, document, rcmail) {
@@ -7,77 +13,238 @@
 
     var undoTimer = null;
     var undoSecondsRemaining = 0;
-    var sendPendingPayload = null;
+    var observerAttached = false;
+    var retryTimer = null;
 
-    rcmail.addEventListener('init', function() {
-        // 1. Compose Window Enhancements
-        if (rcmail.task === 'mail' && rcmail.action === 'compose') {
-            initComposeScheduler();
-        }
-    });
+    // Clock Icon SVG for Send Later
+    var CLOCK_SVG = '<svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>';
+
+    // Save/Disk Icon SVG for Save Draft
+    var SAVE_SVG = '<svg style="width:15px;height:15px;vertical-align:-2px;margin-right:5px;fill:currentColor;" viewBox="0 0 24 24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm2 16H5V5h11.17L19 7.83V19zm-7-7c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3zM6 6h9v4H6z"/></svg>';
 
     /**
-     * Initializes the Send Later button and modal in the compose toolbar.
+     * Checks if current active view is a message compose / reply / forward / draft view.
      */
-    function initComposeScheduler() {
-        if (!rcmail.env.email_scheduler_schedule_enabled) return;
+    function isComposeView() {
+        if (!window.rcmail) return false;
 
-        // Find standard compose Send button
-        var sendBtn = document.getElementById('rcmbtn107') || document.querySelector('.button.send, .btn.btn-primary.send, button[name="_send"]');
-        if (!sendBtn || document.getElementById('btn-send-later')) return;
+        // Check rcmail env and action states
+        var envAction = (rcmail.env && rcmail.env.action) ? rcmail.env.action : '';
+        var curAction = rcmail.action || '';
+        var curTask = rcmail.task || '';
 
-        // Create Send Later button
-        var sendLaterBtn = document.createElement('button');
-        sendLaterBtn.type = 'button';
-        sendLaterBtn.id = 'btn-send-later';
-        sendLaterBtn.className = 'btn btn-outline-secondary send-later-btn';
-        sendLaterBtn.style.marginLeft = '6px';
-        sendLaterBtn.title = rcmail.gettext('send_later_btn', 'email_scheduler');
-        sendLaterBtn.innerHTML = '<span class="inner"><svg style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/></svg>' + rcmail.gettext('send_later_btn', 'email_scheduler') + '</span>';
-        sendLaterBtn.onclick = showScheduleModal;
-
-        sendBtn.parentNode.insertBefore(sendLaterBtn, sendBtn.nextSibling);
-
-        // Inject hidden inputs for scheduler parameters into compose form
-        var composeForm = document.getElementById('compose-form') || document.forms['form'];
-        if (composeForm) {
-            var actionInp = document.createElement('input');
-            actionInp.type = 'hidden';
-            actionInp.name = '_email_scheduler_action';
-            actionInp.id = '_email_scheduler_action';
-            composeForm.appendChild(actionInp);
-
-            var timeInp = document.createElement('input');
-            timeInp.type = 'hidden';
-            timeInp.name = '_email_scheduler_send_at';
-            timeInp.id = '_email_scheduler_send_at';
-            composeForm.appendChild(timeInp);
+        if (curTask !== 'mail') {
+            return false;
         }
 
-        // Intercept standard Send if Undo Send is enabled
-        var undoDelay = parseInt(rcmail.env.email_scheduler_undo_delay || 0, 10);
-        if (undoDelay > 0) {
-            sendBtn.addEventListener('click', function(e) {
-                var actionField = document.getElementById('_email_scheduler_action');
-                if (actionField && actionField.value === 'schedule') {
-                    return; // Let scheduled send pass through
-                }
+        if (curAction === 'compose' || curAction === 'reply' || curAction === 'forward' || curAction === 'draft' ||
+            envAction === 'compose' || envAction === 'reply' || envAction === 'forward' || envAction === 'draft') {
+            return true;
+        }
 
-                if (!sendBtn.getAttribute('data-undo-bypass')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    startUndoSendCountdown(undoDelay, function() {
-                        sendBtn.setAttribute('data-undo-bypass', '1');
-                        sendBtn.click();
-                        sendBtn.removeAttribute('data-undo-bypass');
-                    });
+        // Check DOM elements indicative of the compose screen
+        return (
+            document.getElementById('compose-content') !== null ||
+            document.getElementById('composebody') !== null ||
+            document.getElementById('compose-form') !== null ||
+            document.querySelector('.formbuttons .send, #messagetoolbar a.save, form.formcontent, form[name="form"] input[name="_subject"]') !== null
+        );
+    }
+
+    /**
+     * Register command handlers with Roundcube
+     */
+    rcmail.register_command('plugin.email_scheduler-schedule', function() {
+        showScheduleModal();
+    }, true);
+
+    rcmail.enable_command('plugin.email_scheduler-schedule', true);
+
+    /**
+     * Entry point: Attempt to attach buttons and observers.
+     */
+    function setupComposeEnhancements() {
+        if (!isComposeView()) return;
+
+        initComposeButtons();
+
+        // Attach MutationObserver to catch asynchronous DOM updates (e.g. skin AJAX replacements)
+        if (!observerAttached && window.MutationObserver) {
+            var targetNode = document.getElementById('layout-content') || document.body;
+            var observer = new MutationObserver(function(mutations) {
+                if (isComposeView()) {
+                    // Quick check if buttons are missing
+                    if (!document.getElementById('btn-send-later') || !document.getElementById('btn-save-draft')) {
+                        initComposeButtons();
+                    }
                 }
-            }, true);
+            });
+
+            observer.observe(targetNode, { childList: true, subtree: true });
+            observerAttached = true;
         }
     }
 
     /**
-     * Renders floating Undo Send Toast with live countdown.
+     * Injects "Send Later" and "Save" buttons into both .formbuttons and #messagetoolbar.
+     */
+    function initComposeButtons() {
+        // 1. Ensure hidden inputs for scheduler parameters exist in the compose form
+        var composeForm = document.getElementById('compose-form') || document.forms['form'] || document.querySelector('form.formcontent, form[name="form"]');
+        if (composeForm) {
+            if (!document.getElementById('_email_scheduler_action')) {
+                var actionInp = document.createElement('input');
+                actionInp.type = 'hidden';
+                actionInp.name = '_email_scheduler_action';
+                actionInp.id = '_email_scheduler_action';
+                composeForm.appendChild(actionInp);
+            }
+            if (!document.getElementById('_email_scheduler_send_at')) {
+                var timeInp = document.createElement('input');
+                timeInp.type = 'hidden';
+                timeInp.name = '_email_scheduler_send_at';
+                timeInp.id = '_email_scheduler_send_at';
+                composeForm.appendChild(timeInp);
+            }
+        }
+
+        var sendLaterLabel = rcmail.gettext('send_later_btn', 'email_scheduler') || 'Send Later';
+        var saveLabel = rcmail.gettext('save_draft_btn', 'email_scheduler') || rcmail.gettext('save') || 'Save';
+        var saveTooltip = rcmail.gettext('save_draft_tooltip', 'email_scheduler') || rcmail.gettext('savemessage') || 'Save Draft';
+
+        // 2. Inject into .formbuttons (Beside primary Send button)
+        var formButtonsContainers = document.querySelectorAll('.formbuttons, #composeview-bottom .formbuttons, .formcontainer .formbuttons');
+        formButtonsContainers.forEach(function(container) {
+            var sendBtn = container.querySelector('button.send, .btn.send, button[command="send"], button[name="_send"], a.button.send');
+            if (sendBtn) {
+                // A. Insert "Send Later" button if missing
+                if (!container.querySelector('.send-later-btn') && !document.getElementById('btn-send-later')) {
+                    var sendLaterBtn = document.createElement('button');
+                    sendLaterBtn.type = 'button';
+                    sendLaterBtn.id = 'btn-send-later';
+                    sendLaterBtn.className = 'btn btn-secondary send-later-btn';
+                    sendLaterBtn.title = sendLaterLabel;
+                    sendLaterBtn.innerHTML = '<span class="inner">' + CLOCK_SVG + '<span>' + sendLaterLabel + '</span></span>';
+                    sendLaterBtn.onclick = function(e) {
+                        e.preventDefault();
+                        showScheduleModal();
+                    };
+
+                    sendBtn.parentNode.insertBefore(sendLaterBtn, sendBtn.nextSibling);
+                }
+
+                // B. Insert "Save" (Save Draft) button if missing
+                if (!container.querySelector('.save-draft-btn') && !document.getElementById('btn-save-draft')) {
+                    var sendLaterEl = container.querySelector('.send-later-btn') || sendBtn;
+                    var saveBtn = document.createElement('button');
+                    saveBtn.type = 'button';
+                    saveBtn.id = 'btn-save-draft';
+                    saveBtn.className = 'btn btn-secondary save-draft-btn';
+                    saveBtn.title = saveTooltip;
+                    saveBtn.innerHTML = '<span class="inner">' + SAVE_SVG + '<span>' + saveLabel + '</span></span>';
+                    saveBtn.onclick = function(e) {
+                        e.preventDefault();
+                        saveBtn.disabled = true;
+                        rcmail.command('savedraft');
+                        setTimeout(function() { saveBtn.disabled = false; }, 1200);
+                    };
+
+                    sendLaterEl.parentNode.insertBefore(saveBtn, sendLaterEl.nextSibling);
+                }
+
+                // Setup Undo Send Interception on standard Send button
+                setupUndoSend(sendBtn);
+            }
+        });
+
+        // 3. Inject into #messagetoolbar / .toolbar.menu (Top Header Toolbar)
+        var toolbar = document.getElementById('messagetoolbar') || document.querySelector('.toolbar.menu, #compose-toolbar');
+        if (toolbar) {
+            // A. Send Later toolbar item
+            if (!toolbar.querySelector('#btn-send-later-toolbar') && !toolbar.querySelector('.button.send.schedule')) {
+                var tbSendLater = document.createElement('a');
+                tbSendLater.href = '#schedule';
+                tbSendLater.id = 'btn-send-later-toolbar';
+                tbSendLater.className = 'button send schedule';
+                tbSendLater.title = sendLaterLabel;
+                tbSendLater.tabIndex = 2;
+                tbSendLater.innerHTML = '<span class="inner">' + CLOCK_SVG + '<span class="btn-text">' + sendLaterLabel + '</span></span>';
+                tbSendLater.onclick = function(e) {
+                    e.preventDefault();
+                    showScheduleModal();
+                    return false;
+                };
+
+                // Append to toolbar container or insert after options
+                var optionsBtn = toolbar.querySelector('a.options, a.save');
+                if (optionsBtn && optionsBtn.nextSibling) {
+                    toolbar.insertBefore(tbSendLater, optionsBtn.nextSibling);
+                } else {
+                    toolbar.appendChild(tbSendLater);
+                }
+            }
+
+            // B. Ensure Toolbar Save Draft is prominent and visible
+            var existingSave = toolbar.querySelector('a.save, a.draft, a.savedraft');
+            if (existingSave) {
+                existingSave.style.display = 'inline-flex';
+                existingSave.style.visibility = 'visible';
+                existingSave.classList.remove('disabled');
+                if (!existingSave.querySelector('svg') && !existingSave.classList.contains('icon-svg-ready')) {
+                    existingSave.classList.add('icon-svg-ready');
+                    var innerSpan = existingSave.querySelector('span.inner') || existingSave;
+                    if (!innerSpan.innerHTML.includes('<svg')) {
+                        innerSpan.innerHTML = SAVE_SVG + '<span class="btn-text">' + (innerSpan.textContent.trim() || saveLabel) + '</span>';
+                    }
+                }
+            } else if (!toolbar.querySelector('#btn-save-draft-toolbar')) {
+                var tbSave = document.createElement('a');
+                tbSave.href = '#savedraft';
+                tbSave.id = 'btn-save-draft-toolbar';
+                tbSave.className = 'button save draft';
+                tbSave.title = saveTooltip;
+                tbSave.tabIndex = 2;
+                tbSave.innerHTML = '<span class="inner">' + SAVE_SVG + '<span class="btn-text">' + saveLabel + '</span></span>';
+                tbSave.onclick = function(e) {
+                    e.preventDefault();
+                    rcmail.command('savedraft');
+                    return false;
+                };
+                toolbar.appendChild(tbSave);
+            }
+        }
+    }
+
+    /**
+     * Intercepts standard Send if Undo Send is enabled.
+     */
+    function setupUndoSend(sendBtn) {
+        if (!sendBtn || sendBtn.getAttribute('data-undo-bound')) return;
+        sendBtn.setAttribute('data-undo-bound', '1');
+
+        var undoDelay = parseInt(rcmail.env ? (rcmail.env.email_scheduler_undo_delay || 0) : 0, 10);
+        if (undoDelay <= 0) return;
+
+        sendBtn.addEventListener('click', function(e) {
+            var actionField = document.getElementById('_email_scheduler_action');
+            if (actionField && actionField.value === 'schedule') {
+                return; // Scheduled send passes through directly to database queue
+            }
+
+            if (!sendBtn.getAttribute('data-undo-bypass')) {
+                e.preventDefault();
+                e.stopPropagation();
+                startUndoSendCountdown(undoDelay, function() {
+                    sendBtn.setAttribute('data-undo-bypass', '1');
+                    sendBtn.click();
+                    sendBtn.removeAttribute('data-undo-bypass');
+                });
+            }
+        }, true);
+    }
+
+    /**
+     * Renders floating Undo Send Toast with live animated countdown bar.
      */
     function startUndoSendCountdown(seconds, sendCallback) {
         clearTimeout(undoTimer);
@@ -90,8 +257,8 @@
         toast.id = 'undo-send-toast';
         toast.className = 'undo-send-toast';
         toast.innerHTML = '<div class="undo-content">' +
-            '<span>' + rcmail.gettext('sending_delayed_toast', 'email_scheduler') + ' (<strong id="undo-countdown">' + undoSecondsRemaining + 's</strong>)</span>' +
-            '<button type="button" class="btn btn-warning btn-sm ml-3" id="undo-send-action-btn">' + rcmail.gettext('undo_button', 'email_scheduler') + '</button>' +
+            '<span>' + (rcmail.gettext('sending_delayed_toast', 'email_scheduler') || 'Sending message...') + ' (<strong id="undo-countdown">' + undoSecondsRemaining + 's</strong>)</span>' +
+            '<button type="button" class="btn btn-warning btn-sm ml-3" id="undo-send-action-btn">' + (rcmail.gettext('undo_button', 'email_scheduler') || 'Undo') + '</button>' +
             '</div><div class="undo-progress-bar"><div class="undo-progress-fill" id="undo-progress-fill" style="width: 100%;"></div></div>';
 
         document.body.appendChild(toast);
@@ -100,7 +267,7 @@
         cancelBtn.onclick = function() {
             clearTimeout(undoTimer);
             toast.remove();
-            rcmail.display_message(rcmail.gettext('sending_undone', 'email_scheduler'), 'confirmation');
+            rcmail.display_message(rcmail.gettext('sending_undone', 'email_scheduler') || 'Sending cancelled.', 'confirmation');
         };
 
         var startTime = Date.now();
@@ -134,7 +301,7 @@
         var existing = document.getElementById('schedule-send-modal');
         if (existing) existing.remove();
 
-        var presets = rcmail.env.email_scheduler_presets || {};
+        var presets = (rcmail.env && rcmail.env.email_scheduler_presets) ? rcmail.env.email_scheduler_presets : {};
         var tomorrowM = presets.tomorrow_morning || '';
         var tomorrowMLabel = presets.tomorrow_morning_label || 'Tomorrow morning 8:00 AM';
         var tomorrowA = presets.tomorrow_afternoon || '';
@@ -146,7 +313,7 @@
         modal.id = 'schedule-send-modal';
         modal.className = 'email-scheduler-modal-overlay';
         modal.innerHTML = '<div class="email-scheduler-modal">' +
-            '<div class="modal-header"><h3>' + rcmail.gettext('schedule_modal_title', 'email_scheduler') + '</h3><button type="button" class="close-btn" onclick="document.getElementById(\'schedule-send-modal\').remove()">&times;</button></div>' +
+            '<div class="modal-header"><h3>' + (rcmail.gettext('schedule_modal_title', 'email_scheduler') || 'Schedule Message Delivery') + '</h3><button type="button" class="close-btn" onclick="document.getElementById(\'schedule-send-modal\').remove()">&times;</button></div>' +
             '<div class="modal-body">' +
             '<div class="preset-group">' +
             '<button type="button" class="btn btn-preset" onclick="email_scheduler_choose(\'' + tomorrowM + '\')"><span class="icon">☀️</span> ' + tomorrowMLabel + '</button>' +
@@ -154,12 +321,12 @@
             '<button type="button" class="btn btn-preset" onclick="email_scheduler_choose(\'' + mondayM + '\')"><span class="icon">📅</span> ' + mondayMLabel + '</button>' +
             '</div>' +
             '<div class="custom-schedule-section">' +
-            '<h4>' + rcmail.gettext('schedule_custom_time', 'email_scheduler') + '</h4>' +
+            '<h4>' + (rcmail.gettext('schedule_custom_time', 'email_scheduler') || 'Custom date & time') + '</h4>' +
             '<div class="row" style="display:flex;gap:10px;margin-bottom:12px;">' +
-            '<div style="flex:1;"><label>' + rcmail.gettext('schedule_date_label', 'email_scheduler') + '</label><input type="date" id="sched-custom-date" class="form-control" style="width:100%;"></div>' +
-            '<div style="flex:1;"><label>' + rcmail.gettext('schedule_time_label', 'email_scheduler') + '</label><input type="time" id="sched-custom-time" class="form-control" value="08:00" style="width:100%;"></div>' +
+            '<div style="flex:1;"><label>' + (rcmail.gettext('schedule_date_label', 'email_scheduler') || 'Date:') + '</label><input type="date" id="sched-custom-date" class="form-control" style="width:100%;"></div>' +
+            '<div style="flex:1;"><label>' + (rcmail.gettext('schedule_time_label', 'email_scheduler') || 'Time:') + '</label><input type="time" id="sched-custom-time" class="form-control" value="08:00" style="width:100%;"></div>' +
             '</div>' +
-            '<button type="button" class="btn btn-primary btn-block" style="width:100%;" onclick="email_scheduler_choose_custom()">' + rcmail.gettext('schedule_confirm_btn', 'email_scheduler') + '</button>' +
+            '<button type="button" class="btn btn-primary btn-block" style="width:100%;" onclick="email_scheduler_choose_custom()">' + (rcmail.gettext('schedule_confirm_btn', 'email_scheduler') || 'Schedule Send') + '</button>' +
             '</div></div></div>';
 
         document.body.appendChild(modal);
@@ -178,9 +345,13 @@
     }
 
     window.email_scheduler_choose = function(dateTimeStr) {
-        document.getElementById('_email_scheduler_action').value = 'schedule';
-        document.getElementById('_email_scheduler_send_at').value = dateTimeStr;
-        document.getElementById('schedule-send-modal').remove();
+        var act = document.getElementById('_email_scheduler_action');
+        var time = document.getElementById('_email_scheduler_send_at');
+        if (act) act.value = 'schedule';
+        if (time) time.value = dateTimeStr;
+
+        var modal = document.getElementById('schedule-send-modal');
+        if (modal) modal.remove();
 
         // Trigger compose send
         rcmail.command('send');
@@ -229,5 +400,30 @@
                 }
             });
     };
+
+    // Attach listeners across all lifecycle events
+    rcmail.addEventListener('init', setupComposeEnhancements);
+    rcmail.addEventListener('actionafter', setupComposeEnhancements);
+    rcmail.addEventListener('responseafter', setupComposeEnhancements);
+
+    // Document ready & load listeners
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupComposeEnhancements);
+    } else {
+        setupComposeEnhancements();
+    }
+    window.addEventListener('load', setupComposeEnhancements);
+
+    // Polling retry for asynchronous single-page interface transitions
+    var retries = 0;
+    retryTimer = setInterval(function() {
+        retries++;
+        if (isComposeView()) {
+            setupComposeEnhancements();
+        }
+        if (retries > 15) {
+            clearInterval(retryTimer);
+        }
+    }, 250);
 
 })(window, document, window.rcmail);

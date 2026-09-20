@@ -16,8 +16,9 @@ $labels['undo_send_seconds'] = '%s seconds';
 $labels['undo_send_disabled'] = 'Disabled (Send immediately)';
 
 $labels['schedule_send_title'] = 'Scheduled Delivery (Send Later)';
-$labels['schedule_send_enable'] = 'Enable Send Later in Compose';
 $labels['send_later_btn'] = 'Send Later';
+$labels['save_draft_btn'] = 'Save';
+$labels['save_draft_tooltip'] = 'Save Draft';
 $labels['schedule_modal_title'] = 'Schedule Message Delivery';
 $labels['schedule_preset_tomorrow_morning'] = 'Tomorrow morning (%s)';
 $labels['schedule_preset_tomorrow_afternoon'] = 'Tomorrow afternoon (%s)';
