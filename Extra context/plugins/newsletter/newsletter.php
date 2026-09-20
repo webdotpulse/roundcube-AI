@@ -561,35 +561,82 @@ class newsletter extends rcube_plugin
     public function action_groups(): void
     {
         $groups = [];
-        $sources = (array)$this->rcmail->get_address_sources(false);
-        if (empty($sources)) {
-            $defaultBook = $this->rcmail->get_address_book(null);
-            if ($defaultBook) {
-                $sources = ['0' => ['id' => '0', 'name' => 'Personal Addresses']];
-            }
-        }
+        $sources = [];
+        $defaultId = defined('rcube_addressbook::TYPE_CONTACT') ? (string)rcube_addressbook::TYPE_CONTACT : '0';
 
-        foreach ($sources as $sourceKey => $source) {
-            $sourceId = (string)($source['id'] ?? $sourceKey ?? '');
-            if ($sourceId === '') {
-                continue;
+        try {
+            $sources = (array)$this->rcmail->get_address_sources(false);
+            if (empty($sources)) {
+                $defaultBook = $this->rcmail->get_address_book($defaultId, false, true);
+                if ($defaultBook) {
+                    $sources = [$defaultId => ['id' => $defaultId, 'name' => 'Personal Addresses']];
+                }
             }
-            $abook = $this->rcmail->get_address_book($sourceId);
-            if ($abook) {
-                $sourceName = (string)($source['name'] ?? 'Address Book');
-                $groupList = $abook->list_groups();
-                if (is_array($groupList) || is_iterable($groupList)) {
-                    foreach ($groupList as $g) {
-                        $gId = (string)($g['ID'] ?? $g['id'] ?? '');
-                        if ($gId !== '') {
-                            $groups[] = [
-                                'id' => $sourceId . ':' . $gId,
-                                'name' => (string)($g['name'] ?? 'Group'),
-                                'source' => $sourceName,
-                            ];
+
+            foreach ($sources as $sourceKey => $source) {
+                $sourceId = (string)($source['id'] ?? $sourceKey ?? '');
+                if ($sourceId === '') {
+                    $sourceId = $defaultId;
+                }
+
+                try {
+                    $abook = $this->rcmail->get_address_book($sourceId, false, true);
+                } catch (\Throwable $e) {
+                    $abook = null;
+                }
+
+                if ($abook) {
+                    $sourceName = (string)($source['name'] ?? 'Address Book');
+                    if (method_exists($abook, 'list_groups')) {
+                        $groupList = $abook->list_groups();
+                        if (is_array($groupList) || is_iterable($groupList)) {
+                            foreach ($groupList as $g) {
+                                $gId = (string)($g['ID'] ?? $g['id'] ?? '');
+                                if ($gId !== '') {
+                                    $groups[] = [
+                                        'id' => $sourceId . ':' . $gId,
+                                        'name' => (string)($g['name'] ?? 'Group'),
+                                        'source' => $sourceName,
+                                    ];
+                                }
+                            }
                         }
                     }
                 }
+            }
+        } catch (\Throwable $e) {
+            // Defensive error handling for group listing
+        }
+
+        // Direct database fallback for groups if none were found via address book drivers
+        if (empty($groups) && method_exists($this->rcmail, 'get_dbh')) {
+            try {
+                $userId = 0;
+                if (is_object($this->rcmail->user) && isset($this->rcmail->user->ID)) {
+                    $userId = (int)$this->rcmail->user->ID;
+                } elseif (method_exists($this->rcmail, 'get_user_id')) {
+                    $userId = (int)$this->rcmail->get_user_id();
+                }
+
+                if ($userId > 0) {
+                    $db = $this->rcmail->get_dbh();
+                    if ($db) {
+                        $cgTable = method_exists($db, 'table_name') ? $db->table_name('contactgroups') : 'contactgroups';
+                        $res = $db->query("SELECT contactgroup_id, name FROM {$cgTable} WHERE user_id = ? AND del <> 1", $userId);
+                        while ($res && ($row = $db->fetch_assoc($res))) {
+                            $gId = (string)($row['contactgroup_id'] ?? '');
+                            if ($gId !== '') {
+                                $groups[] = [
+                                    'id' => $defaultId . ':' . $gId,
+                                    'name' => (string)($row['name'] ?? 'Group'),
+                                    'source' => 'Personal Addresses',
+                                ];
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Ignore DB fallback error
             }
         }
 
@@ -1146,7 +1193,7 @@ HTML;
     {
         $rawRecipients = [];
 
-        if ($sourceType === 'custom' || !empty($customText)) {
+        if ($sourceType === 'custom') {
             // Parse custom text (newlines, commas, semicolons)
             $tokens = preg_split('/[\r\n,;]+/', $customText);
             if (is_array($tokens)) {
@@ -1165,19 +1212,25 @@ HTML;
             // Query Roundcube address book sources safely
             try {
                 $sources = (array)$this->rcmail->get_address_sources(false);
+                $defaultId = defined('rcube_addressbook::TYPE_CONTACT') ? (string)rcube_addressbook::TYPE_CONTACT : '0';
+
                 if (empty($sources)) {
-                    $defaultBook = $this->rcmail->get_address_book(null);
+                    $defaultBook = $this->rcmail->get_address_book($defaultId, false, true);
                     if ($defaultBook) {
-                        $sources = ['0' => ['id' => '0', 'name' => 'Personal Addresses']];
+                        $sources = [$defaultId => ['id' => $defaultId, 'name' => 'Personal Addresses']];
                     }
                 }
 
                 foreach ($sources as $sourceKey => $source) {
                     $sourceId = (string)($source['id'] ?? $sourceKey ?? '');
                     if ($sourceId === '') {
-                        continue;
+                        $sourceId = $defaultId;
                     }
-                    $abook = $this->rcmail->get_address_book($sourceId);
+                    try {
+                        $abook = $this->rcmail->get_address_book($sourceId, false, true);
+                    } catch (\Throwable $e) {
+                        $abook = null;
+                    }
                     if (!$abook) {
                         continue;
                     }
@@ -1226,6 +1279,51 @@ HTML;
                     ], true, false);
                 }
             }
+
+            // Direct Database Fallback: If addressbook API returned 0 contacts, query the user's contacts table directly
+            if (empty($rawRecipients) && method_exists($this->rcmail, 'get_dbh')) {
+                try {
+                    $userId = 0;
+                    if (is_object($this->rcmail->user) && isset($this->rcmail->user->ID)) {
+                        $userId = (int)$this->rcmail->user->ID;
+                    } elseif (method_exists($this->rcmail, 'get_user_id')) {
+                        $userId = (int)$this->rcmail->get_user_id();
+                    }
+
+                    if ($userId > 0) {
+                        $db = $this->rcmail->get_dbh();
+                        if ($db) {
+                            $contactsTable = method_exists($db, 'table_name') ? $db->table_name('contacts') : 'contacts';
+
+                            if ($sourceType === 'groups' && !empty($selectedGroups)) {
+                                $groupMembersTable = method_exists($db, 'table_name') ? $db->table_name('contactgroupmembers') : 'contactgroupmembers';
+                                foreach ($selectedGroups as $groupToken) {
+                                    $parts = explode(':', (string)$groupToken);
+                                    $groupId = (int)($parts[1] ?? $parts[0] ?? 0);
+                                    if ($groupId > 0) {
+                                        $sql = "SELECT c.name, c.firstname, c.surname, c.email, c.vcard 
+                                                FROM {$contactsTable} AS c
+                                                INNER JOIN {$groupMembersTable} AS m ON (m.contact_id = c.contact_id)
+                                                WHERE c.user_id = ? AND m.contactgroup_id = ? AND c.del <> 1";
+                                        $res = $db->query($sql, $userId, $groupId);
+                                        while ($res && ($row = $db->fetch_assoc($res))) {
+                                            $this->collectSingleContact($row, $rawRecipients);
+                                        }
+                                    }
+                                }
+                            } else {
+                                $sql = "SELECT name, firstname, surname, email, vcard FROM {$contactsTable} WHERE user_id = ? AND del <> 1";
+                                $res = $db->query($sql, $userId);
+                                while ($res && ($row = $db->fetch_assoc($res))) {
+                                    $this->collectSingleContact($row, $rawRecipients);
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Defensive DB fallback error suppression
+                }
+            }
         }
 
         // Deduplicate and filter against suppressions
@@ -1267,12 +1365,12 @@ HTML;
      */
     protected function collectAddressBookRecords(mixed $records, array &$rawRecipients): void
     {
-        if (is_iterable($records)) {
-            foreach ($records as $r) {
+        if (is_object($records) && isset($records->records) && is_array($records->records)) {
+            foreach ($records->records as $r) {
                 $this->collectSingleContact($r, $rawRecipients);
             }
-        } elseif (is_object($records) && isset($records->records) && is_iterable($records->records)) {
-            foreach ($records->records as $r) {
+        } elseif (is_iterable($records)) {
+            foreach ($records as $r) {
                 $this->collectSingleContact($r, $rawRecipients);
             }
         } elseif (is_object($records) && method_exists($records, 'iterate')) {
@@ -1283,27 +1381,21 @@ HTML;
     }
 
     /**
-     * Collect contact records including secondary emails if present
+     * Collect contact records including all primary and secondary emails
      */
     protected function collectSingleContact(mixed $r, array &$rawRecipients): void
     {
         $extracted = $this->extractContactRecord($r);
-        if (!empty($extracted['email'])) {
-            $rawRecipients[] = $extracted;
-        }
+        $name = $extracted['name'] ?? '';
+        $emails = $this->extractAllEmailsFromRecord($r);
 
-        // Check if contact record contains multiple email addresses
-        $fields = is_object($r) && method_exists($r, 'get_fields') ? (array)$r->get_fields() : (array)$r;
-        if (!empty($fields['email']) && is_array($fields['email']) && count($fields['email']) > 1) {
-            $name = $extracted['name'] ?? '';
-            foreach (array_slice($fields['email'], 1) as $altEmail) {
-                $altEmail = trim((string)$altEmail);
-                if (!empty($altEmail) && filter_var($altEmail, FILTER_VALIDATE_EMAIL)) {
-                    $rawRecipients[] = [
-                        'email' => $altEmail,
-                        'name' => $name,
-                    ];
-                }
+        foreach ($emails as $email) {
+            $email = strtolower(trim($email));
+            if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $rawRecipients[] = [
+                    'email' => $email,
+                    'name' => $name,
+                ];
             }
         }
     }
@@ -1326,7 +1418,110 @@ HTML;
     }
 
     /**
-     * Extract email and name from an address book record array or object
+     * Comprehensive extractor for all email addresses in a contact record or object.
+     * Supports:
+     * - Flat string emails & delimited lists (commas, semicolons, whitespace, \x00)
+     * - Flat array of emails
+     * - Roundcube vCard sub-type keys (email:pref, email:home, email:work, email:other, etc.)
+     * - Nested associative arrays ([['email' => '...'], ...])
+     * - Raw vCard text blobs (EMAIL;TYPE=...:...)
+     */
+    public function extractAllEmailsFromRecord(mixed $record): array
+    {
+        if (is_object($record)) {
+            if (method_exists($record, 'get_fields')) {
+                $record = (array)$record->get_fields();
+            } elseif (method_exists($record, 'toArray')) {
+                $record = (array)$record->toArray();
+            } else {
+                $record = (array)$record;
+            }
+        }
+
+        if (!is_array($record)) {
+            return [];
+        }
+
+        $emails = [];
+
+        // 1. Roundcube native get_col_values if available
+        if (class_exists('rcube_addressbook') && method_exists('rcube_addressbook', 'get_col_values')) {
+            try {
+                $rcubeEmails = rcube_addressbook::get_col_values('email', $record, true);
+                if (is_array($rcubeEmails)) {
+                    foreach ($rcubeEmails as $val) {
+                        $this->collectEmailsFromValue($val, $emails);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Fallback to manual parsing
+            }
+        }
+
+        // 2. Scan all array keys starting with 'email' (e.g. 'email', 'email:pref', 'email:work', 'email:home', 'email:other')
+        foreach ($record as $key => $val) {
+            $lowerKey = strtolower((string)$key);
+            if ($lowerKey === 'email' || str_starts_with($lowerKey, 'email:') || str_starts_with($lowerKey, 'email_') || str_ends_with($lowerKey, '_email')) {
+                $this->collectEmailsFromValue($val, $emails);
+            }
+        }
+
+        // 3. If still empty and a raw vcard is present, extract emails directly via regex
+        if (empty($emails) && !empty($record['vcard']) && is_string($record['vcard'])) {
+            if (preg_match_all('/(?:EMAIL[^\r\n:]*:[\s]*)([^\r\n]+)/i', $record['vcard'], $matches)) {
+                foreach ($matches[1] as $rawEmail) {
+                    $this->collectEmailsFromValue($rawEmail, $emails);
+                }
+            }
+        }
+
+        return array_values(array_unique($emails));
+    }
+
+    /**
+     * Recursively parse and collect valid email addresses from any scalar or nested array structure
+     */
+    protected function collectEmailsFromValue(mixed $val, array &$emails): void
+    {
+        if (is_string($val)) {
+            $tokens = preg_split('/[\r\n,;\x00]+/', $val);
+            if (is_array($tokens)) {
+                foreach ($tokens as $token) {
+                    $token = trim($token);
+                    if (empty($token)) {
+                        continue;
+                    }
+                    if (preg_match('/<([^>]+)>/', $token, $m)) {
+                        $candidate = trim($m[1]);
+                    } else {
+                        $candidate = $token;
+                    }
+                    if (filter_var($candidate, FILTER_VALIDATE_EMAIL)) {
+                        $emails[] = strtolower($candidate);
+                    }
+                }
+            }
+        } elseif (is_array($val) || is_iterable($val)) {
+            foreach ($val as $sub) {
+                if (is_string($sub)) {
+                    $this->collectEmailsFromValue($sub, $emails);
+                } elseif (is_array($sub)) {
+                    if (isset($sub['email'])) {
+                        $this->collectEmailsFromValue($sub['email'], $emails);
+                    } elseif (isset($sub[0])) {
+                        $this->collectEmailsFromValue($sub[0], $emails);
+                    } else {
+                        foreach ($sub as $nested) {
+                            $this->collectEmailsFromValue($nested, $emails);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Extract primary email and name from an address book record array or object
      */
     public function extractContactRecord(mixed $record): array
     {
@@ -1344,25 +1539,30 @@ HTML;
             return ['email' => '', 'name' => ''];
         }
 
-        $email = '';
-        if (!empty($record['email'])) {
-            $email = is_array($record['email']) ? (string)($record['email'][0] ?? '') : (string)$record['email'];
-        }
+        $emails = $this->extractAllEmailsFromRecord($record);
+        $primaryEmail = $emails[0] ?? '';
 
         $name = '';
         if (class_exists('rcube_addressbook') && method_exists('rcube_addressbook', 'compose_list_name')) {
-            $name = (string)rcube_addressbook::compose_list_name($record);
+            try {
+                $name = (string)rcube_addressbook::compose_list_name($record);
+            } catch (\Throwable $e) {}
         }
         if (empty($name)) {
             $name = (string)($record['name'] ?? $record['displayname'] ?? '');
         }
         if (empty($name)) {
-            $firstName = (string)($record['firstname'] ?? '');
-            $surname = (string)($record['surname'] ?? '');
+            $firstName = (string)($record['firstname'] ?? $record['first_name'] ?? '');
+            $surname = (string)($record['surname'] ?? $record['last_name'] ?? '');
             $name = trim("{$firstName} {$surname}");
         }
+        if (empty($name) && !empty($record['vcard']) && is_string($record['vcard'])) {
+            if (preg_match('/(?:FN[^\r\n:]*:[\s]*)([^\r\n]+)/i', $record['vcard'], $m)) {
+                $name = trim($m[1]);
+            }
+        }
 
-        return ['email' => trim($email), 'name' => trim($name)];
+        return ['email' => trim($primaryEmail), 'name' => trim($name)];
     }
 
     /**

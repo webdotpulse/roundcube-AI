@@ -396,7 +396,7 @@
             $('#contact-groups-list input[type="checkbox"]:checked').each(function () {
                 selectedGroups.push($(this).val());
             });
-            var customText = $('#custom-recipients-input').val();
+            var customText = (sourceType === 'custom') ? ($('#custom-recipients-input').val() || '') : '';
 
             $('#recipient-count').text('...');
             $('#deliverable-count').text('...');

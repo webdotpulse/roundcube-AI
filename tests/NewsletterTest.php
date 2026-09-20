@@ -81,6 +81,9 @@ if (!class_exists('rcube')) {
             return self::$inst;
         }
 
+        public $address_book;
+        public $dbh;
+
         public function get_address_sources($required = false)
         {
             return [
@@ -90,8 +93,50 @@ if (!class_exists('rcube')) {
 
         public function get_address_book($id)
         {
-            return new rcube_address_book_mock();
+            if (!$this->address_book) {
+                $this->address_book = new rcube_address_book_mock();
+            }
+            return $this->address_book;
         }
+
+        public function get_user_id()
+        {
+            return 42;
+        }
+
+        public function get_dbh()
+        {
+            if (!$this->dbh) {
+                $this->dbh = new rcube_db_mock();
+            }
+            return $this->dbh;
+        }
+    }
+
+    class rcube_db_mock
+    {
+        public array $mockContacts = [];
+        public array $mockGroups = [];
+        public function table_name($name, $quote = false): string { return $name; }
+        public function query($sql, ...$params)
+        {
+            if (str_contains($sql, 'contactgroups')) {
+                return new rcube_db_result_mock($this->mockGroups);
+            }
+            return new rcube_db_result_mock($this->mockContacts);
+        }
+        public function fetch_assoc($res)
+        {
+            return $res ? $res->fetch() : null;
+        }
+    }
+
+    class rcube_db_result_mock
+    {
+        private array $rows;
+        private int $pos = 0;
+        public function __construct(array $rows) { $this->rows = $rows; }
+        public function fetch() { return $this->rows[$this->pos++] ?? null; }
     }
 
     class rcmail extends rcube {}
@@ -521,6 +566,71 @@ $refMethodCollect->invokeArgs($newsletter, [
 assert_test(count($multiEmailRecipients) === 2, "collectSingleContact extracts all valid emails for a contact");
 assert_test($multiEmailRecipients[0]['email'] === 'multi1@example.org', "primary email collected");
 assert_test($multiEmailRecipients[1]['email'] === 'multi2@example.org', "secondary email collected");
+
+// 5. vCard subtype emails (email:pref, email:work, email:home) where standard 'email' key is unset
+$vcardRecord = [
+    'name' => 'Dana Scully',
+    'firstname' => 'Dana',
+    'surname' => 'Scully',
+    'email:pref' => ['dana.scully@fbi.gov'],
+    'email:work' => ['dana@xfiles.org'],
+    'email:home' => 'scully.home@example.com',
+];
+$vcardEmails = $newsletter->extractAllEmailsFromRecord($vcardRecord);
+assert_test(in_array('dana.scully@fbi.gov', $vcardEmails, true), "extractAllEmailsFromRecord extracts email:pref");
+assert_test(in_array('dana@xfiles.org', $vcardEmails, true), "extractAllEmailsFromRecord extracts email:work");
+assert_test(in_array('scully.home@example.com', $vcardEmails, true), "extractAllEmailsFromRecord extracts email:home");
+
+$extractedVcard = $newsletter->extractContactRecord($vcardRecord);
+assert_test($extractedVcard['email'] === 'dana.scully@fbi.gov', "extractContactRecord returns primary email from vcard subtype");
+assert_test($extractedVcard['name'] === 'Dana Scully', "extractContactRecord returns correct name for vcard record");
+
+$vcardSingleCollect = [];
+$refMethodCollect->invokeArgs($newsletter, [
+    $vcardRecord,
+    &$vcardSingleCollect
+]);
+assert_test(count($vcardSingleCollect) === 3, "collectSingleContact extracts all 3 vcard email addresses");
+
+// 6. Nested array email extraction
+$nestedRecord = [
+    'name' => 'Fox Mulder',
+    'email' => [
+        ['email' => 'mulder@fbi.gov'],
+        ['email' => 'spooky@xfiles.org'],
+    ]
+];
+$nestedEmails = $newsletter->extractAllEmailsFromRecord($nestedRecord);
+assert_test(in_array('mulder@fbi.gov', $nestedEmails, true), "extractAllEmailsFromRecord extracts nested associative emails");
+assert_test(in_array('spooky@xfiles.org', $nestedEmails, true), "extractAllEmailsFromRecord extracts secondary nested email");
+
+// 7. Raw vCard text extraction
+$rawVcardRecord = [
+    'name' => '',
+    'vcard' => "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Walter Skinner\r\nEMAIL;TYPE=PREF:skinner@fbi.gov\r\nEND:VCARD"
+];
+$rawEmails = $newsletter->extractAllEmailsFromRecord($rawVcardRecord);
+assert_test(in_array('skinner@fbi.gov', $rawEmails, true), "extractAllEmailsFromRecord parses email from raw vcard blob");
+$extractedRaw = $newsletter->extractContactRecord($rawVcardRecord);
+assert_test($extractedRaw['name'] === 'Walter Skinner', "extractContactRecord parses FN name from raw vcard blob");
+assert_test($extractedRaw['email'] === 'skinner@fbi.gov', "extractContactRecord parses primary email from raw vcard blob");
+
+// 8. Direct database fallback simulation when address book returns 0 records
+$abook = rcmail::get_instance()->get_address_book('0');
+$origContacts = $abook->contacts;
+$abook->contacts = [];
+
+$dbh = rcmail::get_instance()->get_dbh();
+$dbh->mockContacts = [
+    ['name' => 'Database Contact', 'firstname' => 'DB', 'surname' => 'User', 'email' => 'dbuser@example.org', 'vcard' => '']
+];
+
+$dbFallbackRecipients = $newsletter->resolveRecipients('all', [], '');
+assert_test(count($dbFallbackRecipients['deliverable']) === 1, "resolveRecipients falls back to direct database query when addressbook is empty");
+assert_test($dbFallbackRecipients['deliverable'][0]['email'] === 'dbuser@example.org', "database fallback recipient is dbuser@example.org");
+
+// Restore contacts for subsequent tests
+$abook->contacts = $origContacts;
 
 // --------------------------------------------------------------------------
 // Test Suite 13: Gemini AI Integration in Newsletter Studio
