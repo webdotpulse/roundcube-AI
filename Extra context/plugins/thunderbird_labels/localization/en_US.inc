@@ -7,11 +7,11 @@
 $labels = array();
 $labels['label'] = 'Thunderbird Labels';
 $labels['label0'] = 'No Label';
-$labels['label1'] = 'Important';
-$labels['label2'] = 'Work';
-$labels['label3'] = 'Personal';
-$labels['label4'] = 'To do';
-$labels['label5'] = 'Later';
+$labels['label1'] = 'To Respond';
+$labels['label2'] = 'FYI';
+$labels['label3'] = 'Important';
+$labels['label4'] = 'Marketing & Newsletters';
+$labels['label5'] = 'ToDo';
 
 $labels['tb_label_options'] = 'Thunderbird Labels Options';
 $labels['tb_label_enable_option'] = 'Enable labels';

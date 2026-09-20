@@ -7,11 +7,11 @@
 $labels = array();
 $labels['label'] = 'Thunderbird-etiketten';
 $labels['label0'] = 'Geen etiket';
-$labels['label1'] = 'Belangrijk';
-$labels['label2'] = 'Werk';
-$labels['label3'] = 'Persoonlijk';
-$labels['label4'] = 'Te doen';
-$labels['label5'] = 'Later';
+$labels['label1'] = 'Beantwoorden';
+$labels['label2'] = 'FYI';
+$labels['label3'] = 'Belangrijk';
+$labels['label4'] = 'Marketing & Nieuwsbrieven';
+$labels['label5'] = 'Te doen';
 
 $labels['tb_label_options'] = 'Thunderbird-etiketten';
 $labels['tb_label_enable_option'] = 'Thunderbird-etiketten tonen en beheren';

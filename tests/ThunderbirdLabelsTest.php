@@ -242,11 +242,11 @@ if (!class_exists('rcube')) {
         {
             $texts = [
                 'label0' => 'No Label',
-                'label1' => 'Important',
-                'label2' => 'Work',
-                'label3' => 'Personal',
-                'label4' => 'To do',
-                'label5' => 'Later',
+                'label1' => 'To Respond',
+                'label2' => 'FYI',
+                'label3' => 'Important',
+                'label4' => 'Marketing & Newsletters',
+                'label5' => 'ToDo',
             ];
             return $texts[$key] ?? $key;
         }
@@ -322,8 +322,11 @@ echo "\n--- Test 2: Custom Labels and Color Palette Mapping ---\n";
 $env_labels = $rcmail->output->env['tb_label_custom_labels'];
 assert_true(is_array($env_labels), "tb_label_custom_labels exported to JS environment");
 assert_true(isset($env_labels['LABEL0']) && $env_labels['LABEL0'] === 'No Label', "LABEL0 defaults to No Label");
-assert_true(isset($env_labels['LABEL1']) && $env_labels['LABEL1'] === 'Important', "LABEL1 defaults to Important");
-assert_true(isset($env_labels['LABEL2']) && $env_labels['LABEL2'] === 'Work', "LABEL2 defaults to Work");
+assert_true(isset($env_labels['LABEL1']) && $env_labels['LABEL1'] === 'To Respond', "LABEL1 defaults to To Respond");
+assert_true(isset($env_labels['LABEL2']) && $env_labels['LABEL2'] === 'FYI', "LABEL2 defaults to FYI");
+assert_true(isset($env_labels['LABEL3']) && $env_labels['LABEL3'] === 'Important', "LABEL3 defaults to Important");
+assert_true(isset($env_labels['LABEL4']) && $env_labels['LABEL4'] === 'Marketing & Newsletters', "LABEL4 defaults to Marketing & Newsletters");
+assert_true(isset($env_labels['LABEL5']) && $env_labels['LABEL5'] === 'ToDo', "LABEL5 defaults to ToDo");
 
 $env_colors = $rcmail->output->env['tb_label_colors'];
 assert_true(is_array($env_colors), "tb_label_colors exported to JS environment");
@@ -335,8 +338,8 @@ $rcmail->config->set('tb_label_custom_labels', ['LABEL1' => 'LABEL1', 'LABEL2' =
 $plugin_sanitized = new thunderbird_labels();
 $plugin_sanitized->init();
 $sanitized_labels = $rcmail->output->env['tb_label_custom_labels'];
-assert_true($sanitized_labels['LABEL1'] === 'Important', "Raw database key LABEL1 sanitized to human-readable 'Important'");
-assert_true($sanitized_labels['LABEL2'] === 'Work', "Raw database key LABEL2 sanitized to human-readable 'Work'");
+assert_true($sanitized_labels['LABEL1'] === 'To Respond', "Raw database key LABEL1 sanitized to human-readable 'To Respond'");
+assert_true($sanitized_labels['LABEL2'] === 'FYI', "Raw database key LABEL2 sanitized to human-readable 'FYI'");
 
 // --- Test 3: imap_search_before Query Rewriting ---
 echo "\n--- Test 3: imap_search_before Search Query Rewriting ---\n";
@@ -352,15 +355,15 @@ assert_true(strpos($res2['search'], 'KEYWORD $LABEL3') !== false, "label:LABEL3 
 
 // Label name with quotes e.g. label:"Important"
 $res3 = $plugin->imap_search_before(['search' => 'label:"Important"']);
-assert_true(strpos($res3['search'], 'KEYWORD $LABEL1') !== false, "label:\"Important\" resolves to LABEL1");
+assert_true(strpos($res3['search'], 'KEYWORD $LABEL3') !== false, "label:\"Important\" resolves to LABEL3");
 
 // Number prefix e.g. label:"1: to respond"
 $res4 = $plugin->imap_search_before(['search' => 'label:"1: to respond"']);
 assert_true(strpos($res4['search'], 'KEYWORD $LABEL1') !== false, "label:\"1: to respond\" resolves to LABEL1");
 
-// Tag syntax e.g. tag:Work
-$res5 = $plugin->imap_search_before(['search' => 'tag:Work']);
-assert_true(strpos($res5['search'], 'KEYWORD $LABEL2') !== false, "tag:Work resolves to LABEL2");
+// Tag syntax e.g. tag:FYI
+$res5 = $plugin->imap_search_before(['search' => 'tag:FYI']);
+assert_true(strpos($res5['search'], 'KEYWORD $LABEL2') !== false, "tag:FYI resolves to LABEL2");
 
 // Negation e.g. NOT label:4
 $res6 = $plugin->imap_search_before(['search' => 'NOT label:4']);

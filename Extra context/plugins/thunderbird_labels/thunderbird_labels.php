@@ -169,11 +169,11 @@ class thunderbird_labels extends rcube_plugin
 
 		// Colors map
 		$default_colors = array(
-			'LABEL1' => '#d93025', // Red / Coral (1: to respond)
-			'LABEL2' => '#e37400', // Amber / Orange (2: FYI)
-			'LABEL3' => '#f29900', // Yellow / Gold (3: comment)
-			'LABEL4' => '#188038', // Green (4: notification)
-			'LABEL5' => '#129eaf', // Teal (5: meeting update)
+			'LABEL1' => '#1a73e8', // Blue (1: To Respond)
+			'LABEL2' => '#5f6368', // Slate / Gray (2: FYI)
+			'LABEL3' => '#d93025', // Red / Crimson (3: Important)
+			'LABEL4' => '#188038', // Green (4: Marketing & Newsletters)
+			'LABEL5' => '#e37400', // Orange (5: ToDo)
 		);
 		$user_colors = (array) $this->rc->config->get('tb_label_colors', array());
 		$colors = array_merge($default_colors, $user_colors);

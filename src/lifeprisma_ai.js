@@ -261,11 +261,11 @@ function lpai_get_message_text() {
 // Label Integration (roundcube-labels / Thunderbird Standard)
 // ========================================
 var LPAI_LABEL_DEF = {
-    '$Label1': { name: 'Belangrijk', color: '#d93025', bg: '#fce8e6', class: 'label-1' },
-    '$Label2': { name: 'Werk', color: '#e37400', bg: '#fef7e0', class: 'label-2' },
-    '$Label3': { name: 'Persoonlijk', color: '#188038', bg: '#e6f4ea', class: 'label-3' },
-    '$Label4': { name: 'Te doen', color: '#1a73e8', bg: '#e8f0fe', class: 'label-4' },
-    '$Label5': { name: 'Later', color: '#9333ea', bg: '#f3e8fd', class: 'label-5' }
+    '$Label1': { name: 'To Respond', color: '#1a73e8', bg: '#e8f0fe', class: 'label-1' },
+    '$Label2': { name: 'FYI', color: '#5f6368', bg: '#f1f3f4', class: 'label-2' },
+    '$Label3': { name: 'Important', color: '#d93025', bg: '#fce8e6', class: 'label-3' },
+    '$Label4': { name: 'Marketing & Newsletters', color: '#188038', bg: '#e6f4ea', class: 'label-4' },
+    '$Label5': { name: 'ToDo', color: '#e37400', bg: '#fef7e0', class: 'label-5' }
 };
 
 function lpai_format_size(bytes) {

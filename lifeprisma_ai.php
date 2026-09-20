@@ -117,12 +117,17 @@ class lifeprisma_ai extends rcube_plugin
                 'memory_enabled' => (bool) $rcmail->config->get('lifeprisma_ai_memory_enabled', true),
                 'triage_labels_enabled' => (bool) $rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true),
                 'triage_label_map' => $rcmail->config->get('lifeprisma_ai_triage_label_map', [
-                    'action_required_high' => '$Label1',
-                    'action_required'      => '$Label4',
-                    'meeting'              => '$Label2',
-                    'follow_up'            => '$Label4',
-                    'fyi'                  => '$Label5',
-                    'scam'                 => '$Label1',
+                    'to_respond'            => '$Label1',
+                    'fyi'                   => '$Label2',
+                    'important'             => '$Label3',
+                    'marketing_newsletters' => '$Label4',
+                    'todo'                  => '$Label5',
+                    'action_required'       => '$Label1',
+                    'action_required_high'  => '$Label3',
+                    'meeting'               => '$Label1',
+                    'follow_up'             => '$Label1',
+                    'newsletter'            => '$Label4',
+                    'scam'                  => '$Label3',
                 ]),
             ]);
 
@@ -372,17 +377,22 @@ class lifeprisma_ai extends rcube_plugin
             if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
                 try {
                     $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
-                        'action_required_high' => '$Label1',
-                        'action_required'      => '$Label4',
-                        'meeting'              => '$Label2',
-                        'follow_up'            => '$Label4',
-                        'fyi'                  => '$Label5',
-                        'scam'                 => '$Label1',
+                        'to_respond'            => '$Label1',
+                        'fyi'                   => '$Label2',
+                        'important'             => '$Label3',
+                        'marketing_newsletters' => '$Label4',
+                        'todo'                  => '$Label5',
+                        'action_required'       => '$Label1',
+                        'action_required_high'  => '$Label3',
+                        'meeting'               => '$Label1',
+                        'follow_up'             => '$Label1',
+                        'newsletter'            => '$Label4',
+                        'scam'                  => '$Label3',
                     ]);
                     $cat = $analysis['category'] ?? 'fyi';
                     $urgency = $analysis['urgency'] ?? 'low';
                     $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
-                    $flag = $label_map[$mapKey] ?? ($label_map[$cat] ?? null);
+                    $flag = $label_map[$cat] ?? ($label_map[$mapKey] ?? ($label_map['fyi'] ?? '$Label2'));
                     if ($flag) {
                         $storage = $rcmail->get_storage();
                         if ($storage) {
@@ -474,13 +484,13 @@ class lifeprisma_ai extends rcube_plugin
         $body = mb_substr($ctx['body'] ?? '', 0, 4000);
 
         $system_prompt = "You are an executive Chief of Staff and AI email assistant.
-Your goal is to provide an instant, high-level briefing of incoming emails, classify their urgency and category, extract concrete action items, detect meetings or scheduling requests, check for phishing/scams, and prepare a polished, contextual draft reply when appropriate.
+Your goal is to provide an instant, high-level briefing of incoming emails, classify them strictly according to the defined 5-label taxonomy, extract concrete action items, and prepare a polished, contextual draft reply when appropriate.
 
 Return ONLY a JSON object with this exact structure (no markdown formatting, no code fences):
 {
-  \"category\": \"action_required\" | \"follow_up\" | \"meeting\" | \"fyi\" | \"newsletter\" | \"scam\",
+  \"category\": \"to_respond\" | \"fyi\" | \"important\" | \"marketing_newsletters\" | \"todo\",
   \"urgency\": \"high\" | \"medium\" | \"low\",
-  \"category_label\": \"Action Required\" | \"Follow-Up Needed\" | \"Meeting Request\" | \"FYI / Informational\" | \"Newsletter / Automated\" | \"Security Alert\",
+  \"category_label\": \"To Respond\" | \"FYI\" | \"Important\" | \"Marketing & Newsletters\" | \"ToDo\",
   \"summary\": \"1-2 concise sentence executive briefing focusing on what the email is about and key implications for the recipient.\",
   \"action_items\": [\"Specific action item, question to answer, or next step\", ...],
   \"meeting_details\": \"Date, time, timezone, topic, or null if no meeting mentioned\",
@@ -491,19 +501,21 @@ Return ONLY a JSON object with this exact structure (no markdown formatting, no 
 }
 
 Rules:
-1. Category definitions:
-   - \"action_required\": requires decision, response, approval, or task from the recipient.
-   - \"meeting\": proposed meeting, interview, calendar invite, or time coordination.
-   - \"follow_up\": check-in, tracking past discussion, waiting on updates.
-   - \"fyi\": purely informational, report, status update with no action requested.
-   - \"newsletter\": marketing, automated digest, system alert.
-   - \"scam\": phishing, fraudulent request, credential theft, suspicious link.
+1. Category definitions (classify into EXACTLY ONE of these 5 categories):
+   - \"to_respond\" (1: To Respond): Direct conversational obligation. Requires you to draft a reply, give an explicit approval, or answer questions directly within the thread.
+   - \"fyi\" (2: FYI): Passive knowledge. Updates, company announcements, receipts, and project summaries where you are CC’d or kept in the loop, requiring no action or response.
+   - \"important\" (3: Important): Critical urgency and high stakes. High-impact updates or alerts from VIPs, clients, or security teams that must be seen immediately.
+   - \"marketing_newsletters\" (4: Marketing & Newsletters): Low-priority machine-generated mail. Vendor outreach, industry newsletters, webinars, product updates, and routine SaaS platform digests.
+   - \"todo\" (5: ToDo): External work execution. The email assigns you work to be done outside the inbox (e.g., \"please sign this contract\" or \"fix this bug\"), closing the loop only after the external task is finished.
 2. If the email is sent by the user themself, category should be \"fyi\" and needs_reply should be false.
-3. If the email is a newsletter/bulk or automated notification, needs_reply should be false and draft_reply should be null.
-4. Keep summary under 50 words. Be objective and direct.
-5. Action items should be clear and actionable. If no action items, return an empty array [].
-6. Draft reply must be contextually appropriate in {$language} with a {$tone} tone. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
-7. If needs_reply is false, set draft_reply to null.";
+3. If the email is \"marketing_newsletters\", needs_reply should be false and draft_reply should be null.
+4. If the email is \"fyi\", needs_reply should be false and draft_reply should be null.
+5. If the email is \"to_respond\", needs_reply should be true and a draft_reply should be prepared.
+6. If the email is a suspicious phishing/scam, set category to \"important\", is_scam to true, and explain in scam_reason.
+7. Keep summary under 50 words. Be objective and direct.
+8. Action items should be clear and actionable. If no action items, return an empty array [].
+9. Draft reply must be contextually appropriate in {$language} with a {$tone} tone. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
+10. If needs_reply is false, set draft_reply to null.";
 
         // Inject learned AI memory if enabled (answer replication)
         $rcmail = rcmail::get_instance();

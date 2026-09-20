@@ -58,19 +58,24 @@ $config['lifeprisma_ai_auto_draft_mode'] = 'open';
 $config['lifeprisma_ai_triage_labels_enabled'] = true;
 
 // Mapping of triage category & urgency to IMAP label flags:
-//   $Label1 = Red    (Belangrijk / Important)
-//   $Label2 = Orange (Werk / Work)
-//   $Label3 = Green  (Persoonlijk / Personal)
-//   $Label4 = Blue   (Te doen / To Do)
-//   $Label5 = Violet (Later)
+//   $Label1 = Blue   (1: To Respond)
+//   $Label2 = Slate  (2: FYI)
+//   $Label3 = Red    (3: Important)
+//   $Label4 = Green  (4: Marketing & Newsletters)
+//   $Label5 = Orange (5: ToDo)
 $config['lifeprisma_ai_triage_label_map'] = [
-    'action_required_high' => '$Label1', // Belangrijk / Important (Red)
-    'action_required'      => '$Label4', // Te doen / To Do (Blue)
-    'meeting'              => '$Label2', // Werk / Work (Orange)
-    'follow_up'            => '$Label4', // Te doen / To Do (Blue)
-    'fyi'                  => '$Label5', // Later (Violet)
-    'scam'                 => '$Label1', // Belangrijk / Warning (Red)
-    'newsletter'           => '',        // Neutral (no label)
+    'to_respond'            => '$Label1', // 1: To Respond
+    'fyi'                   => '$Label2', // 2: FYI
+    'important'             => '$Label3', // 3: Important
+    'marketing_newsletters' => '$Label4', // 4: Marketing & Newsletters
+    'todo'                  => '$Label5', // 5: ToDo
+    // Fallback aliases for backward compatibility:
+    'action_required'       => '$Label1',
+    'action_required_high'  => '$Label3',
+    'meeting'               => '$Label1',
+    'follow_up'             => '$Label1',
+    'newsletter'            => '$Label4',
+    'scam'                  => '$Label3',
 ];
 
 // ============================================================

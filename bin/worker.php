@@ -771,12 +771,17 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 
                 if (!empty($config['lifeprisma_ai_triage_labels_enabled'])) {
                     $label_map = $config['lifeprisma_ai_triage_label_map'] ?? [
-                        'action_required_high' => '$Label1',
-                        'action_required'      => '$Label4',
-                        'meeting'              => '$Label2',
-                        'follow_up'            => '$Label4',
-                        'fyi'                  => '$Label5',
-                        'scam'                 => '$Label1',
+                        'to_respond'            => '$Label1',
+                        'fyi'                   => '$Label2',
+                        'important'             => '$Label3',
+                        'marketing_newsletters' => '$Label4',
+                        'todo'                  => '$Label5',
+                        'action_required'       => '$Label1',
+                        'action_required_high'  => '$Label3',
+                        'meeting'               => '$Label1',
+                        'follow_up'             => '$Label1',
+                        'newsletter'            => '$Label4',
+                        'scam'                  => '$Label3',
                     ];
 
                     $text_combined = $subject . ' ' . $body;
@@ -784,21 +789,26 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     $has_question = (strpos($text_combined, '?') !== false);
                     $has_action_words = (bool) preg_match('/\b(please|could you|can you|let me know|what do you think|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|gelieve|kunt u|kan je|bevestig|graag|reactie|antwoord|nodig|actie)\b/i', $text_lower);
 
-                    if (preg_match('/\b(urgent|asap|critical|immediate|action required|important|belangrijk|spoed|dringend|prioriteit)\b/i', $text_lower)) {
-                        $category = 'action_required_high';
-                        $assigned_flag = $label_map['action_required_high'] ?? '$Label1';
-                    } elseif (preg_match('/\b(meeting|zoom|google meet|teams|calendar|schedule|afspraak|overleg|vergadering)\b/i', $text_lower)) {
-                        $category = 'meeting';
-                        $assigned_flag = $label_map['meeting'] ?? '$Label2';
-                    } elseif (preg_match('/\b(follow up|checking in|status update|status|opvolging)\b/i', $text_lower)) {
-                        $category = 'follow_up';
-                        $assigned_flag = $label_map['follow_up'] ?? '$Label4';
+                    // 1: Important (Critical urgency and high stakes)
+                    if (preg_match('/\b(urgent|asap|critical|immediate|security alert|data breach|unauthorized|phishing|fraud|important|belangrijk|spoed|dringend|prioriteit|beveiliging)\b/i', $text_lower)) {
+                        $category = 'important';
+                        $assigned_flag = $label_map['important'] ?? '$Label3';
+                    // 2: Marketing & Newsletters (Vendor outreach, newsletters, digests, webinar)
+                    } elseif (preg_match('/\b(unsubscribe|uitschrijven|newsletter|nieuwsbrief|webinar|digest|promo|special offer|discount|korting|aanbieding|digest|marketing)\b/i', $text_lower)) {
+                        $category = 'marketing_newsletters';
+                        $assigned_flag = $label_map['marketing_newsletters'] ?? '$Label4';
+                    // 3: ToDo (External work execution: sign contract, fix bug, code, deploy, pay invoice)
+                    } elseif (preg_match('/\b(sign|contract|fix|bug|pr|pull request|issue|ticket|deploy|build|invoice|payment|factuur|betalen|tekenen|overmaken|task|taken)\b/i', $text_lower)) {
+                        $category = 'todo';
+                        $assigned_flag = $label_map['todo'] ?? '$Label5';
+                    // 4: To Respond (Direct conversational obligation, question, reply requested)
                     } elseif ($has_question || $has_action_words) {
-                        $category = 'action_required';
-                        $assigned_flag = $label_map['action_required'] ?? '$Label4';
+                        $category = 'to_respond';
+                        $assigned_flag = $label_map['to_respond'] ?? '$Label1';
+                    // 5: FYI (Passive knowledge, updates, receipts, CC'd)
                     } else {
                         $category = 'fyi';
-                        $assigned_flag = $label_map['fyi'] ?? '$Label5';
+                        $assigned_flag = $label_map['fyi'] ?? '$Label2';
                     }
 
                     if (!$is_dry_run && !empty($assigned_flag)) {
@@ -813,16 +823,16 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     }
                 }
 
-                // 4. Smart Draft Gate (skips draft reply generation for purely informational / FYI emails)
+                // 4. Smart Draft Gate (skips draft reply generation for purely informational / FYI / Marketing emails)
                 if (!empty($config['lifeprisma_ai_auto_draft_filter'])) {
                     $text_combined = $subject . ' ' . $body;
                     $has_action = (strpos($text_combined, '?') !== false) ||
                         preg_match('/\b(please|could you|can you|let me know|what do you think|confirm|feedback|reply|respond|waiting for|deadline|meeting|schedule|availability|asap|gelieve|kunt u|kan je|bevestig|graag|reactie|antwoord|nodig|actie)\b/i', strtolower($text_combined));
 
-                    if (!$has_action && $category === 'fyi') {
-                        echo "[$now] [SKIP-DRAFT] UID $uid '$subject' — Informational email (no reply needed, labeled as FYI)\n";
+                    if ($category === 'marketing_newsletters' || (!$has_action && in_array($category, ['fyi', 'todo']))) {
+                        echo "[$now] [SKIP-DRAFT] UID $uid '$subject' — Classified as $category (no direct reply draft needed, tagged $assigned_flag)\n";
                         if (!$is_dry_run) {
-                            $state->mark_processed($email, 'INBOX', $uid, 'labeled_fyi_no_draft', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
+                            $state->mark_processed($email, 'INBOX', $uid, 'labeled_no_draft', ['subject' => $subject, 'category' => $category, 'label' => $assigned_flag]);
                         }
                         continue;
                     }
