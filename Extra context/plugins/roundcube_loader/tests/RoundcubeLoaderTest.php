@@ -59,6 +59,53 @@ if (!class_exists('rcmail')) {
     }
 }
 
+if (!class_exists('rcube')) {
+    class rcube
+    {
+        public static function Q($str) { return htmlspecialchars((string) $str, ENT_QUOTES, 'UTF-8'); }
+    }
+}
+
+if (!class_exists('html')) {
+    class html
+    {
+        public static function label($for, $content) { return "<label for=\"$for\">$content</label>"; }
+        public static function tag($tag, $attrs = [], $content = '') { return "<$tag>$content</$tag>"; }
+    }
+}
+
+if (!class_exists('html_checkbox')) {
+    class html_checkbox
+    {
+        private array $attrib = [];
+        public function __construct(array $attrib = []) { $this->attrib = $attrib; }
+        public function show($val = 0) { return '<input type="checkbox" ' . ($val ? 'checked ' : '') . '/>'; }
+    }
+}
+
+if (!class_exists('html_select')) {
+    class html_select
+    {
+        private array $attrib = [];
+        private array $options = [];
+        public function __construct(array $attrib = []) { $this->attrib = $attrib; }
+        public function add($names, $values) {
+            foreach ($names as $idx => $name) {
+                $this->options[] = ['name' => $name, 'val' => $values[$idx] ?? $name];
+            }
+        }
+        public function show($selected = '') {
+            $h = '<select>';
+            foreach ($this->options as $opt) {
+                $sel = ($opt['val'] == $selected) ? ' selected' : '';
+                $h .= '<option value="' . $opt['val'] . '"' . $sel . '>' . $opt['name'] . '</option>';
+            }
+            return $h . '</select>';
+        }
+    }
+}
+
+
 require_once dirname(__DIR__) . '/roundcube_loader.php';
 
 class TestableRoundcubeLoader extends roundcube_loader
@@ -156,11 +203,11 @@ class RoundcubeLoaderTestRunner
         $this->assert(strpos($htmlApp, 'display: none;') !== false, 'App startup mode starts hidden with display:none');
         $this->assert(strpos($htmlApp, 'sessionStorage.getItem(\'rc_loader_active\')===\'1\'') !== false, 'Contains inline sessionStorage login check script');
 
-        // Test 4: Logo rendering
-        echo "\n--- Test 4: Logo Rendering (Default Gmail & Roundcube) ---\n";
+        // Test 4: Logo rendering (Standard Grid Mail & Roundcube)
+        echo "\n--- Test 4: Logo Rendering (Standard Grid Mail & Roundcube) ---\n";
         $rc->config->set('roundcube_loader_logo_type', 'gmail');
         $logoGmail = $plugin->callRenderLogo();
-        $this->assert(strpos($logoGmail, '<svg') !== false && strpos($logoGmail, '#4285f4') !== false, 'Default Gmail SVG logo rendered');
+        $this->assert(strpos($logoGmail, '<svg') !== false && (stripos($logoGmail, '#289FF2') !== false || stripos($logoGmail, '#5ABBFF') !== false), 'Standard Grid Mail SVG logo rendered');
 
         $rc->config->set('roundcube_loader_logo_type', 'roundcube');
         $logoRc = $plugin->callRenderLogo();
@@ -170,6 +217,11 @@ class RoundcubeLoaderTestRunner
         $rc->config->set('roundcube_loader_custom_logo', 'https://example.com/custom_logo.png');
         $logoCustom = $plugin->callRenderLogo();
         $this->assert(strpos($logoCustom, 'src="https://example.com/custom_logo.png"') !== false, 'Custom image logo rendered');
+
+        // Test 4b: Preferences List contains Logo Type selection
+        $prefs = $plugin->preferences_list(['section' => 'ui', 'blocks' => ['main' => ['options' => []]]]);
+        $this->assert(isset($prefs['blocks']['main']['options']['roundcube_loader_logo_type']), 'Preferences includes roundcube_loader_logo_type');
+
 
         // Test 5: Themes (gmail, google_gradient, roundcube)
         echo "\n--- Test 5: Theme Variants ---\n";

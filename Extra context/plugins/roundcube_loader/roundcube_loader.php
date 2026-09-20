@@ -159,9 +159,17 @@ HTML;
         $logoType = (string) $this->rc->config->get('roundcube_loader_logo_type', 'gmail');
         $customLogo = $this->rc->config->get('roundcube_loader_custom_logo');
 
-        if ($logoType === 'custom' && !empty($customLogo) && is_string($customLogo)) {
-            $escaped = htmlspecialchars($customLogo, ENT_QUOTES, 'UTF-8');
-            return '<img src="' . $escaped . '" alt="Logo" class="rc-loader-logo" />';
+        if ($logoType === 'custom') {
+            if (!empty($customLogo) && is_string($customLogo)) {
+                $escaped = htmlspecialchars($customLogo, ENT_QUOTES, 'UTF-8');
+                return '<img src="' . $escaped . '" alt="Logo" class="rc-loader-logo" />';
+            }
+            // Fallback to custom_logo_login or custom_logo if defined in customizr / core config
+            $skinLogo = $this->rc->config->get('custom_logo_login', $this->rc->config->get('custom_logo'));
+            if (!empty($skinLogo) && is_string($skinLogo)) {
+                $escaped = htmlspecialchars($skinLogo, ENT_QUOTES, 'UTF-8');
+                return '<img src="' . $escaped . '" alt="Logo" class="rc-loader-logo" />';
+            }
         }
 
         if ($logoType === 'roundcube') {
@@ -171,14 +179,18 @@ HTML;
             }
         }
 
-        // Default: Gmail envelope SVG
+        // Standard Default: Grid Mail SVG (also available as gmail_logo.svg)
+        $gridSvg = __DIR__ . '/assets/grid_mail.svg';
+        if (file_exists($gridSvg)) {
+            return file_get_contents($gridSvg);
+        }
         $gmailSvg = __DIR__ . '/assets/gmail_logo.svg';
         if (file_exists($gmailSvg)) {
             return file_get_contents($gmailSvg);
         }
 
         // Fallback text mark if SVG is not readable
-        return '<span class="rc-loader-logo" style="font-size: 28px; font-weight: bold; color: #1a73e8;">Webmail</span>';
+        return '<span class="rc-loader-logo" style="font-size: 28px; font-weight: bold; color: #289ff2;">Grid Mail</span>';
     }
 
     /**
@@ -197,6 +209,23 @@ HTML;
                 $args['blocks']['main']['options']['roundcube_loader_enabled'] = [
                     'title'   => html::label($fieldId, rcube::Q($this->gettext('enable_loader'))),
                     'content' => $checkbox->show($enabled ? 1 : 0),
+                ];
+            }
+
+            if (!in_array('roundcube_loader_logo_type', $dontOverride, true)) {
+                $fieldId = 'rcmfd_roundcube_loader_logo_type';
+                $select = new html_select(['name' => '_roundcube_loader_logo_type', 'id' => $fieldId]);
+                $select->add([
+                    $this->gettext('logo_grid_mail'),
+                    $this->gettext('logo_roundcube'),
+                    $this->gettext('logo_custom'),
+                ], ['gmail', 'roundcube', 'custom']);
+
+                $currentLogo = (string) $this->rc->config->get('roundcube_loader_logo_type', 'gmail');
+
+                $args['blocks']['main']['options']['roundcube_loader_logo_type'] = [
+                    'title'   => html::label($fieldId, rcube::Q($this->gettext('loader_logo'))),
+                    'content' => $select->show($currentLogo),
                 ];
             }
 
@@ -231,6 +260,13 @@ HTML;
 
             if (!in_array('roundcube_loader_enabled', $dontOverride, true)) {
                 $args['prefs']['roundcube_loader_enabled'] = !empty($_POST['_roundcube_loader_enabled']);
+            }
+
+            if (!in_array('roundcube_loader_logo_type', $dontOverride, true) && !empty($_POST['_roundcube_loader_logo_type'])) {
+                $logoType = (string) $_POST['_roundcube_loader_logo_type'];
+                if (in_array($logoType, ['gmail', 'roundcube', 'custom'], true)) {
+                    $args['prefs']['roundcube_loader_logo_type'] = $logoType;
+                }
             }
 
             if (!in_array('roundcube_loader_theme', $dontOverride, true) && !empty($_POST['_roundcube_loader_theme'])) {

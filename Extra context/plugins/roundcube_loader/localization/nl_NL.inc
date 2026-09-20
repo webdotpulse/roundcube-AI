@@ -17,7 +17,12 @@ $labels['slow_connections'] = 'voor trage verbindingen';
 $labels['taking_longer'] = 'Duurt het langer dan verwacht?';
 $labels['reload'] = 'Klik hier om opnieuw te laden';
 $labels['enable_loader'] = 'Gmail-stijl laadscherm inschakelen';
+$labels['loader_logo'] = 'Logo op het laadscherm';
+$labels['logo_grid_mail'] = 'Grid Mail (Standaard)';
+$labels['logo_roundcube'] = 'Roundcube Blauw';
+$labels['logo_custom'] = 'Aangepaste afbeelding';
 $labels['loader_theme'] = 'Laadscherm thema';
 $labels['theme_gmail'] = 'Gmail Rood';
 $labels['theme_google_gradient'] = 'Google 4-kleuren gradiënt';
 $labels['theme_roundcube'] = 'Roundcube Blauw';
+

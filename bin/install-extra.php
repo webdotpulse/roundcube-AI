@@ -736,6 +736,19 @@ class RoundcubeExtraContentInstaller
             $this->success("  -> Added \$config['remove_vendor_branding'] = true to config.inc.php");
         }
 
+        // Standard Mailbox Logo, Login Page Logo, and Favicon branding (Grid Mail)
+        if (!preg_match("/\\\$config\\[['\"]skin_logo['\"]\\]/", $content)) {
+            $content .= "\n// Standard Logo & Favicon branding (Grid Mail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail_plus/assets/images/logo_header.svg',\n    'login' => 'skins/gmail_plus/assets/images/logo_login.svg',\n    '[favicon]' => 'skins/gmail_plus/assets/images/favicon.png',\n];\n";
+            $modified = true;
+            $this->success("  -> Configured standard Grid Mail logo & favicon in \$config['skin_logo']");
+        }
+
+        if (!preg_match("/\\\$config\\[['\"]favicon['\"]\\]/", $content)) {
+            $content .= "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png';\n";
+            $modified = true;
+            $this->success("  -> Configured standard favicon in \$config['favicon']");
+        }
+
         if ($modified && !$this->dryRun) {
             @file_put_contents($configFile, $content);
             $this->success("Successfully updated Roundcube configuration file at {$configFile}");

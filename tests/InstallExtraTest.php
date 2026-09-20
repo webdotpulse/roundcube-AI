@@ -140,6 +140,15 @@ assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' p
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
 assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");
 assert_true(strpos($updatedConfig, "\$config['remove_vendor_branding'] = true") !== false, "remove_vendor_branding enabled in config");
+assert_true(strpos($updatedConfig, "\$config['skin_logo']") !== false, "Standard skin_logo configured in config");
+assert_true(strpos($updatedConfig, "'login' => 'skins/gmail_plus/assets/images/logo_login.svg'") !== false, "Login Page Logo set to logo_login.svg in config");
+assert_true(strpos($updatedConfig, "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png'") !== false, "Standard favicon configured in config");
+assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/grid_mail.svg'), "grid_mail.svg installed in skins/gmail_plus");
+assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/logo_header.svg'), "logo_header.svg installed in skins/gmail_plus");
+assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/logo_login.svg'), "logo_login.svg installed in skins/gmail_plus");
+assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/favicon.png'), "favicon.png installed in skins/gmail_plus");
+assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/favicon.ico'), "favicon.ico installed in skins/gmail_plus");
+
 
 // Verify 'xskin' is the FIRST element in $config['plugins']
 preg_match('/\$config\[[\'"]plugins[\'"]\]\s*=\s*(?:array\s*\((.*?)\)|\[(.*?)\])\s*;/is', $updatedConfig, $pm);

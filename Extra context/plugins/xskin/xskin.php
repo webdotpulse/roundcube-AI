@@ -1227,18 +1227,70 @@ class xskin extends XFramework\Plugin
      */
     protected function ensureSkinLogo(): void
     {
+        $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
+        $skinDir = "skins/$this->skin/assets/images";
+
+        // Determine header/mailbox logo (SVG preferred, fallback PNG)
+        $headerLogo = "$skinDir/logo_header.png";
+        if ($basePath && is_file($basePath . "$skinDir/logo_header.svg")) {
+            $headerLogo = "$skinDir/logo_header.svg";
+        } elseif ($basePath && is_file($basePath . "$skinDir/grid_mail.svg")) {
+            $headerLogo = "$skinDir/grid_mail.svg";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/logo_header.svg")) {
+            $headerLogo = "$skinDir/logo_header.svg";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/grid_mail.svg")) {
+            $headerLogo = "$skinDir/grid_mail.svg";
+        }
+
+        // Determine login logo (SVG preferred, fallback PNG or header logo)
+        $loginLogo = $headerLogo;
+        if ($basePath && is_file($basePath . "$skinDir/logo_login.svg")) {
+            $loginLogo = "$skinDir/logo_login.svg";
+        } elseif ($basePath && is_file($basePath . "$skinDir/logo_login.png")) {
+            $loginLogo = "$skinDir/logo_login.png";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/logo_login.svg")) {
+            $loginLogo = "$skinDir/logo_login.svg";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/logo_login.png")) {
+            $loginLogo = "$skinDir/logo_login.png";
+        }
+
+        // Determine favicon (PNG preferred from icon.png, fallback ICO)
+        $favPath = "$skinDir/favicon.png";
+        if ($basePath && is_file($basePath . "$skinDir/favicon.png")) {
+            $favPath = "$skinDir/favicon.png";
+        } elseif ($basePath && is_file($basePath . "$skinDir/icon.png")) {
+            $favPath = "$skinDir/icon.png";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/favicon.png")) {
+            $favPath = "$skinDir/favicon.png";
+        } elseif (is_file(__DIR__ . "/../../$skinDir/icon.png")) {
+            $favPath = "$skinDir/icon.png";
+        }
+
         if (empty($this->rcmail->config->get("skin_logo"))) {
             $skinLogo = [
-                '*' => "skins/$this->skin/assets/images/logo_header.png",
-                '[print]' => "skins/$this->skin/assets/images/logo_print.png",
+                '*' => $headerLogo,
+                'login' => $loginLogo,
+                '[print]' => "$skinDir/logo_print.png",
+                '[favicon]' => $favPath,
             ];
 
-            $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
-            if ($basePath && is_file($basePath . "skins/$this->skin/assets/images/logo_login.png")) {
-                $skinLogo['login'] = "skins/$this->skin/assets/images/logo_login.png";
-            }
-
             $this->rcmail->config->set('skin_logo', $skinLogo);
+        } else {
+            // If skin_logo array exists but misses [favicon] or login, ensure they are populated
+            $existing = $this->rcmail->config->get('skin_logo');
+            if (is_array($existing)) {
+                if (empty($existing['[favicon]'])) {
+                    $existing['[favicon]'] = $favPath;
+                }
+                if (empty($existing['login']) && !empty($loginLogo)) {
+                    $existing['login'] = $loginLogo;
+                }
+                $this->rcmail->config->set('skin_logo', $existing);
+            }
+        }
+
+        if (empty($this->rcmail->config->get("favicon"))) {
+            $this->rcmail->config->set('favicon', $favPath);
         }
     }
 

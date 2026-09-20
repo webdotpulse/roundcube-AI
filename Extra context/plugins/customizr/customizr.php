@@ -41,10 +41,8 @@
  */
 class customizr extends rcube_plugin
 {
-    public $noajax = true;
-    public $task = '?(?!logout).*';
-
-    private $rcmail;
+    public $task = 'login|mail|settings';
+    protected $rcmail;
     private $custom_css;
     private $custom_css_inline;
     private $custom_favicon;
@@ -481,6 +479,7 @@ class customizr extends rcube_plugin
                 'title' => html::label($field_id, rcube::Q($title)),
                 'content' => $this->render_color_field('compose_button_bg_color', $field_id, $value, $title, $desc),
             ];
+            $args['blocks']['customizr']['options']['custom_compose_bg'] = &$args['blocks']['customizr']['options']['compose_button_bg_color'];
         }
 
         // 11. Custom Compose Button Text / Icon Color
@@ -797,11 +796,19 @@ JS;
         }
 
         // replace or inject favicon
-        if (!is_null($this->custom_favicon)) {
-            $active_fav = self::resolve_image_url($this->custom_favicon);
-            $favicon = !empty($active_fav) ?
-                html::tag('link', array('rel' => 'shortcut icon', 'href' => $active_fav)) :
-                '';
+        $active_fav = !is_null($this->custom_favicon) ? self::resolve_image_url($this->custom_favicon) : null;
+        if (empty($active_fav) && is_null($this->custom_favicon)) {
+            // standard default favicon (icon.png / favicon.png)
+            $skin = $this->rcmail->config->get('skin', 'gmail_plus');
+            $std_fav = "skins/{$skin}/assets/images/favicon.png";
+            $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
+            if (($basePath && is_file($basePath . $std_fav)) || is_file(__DIR__ . "/../../{$std_fav}")) {
+                $active_fav = $std_fav;
+            }
+        }
+
+        if (!empty($active_fav)) {
+            $favicon = html::tag('link', array('rel' => 'shortcut icon', 'href' => $active_fav));
 
             $args['content'] = preg_replace('!<link\s[^>]*rel="(shortcut )?icon"[^>]*>!i', $favicon, $args['content'], -1, $count);
 
@@ -816,6 +823,21 @@ JS;
         $is_login = ($this->rcmail->task === 'login');
         $active_logo = ($is_login && !empty($this->custom_logo_login)) ? $this->custom_logo_login : $this->custom_logo;
         $active_logo = self::resolve_image_url($active_logo);
+        if (empty($active_logo)) {
+            // standard default: Grid Mail SVG
+            $skin = $this->rcmail->config->get('skin', 'gmail_plus');
+            $std_logo = "skins/{$skin}/assets/images/logo_header.svg";
+            $std_login = "skins/{$skin}/assets/images/logo_login.svg";
+            $std_grid = "skins/{$skin}/assets/images/grid_mail.svg";
+            $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
+            if ($is_login && (($basePath && is_file($basePath . $std_login)) || is_file(__DIR__ . "/../../{$std_login}"))) {
+                $active_logo = $std_login;
+            } elseif (($basePath && is_file($basePath . $std_logo)) || is_file(__DIR__ . "/../../{$std_logo}")) {
+                $active_logo = $std_logo;
+            } elseif (($basePath && is_file($basePath . $std_grid)) || is_file(__DIR__ . "/../../{$std_grid}")) {
+                $active_logo = $std_grid;
+            }
+        }
 
         if (!empty($active_logo)) {
             $escaped = htmlspecialchars($active_logo, ENT_QUOTES);

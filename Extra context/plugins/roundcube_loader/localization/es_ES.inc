@@ -17,7 +17,12 @@ $labels['slow_connections'] = 'para conexiones lentas';
 $labels['taking_longer'] = '¿Está tardando más de lo habitual?';
 $labels['reload'] = 'Haz clic aquí para recargar';
 $labels['enable_loader'] = 'Activar pantalla de carga estilo Gmail';
+$labels['loader_logo'] = 'Logo en la pantalla de carga';
+$labels['logo_grid_mail'] = 'Grid Mail (Estándar)';
+$labels['logo_roundcube'] = 'Roundcube Azul';
+$labels['logo_custom'] = 'Imagen personalizada';
 $labels['loader_theme'] = 'Tema de la pantalla de carga';
 $labels['theme_gmail'] = 'Gmail Rojo';
 $labels['theme_google_gradient'] = 'Degradado Google 4 colores';
 $labels['theme_roundcube'] = 'Roundcube Azul';
+

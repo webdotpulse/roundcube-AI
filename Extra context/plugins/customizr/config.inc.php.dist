@@ -10,14 +10,15 @@ $config['custom_watermark_image'] = './skins/watermark.png';
 // Define a custom URI to be displayed instead of the empty watermark page
 $config['custom_watermark_uri'] = '';
 
-// Define a custom favicon image (empty string to remove it)
-$config['custom_favicon'] = './skins/favicon.ico';
+// Define a custom favicon image (empty string to remove it; default is standard icon.png / favicon.png)
+$config['custom_favicon'] = 'skins/gmail_plus/assets/images/favicon.png';
 
-// Define a custom logo image for the mailbox / webmail interface (empty string for skin default)
-$config['custom_logo'] = '';
+// Define a custom logo image for the mailbox / webmail interface (empty string falls back to skin default / standard Grid Mail SVG)
+$config['custom_logo'] = 'skins/gmail_plus/assets/images/logo_header.svg';
 
-// Define a custom logo image specifically for the login page (empty string falls back to custom_logo)
-$config['custom_logo_login'] = '';
+// Define a custom logo image specifically for the login page (empty string falls back to custom_logo / standard Grid Mail SVG)
+$config['custom_logo_login'] = 'skins/gmail_plus/assets/images/logo_login.svg';
+
 
 // Defines a custom CSS file which is added to every page
 $config['custom_stylesheet'] = './skins/custom.css';
