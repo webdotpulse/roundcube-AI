@@ -247,9 +247,96 @@
                 self.loadHistory();
             });
 
+            // Initialize Gemini AI studio integrations
+            self.setupGeminiAI();
+
             // Initial loads
             self.refreshRecipients();
             self.runSpamCheck();
+        },
+
+        setupGeminiAI: function () {
+            var self = this;
+
+            // Gemini Subject Suggestion Button
+            $('#btn-newsletter-ai-subject').on('click', function (e) {
+                e.preventDefault();
+                var btn = this;
+                if (window.lpai_suggest_subject) {
+                    window.lpai_suggest_subject(btn);
+                } else {
+                    var content = $('#newsletter-body').val();
+                    if (!content || !content.trim()) {
+                        if (window.rcmail && rcmail.display_message) rcmail.display_message('Write or template some newsletter content first', 'notice');
+                        return;
+                    }
+                    var orig = $(btn).html();
+                    $(btn).prop('disabled', true).html('&#9203; Generating...');
+                    $.post('?_task=mail&_action=plugin.lifeprisma_ai_request', {
+                        ai_action: 'suggest_subject',
+                        email_body: content.substring(0, 1500),
+                        _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
+                    }, function (data) {
+                        $(btn).prop('disabled', false).html(orig);
+                        if (data && data.status === 'success' && data.result) {
+                            var lines = data.result.split('\n').filter(function(l) { return l.trim().length > 0; });
+                            var first = lines[0].replace(/^\d+\.\s*/, '').replace(/^["']|["']$/g, '');
+                            $('#newsletter-subject').val(first).trigger('input').trigger('change');
+                            self.runSpamCheck();
+                        }
+                    }, 'json').fail(function() {
+                        $(btn).prop('disabled', false).html(orig);
+                    });
+                }
+            });
+
+            // Open Full Gemini Assistant Panel
+            $('#btn-newsletter-ai-open-panel').on('click', function (e) {
+                e.preventDefault();
+                if (window.lpai_open_panel) {
+                    window.lpai_open_panel('newsletter');
+                }
+            });
+
+            // Draft Newsletter with Gemini
+            $('#btn-newsletter-ai-draft').on('click', function (e) {
+                e.preventDefault();
+                if (window.lpai_open_panel) {
+                    window.lpai_open_panel('newsletter');
+                    if (window.lpai_select_action) window.lpai_select_action('compose');
+                }
+            });
+
+            // Polish & Rewrite
+            $('#btn-newsletter-ai-rewrite').on('click', function (e) {
+                e.preventDefault();
+                if (window.lpai_open_panel) {
+                    window.lpai_open_panel('newsletter');
+                    if (window.lpai_select_action) window.lpai_select_action('rewrite');
+                }
+            });
+
+            // Fix Grammar & Flow
+            $('#btn-newsletter-ai-fix').on('click', function (e) {
+                e.preventDefault();
+                if (window.lpai_newsletter_quick) {
+                    window.lpai_newsletter_quick('fix', this);
+                } else if (window.lpai_open_panel) {
+                    window.lpai_open_panel('newsletter');
+                    if (window.lpai_select_action) window.lpai_select_action('fix');
+                }
+            });
+
+            // Optimize Anti-Spam Deliverability
+            $('#btn-newsletter-ai-optimize-spam').on('click', function (e) {
+                e.preventDefault();
+                if (window.lpai_newsletter_quick) {
+                    window.lpai_newsletter_quick('newsletter_optimize_spam', this);
+                } else if (window.lpai_open_panel) {
+                    window.lpai_open_panel('newsletter');
+                    if (window.lpai_select_action) window.lpai_select_action('rewrite');
+                }
+            });
         },
 
         loadTemplate: function (name) {
@@ -280,12 +367,13 @@
             $.post('?_task=newsletter&_action=plugin.newsletter-groups', {
                 _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function (res) {
-                if (res && res.groups) {
+                if (res) {
                     var html = '';
-                    if (res.groups.length === 0) {
-                        html = '<p class="text-muted mb-0">No contact groups found in address books.</p>';
+                    var groups = res.groups || [];
+                    if (groups.length === 0) {
+                        html = '<p class="text-muted mb-0">No specific contact groups found in address books. Switch to <strong>All Contacts</strong> to send to your full address book, or create groups in Contacts.</p>';
                     } else {
-                        $.each(res.groups, function (i, g) {
+                        $.each(groups, function (i, g) {
                             html += '<label class="group-checkbox-pill">' +
                                     '<input type="checkbox" name="contact_group[]" value="' + g.id + '"> ' +
                                     '<span>' + (g.name || 'Group') + ' <small class="text-muted">(' + g.source + ')</small></span>' +

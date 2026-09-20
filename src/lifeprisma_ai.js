@@ -32,6 +32,10 @@ if (window.rcmail) {
             lpai_init_responses();
         }
 
+        if (task === 'newsletter') {
+            lpai_init_newsletter();
+        }
+
         lpai_apply_server_prefs();
         lpai_restore_prefs();
         lpai_bind_events();
@@ -1118,8 +1122,12 @@ function lpai_suggest_subject(btn) {
         if (data.status === 'success' && data.result) {
             var lines = data.result.split('\n').filter(function(l) { return l.trim().length > 0; });
             var first = lines[0].replace(/^\d+\.\s*/, '').replace(/^["']|["']$/g, '');
-            var subInput = document.getElementById('_subject') || document.querySelector('input[name="_subject"]');
-            if (subInput) subInput.value = first;
+            var subInput = document.getElementById('newsletter-subject') || document.getElementById('_subject') || document.querySelector('input[name="_subject"]');
+            if (subInput) {
+                subInput.value = first;
+                subInput.dispatchEvent(new Event('input', { bubbles: true }));
+                subInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
             if (rcmail.display_message) rcmail.display_message('Subject set: ' + first, 'confirmation');
         }
     }).catch(function() {
@@ -1384,6 +1392,134 @@ function lpai_auto_fill_response_name(content, doc) {
 }
 
 // ========================================
+// Newsletter Plugin Integration
+// ========================================
+function lpai_init_newsletter() {
+    lpai_panel_context = 'newsletter';
+
+    setTimeout(function() {
+        lpai_setup_newsletter_quick_actions();
+    }, 150);
+
+    var content = document.getElementById('newsletter-studio') || document.getElementById('layout-content') || document.body;
+    if (content && window.MutationObserver) {
+        var obs = new MutationObserver(function() {
+            if (document.getElementById('newsletter-body') && !document.getElementById('btn-newsletter-ai-open-panel')) {
+                lpai_setup_newsletter_quick_actions();
+            }
+        });
+        obs.observe(content, { childList: true, subtree: true });
+    }
+}
+
+function lpai_setup_newsletter_quick_actions() {
+    var ta = document.getElementById('newsletter-body');
+    if (!ta) return;
+
+    // Attach subject suggest button
+    var aiSubjBtn = document.getElementById('btn-newsletter-ai-subject');
+    if (aiSubjBtn && !aiSubjBtn.dataset.bound) {
+        aiSubjBtn.dataset.bound = '1';
+        aiSubjBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_suggest_subject(aiSubjBtn);
+        };
+    }
+
+    // Attach open panel button
+    var panelBtn = document.getElementById('btn-newsletter-ai-open-panel');
+    if (panelBtn && !panelBtn.dataset.bound) {
+        panelBtn.dataset.bound = '1';
+        panelBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_open_panel('newsletter');
+        };
+    }
+
+    // Attach draft button
+    var draftBtn = document.getElementById('btn-newsletter-ai-draft');
+    if (draftBtn && !draftBtn.dataset.bound) {
+        draftBtn.dataset.bound = '1';
+        draftBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_open_panel('newsletter');
+            lpai_select_action('compose');
+        };
+    }
+
+    // Attach rewrite/polish button
+    var rwBtn = document.getElementById('btn-newsletter-ai-rewrite');
+    if (rwBtn && !rwBtn.dataset.bound) {
+        rwBtn.dataset.bound = '1';
+        rwBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_open_panel('newsletter');
+            lpai_select_action('rewrite');
+        };
+    }
+
+    // Attach fix grammar button
+    var fixBtn = document.getElementById('btn-newsletter-ai-fix');
+    if (fixBtn && !fixBtn.dataset.bound) {
+        fixBtn.dataset.bound = '1';
+        fixBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_newsletter_quick('fix', fixBtn);
+        };
+    }
+
+    // Attach optimize spam button
+    var spamBtn = document.getElementById('btn-newsletter-ai-optimize-spam');
+    if (spamBtn && !spamBtn.dataset.bound) {
+        spamBtn.dataset.bound = '1';
+        spamBtn.onclick = function(e) {
+            e.preventDefault();
+            lpai_newsletter_quick('newsletter_optimize_spam', spamBtn);
+        };
+    }
+}
+
+function lpai_newsletter_quick(action, btn) {
+    var content = lpai_get_editor_content();
+    if (!content.trim()) {
+        if (rcmail.display_message) rcmail.display_message('Write or template some newsletter content first', 'notice');
+        return;
+    }
+
+    var orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '&#9203; Optimizing...';
+
+    var postData = {
+        _action: 'plugin.lifeprisma_ai_stream',
+        ai_action: action,
+        instruction: '',
+        email_body: content,
+        reply_text: '',
+        subject: lpai_get_subject(),
+        language: lpai_options.language,
+        tone: lpai_options.tone,
+        model: lpai_options.model,
+        view_context: 'newsletter',
+        _token: rcmail.env.request_token
+    };
+
+    var targetEl = document.createElement('div');
+    if (lpai_stream_controller) lpai_stream_controller.abort();
+    lpai_stream_controller = new AbortController();
+
+    lpai_stream_to_element(postData, targetEl, lpai_stream_controller, function(fullText) {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+        if (fullText) {
+            lpai_undo_text = content;
+            lpai_apply_with_preserve(fullText);
+            if (rcmail.display_message) rcmail.display_message('Newsletter optimized with Gemini AI', 'confirmation');
+        }
+    });
+}
+
+// ========================================
 // Smart Compose Autocomplete
 // ========================================
 var lpai_sc_timer = null;
@@ -1452,7 +1588,7 @@ function lpai_get_editor_content() {
         }
     }
     // 2. Textarea in current window
-    var ta = document.getElementById('fftext') || document.getElementById('_message');
+    var ta = document.getElementById('fftext') || document.getElementById('newsletter-body') || document.getElementById('_message');
     if (ta && typeof ta.value === 'string' && ta.value.length > 0) {
         return ta.value;
     }
@@ -1500,6 +1636,19 @@ function lpai_apply_with_preserve(newContent) {
         respTa.dispatchEvent(new Event('change', { bubbles: true }));
         respTa.dispatchEvent(new Event('input', { bubbles: true }));
         lpai_auto_fill_response_name(newContent);
+        return;
+    }
+
+    // Target is Newsletter Studio body (#newsletter-body)
+    var newsTa = document.getElementById('newsletter-body');
+    if (newsTa) {
+        var formattedHtml = (newContent.indexOf('<') >= 0 && newContent.indexOf('>') >= 0) ? newContent : lpai_md_to_html(newContent);
+        newsTa.value = formattedHtml;
+        newsTa.dispatchEvent(new Event('input', { bubbles: true }));
+        newsTa.dispatchEvent(new Event('change', { bubbles: true }));
+        if (window.newsletter_app && typeof newsletter_app.runSpamCheck === 'function') {
+            newsletter_app.runSpamCheck();
+        }
         return;
     }
 
@@ -1558,7 +1707,7 @@ function lpai_apply_with_preserve(newContent) {
 }
 
 function lpai_get_subject() {
-    var sub = document.getElementById('_subject') || document.querySelector('input[name="_subject"]');
+    var sub = document.getElementById('newsletter-subject') || document.getElementById('_subject') || document.querySelector('input[name="_subject"]');
     return sub ? sub.value : (rcmail.env.subject || '');
 }
 
@@ -1873,6 +2022,8 @@ function lpai_open_panel(context) {
     if (!context) {
         if (document.getElementById('fftext') || (document.getElementById('preferences-frame') && document.getElementById('preferences-frame').contentDocument && document.getElementById('preferences-frame').contentDocument.getElementById('fftext'))) {
             context = 'response';
+        } else if (document.getElementById('newsletter-studio') || rcmail.env.task === 'newsletter') {
+            context = 'newsletter';
         } else if (rcmail.env.task === 'mail' && (rcmail.env.action === 'show' || rcmail.env.action === 'preview')) {
             context = 'read';
         } else {
@@ -1896,6 +2047,10 @@ function lpai_open_panel(context) {
         if (titleEl) titleEl.textContent = 'Gemini Response Assistant';
         if (applyBtn) applyBtn.textContent = 'Insert into Response';
         if (subjBtn) subjBtn.textContent = 'Suggest Name';
+    } else if (lpai_panel_context === 'newsletter') {
+        if (titleEl) titleEl.textContent = 'Gemini Newsletter Assistant';
+        if (applyBtn) applyBtn.textContent = 'Insert into Newsletter';
+        if (subjBtn) subjBtn.textContent = 'Subject Lines';
     } else {
         if (titleEl) titleEl.textContent = 'Gemini Assistant';
         if (applyBtn) applyBtn.textContent = 'Insert into Email';
@@ -1933,12 +2088,18 @@ function lpai_select_action(action) {
     var input = doc.getElementById('lpai-input');
     if (input) {
         var placeholders = {
-            'compose': (lpai_panel_context === 'response') ? 'What canned response should Gemini write? (e.g. Out of office, Billing confirmation...)' : 'What should Gemini write?',
-            'rewrite': (lpai_panel_context === 'response') ? 'How should Gemini rephrase this response?' : 'How should Gemini rephrase this?',
+            'compose': (lpai_panel_context === 'response') ? 'What canned response should Gemini write? (e.g. Out of office, Billing confirmation...)' :
+                       (lpai_panel_context === 'newsletter') ? 'What newsletter should Gemini write? (e.g. Monthly roundup, special launch, exclusive member promo...)' :
+                       'What should Gemini write?',
+            'rewrite': (lpai_panel_context === 'response') ? 'How should Gemini rephrase this response?' :
+                       (lpai_panel_context === 'newsletter') ? 'How should Gemini enhance this newsletter? (e.g. More engaging, add CTA, punchier headings...)' :
+                       'How should Gemini rephrase this?',
             'fix': 'Correcting grammar & clarity...',
             'translate': 'Translating into selected language...',
             'summarize': 'Extracting key takeaways...',
-            'suggest_subject': (lpai_panel_context === 'response') ? 'Suggesting a clear name for this response...' : 'Generating high-impact subject lines...'
+            'suggest_subject': (lpai_panel_context === 'response') ? 'Suggesting a clear name for this response...' :
+                               (lpai_panel_context === 'newsletter') ? 'Generating 5 high-converting, spam-compliant newsletter subject lines...' :
+                               'Generating high-impact subject lines...'
         };
         input.placeholder = placeholders[action] || 'Instruction for Gemini...';
     }
@@ -1964,7 +2125,7 @@ function lpai_submit() {
     if (generateBtn) generateBtn.style.display = 'none';
 
     var contextText = '';
-    if (lpai_panel_context === 'compose' || lpai_panel_context === 'response') {
+    if (lpai_panel_context === 'compose' || lpai_panel_context === 'response' || lpai_panel_context === 'newsletter') {
         contextText = lpai_get_editor_content();
     } else {
         contextText = lpai_get_message_text();
@@ -1985,9 +2146,10 @@ function lpai_submit() {
 
     var postData = {
         _action: 'plugin.lifeprisma_ai_stream',
-        ai_action: (action === 'suggest_subject' && lpai_panel_context === 'response') ? 'suggest_response_name' : action,
+        ai_action: (action === 'suggest_subject' && lpai_panel_context === 'response') ? 'suggest_response_name' :
+                   (action === 'compose' && lpai_panel_context === 'newsletter') ? 'newsletter_draft' : action,
         instruction: instruction,
-        email_body: (lpai_panel_context === 'compose' || lpai_panel_context === 'response') ? contextText : '',
+        email_body: (lpai_panel_context === 'compose' || lpai_panel_context === 'response' || lpai_panel_context === 'newsletter') ? contextText : '',
         reply_text: (lpai_panel_context === 'read') ? contextText.substring(0, 3500) : '',
         subject: (lpai_panel_context === 'response') ? lpai_get_response_name() : lpai_get_subject(),
         language: language,
@@ -2033,9 +2195,25 @@ function lpai_apply_result() {
         if (rcmail.display_message) rcmail.display_message('Response name set', 'confirmation');
         return;
     }
+    if (lpai_panel_context === 'newsletter' && lpai_current_action === 'suggest_subject') {
+        var subInput = document.getElementById('newsletter-subject') || document.getElementById('_subject');
+        if (subInput) {
+            var cleanSub = lpai_last_result.trim().replace(/^["']|["']$/g, '').replace(/[\r\n]+/g, ' ');
+            var lines = cleanSub.split('\n').filter(function(l) { return l.trim().length > 0; });
+            if (lines.length > 0) cleanSub = lines[0].replace(/^\d+\.\s*/, '').replace(/^["']|["']$/g, '');
+            subInput.value = cleanSub;
+            subInput.dispatchEvent(new Event('input', { bubbles: true }));
+            subInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        lpai_close_panel();
+        if (rcmail.display_message) rcmail.display_message('Newsletter subject set', 'confirmation');
+        return;
+    }
     lpai_apply_with_preserve(lpai_last_result);
     lpai_close_panel();
-    var msg = (lpai_panel_context === 'response') ? 'Gemini response inserted' : 'Gemini text inserted';
+    var msg = (lpai_panel_context === 'response') ? 'Gemini response inserted' :
+              (lpai_panel_context === 'newsletter') ? 'Gemini newsletter content inserted' :
+              'Gemini text inserted';
     if (rcmail.display_message) rcmail.display_message(msg, 'confirmation');
 }
 

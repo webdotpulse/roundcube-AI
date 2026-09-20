@@ -270,7 +270,12 @@ class newsletter extends rcube_plugin
                                 </div>
 
                                 <div class="form-group mb-3">
-                                    <label class="form-label font-weight-bold"><?= htmlspecialchars($this->gettext('subject'), ENT_QUOTES, 'UTF-8') ?></label>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label class="form-label font-weight-bold mb-0"><?= htmlspecialchars($this->gettext('subject'), ENT_QUOTES, 'UTF-8') ?></label>
+                                        <button type="button" id="btn-newsletter-ai-subject" class="btn btn-xs btn-gemini-ai" title="Generate catchy, high-open-rate subject lines with Gemini AI">
+                                            <span class="sparkle-icon">✨</span> Gemini Subject
+                                        </button>
+                                    </div>
                                     <input type="text" id="newsletter-subject" class="form-control" placeholder="<?= htmlspecialchars($this->gettext('subject_placeholder'), ENT_QUOTES, 'UTF-8') ?>" value="Exciting updates for our community">
                                     <small id="subject-hint" class="form-text text-muted">Keep under 60 characters. Avoid excessive punctuation (!!!) or spam trigger words.</small>
                                 </div>
@@ -283,6 +288,38 @@ class newsletter extends rcube_plugin
                                     <button type="button" class="btn-token" data-token="{email}">✉️ {email}</button>
                                     <button type="button" class="btn-token" data-token="{date}">📅 {date}</button>
                                     <button type="button" class="btn-token highlight" data-token="{unsubscribe_url}">🔗 {unsubscribe_url}</button>
+                                </div>
+
+                                <!-- Gemini AI Studio Toolbar -->
+                                <div class="newsletter-ai-bar mb-3" id="newsletter-ai-bar">
+                                    <div class="newsletter-ai-bar-inner">
+                                        <div class="newsletter-ai-badge">
+                                            <span class="gemini-sparkle-svg">
+                                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                                    <path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/>
+                                                </svg>
+                                            </span>
+                                            <span class="ai-label-text">Gemini AI</span>
+                                            <span class="ai-model-tag">Flash 3.8</span>
+                                        </div>
+                                        <div class="newsletter-ai-actions">
+                                            <button type="button" class="btn btn-sm btn-gemini-action btn-gemini-primary" id="btn-newsletter-ai-draft" title="Generate a complete marketing or update newsletter with Gemini">
+                                                <span class="btn-icon">✨</span> Draft Newsletter
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-gemini-action" id="btn-newsletter-ai-rewrite" title="Rephrase and enhance the existing content with higher engagement">
+                                                <span class="btn-icon">🔄</span> Polish &amp; Rewrite
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-gemini-action" id="btn-newsletter-ai-fix" title="Fix spelling, grammar, and sentence flow">
+                                                <span class="btn-icon">✔️</span> Fix Grammar
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-gemini-action" id="btn-newsletter-ai-optimize-spam" title="Optimize content to avoid spam filters and reduce spam score">
+                                                <span class="btn-icon">🛡️</span> Optimize Deliverability
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-gemini-action btn-gemini-panel" id="btn-newsletter-ai-open-panel" title="Open full Gemini Assistant (Alt+A)">
+                                                <span class="btn-icon">⚡</span> Assistant Panel
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Editor Container -->
@@ -524,23 +561,33 @@ class newsletter extends rcube_plugin
     public function action_groups(): void
     {
         $groups = [];
-        $sources = (array)$this->rcmail->get_address_sources(true);
+        $sources = (array)$this->rcmail->get_address_sources(false);
+        if (empty($sources)) {
+            $defaultBook = $this->rcmail->get_address_book(null);
+            if ($defaultBook) {
+                $sources = ['0' => ['id' => '0', 'name' => 'Personal Addresses']];
+            }
+        }
 
-        foreach ($sources as $source) {
-            $sourceId = (string)($source['id'] ?? '');
+        foreach ($sources as $sourceKey => $source) {
+            $sourceId = (string)($source['id'] ?? $sourceKey ?? '');
             if ($sourceId === '') {
                 continue;
             }
             $abook = $this->rcmail->get_address_book($sourceId);
             if ($abook) {
+                $sourceName = (string)($source['name'] ?? 'Address Book');
                 $groupList = $abook->list_groups();
-                if (is_array($groupList)) {
+                if (is_array($groupList) || is_iterable($groupList)) {
                     foreach ($groupList as $g) {
-                        $groups[] = [
-                            'id' => $sourceId . ':' . ($g['ID'] ?? $g['id'] ?? ''),
-                            'name' => (string)($g['name'] ?? 'Group'),
-                            'source' => (string)($source['name'] ?? 'Address Book'),
-                        ];
+                        $gId = (string)($g['ID'] ?? $g['id'] ?? '');
+                        if ($gId !== '') {
+                            $groups[] = [
+                                'id' => $sourceId . ':' . $gId,
+                                'name' => (string)($g['name'] ?? 'Group'),
+                                'source' => $sourceName,
+                            ];
+                        }
                     }
                 }
             }
@@ -549,7 +596,7 @@ class newsletter extends rcube_plugin
         $this->jsonResponse([
             'success' => true,
             'groups' => $groups,
-            'sources' => $sources,
+            'sources' => array_values($sources),
         ]);
     }
 
@@ -1094,15 +1141,33 @@ HTML;
         } else {
             // Query Roundcube address book sources safely
             try {
-                $sources = (array)$this->rcmail->get_address_sources(true);
-                foreach ($sources as $source) {
-                    $sourceId = (string)($source['id'] ?? '');
+                $sources = (array)$this->rcmail->get_address_sources(false);
+                if (empty($sources)) {
+                    $defaultBook = $this->rcmail->get_address_book(null);
+                    if ($defaultBook) {
+                        $sources = ['0' => ['id' => '0', 'name' => 'Personal Addresses']];
+                    }
+                }
+
+                foreach ($sources as $sourceKey => $source) {
+                    $sourceId = (string)($source['id'] ?? $sourceKey ?? '');
                     if ($sourceId === '') {
                         continue;
                     }
                     $abook = $this->rcmail->get_address_book($sourceId);
                     if (!$abook) {
                         continue;
+                    }
+
+                    // Reset and configure pagination to retrieve all records
+                    if (method_exists($abook, 'reset')) {
+                        $abook->reset();
+                    }
+                    if (method_exists($abook, 'set_page')) {
+                        $abook->set_page(1);
+                    }
+                    if (method_exists($abook, 'set_pagesize')) {
+                        $abook->set_pagesize(99999);
                     }
 
                     if ($sourceType === 'groups' && !empty($selectedGroups)) {
@@ -1120,11 +1185,8 @@ HTML;
                         }
                     } else {
                         // All contacts in this address book
-                        if (method_exists($abook, 'reset')) {
-                            $abook->reset();
-                        }
                         if (method_exists($abook, 'set_group')) {
-                            $abook->set_group('');
+                            $abook->set_group(0);
                         }
                         $records = $abook->list_records();
                         $this->collectAddressBookRecords($records, $rawRecipients);
@@ -1178,31 +1240,46 @@ HTML;
     }
 
     /**
-     * Safely iterate and collect records from address book results
+     * Safely iterate and collect records from address book results (handles Arrays, Traversables, rcube_result_set)
      */
     protected function collectAddressBookRecords(mixed $records, array &$rawRecipients): void
     {
-        if (is_array($records)) {
+        if (is_iterable($records)) {
             foreach ($records as $r) {
-                $extracted = $this->extractContactRecord($r);
-                if (!empty($extracted['email'])) {
-                    $rawRecipients[] = $extracted;
-                }
+                $this->collectSingleContact($r, $rawRecipients);
             }
-        } elseif (is_object($records)) {
-            if (method_exists($records, 'next')) {
-                while ($rec = $records->next()) {
-                    $extracted = $this->extractContactRecord($rec);
-                    if (!empty($extracted['email'])) {
-                        $rawRecipients[] = $extracted;
-                    }
-                }
-            } elseif (is_iterable($records)) {
-                foreach ($records as $r) {
-                    $extracted = $this->extractContactRecord($r);
-                    if (!empty($extracted['email'])) {
-                        $rawRecipients[] = $extracted;
-                    }
+        } elseif (is_object($records) && isset($records->records) && is_iterable($records->records)) {
+            foreach ($records->records as $r) {
+                $this->collectSingleContact($r, $rawRecipients);
+            }
+        } elseif (is_object($records) && method_exists($records, 'iterate')) {
+            while ($r = $records->iterate()) {
+                $this->collectSingleContact($r, $rawRecipients);
+            }
+        }
+    }
+
+    /**
+     * Collect contact records including secondary emails if present
+     */
+    protected function collectSingleContact(mixed $r, array &$rawRecipients): void
+    {
+        $extracted = $this->extractContactRecord($r);
+        if (!empty($extracted['email'])) {
+            $rawRecipients[] = $extracted;
+        }
+
+        // Check if contact record contains multiple email addresses
+        $fields = is_object($r) && method_exists($r, 'get_fields') ? (array)$r->get_fields() : (array)$r;
+        if (!empty($fields['email']) && is_array($fields['email']) && count($fields['email']) > 1) {
+            $name = $extracted['name'] ?? '';
+            foreach (array_slice($fields['email'], 1) as $altEmail) {
+                $altEmail = trim((string)$altEmail);
+                if (!empty($altEmail) && filter_var($altEmail, FILTER_VALIDATE_EMAIL)) {
+                    $rawRecipients[] = [
+                        'email' => $altEmail,
+                        'name' => $name,
+                    ];
                 }
             }
         }
@@ -1249,7 +1326,13 @@ HTML;
             $email = is_array($record['email']) ? (string)($record['email'][0] ?? '') : (string)$record['email'];
         }
 
-        $name = (string)($record['name'] ?? '');
+        $name = '';
+        if (class_exists('rcube_addressbook') && method_exists('rcube_addressbook', 'compose_list_name')) {
+            $name = (string)rcube_addressbook::compose_list_name($record);
+        }
+        if (empty($name)) {
+            $name = (string)($record['name'] ?? $record['displayname'] ?? '');
+        }
         if (empty($name)) {
             $firstName = (string)($record['firstname'] ?? '');
             $surname = (string)($record['surname'] ?? '');

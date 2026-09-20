@@ -11,7 +11,7 @@
  */
 class lifeprisma_ai extends rcube_plugin
 {
-    public $task = 'mail|settings';
+    public $task = '?(?!logout).*';
 
     public function init()
     {
@@ -75,8 +75,9 @@ class lifeprisma_ai extends rcube_plugin
         $is_compose = ($template === 'compose');
         $is_read = ($template === 'message' || $template === 'messagepreview' || $template === 'mail');
         $is_response = ($template === 'responses' || $template === 'responseedit' || in_array($rcmail->action, ['responses', 'response-edit', 'response-add', 'add-response', 'edit-response'], true));
+        $is_newsletter = ($rcmail->task === 'newsletter' || strpos((string)$rcmail->action, 'newsletter') !== false || ($template === 'plugin' && $rcmail->task === 'newsletter'));
 
-        if ($is_compose || $is_read || $is_response) {
+        if ($is_compose || $is_read || $is_response || $is_newsletter) {
             $gemini = $this->get_gemini_config();
             $active_skin = $rcmail->config->get('skin', 'elastic');
 
@@ -2236,6 +2237,24 @@ Body:
 
         if ($action === 'scam') {
             return "You are a cybersecurity expert specialized in email fraud detection. Analyze the email for phishing, social engineering, spoofing, and malicious intent. Provide a clear verdict (SAFE, SUSPICIOUS, or DANGEROUS) followed by specific evidence points.";
+        }
+
+        if ($action === 'newsletter_draft' || $action === 'newsletter') {
+            return "You are an elite email marketing copywriter and deliverability specialist powered by Google Gemini.
+Create high-converting, engaging newsletter content formatted in clean, modern email HTML with inline CSS styling.
+Rules:
+1. Generate structured, beautiful email layout: clean header, compelling hero title, engaging intro paragraph, 2-3 content sections or article highlights with clear headings, a prominent call-to-action button, and a polite sign-off.
+2. Incorporate dynamic personalization tokens where appropriate ({first_name}, {name}, {unsubscribe_url}).
+3. Write crisp, persuasive copy that avoids spam trigger words (no all-caps screaming, no excessive punctuation, no spam clichés).
+4. Ensure clean HTML semantics compatible with all modern email clients and dual MIME rendering.
+5. Return ONLY the newsletter HTML body content. No meta-commentary, markdown wrapping backticks, or conversational preamble.";
+        }
+
+        if ($action === 'newsletter_optimize_spam') {
+            return "You are an email deliverability and anti-spam heuristic expert.
+Review the provided newsletter subject and body. Identify deliverability risks, spam trigger patterns, and formatting traps.
+Rewrite the content to maximize deliverability, readability, and inbox placement while preserving marketing impact.
+Return ONLY the deliverability-optimized newsletter HTML.";
         }
 
         return "You are Google Gemini, an elite executive email assistant embedded in Roundcube webmail. Rules:

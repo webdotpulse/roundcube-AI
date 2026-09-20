@@ -146,14 +146,31 @@ if (!class_exists('rcube')) {
         }
     }
 
+    class rcube_result_set_mock implements \Iterator
+    {
+        public array $records;
+        private int $pos = 0;
+
+        public function __construct(array $records) {
+            $this->records = $records;
+        }
+        public function current(): mixed { return $this->records[$this->pos] ?? null; }
+        public function key(): mixed { return $this->pos; }
+        public function next(): void { $this->pos++; }
+        public function rewind(): void { $this->pos = 0; }
+        public function valid(): bool { return isset($this->records[$this->pos]); }
+    }
+
     class rcube_address_book_mock
     {
-        private array $contacts = [
+        public array $contacts = [
             ['name' => 'Alice Martin', 'email' => 'alice@example.org', 'firstname' => 'Alice', 'surname' => 'Martin'],
             ['name' => 'Bob Builder', 'email' => 'bob@example.org', 'firstname' => 'Bob', 'surname' => 'Builder'],
             ['name' => 'Charlie Chaplin', 'email' => 'charlie@example.org', 'firstname' => 'Charlie', 'surname' => 'Chaplin'],
         ];
-        private int $index = 0;
+        public string $currentGroup = '';
+        public int $page = 1;
+        public int $pagesize = 50;
 
         public function list_groups(): array
         {
@@ -163,14 +180,35 @@ if (!class_exists('rcube')) {
             ];
         }
 
+        public function set_group($gid): void
+        {
+            $this->currentGroup = (string)$gid;
+        }
+
+        public function set_page(int $page): void
+        {
+            $this->page = $page;
+        }
+
+        public function set_pagesize(int $ps): void
+        {
+            $this->pagesize = $ps;
+        }
+
         public function list_records()
         {
-            return $this->contacts;
+            if ($this->currentGroup === 'vip') {
+                return new rcube_result_set_mock([
+                    ['name' => 'Alice Martin', 'email' => 'alice@example.org', 'firstname' => 'Alice', 'surname' => 'Martin']
+                ]);
+            }
+            return new rcube_result_set_mock($this->contacts);
         }
 
         public function reset(): void
         {
-            $this->index = 0;
+            $this->currentGroup = '';
+            $this->page = 1;
         }
     }
 
@@ -447,4 +485,84 @@ assert_test(str_contains($iconsCommon, 'newsletter: icons_map.$newspaper'), "_ic
 $elasticCss = file_get_contents(dirname(__DIR__) . '/Extra context/plugins/xframework/assets/styles/elastic.css');
 assert_test(str_contains($elasticCss, '.xskin #taskmenu a.newsletter:before'), "elastic.css compiles .xskin #taskmenu a.newsletter:before rules");
 
-echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (12/12) ***\n";
+// --------------------------------------------------------------------------
+// Test Suite 12: Address Book Resolution & Iterator Bug Fix
+// --------------------------------------------------------------------------
+echo "\n--- Test Suite 12: Address Book Resolution & Iterator Bug Fix ---\n";
+
+// 1. All Contacts resolution with Iterator result set (verifying records are NOT dropped by void next())
+$allRecipients = $newsletter->resolveRecipients('all', [], '');
+assert_test(count($allRecipients['deliverable']) === 3, "resolveRecipients('all') collects all 3 records from Iterator address book");
+$emails = array_column($allRecipients['deliverable'], 'email');
+assert_test(in_array('alice@example.org', $emails, true), "deliverable includes alice@example.org");
+assert_test(in_array('bob@example.org', $emails, true), "deliverable includes bob@example.org");
+assert_test(in_array('charlie@example.org', $emails, true), "deliverable includes charlie@example.org");
+
+// 2. Group resolution
+$groupRecipients = $newsletter->resolveRecipients('groups', ['0:vip'], '');
+assert_test(count($groupRecipients['deliverable']) === 1, "resolveRecipients('groups') resolves selected group");
+assert_test(($groupRecipients['deliverable'][0]['email'] ?? '') === 'alice@example.org', "group recipient is Alice from VIP group");
+
+// 3. action_groups endpoint with read-only & default address book handling
+$newsletter->action_groups();
+$resGroups = rcmail::get_instance()->output->lastJsonResponse;
+assert_test(is_array($resGroups) && ($resGroups['success'] ?? false) === true, "action_groups executes and outputs success");
+assert_test(count($resGroups['sources'] ?? []) >= 1, "action_groups returns address sources");
+assert_test(count($resGroups['groups'] ?? []) >= 2, "action_groups returns contact groups");
+
+// 4. Multi-email contact record extraction
+$multiEmailRecipients = [];
+$refMethodCollect = new ReflectionMethod('newsletter', 'collectSingleContact');
+$refMethodCollect->setAccessible(true);
+$refMethodCollect->invokeArgs($newsletter, [
+    ['name' => 'Dr. Multi', 'email' => ['multi1@example.org', 'multi2@example.org']],
+    &$multiEmailRecipients
+]);
+assert_test(count($multiEmailRecipients) === 2, "collectSingleContact extracts all valid emails for a contact");
+assert_test($multiEmailRecipients[0]['email'] === 'multi1@example.org', "primary email collected");
+assert_test($multiEmailRecipients[1]['email'] === 'multi2@example.org', "secondary email collected");
+
+// --------------------------------------------------------------------------
+// Test Suite 13: Gemini AI Integration in Newsletter Studio
+// --------------------------------------------------------------------------
+echo "\n--- Test Suite 13: Gemini AI Integration in Newsletter Studio ---\n";
+
+// 1. UI Elements in render_newsletter_ui
+$ui = $newsletter->render_newsletter_ui();
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-subject"'), "render_newsletter_ui contains Gemini Subject button");
+assert_test(str_contains($ui, 'id="newsletter-ai-bar"'), "render_newsletter_ui contains Gemini AI Studio bar");
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-draft"'), "render_newsletter_ui contains Draft Newsletter button");
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-rewrite"'), "render_newsletter_ui contains Polish & Rewrite button");
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-fix"'), "render_newsletter_ui contains Fix Grammar button");
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-optimize-spam"'), "render_newsletter_ui contains Optimize Deliverability button");
+assert_test(str_contains($ui, 'id="btn-newsletter-ai-open-panel"'), "render_newsletter_ui contains Open Assistant Panel button");
+
+// 2. CSS Rules in newsletter.css
+$cssContent = file_get_contents($pluginDir . '/newsletter.css');
+assert_test(str_contains($cssContent, '.btn-gemini-ai'), "newsletter.css defines .btn-gemini-ai styling");
+assert_test(str_contains($cssContent, '.newsletter-ai-bar'), "newsletter.css defines .newsletter-ai-bar container");
+assert_test(str_contains($cssContent, '.btn-gemini-action'), "newsletter.css defines .btn-gemini-action buttons");
+assert_test(str_contains($cssContent, '.newsletter-ai-badge'), "newsletter.css defines .newsletter-ai-badge");
+assert_test(str_contains($cssContent, 'html.dark-mode .newsletter-ai-bar') || str_contains($cssContent, '.xskin-dark .newsletter-ai-bar'), "newsletter.css provides dark mode styling for Gemini AI bar");
+
+// 3. Client JS in newsletter.js
+$jsContent = file_get_contents($pluginDir . '/newsletter.js');
+assert_test(str_contains($jsContent, 'setupGeminiAI'), "newsletter.js defines setupGeminiAI method");
+assert_test(str_contains($jsContent, '#btn-newsletter-ai-subject'), "newsletter.js binds AI subject suggestion");
+assert_test(str_contains($jsContent, '#btn-newsletter-ai-draft'), "newsletter.js binds Draft Newsletter action");
+assert_test(str_contains($jsContent, '#btn-newsletter-ai-optimize-spam'), "newsletter.js binds deliverability optimization");
+
+// 4. LifePrisma AI backend & frontend integration
+$aiPhp = file_get_contents(dirname(__DIR__) . '/lifeprisma_ai.php');
+assert_test(str_contains($aiPhp, "'newsletter'") || str_contains($aiPhp, 'task === \'newsletter\'') || str_contains($aiPhp, "public \$task = '?(?!logout).*'"), "lifeprisma_ai.php task allows newsletter");
+assert_test(str_contains($aiPhp, '$is_newsletter ='), "lifeprisma_ai.php render_page detects newsletter task");
+assert_test(str_contains($aiPhp, 'newsletter_draft') && str_contains($aiPhp, 'newsletter_optimize_spam'), "lifeprisma_ai.php build_system_prompt defines newsletter prompt templates");
+
+$aiJs = file_get_contents(dirname(__DIR__) . '/src/lifeprisma_ai.js');
+assert_test(str_contains($aiJs, "task === 'newsletter'"), "src/lifeprisma_ai.js registers newsletter task listener");
+assert_test(str_contains($aiJs, 'lpai_init_newsletter'), "src/lifeprisma_ai.js defines lpai_init_newsletter function");
+assert_test(str_contains($aiJs, 'newsletter-body'), "src/lifeprisma_ai.js editor utilities support newsletter-body");
+assert_test(str_contains($aiJs, 'newsletter-subject'), "src/lifeprisma_ai.js subject utilities support newsletter-subject");
+assert_test(str_contains($aiJs, 'Gemini Newsletter Assistant'), "src/lifeprisma_ai.js adapts modal title for newsletter");
+
+echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (14/14) ***\n";

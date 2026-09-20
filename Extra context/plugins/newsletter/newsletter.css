@@ -493,6 +493,172 @@ body.task-newsletter #main {
     color: #047857;
 }
 
+/* Gemini AI Subject Button */
+.btn-gemini-ai {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(139, 92, 246, 0.25);
+}
+
+.btn-gemini-ai:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    color: #ffffff !important;
+}
+
+.btn-gemini-ai:active {
+    transform: translateY(0);
+}
+
+/* Gemini AI Studio Bar */
+.newsletter-ai-bar {
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+    border: 1px solid #ddd6fe;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 6px;
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.08);
+}
+
+.newsletter-ai-bar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.newsletter-ai-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #5b21b6;
+}
+
+.newsletter-ai-badge .gemini-sparkle-svg {
+    display: inline-flex;
+    color: #7c3aed;
+    animation: lpai-sparkle-pulse 2.5s infinite ease-in-out;
+}
+
+@keyframes lpai-sparkle-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.18); opacity: 1; filter: drop-shadow(0 0 4px rgba(124, 58, 237, 0.6)); }
+}
+
+.newsletter-ai-badge .ai-model-tag {
+    background: #7c3aed;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.newsletter-ai-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.btn-gemini-action {
+    background: #ffffff;
+    border: 1px solid #c4b5fd;
+    color: #6d28d9;
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.18s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.btn-gemini-action:hover {
+    background: #f5f3ff;
+    border-color: #8b5cf6;
+    color: #4c1d95;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(139, 92, 246, 0.2);
+}
+
+.btn-gemini-action.btn-gemini-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+    border-color: transparent;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(124, 58, 237, 0.3);
+}
+
+.btn-gemini-action.btn-gemini-primary:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #4f46e5 100%);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.45);
+    color: #ffffff;
+}
+
+.btn-gemini-action.btn-gemini-panel {
+    background: #ede9fe;
+    border-color: #a78bfa;
+    color: #5b21b6;
+}
+
+.btn-gemini-action.btn-gemini-panel:hover {
+    background: #ddd6fe;
+    color: #4c1d95;
+}
+
+/* Dark mode overrides for Gemini AI studio bar */
+html.dark-mode .newsletter-ai-bar,
+body.dark-mode .newsletter-ai-bar,
+[data-theme="dark"] .newsletter-ai-bar,
+.xskin-dark .newsletter-ai-bar {
+    background: linear-gradient(135deg, #1e1b4b 0%, #2e1065 100%);
+    border-color: #4c1d95;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+html.dark-mode .newsletter-ai-badge,
+body.dark-mode .newsletter-ai-badge,
+[data-theme="dark"] .newsletter-ai-badge,
+.xskin-dark .newsletter-ai-badge {
+    color: #e9d5ff;
+}
+
+html.dark-mode .btn-gemini-action,
+body.dark-mode .btn-gemini-action,
+[data-theme="dark"] .btn-gemini-action,
+.xskin-dark .btn-gemini-action {
+    background: #2e1065;
+    border-color: #5b21b6;
+    color: #ddd6fe;
+}
+
+html.dark-mode .btn-gemini-action:hover,
+body.dark-mode .btn-gemini-action:hover,
+[data-theme="dark"] .btn-gemini-action:hover,
+.xskin-dark .btn-gemini-action:hover {
+    background: #3b0764;
+    border-color: #8b5cf6;
+    color: #ffffff;
+}
+
 .editor-tabs {
     display: flex;
     gap: 6px;
