@@ -2022,8 +2022,17 @@ Body:
     private function get_ai_panel_html($gemini)
     {
         $model_options = '';
-        foreach ($gemini['models'] as $m) {
-            $selected = ($m === $gemini['model']) ? ' selected' : '';
+        $models = !empty($gemini['models']) && is_array($gemini['models']) ? $gemini['models'] : [
+            'gemini-3.8-flash',
+            'gemini-3.8-flash-cyber',
+            'gemini-3.7-flash',
+            'gemini-3.6-flash',
+            'gemini-3.5-flash',
+            'gemini-3.5-flash-lite',
+        ];
+        $current_model = $gemini['model'] ?? 'gemini-3.8-flash';
+        foreach ($models as $m) {
+            $selected = ($m === $current_model) ? ' selected' : '';
             $model_options .= '<option value="' . htmlspecialchars($m) . '"' . $selected . '>' . htmlspecialchars($m) . '</option>';
         }
 

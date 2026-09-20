@@ -27,10 +27,10 @@
     top: 50% !important;
     left: 50% !important;
     transform: translate(-50%, -50%) !important;
-    width: 660px !important;
+    width: 800px !important;
     max-width: calc(100vw - 32px) !important;
     max-height: calc(100vh - 48px) !important;
-    background: #ffffff !important;
+    background: #fff !important;
     border: 1px solid rgba(229, 231, 235, 0.9) !important;
     border-radius: 18px !important;
     box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(147, 51, 234, 0.08) !important;
@@ -41,7 +41,7 @@
     font-size: 14px !important;
     color: #1f2937 !important;
     box-sizing: border-box !important;
-    animation: lpai-modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    animation: lpai-modal-pop .25s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 #lpai-panel[style*="display: none"],
@@ -252,6 +252,9 @@ select.lpai-select,
 #lpai-model-select,
 #lpai-tone-select,
 #lpai-lang-select {
+    position: relative !important;
+    z-index: 10 !important;
+    pointer-events: auto !important;
     width: 100% !important;
     height: 38px !important;
     padding: 6px 30px 6px 12px !important;
@@ -267,11 +270,19 @@ select.lpai-select,
     background-size: 16px 16px !important;
     appearance: none !important;
     -webkit-appearance: none !important;
-    -moz-appearance: none !important;
     cursor: pointer !important;
     transition: border-color 0.15s, box-shadow 0.15s !important;
     box-sizing: border-box !important;
     outline: none !important;
+}
+
+select.lpai-select option,
+#lpai-model-select option,
+#lpai-tone-select option,
+#lpai-lang-select option {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+    padding: 6px 10px !important;
 }
 
 select.lpai-select:focus,
@@ -1089,6 +1100,18 @@ html.dark-mode #lpai-input,
 .dark-mode #lpai-input {
     background-color: #27272a !important;
     border-color: #3f3f46 !important;
+    color: #f3f4f6 !important;
+}
+
+html.dark-mode select.lpai-select option,
+.dark-mode select.lpai-select option,
+html.dark-mode #lpai-model-select option,
+.dark-mode #lpai-model-select option,
+html.dark-mode #lpai-tone-select option,
+.dark-mode #lpai-tone-select option,
+html.dark-mode #lpai-lang-select option,
+.dark-mode #lpai-lang-select option {
+    background-color: #27272a !important;
     color: #f3f4f6 !important;
 }
 

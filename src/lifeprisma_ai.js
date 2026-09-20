@@ -1294,6 +1294,35 @@ function lpai_get_modal_elements() {
     return { panel: panel, overlay: overlay };
 }
 
+function lpai_get_modal_doc() {
+    var els = lpai_get_modal_elements();
+    if (els.panel && els.panel.ownerDocument) {
+        return els.panel.ownerDocument;
+    }
+    return document;
+}
+
+function lpai_sync_select_elements() {
+    var doc = lpai_get_modal_doc();
+    var mSel = doc.getElementById('lpai-model-select');
+    var tSel = doc.getElementById('lpai-tone-select');
+    var lSel = doc.getElementById('lpai-lang-select');
+    var tag = doc.querySelector('.lpai-model-tag');
+
+    if (mSel && lpai_options.model) {
+        mSel.value = lpai_options.model;
+    }
+    if (tSel && lpai_options.tone) {
+        tSel.value = lpai_options.tone;
+    }
+    if (lSel && lpai_options.language) {
+        lSel.value = lpai_options.language;
+    }
+    if (tag) {
+        tag.textContent = (mSel && mSel.value) ? mSel.value : lpai_options.model;
+    }
+}
+
 function lpai_open_panel(context) {
     var els = lpai_get_modal_elements();
     var panel = els.panel;
@@ -1303,6 +1332,8 @@ function lpai_open_panel(context) {
     lpai_panel_context = context || 'compose';
     panel.style.display = 'flex';
     overlay.style.display = 'block';
+
+    lpai_sync_select_elements();
 
     var doc = panel.ownerDocument || document;
     var input = doc.getElementById('lpai-input');
@@ -1323,12 +1354,13 @@ function lpai_close_panel() {
 
 function lpai_select_action(action) {
     lpai_current_action = action;
-    var btns = document.querySelectorAll('.lpai-action-btn');
+    var doc = lpai_get_modal_doc();
+    var btns = doc.querySelectorAll('.lpai-action-btn');
     btns.forEach(function(b) {
         b.classList.toggle('active', b.dataset.action === action);
     });
 
-    var input = document.getElementById('lpai-input');
+    var input = doc.getElementById('lpai-input');
     if (input) {
         var placeholders = {
             'compose': 'What should Gemini write?',
@@ -1343,16 +1375,17 @@ function lpai_select_action(action) {
 }
 
 function lpai_submit() {
-    var input = document.getElementById('lpai-input');
+    var doc = lpai_get_modal_doc();
+    var input = doc.getElementById('lpai-input');
     var instruction = input ? input.value.trim() : '';
     var action = lpai_current_action || 'compose';
 
-    var preview = document.getElementById('lpai-preview');
-    var previewContent = document.getElementById('lpai-preview-content');
-    var applyBtn = document.getElementById('lpai-apply');
-    var copyBtn = document.getElementById('lpai-copy');
-    var cancelBtn = document.getElementById('lpai-cancel');
-    var generateBtn = document.getElementById('lpai-generate');
+    var preview = doc.getElementById('lpai-preview');
+    var previewContent = doc.getElementById('lpai-preview-content');
+    var applyBtn = doc.getElementById('lpai-apply');
+    var copyBtn = doc.getElementById('lpai-copy');
+    var cancelBtn = doc.getElementById('lpai-cancel');
+    var generateBtn = doc.getElementById('lpai-generate');
 
     if (preview) preview.style.display = 'block';
     if (applyBtn) applyBtn.style.display = 'none';
@@ -1367,9 +1400,14 @@ function lpai_submit() {
         contextText = lpai_get_message_text();
     }
 
-    var modelSelect = document.getElementById('lpai-model-select');
-    var toneSelect = document.getElementById('lpai-tone-select');
-    var langSelect = document.getElementById('lpai-lang-select');
+    var modelSelect = doc.getElementById('lpai-model-select');
+    var toneSelect = doc.getElementById('lpai-tone-select');
+    var langSelect = doc.getElementById('lpai-lang-select');
+
+    if (modelSelect && modelSelect.value) lpai_options.model = modelSelect.value;
+    if (toneSelect && toneSelect.value) lpai_options.tone = toneSelect.value;
+    if (langSelect && langSelect.value) lpai_options.language = langSelect.value;
+    lpai_save_prefs();
 
     var model = modelSelect ? modelSelect.value : lpai_options.model;
     var tone = toneSelect ? toneSelect.value : lpai_options.tone;
@@ -1399,7 +1437,7 @@ function lpai_submit() {
         if (applyBtn) applyBtn.style.display = 'inline-flex';
         if (copyBtn) copyBtn.style.display = 'inline-flex';
 
-        var costSpan = document.getElementById('lpai-token-cost');
+        var costSpan = doc.getElementById('lpai-token-cost');
         if (costSpan) {
             var cost = lpai_estimate_cost(model, tokens.input, tokens.output);
             costSpan.textContent = cost ? ('Cost: ' + cost) : '';
@@ -1445,54 +1483,85 @@ function lpai_estimate_cost(model, inpTokens, outTokens) {
 // Event Listeners
 // ========================================
 function lpai_bind_events() {
-    document.addEventListener('click', function(e) {
-        if (e.target.id === 'lpai-close' || e.target.id === 'lpai-overlay' || (e.target.closest && e.target.closest('#lpai-close'))) {
-            lpai_close_panel();
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && docs.indexOf(window.parent.document) === -1) {
+            docs.push(window.parent.document);
         }
-        var actionBtn = e.target.closest ? e.target.closest('.lpai-action-btn') : null;
-        if (actionBtn) {
-            lpai_select_action(actionBtn.dataset.action);
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
         }
-        var genBtn = e.target.closest ? e.target.closest('#lpai-generate') : null;
-        if (genBtn || e.target.id === 'lpai-generate') {
-            lpai_submit();
-        }
-        var applyBtn = e.target.closest ? e.target.closest('#lpai-apply') : null;
-        if (applyBtn || e.target.id === 'lpai-apply') {
-            lpai_apply_result();
-        }
-        var copyBtn = e.target.closest ? e.target.closest('#lpai-copy') : null;
-        if (copyBtn || e.target.id === 'lpai-copy') {
-            lpai_copy_result();
-        }
-        var cancelBtn = e.target.closest ? e.target.closest('#lpai-cancel') : null;
-        if (cancelBtn || e.target.id === 'lpai-cancel') {
-            if (lpai_stream_controller) {
-                lpai_stream_controller.abort();
-                lpai_stream_controller = null;
-            }
-        }
-    });
+    } catch (e) {}
 
-    document.addEventListener('keydown', function(e) {
-        if (e.target.id === 'lpai-input' && e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            lpai_submit();
-        }
-        if (e.key === 'Escape') {
-            lpai_close_panel();
-        }
-        if (e.altKey && (e.key === 'a' || e.key === 'A')) {
-            e.preventDefault();
-            var panel = document.getElementById('lpai-panel');
-            if (panel && panel.style.display !== 'none') {
-                lpai_close_panel();
-            } else {
-                var action = rcmail.env.action;
-                var ctx = (action === 'show' || action === 'preview') ? 'read' : 'compose';
-                lpai_open_panel(ctx);
+    docs.forEach(function(d) {
+        d.addEventListener('change', function(e) {
+            var t = e.target;
+            if (!t) return;
+            if (t.id === 'lpai-model-select') {
+                lpai_options.model = t.value;
+                lpai_save_prefs();
+                var modalDoc = lpai_get_modal_doc();
+                var tag = modalDoc.querySelector('.lpai-model-tag');
+                if (tag) tag.textContent = t.value;
+            } else if (t.id === 'lpai-tone-select') {
+                lpai_options.tone = t.value;
+                lpai_save_prefs();
+            } else if (t.id === 'lpai-lang-select') {
+                lpai_options.language = t.value;
+                lpai_save_prefs();
             }
-        }
+        });
+
+        d.addEventListener('click', function(e) {
+            if (e.target.id === 'lpai-close' || e.target.id === 'lpai-overlay' || (e.target.closest && e.target.closest('#lpai-close'))) {
+                lpai_close_panel();
+            }
+            var actionBtn = e.target.closest ? e.target.closest('.lpai-action-btn') : null;
+            if (actionBtn) {
+                lpai_select_action(actionBtn.dataset.action);
+            }
+            var genBtn = e.target.closest ? e.target.closest('#lpai-generate') : null;
+            if (genBtn || e.target.id === 'lpai-generate') {
+                lpai_submit();
+            }
+            var applyBtn = e.target.closest ? e.target.closest('#lpai-apply') : null;
+            if (applyBtn || e.target.id === 'lpai-apply') {
+                lpai_apply_result();
+            }
+            var copyBtn = e.target.closest ? e.target.closest('#lpai-copy') : null;
+            if (copyBtn || e.target.id === 'lpai-copy') {
+                lpai_copy_result();
+            }
+            var cancelBtn = e.target.closest ? e.target.closest('#lpai-cancel') : null;
+            if (cancelBtn || e.target.id === 'lpai-cancel') {
+                if (lpai_stream_controller) {
+                    lpai_stream_controller.abort();
+                    lpai_stream_controller = null;
+                }
+            }
+        });
+
+        d.addEventListener('keydown', function(e) {
+            if (e.target.id === 'lpai-input' && e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                lpai_submit();
+            }
+            if (e.key === 'Escape') {
+                lpai_close_panel();
+            }
+            if (e.altKey && (e.key === 'a' || e.key === 'A')) {
+                e.preventDefault();
+                var els = lpai_get_modal_elements();
+                var panel = els.panel;
+                if (panel && panel.style.display !== 'none') {
+                    lpai_close_panel();
+                } else {
+                    var action = rcmail.env.action;
+                    var ctx = (action === 'show' || action === 'preview') ? 'read' : 'compose';
+                    lpai_open_panel(ctx);
+                }
+            }
+        });
     });
 }
 
