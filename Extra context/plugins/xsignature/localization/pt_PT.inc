@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Assinatura';
+$labels['app_menu_title'] = 'Assinatura';
+$labels['signature_preview'] = 'Pré-visualização da assinatura';
+$labels['signature_builder'] = 'Construtor de assinaturas';
+$labels['enable'] = 'Ativar o Criador de assinaturas';
+$labels['preview'] = 'Pré-visualização';
+$labels['main'] = 'Principal';
+$labels['details'] = 'Detalhes';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Declaração de exoneração de responsabilidade';
+$labels['style'] = 'Estilo';
+$labels['export'] = 'Exportação';
+$labels['select_design'] = 'Selecionar desenho';
+$labels['name'] = 'Nome';
+$labels['position'] = 'Posição';
+$labels['user'] = 'Utilizador';
+$labels['logo'] = 'Logótipo';
+$labels['resize_note'] = 'Clique e arraste a imagem apresentada na pré-visualização para a redimensionar.';
+$labels['colors'] = 'Cores';
+$labels['fonts'] = 'Fontes';
+$labels['items'] = 'Artigos';
+$labels['image'] = 'Imagem';
+$labels['text'] = 'Texto';
+$labels['social_hand_drawn'] = 'Desenhado à mão';
+$labels['social_logotype'] = 'Logótipo';
+$labels['social_logotype_black'] = 'Logótipo preto';
+$labels['social_outline'] = 'Esboço';
+$labels['social_round_black'] = 'Preto redondo';
+$labels['social_round_flat'] = 'Plano redondo';
+$labels['social_round_gloss'] = 'Brilho redondo';
+$labels['social_square_black'] = 'Quadrado preto';
+$labels['social_square_flat'] = 'Plano quadrado';
+$labels['social_square_gloss'] = 'Brilho quadrado';
+$labels['social_xmas'] = 'Natal';
+$labels['templates'] = 'Modelos';
+$labels['template_note'] = 'A aplicação de um modelo substitui todas as modificações efectuadas no editor de design.';
+$labels['enable_image_resizing'] = 'Ativar o redimensionamento da imagem';
+$labels['layout'] = 'Disposição';
+$labels['separator'] = 'Separador';
+$labels['column'] = 'Coluna';
+$labels['row'] = 'Fila';
+$labels['include_in_plain_text'] = 'Incluir na assinatura de texto simples';
+$labels['show'] = 'Mostrar';
+$labels['hide'] = 'Esconder';
+$labels['no_change'] = 'Sem alterações';
+$labels['text_color'] = 'Cor do texto';
+$labels['show_titles'] = 'Mostrar títulos';
+$labels['title_color'] = 'Cor do título';
+$labels['title_style'] = 'Estilo do título';
+$labels['link_color'] = 'Cor da ligação';
+$labels['font_family'] = 'Família de fontes';
+$labels['font_size'] = 'Tamanho da letra';
+$labels['alignment'] = 'Alinhamento';
+$labels['disclaimer_size'] = 'Tamanho do tipo de letra da declaração de exoneração de responsabilidade';
+$labels['social_icon_style'] = 'Estilo de ícone social';
+$labels['social_icon_size'] = 'Tamanho do ícone social';
+$labels['add_item'] = 'Adicionar item';
+$labels['small'] = 'Pequeno';
+$labels['medium'] = 'Médio';
+$labels['large'] = 'Grande';
+$labels['tiny'] = 'Minúsculo';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Negrito';
+$labels['serif'] = 'Serifa';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Cursiva';
+$labels['monospace'] = 'Monoespaço';
+$labels['start_designing'] = 'Abrir o editor de design';
+$labels['finish_designing'] = 'Fechar o editor de design';
+$labels['designer_info'] = 'Arraste e largue os elementos da tabela abaixo para reorganizar as suas posições. Clique nos ícones de engrenagem para ajustar as propriedades das células.';
+$labels['cell_properties'] = 'Propriedades das células';
+$labels['left_padding'] = 'Preenchimento à esquerda';
+$labels['right_padding'] = 'Preenchimento à direita';
+$labels['top_padding'] = 'Acolchoamento superior';
+$labels['bottom_padding'] = 'Acolchoamento inferior';
+$labels['left_border'] = 'Margem esquerda';
+$labels['right_border'] = 'Margem direita';
+$labels['top_border'] = 'Fronteira superior';
+$labels['bottom_border'] = 'Rebordo inferior';
+$labels['border'] = 'Fronteira:';
+$labels['left'] = 'Esquerda';
+$labels['right'] = 'Certo';
+$labels['top'] = 'Topo';
+$labels['bottom'] = 'Fundo';
+$labels['middle'] = 'Médio';
+$labels['vertical_align'] = 'Alinhamento vertical:';
+$labels['export_note'] = 'Utilize este código HTML se pretender incluir a sua assinatura noutro programa de correio eletrónico.';
+$labels['copy_to_clipboard'] = 'Copiar para a área de transferência';
+$labels['close_design_editor_note'] = 'Feche o editor de design para obter o código HTML da assinatura.';
+$labels['copy_success_note'] = 'Assinatura copiada para a área de transferência';
+$labels['details_email'] = 'Correio eletrónico:';
+$labels['details_website'] = 'Sítio Web:';
+$labels['details_phone'] = 'Telefone:';
+$labels['details_mobile'] = 'Telemóvel:';
+$labels['details_address'] = 'Endereço:';
+$labels['image_alternative_text'] = 'Texto alternativo';

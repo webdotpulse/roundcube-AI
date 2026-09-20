@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Handtekening';
+$labels['app_menu_title'] = 'Handtekening';
+$labels['signature_preview'] = 'Voorbeeld';
+$labels['signature_builder'] = 'Handtekening bouwer';
+$labels['enable'] = 'Handtekeningmaker inschakelen';
+$labels['preview'] = 'Voorbeeld';
+$labels['main'] = 'Hoofd';
+$labels['details'] = 'Details';
+$labels['social'] = 'Sociaal';
+$labels['disclaimer'] = 'Disclaimer';
+$labels['style'] = 'Stijl';
+$labels['export'] = 'Export';
+$labels['select_design'] = 'Selecteer ontwerp';
+$labels['name'] = 'Naam';
+$labels['position'] = 'Positie';
+$labels['user'] = 'Gebruiker';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Klik en versleep de afbeelding in het voorbeeld om het formaat aan te passen.';
+$labels['colors'] = 'Kleuren';
+$labels['fonts'] = 'Fonts';
+$labels['items'] = 'Items';
+$labels['image'] = 'Afbeelding';
+$labels['text'] = 'Tekst';
+$labels['social_hand_drawn'] = 'Handgetekend';
+$labels['social_logotype'] = 'Logotype';
+$labels['social_logotype_black'] = 'Logotype zwart';
+$labels['social_outline'] = 'Schets';
+$labels['social_round_black'] = 'Rond zwart';
+$labels['social_round_flat'] = 'Rond plat';
+$labels['social_round_gloss'] = 'Ronde glans';
+$labels['social_square_black'] = 'Vierkant zwart';
+$labels['social_square_flat'] = 'Vierkant plat';
+$labels['social_square_gloss'] = 'Vierkante glans';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Sjablonen';
+$labels['template_note'] = 'Het toepassen van een sjabloon overschrijft alle wijzigingen die u met de ontwerp-editor hebt aangebracht.';
+$labels['enable_image_resizing'] = 'Inschakelen van het aanpassen van het beeldformaat';
+$labels['layout'] = 'Indeling';
+$labels['separator'] = 'Scheider';
+$labels['column'] = 'Kolom';
+$labels['row'] = 'Rij';
+$labels['include_in_plain_text'] = 'Opnemen in platte tekst handtekening';
+$labels['show'] = 'Toon';
+$labels['hide'] = 'Verberg';
+$labels['no_change'] = 'Geen verandering';
+$labels['text_color'] = 'Tekstkleur';
+$labels['show_titles'] = 'Toon titels';
+$labels['title_color'] = 'Titel kleur';
+$labels['title_style'] = 'Titel stijl';
+$labels['link_color'] = 'Link kleur';
+$labels['font_family'] = 'Lettertype familie';
+$labels['font_size'] = 'Lettergrootte';
+$labels['alignment'] = 'Uitlijning';
+$labels['disclaimer_size'] = 'Disclaimer lettergrootte';
+$labels['social_icon_style'] = 'Sociale icoonstijl';
+$labels['social_icon_size'] = 'Grootte sociaal pictogram';
+$labels['add_item'] = 'Item toevoegen';
+$labels['small'] = 'Kleine';
+$labels['medium'] = 'Medium';
+$labels['large'] = 'Groot';
+$labels['tiny'] = 'Kleine';
+$labels['normal'] = 'Normaal';
+$labels['bold'] = 'Gedurfd';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'schreefloos';
+$labels['cursive'] = 'Cursief';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Open ontwerp-editor';
+$labels['finish_designing'] = 'Design editor sluiten';
+$labels['designer_info'] = 'Versleep de elementen in de onderstaande tabel om hun positie te wijzigen. Klik op de tandwielpictogrammen om de celeigenschappen aan te passen.';
+$labels['cell_properties'] = 'Cel eigenschappen';
+$labels['left_padding'] = 'Vulling links';
+$labels['right_padding'] = 'Juiste vulling';
+$labels['top_padding'] = 'Top vulling';
+$labels['bottom_padding'] = 'Bodemvulling';
+$labels['left_border'] = 'Rand links';
+$labels['right_border'] = 'Rechter grens';
+$labels['top_border'] = 'Bovengrens';
+$labels['bottom_border'] = 'Onderste rand';
+$labels['border'] = 'Grens:';
+$labels['left'] = 'Links';
+$labels['right'] = 'Rechts';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Onderaan';
+$labels['middle'] = 'Midden';
+$labels['vertical_align'] = 'Verticale uitlijning:';
+$labels['export_note'] = 'Gebruik deze HTML-code als u uw handtekening in een ander e-mailprogramma wilt opnemen.';
+$labels['copy_to_clipboard'] = 'Kopiëren naar klembord';
+$labels['close_design_editor_note'] = 'Sluit de ontwerp editor om de handtekening HTML code te krijgen.';
+$labels['copy_success_note'] = 'Handtekening gekopieerd naar klembord';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Website:';
+$labels['details_phone'] = 'Telefoon:';
+$labels['details_mobile'] = 'Mobiel:';
+$labels['details_address'] = 'Adres:';
+$labels['image_alternative_text'] = 'Alternatieve tekst';

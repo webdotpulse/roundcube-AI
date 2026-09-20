@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'التوقيع';
+$labels['app_menu_title'] = 'التوقيع';
+$labels['signature_preview'] = 'معاينة التوقيع';
+$labels['signature_builder'] = 'منشئ التوقيع';
+$labels['enable'] = 'تمكين منشئ التواقيع';
+$labels['preview'] = 'معاينة';
+$labels['main'] = 'الرئيسية';
+$labels['details'] = 'التفاصيل';
+$labels['social'] = 'اجتماعي';
+$labels['disclaimer'] = 'إخلاء المسؤولية';
+$labels['style'] = 'الطراز';
+$labels['export'] = 'التصدير';
+$labels['select_design'] = 'اختر التصميم';
+$labels['name'] = 'الاسم';
+$labels['position'] = 'المنصب';
+$labels['user'] = 'المستخدم';
+$labels['logo'] = 'الشعار';
+$labels['resize_note'] = 'انقر واسحب الصورة المعروضة في المعاينة لتغيير حجمها.';
+$labels['colors'] = 'الألوان';
+$labels['fonts'] = 'الخطوط';
+$labels['items'] = 'العناصر';
+$labels['image'] = 'الصورة';
+$labels['text'] = 'النص';
+$labels['social_hand_drawn'] = 'مرسومة باليد';
+$labels['social_logotype'] = 'الشعار';
+$labels['social_logotype_black'] = 'شعار أسود اللون الأسود';
+$labels['social_outline'] = 'المخطط التفصيلي';
+$labels['social_round_black'] = 'أسود مستدير';
+$labels['social_round_flat'] = 'مسطحة مستديرة';
+$labels['social_round_gloss'] = 'لمعان دائري';
+$labels['social_square_black'] = 'أسود مربع';
+$labels['social_square_flat'] = 'مربع مسطح';
+$labels['social_square_gloss'] = 'لمعان مربع';
+$labels['social_xmas'] = 'عيد الميلاد';
+$labels['templates'] = 'القوالب';
+$labels['template_note'] = 'سيؤدي تطبيق قالب إلى الكتابة فوق جميع التعديلات التي أجريتها باستخدام محرر التصميم.';
+$labels['enable_image_resizing'] = 'تمكين تغيير حجم الصورة';
+$labels['layout'] = 'التصميم';
+$labels['separator'] = 'الفاصل';
+$labels['column'] = 'العمود';
+$labels['row'] = 'الصف';
+$labels['include_in_plain_text'] = 'تضمين في توقيع نص عادي';
+$labels['show'] = 'عرض';
+$labels['hide'] = 'إخفاء';
+$labels['no_change'] = 'لا يوجد تغيير';
+$labels['text_color'] = 'لون النص';
+$labels['show_titles'] = 'عرض العناوين';
+$labels['title_color'] = 'لون العنوان';
+$labels['title_style'] = 'نمط العنوان';
+$labels['link_color'] = 'لون الرابط';
+$labels['font_family'] = 'عائلة الخط';
+$labels['font_size'] = 'حجم الخط';
+$labels['alignment'] = 'المحاذاة';
+$labels['disclaimer_size'] = 'حجم خط التنويه';
+$labels['social_icon_style'] = 'نمط الأيقونة الاجتماعية';
+$labels['social_icon_size'] = 'حجم الأيقونة الاجتماعية';
+$labels['add_item'] = 'إضافة عنصر';
+$labels['small'] = 'صغيرة';
+$labels['medium'] = 'متوسط';
+$labels['large'] = 'كبير';
+$labels['tiny'] = 'صغير';
+$labels['normal'] = 'عادي';
+$labels['bold'] = 'جريئة';
+$labels['serif'] = 'سيريف';
+$labels['sans_serif'] = 'حروف بلا رقيق';
+$labels['cursive'] = 'الخط المتصل';
+$labels['monospace'] = 'مونوسبيس';
+$labels['start_designing'] = 'محرر التصميم المفتوح';
+$labels['finish_designing'] = 'إغلاق محرر التصميم';
+$labels['designer_info'] = 'قم بسحب وإسقاط العناصر في الجدول أدناه لإعادة ترتيب مواضعها. انقر على أيقونات الترس لضبط خصائص الخلية.';
+$labels['cell_properties'] = 'خصائص الخلية';
+$labels['left_padding'] = 'الحشو الأيسر';
+$labels['right_padding'] = 'الحشو الأيمن';
+$labels['top_padding'] = 'حشوة علوية';
+$labels['bottom_padding'] = 'حشوة سفلية';
+$labels['left_border'] = 'الحد الأيسر';
+$labels['right_border'] = 'الحدود اليمنى';
+$labels['top_border'] = 'أعلى الحدود';
+$labels['bottom_border'] = 'الحد السفلي';
+$labels['border'] = 'الحدود:';
+$labels['left'] = 'يسار';
+$labels['right'] = 'صحيح';
+$labels['top'] = 'أعلى';
+$labels['bottom'] = 'القاع';
+$labels['middle'] = 'الأوسط';
+$labels['vertical_align'] = 'محاذاة رأسية:';
+$labels['export_note'] = 'استخدم كود HTML هذا إذا كنت تريد تضمين توقيعك في برنامج بريد إلكتروني آخر.';
+$labels['copy_to_clipboard'] = 'نسخ إلى الحافظة';
+$labels['close_design_editor_note'] = 'أغلق محرر التصميم للحصول على كود HTML الخاص بالتوقيع.';
+$labels['copy_success_note'] = 'تم نسخ التوقيع إلى الحافظة';
+$labels['details_email'] = 'البريد الإلكتروني:';
+$labels['details_website'] = 'الموقع الإلكتروني:';
+$labels['details_phone'] = 'الهاتف:';
+$labels['details_mobile'] = 'الهاتف المحمول:';
+$labels['details_address'] = 'العنوان:';
+$labels['image_alternative_text'] = 'نص بديل';

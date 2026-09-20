@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Подпис';
+$labels['app_menu_title'] = 'Подпис';
+$labels['signature_preview'] = 'Преглед на подписа';
+$labels['signature_builder'] = 'Строител на подписи';
+$labels['enable'] = 'Активиране на конструктора на подписи';
+$labels['preview'] = 'Преглед';
+$labels['main'] = 'Основен';
+$labels['details'] = 'Подробности';
+$labels['social'] = 'Социална мрежа';
+$labels['disclaimer'] = 'Отказ от отговорност';
+$labels['style'] = 'Стил';
+$labels['export'] = 'Експорт';
+$labels['select_design'] = 'Изберете дизайн';
+$labels['name'] = 'Име';
+$labels['position'] = 'Позиция';
+$labels['user'] = 'Потребител';
+$labels['logo'] = 'Лого';
+$labels['resize_note'] = 'Кликнете и плъзнете изображението, показано в предварителния преглед, за да промените размера му.';
+$labels['colors'] = 'Цветове';
+$labels['fonts'] = 'Шрифтове';
+$labels['items'] = 'Елементи';
+$labels['image'] = 'Изображение';
+$labels['text'] = 'Текст';
+$labels['social_hand_drawn'] = 'Ръчно рисувани';
+$labels['social_logotype'] = 'Логотип';
+$labels['social_logotype_black'] = 'Логотип в черно';
+$labels['social_outline'] = 'Контур';
+$labels['social_round_black'] = 'Кръгло черно';
+$labels['social_round_flat'] = 'Кръгла плоскост';
+$labels['social_round_gloss'] = 'Кръгъл гланц';
+$labels['social_square_black'] = 'Квадратно черно';
+$labels['social_square_flat'] = 'Квадратна плоскост';
+$labels['social_square_gloss'] = 'Квадратен гланц';
+$labels['social_xmas'] = 'Коледа';
+$labels['templates'] = 'Шаблони';
+$labels['template_note'] = 'Прилагането на шаблон ще презапише всички промени, които сте направили с помощта на редактора на дизайна.';
+$labels['enable_image_resizing'] = 'Разрешаване на промяна на размера на изображението';
+$labels['layout'] = 'Макет';
+$labels['separator'] = 'Сепаратор';
+$labels['column'] = 'Колона';
+$labels['row'] = 'Ред';
+$labels['include_in_plain_text'] = 'Включване на подпис в обикновен текст';
+$labels['show'] = 'Покажи';
+$labels['hide'] = 'Скрий';
+$labels['no_change'] = 'Няма промяна';
+$labels['text_color'] = 'Цвят на текста';
+$labels['show_titles'] = 'Показване на заглавия';
+$labels['title_color'] = 'Цвят на заглавието';
+$labels['title_style'] = 'Стил на заглавието';
+$labels['link_color'] = 'Цвят на връзката';
+$labels['font_family'] = 'Семейство шрифтове';
+$labels['font_size'] = 'Размер на шрифта';
+$labels['alignment'] = 'Изравняване';
+$labels['disclaimer_size'] = 'Размер на шрифта за отказ от отговорност';
+$labels['social_icon_style'] = 'Стил на социалните икони';
+$labels['social_icon_size'] = 'Размер на социалната икона';
+$labels['add_item'] = 'Добавяне на елемент';
+$labels['small'] = 'Малък';
+$labels['medium'] = 'Среден';
+$labels['large'] = 'Голям';
+$labels['tiny'] = 'Малък';
+$labels['normal'] = 'Нормален';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Курсив';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Отворен редактор на дизайна';
+$labels['finish_designing'] = 'Редактор за затваряне на дизайна';
+$labels['designer_info'] = 'Плъзнете и пуснете елементите в таблицата по-долу, за да промените позициите им. Щракнете върху иконите със зъбни колела, за да регулирате свойствата на клетките.';
+$labels['cell_properties'] = 'Свойства на клетките';
+$labels['left_padding'] = 'Леви подложки';
+$labels['right_padding'] = 'Десен пълнеж';
+$labels['top_padding'] = 'Топ подложки';
+$labels['bottom_padding'] = 'Подложка на дъното';
+$labels['left_border'] = 'Лява граница';
+$labels['right_border'] = 'Дясна граница';
+$labels['top_border'] = 'Горна граница';
+$labels['bottom_border'] = 'Долна граница';
+$labels['border'] = 'Граница:';
+$labels['left'] = 'Вляво';
+$labels['right'] = 'Вдясно';
+$labels['top'] = 'Топ';
+$labels['bottom'] = 'Дъно';
+$labels['middle'] = 'Среден';
+$labels['vertical_align'] = 'Вертикално подравняване:';
+$labels['export_note'] = 'Използвайте този HTML код, ако искате да включите подписа си в друга програма за електронна поща.';
+$labels['copy_to_clipboard'] = 'Копиране в клипборда';
+$labels['close_design_editor_note'] = 'Затворете редактора на дизайна, за да получите HTML кода на подписа.';
+$labels['copy_success_note'] = 'Подпис, копиран в клипборда';
+$labels['details_email'] = 'Имейл:';
+$labels['details_website'] = 'Уебсайт:';
+$labels['details_phone'] = 'Телефон:';
+$labels['details_mobile'] = 'Мобилни устройства:';
+$labels['details_address'] = 'Адрес:';
+$labels['image_alternative_text'] = 'Алтернативен текст';

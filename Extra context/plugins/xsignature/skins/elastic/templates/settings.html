@@ -1,0 +1,557 @@
+<div id="xsignature-settings-controller" x-data="xsignatureController" x-cloak>
+    <div x-show="data.enabled">
+        <input type="hidden" id="xsignature_html" name="xsignature_html" value="" />
+        <input type="hidden" id="xsignature_plain" name="xsignature_plain" value="" />
+        <input type="hidden" id="xsignature_data" name="xsignature_data" value="" />
+
+        <fieldset>
+            <legend>[+xsignature.signature_preview+]</legend>
+            <div class="designer-buttons">
+                <input type="button" class="button btn btn-secondary" x-show="!designing" @click="startDesigning()"
+                       value="[+xsignature.start_designing+]" />
+                <input type="button" class="button btn btn-secondary" x-show="designing" @click="stopDesigning()"
+                       value="[+xsignature.finish_designing+]" />
+            </div>
+            <div class="designer-info" x-show="designing">
+                [+xsignature.designer_info+]
+            </div>
+            [~preview~]
+        </fieldset>
+
+        <fieldset class="no-margin">
+            <legend>[+xsignature.signature_builder+]</legend>
+        </fieldset>
+
+        <div id="signature-tabs" class="tabbed xtabs">
+            <ul>
+                <li><a class="tab-templates" href="#signature-tab-templates"><span>[+xsignature.templates+]</span></a></li>
+                <li><a class="tab-user" href="#signature-tab-user"><span>[+xsignature.user+]</span></a></li>
+                <li><a class="tab-logo" href="#signature-tab-logo"><span>[+xsignature.logo+]</span></a></li>
+                <li><a class="tab-details" href="#signature-tab-details"><span>[+xsignature.details+]</span></a></li>
+                <li><a class="tab-social" href="#signature-tab-social"><span>[+xsignature.social+]</span></a></li>
+                <li><a class="tab-disclaimer" href="#signature-tab-disclaimer"><span>[+xsignature.disclaimer+]</span></a></li>
+                <li><a class="tab-style" href="#signature-tab-style"><span>[+xsignature.style+]</span></a></li>
+                <li><a class="tab-export" href="#signature-tab-export" @click="activateExportTab()"><span>[+xsignature.export+]</span></a></li>
+            </ul>
+
+            <div id="signature-tab-export">
+                <fieldset>
+                    <div x-show="!designing">
+                        <p>[+xsignature.export_note+]</p>
+                        <div id="signature-html-code" x-text="finalHtml"></div>
+                        <div class="export-button-box">
+                            <input type="button" class="button btn btn-secondary" value="[+xsignature.copy_to_clipboard+]" @click="copyToClipboard()" />
+                        </div>
+                    </div>
+                    <div id="close-design-editor-note" x-show="designing">
+                        [+xsignature.close_design_editor_note+]
+                    </div>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-user">
+                <fieldset>
+                    <table class="propform padded-cells">
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_name">[+xsignature.name+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="text" id="xsignature_name" class="form-control" x-model="data.name" maxlength="150" />
+                                [~format_name~]
+                            </td>
+                            <td class="vtop">
+                                <input type="text" class="separator form-control" x-model="data.name_separator"
+                                       x-show='data.format.name.layout == "row"' maxlength="10" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_position">[+xsignature.position+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="text" id="xsignature_position" class="form-control" x-model="data.position" maxlength="150" />
+                                [~format_position~]
+                            </td>
+                            <td class="vtop">
+                                <input type="text" class="separator form-control" x-model="data.position_separator"
+                                       x-show='data.format.position.layout == "row"' maxlength="10" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_organization">[+organization+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="text" id="xsignature_organization" class="form-control" x-model="data.organization" maxlength="150" />
+                                [~format_organization~]
+                            </td>
+                            <td class="vtop">
+                                <input type="text" class="separator form-control" x-model="data.organization_separator"
+                                       x-show='data.format.organization.layout == "row"' maxlength="10" />
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-logo">
+                <fieldset>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label>[+xsignature.image+]</label>
+                            </td>
+                            <td class="input">
+                                <div id="xsignature-logo-edit"></div>
+
+                                <button type="button" class="button" onclick='$("#logo-upload").click()' x-show="!uploadingLogo">[+upload+]</button>
+                                <button type="button" class="button" @click="removeLogo()" x-show="!uploadingLogo && data.logo">[+delete+]</button>
+                                <button type="button" class="button" @click="restoreDefaultLogo()" x-show="data.logo !== 'sample'">[+setdefault+]</button>
+                                <div class="xnote" x-show="!uploadError" x-text="data.maxLogoSizeNote"></div>
+
+                                <div class="logo-upload-error" x-show="uploadError" x-text="uploadError"></div>
+
+                                <script>
+                                    if (!$("#logo-form").length) {
+                                        $(document).ready(function() {
+                                            $("<form>").attr("id", "logo-form")
+                                                .attr("enctype", "multipart/form-data")
+                                                .attr("method", "POST")
+                                                .attr("action", rcmail.url("uploadSignatureLogo"))
+                                                .prependTo("body");
+                                            $("<input>").attr("type", "hidden")
+                                                .attr("name", "_token")
+                                                .attr("value", $("form.propform input[name='_token']").val())
+                                                .appendTo("#logo-form");
+                                            $("<input>").attr("type", "hidden")
+                                                .attr("name", "_action")
+                                                .attr("value", "uploadSignatureLogo")
+                                                .appendTo("#logo-form");
+                                            $("<input>").attr("type", "hidden")
+                                                .attr("name", "xsignature_id")
+                                                .attr("value", rcmail.env.xsignature_data['id'])
+                                                .appendTo("#logo-form");
+                                            $("<input>").attr("type", "file")
+                                                .attr("id", "logo-upload")
+                                                .attr("name", "file")
+                                                .attr("style", "display:none")
+                                                .attr("onchange", "xsignature.uploadLogo()")
+                                                .appendTo("#logo-form");
+
+                                            $("#logo-form").ajaxForm({
+                                                dataType: "json",
+                                                url: rcmail.url("uploadSignatureLogo"),
+                                                beforeSubmit: function() {
+                                                    return !!$("#logo-upload").val();
+                                                },
+                                                success: function(data) {
+                                                    xsignature.uploadLogoSuccess(data);
+                                                },
+                                                error: function(data) {
+                                                    xsignature.uploadLogoError(data);
+                                                }
+                                            });
+                                        });
+                                    }
+                                </script>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_logo_alt">[+xsignature.image_alternative_text+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="text" id="xsignature_logo_alt" class="form-control" x-model="data.logo_alt"
+                                    maxlength="150"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_logo_resizable">[+xsignature.enable_image_resizing+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="checkbox" id="xsignature_logo_resizable" x-model="data.logo_resizable">
+                                <span class="xnote" x-show="data.logo_resizable">[+xsignature.resize_note+]</span>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-details">
+                <fieldset>
+                    <legend>[+options+]</legend>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_detail_layout">[+xsignature.layout+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_detail_layout" class="form-control custom-select pretty-select"
+                                        x-model="data.detail_layout">
+                                    <option value="column">[+xsignature.column+]</option>
+                                    <option value="row">[+xsignature.row+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr x-show='data.detail_layout == "row"'>
+                            <td class="title">
+                                <label for="xsignature_detail_separator">[+xsignature.separator+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="text" id="xsignature_detail_separator" class="short form-control"
+                                       x-model="data.detail_separator" maxlength="10" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_detail_show_title">[+xsignature.show_titles+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="checkbox" id="xsignature_detail_show_title" x-model="data.detail_show_title">
+                            </td>
+                        </tr>
+                        <tr x-show="data.detail_show_title">
+                            <td class="title">
+                                <label>[+xsignature.title_color+]</label>
+                            </td>
+                            <td class="input">
+                                <div><input type="text" name="xsignature_detail_title_color" class="form-control" x-model="data.detail_title_color"
+                                            x-init="initMinicolors($el, () => data.detail_title_color)"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+                <fieldset>
+                    <legend>[+xsignature.items+]</legend>
+                    <table class="propform padded-cells">
+                        <tr>
+                            <td class="title" x-show="data.detail_show_title">[~format_detail_title~]</td>
+                            <td class="input">[~format_detail_value~]</td>
+                            <td></td>
+                        </tr>
+                        <template x-for="(item, index) in data.details" :key="index">
+                            <tr class="xsignature-details-item">
+                                <td class="title" x-show="data.detail_show_title">
+                                    <input type="text" class="form-control" x-model="item.title" />
+                                </td>
+                                <td class="input">
+                                    <input type="text" class="form-control" x-model="item.value" />
+                                </td>
+                                <td>
+                                    <input type="button" class="button btn btn-secondary" value="X" @click="removeDetailsItem(index)" />
+                                </td>
+                            </tr>
+                        </template>
+                        <tr>
+                            <td colspan="3" class="add-item-row">
+                                <input type="button" class="button btn btn-secondary add-item" value="[+xsignature.add_item+]" @click="addDetailsItem()" />
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-social">
+                <fieldset>
+                    <legend>[+options+]</legend>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_social_icon_style">[+xsignature.social_icon_style+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_social_icon_style" class="form-control custom-select pretty-select"
+                                        x-model="data.social_icon_style" @change="setSocialImageSrc()">
+                                    <option value="hand_drawn">[+xsignature.social_hand_drawn+]</option>
+                                    <option value="logotype">[+xsignature.social_logotype+]</option>
+                                    <option value="logotype_black">[+xsignature.social_logotype_black+]</option>
+                                    <option value="outline">[+xsignature.social_outline+]</option>
+                                    <option value="round_black">[+xsignature.social_round_black+]</option>
+                                    <option value="round_flat">[+xsignature.social_round_flat+]</option>
+                                    <option value="round_gloss">[+xsignature.social_round_gloss+]</option>
+                                    <option value="square_black">[+xsignature.social_square_black+]</option>
+                                    <option value="square_flat">[+xsignature.social_square_flat+]</option>
+                                    <option value="square_gloss">[+xsignature.social_square_gloss+]</option>
+                                    <option value="xmas">[+xsignature.social_xmas+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_social_icon_size">[+xsignature.social_icon_size+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_social_icon_size" class="form-control custom-select pretty-select"
+                                        x-model="data.social_icon_size" @change="setSocialImageSrc(false)">
+                                    <option value="small">[+xsignature.small+]</option>
+                                    <option value="medium">[+xsignature.medium+]</option>
+                                    <option value="large">[+xsignature.large+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_social_icon_layout">[+xsignature.layout+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_social_icon_layout" class="form-control custom-select pretty-select"
+                                        x-model="data.social_icon_layout">
+                                    <option value="column">[+xsignature.column+]</option>
+                                    <option value="row">[+xsignature.row+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label>[+xsignature.alignment+]</label>
+                            </td>
+                            <td class="input">
+                                [~format_social~]
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_social_in_plain_text">[+xsignature.include_in_plain_text+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="checkbox" id="xsignature_social_in_plain_text" x-model="data.social_in_plain_text">
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+                <fieldset>
+                    <legend>[+xsignature.items+]</legend>
+                    <table class="propform padded-cells">
+                        <tr>
+                            <td class="title">Service</td>
+                            <td class="input">URL</td>
+                            <td></td>
+                        </tr>
+                        <template x-for="(item, index) in data.social_items" :key="item.id">
+                            <tr>
+                                <td class="title">
+                                    <select class="form-control custom-select pretty-select" x-model="item.name" @change="setSocialImageSrc()">
+                                        <template x-for="[key, name] in Object.entries(socialNames)" :key="key">
+                                            <option :value="key" :selected="key === item.name" x-text="name"></option>
+                                        </template>
+                                    </select>
+                                </td>
+                                <td class="input">
+                                    <input type="text" class="form-control" x-model="item.link" maxlength="250" />
+                                </td>
+                                <td>
+                                    <input type="button" class="button btn btn-secondary remove-social-item-button" value="X" @click="removeSocialItem(index)" />
+                                </td>
+                            </tr>
+                        </template>
+                        <tr>
+                            <td colspan="3" class="add-item-row">
+                                <input type="button" class="button btn btn-secondary add-item" value="[+xsignature.add_item+]" @click="addSocialItem()" />
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-disclaimer">
+                <fieldset>
+                    <legend>[+options+]</legend>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_disclaimer_size">[+xsignature.font_size+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_disclaimer_size" class="form-control custom-select pretty-select"
+                                        x-model="data.disclaimer_size">
+                                    <option value="tiny">[+xsignature.tiny+]</option>
+                                    <option value="small">[+xsignature.small+]</option>
+                                    <option value="normal">[+xsignature.normal+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title"><label>[+xsignature.text_color+]</label></td>
+                            <td class="input">
+                                <div><input type="text" class="form-control" x-model="data.disclaimer_color"
+                                            x-init="initMinicolors($el, () => data.disclaimer_color)"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_disclaimer_in_plain_text">[+xsignature.include_in_plain_text+]</label>
+                            </td>
+                            <td class="input">
+                                <input type="checkbox" id="xsignature_disclaimer_in_plain_text" x-model="data.disclaimer_in_plain_text">
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+                <fieldset>
+                    <legend>[+xsignature.text+]</legend>
+                    <textarea rows="6" cols="10" x-model="data.disclaimer" maxlength="2000"></textarea>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-style">
+                <fieldset>
+                    <legend>[+xsignature.colors+]</legend>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label>[+xsignature.text_color+]</label>
+                            </td>
+                            <td class="input">
+                                <div><input type="text" class="form-control" x-model="data.text_color"
+                                            x-init="initMinicolors($el, () => data.text_color)"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title"><label>[+xsignature.link_color+]</label></td>
+                            <td class="input">
+                                <div><input type="text" class="form-control" x-model="data.link_color"
+                                            x-init="initMinicolors($el, () => data.link_color)"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+
+                <fieldset>
+                    <legend>[+xsignature.fonts+]</legend>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_font_family">[+xsignature.font_family+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_font_family" class="form-control custom-select pretty-select"
+                                        x-model="data.font_family">
+                                    <option value="sans-serif">[+xsignature.sans_serif+]</option>
+                                    <option value="serif">[+xsignature.serif+]</option>
+                                    <option value="cursive">[+xsignature.cursive+]</option>
+                                    <option value="monospace">[+xsignature.monospace+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="title">
+                                <label for="xsignature_font_size">[+xsignature.font_size+]</label>
+                            </td>
+                            <td class="input">
+                                <select id="xsignature_font_size" class="form-control custom-select pretty-select"
+                                        x-model="data.font_size">
+                                    <option value="small">[+xsignature.small+]</option>
+                                    <option value="medium">[+xsignature.medium+]</option>
+                                    <option value="large">[+xsignature.large+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+
+            <div id="signature-tab-templates" x-init="initTemplates()">
+                <fieldset>
+                    <p>[+xsignature.template_note+]</p>
+                    <template x-for="(item, key) in templates" :key="key">
+                        <div class="xsignature-template">
+                            <a href="javascript:void(0)" @click="applyTemplate(key)">
+                                <table class="template-table compact-table" :id="`template-table-${key}`">
+                                    <tr><td class="template-cell-11" colspan="3"></td></tr>
+                                    <tr><td class="template-cell-21" colspan="3"></td></tr>
+                                    <tr>
+                                        <td class="template-cell-31"></td>
+                                        <td class="template-cell-32"></td>
+                                        <td class="template-cell-33"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="template-cell-41"></td>
+                                        <td class="template-cell-42"></td>
+                                        <td class="template-cell-43"></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="template-cell-51"></td>
+                                        <td class="template-cell-52"></td>
+                                        <td class="template-cell-53"></td>
+                                    </tr>
+                                    <tr><td class="template-cell-61" colspan="3"></td></tr>
+                                    <tr><td class="template-cell-71" colspan="3"></td></tr>
+                                </table>
+                            </a>
+                        </div>
+                    </template>
+                </fieldset>
+            </div>
+        </div>
+    </div>
+
+    <div class="cell-popup" title="[+xsignature.cell_properties+]" x-show="cellPopupVisible">
+        <div class="cell-popup-title">
+            <h4>[+xsignature.cell_properties+]</h4>
+        </div>
+        <template x-if="cellEditorId && data.grid && data.grid[cellEditorId]">
+            <div class="cell-popup-content">
+                <fieldset>
+                    <table class="propform">
+                        <tr>
+                            <td class="title">[+xsignature.vertical_align+]</td>
+                            <td class="input">
+                                <select class="form-control custom-select pretty-select"
+                                        x-model="data.grid[cellEditorId].vertical_align">
+                                    <option value="top">[+xsignature.top+]</option>
+                                    <option value="middle">[+xsignature.middle+]</option>
+                                    <option value="bottom">[+xsignature.bottom+]</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <template x-for="[position, labels] in Object.entries(cellLabels)" :key="position">
+                            <tr>
+                                <td class="title">
+                                    <label x-text="labels.padding"></label>
+                                </td>
+                                <td class="input">
+                                    <select class="form-control custom-select pretty-select"
+                                            x-model.number='data.grid[cellEditorId]["padding_" + position]'>
+                                        <template x-for="i in [0,1,2,3,4,5,6,7,8,9,10,15,20,25,30]" :key="i">
+                                            <option :value="i" x-text="`${i}px`"></option>
+                                        </template>
+                                    </select>
+                                </td>
+                            </tr>
+                        </template>
+                        <template x-for="[position, labels] in Object.entries(cellLabels)" :key="position">
+                            <tr>
+                                <td class="title" x-text="labels.border"></td>
+                                <td class="input">
+                                    <select class="form-control custom-select pretty-select"
+                                            x-model='data.grid[cellEditorId]["border_" + position + "_style"]'>
+                                        <option value="none">None</option>
+                                        <option value="solid">Solid</option>
+                                        <option value="dotted">Dotted</option>
+                                        <option value="dashed">Dashed</option>
+                                    </select>
+                                    <select class="form-control custom-select pretty-select"
+                                            x-model.number='data.grid[cellEditorId]["border_" + position + "_width"]'>
+                                        <template x-for="i in [1,2,3,4,5,6,7,8,9,10]" :key="i">
+                                            <option :value="i" x-text="`${i}px`"></option>
+                                        </template>
+                                    </select>
+                                    <span><input type="hidden" x-model='data.grid[cellEditorId]["border_" + position + "_color"]'
+                                                 x-init='initMinicolors($el, () => data.grid[cellEditorId]["border_" + position + "_color"])'></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </table>
+                </fieldset>
+            </div>
+        </template>
+        <div class="cell-popup-close">
+            <input type="button" class="button btn btn-secondary" value="[+close+]" @click="hideCellPopup()" />
+        </div>
+    </div>
+
+</div>
+
+<script>$("#signature-tabs").tabs();</script>

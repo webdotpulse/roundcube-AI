@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Podpis';
+$labels['app_menu_title'] = 'Podpis';
+$labels['signature_preview'] = 'Náhľad podpisu';
+$labels['signature_builder'] = 'Staviteľ podpisov';
+$labels['enable'] = 'Povolenie funkcie vytvárania podpisov';
+$labels['preview'] = 'Náhľad';
+$labels['main'] = 'Hlavná stránka';
+$labels['details'] = 'Podrobnosti na';
+$labels['social'] = 'Sociálna sieť';
+$labels['disclaimer'] = 'Zrieknutie sa zodpovednosti';
+$labels['style'] = 'Štýl';
+$labels['export'] = 'Export';
+$labels['select_design'] = 'Vyberte dizajn';
+$labels['name'] = 'Názov';
+$labels['position'] = 'Pozícia';
+$labels['user'] = 'Používateľ';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Kliknutím a potiahnutím obrázka zobrazeného v náhľade zmeníte jeho veľkosť.';
+$labels['colors'] = 'Farby';
+$labels['fonts'] = 'Fonty';
+$labels['items'] = 'Položky';
+$labels['image'] = 'Obrázok';
+$labels['text'] = 'Text';
+$labels['social_hand_drawn'] = 'Ručne kreslené';
+$labels['social_logotype'] = 'Logotyp';
+$labels['social_logotype_black'] = 'Logotyp čiernej farby';
+$labels['social_outline'] = 'Náčrt';
+$labels['social_round_black'] = 'Okrúhla čierna';
+$labels['social_round_flat'] = 'Okrúhla plochá';
+$labels['social_round_gloss'] = 'Okrúhly lesk';
+$labels['social_square_black'] = 'Štvorcová čierna';
+$labels['social_square_flat'] = 'Štvorcový byt';
+$labels['social_square_gloss'] = 'Štvorcový lesk';
+$labels['social_xmas'] = 'Vianočné';
+$labels['templates'] = 'Šablóny';
+$labels['template_note'] = 'Použitím šablóny sa prepíšu všetky úpravy, ktoré ste vykonali pomocou editora dizajnu.';
+$labels['enable_image_resizing'] = 'Povolenie zmeny veľkosti obrázka';
+$labels['layout'] = 'Rozloženie';
+$labels['separator'] = 'Oddeľovač';
+$labels['column'] = 'Stĺpec';
+$labels['row'] = 'Riadok';
+$labels['include_in_plain_text'] = 'Zahrnúť do obyčajného textového podpisu';
+$labels['show'] = 'Zobraziť';
+$labels['hide'] = 'Skryť';
+$labels['no_change'] = 'Žiadna zmena';
+$labels['text_color'] = 'Farba textu';
+$labels['show_titles'] = 'Zobraziť názvy';
+$labels['title_color'] = 'Farba názvu';
+$labels['title_style'] = 'Štýl názvu';
+$labels['link_color'] = 'Farba odkazu';
+$labels['font_family'] = 'Rodina písiem';
+$labels['font_size'] = 'Veľkosť písma';
+$labels['alignment'] = 'Zarovnanie';
+$labels['disclaimer_size'] = 'Veľkosť písma Disclaimer';
+$labels['social_icon_style'] = 'Štýl sociálnej ikony';
+$labels['social_icon_size'] = 'Veľkosť ikony sociálnej siete';
+$labels['add_item'] = 'Pridať položku';
+$labels['small'] = 'Malé';
+$labels['medium'] = 'Stredné';
+$labels['large'] = 'Veľké';
+$labels['tiny'] = 'Drobné';
+$labels['normal'] = 'Normálne';
+$labels['bold'] = 'Odvážne';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kurzíva';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Otvorený editor dizajnu';
+$labels['finish_designing'] = 'Zatvoriť editor dizajnu';
+$labels['designer_info'] = 'Prvky v nasledujúcej tabuľke presuňte a pustite, aby ste zmenili ich polohu. Kliknutím na ikony ozubených koliesok upravte vlastnosti buniek.';
+$labels['cell_properties'] = 'Vlastnosti buniek';
+$labels['left_padding'] = 'Ľavé polstrovanie';
+$labels['right_padding'] = 'Pravé polstrovanie';
+$labels['top_padding'] = 'Vrchné polstrovanie';
+$labels['bottom_padding'] = 'Spodné polstrovanie';
+$labels['left_border'] = 'Ľavý okraj';
+$labels['right_border'] = 'Pravý okraj';
+$labels['top_border'] = 'Horná hranica';
+$labels['bottom_border'] = 'Spodný okraj';
+$labels['border'] = 'Hranica:';
+$labels['left'] = 'Vľavo';
+$labels['right'] = 'Vpravo';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Spodná časť';
+$labels['middle'] = 'Stred';
+$labels['vertical_align'] = 'Vertikálne zarovnanie:';
+$labels['export_note'] = 'Tento kód HTML použite, ak chcete svoj podpis zahrnúť do iného e-mailového programu.';
+$labels['copy_to_clipboard'] = 'Kopírovanie do schránky';
+$labels['close_design_editor_note'] = 'Zatvorte editor návrhu, aby ste získali podpisový kód HTML.';
+$labels['copy_success_note'] = 'Podpis skopírovaný do schránky';
+$labels['details_email'] = 'E-mail:';
+$labels['details_website'] = 'Webová lokalita:';
+$labels['details_phone'] = 'Telefón:';
+$labels['details_mobile'] = 'Mobilný telefón:';
+$labels['details_address'] = 'Adresa:';
+$labels['image_alternative_text'] = 'Alternatívny text';

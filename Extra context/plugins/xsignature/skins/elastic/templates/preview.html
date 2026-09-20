@@ -1,0 +1,169 @@
+<div id="xsignature-preview">
+    <div :style="style.font">
+
+        <table id="signature-table" class="compact-table" :style="`color:${data.text_color};${style.table}`">
+            <tr class="cell-row">
+                <td id="cell-11" class="cell" :style="`${style.font}${data.grid[11]?.style || ''}`" colspan="3">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(11)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-21" class="cell" :style="`${style.font}${data.grid[21]?.style || ''}`" colspan="3">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(21)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-31" class="cell" :style="`${style.font}${data.grid[31]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(31)"></div>
+                    </template>
+                </td>
+                <td id="cell-32" class="cell" :style="`${style.font}${data.grid[32]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(32)"></div>
+                    </template>
+                </td>
+                <td id="cell-33" class="cell" :style="`${style.font}${data.grid[33]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(33)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-41" class="cell" :style="`${style.font}${data.grid[41]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(41)"></div>
+                    </template>
+                </td>
+                <td id="cell-42" class="cell" :style="`${style.font}${data.grid[42]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(42)"></div>
+                    </template>
+                </td>
+                <td id="cell-43" class="cell" :style="`${style.font}${data.grid[43]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(43)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-51" class="cell" :style="`${style.font}${data.grid[51]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(51)"></div>
+                    </template>
+                </td>
+                <td id="cell-52" class="cell" :style="`${style.font}${data.grid[52]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(52)"></div>
+                    </template>
+                </td>
+                <td id="cell-53" class="cell" :style="`${style.font}${data.grid[53]?.style || ''}`">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(53)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-61" class="cell" :style="`${style.font}${data.grid[61]?.style || ''}`" colspan="3">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(61)"></div>
+                    </template>
+                </td>
+            </tr>
+            <tr class="cell-row">
+                <td id="cell-71" class="cell" :style="`${style.font}${data.grid[71]?.style || ''}`" colspan="3">
+                    <template x-if="designing">
+                        <div class="cell-editor" @click="showCellPopup(71)"></div>
+                    </template>
+                </td>
+            </tr>
+        </table>
+
+        <template x-if="data.disclaimer">
+            <div :style="`margin-top:10px;color:${data.disclaimer_color};${style.font}${data.disclaimer_size != 'normal' ? 'font-size:' + disclaimerFontSizes[data.disclaimer_size] + ';' : ''}`"
+                 x-text="data.disclaimer"></div>
+        </template>
+    </div>
+</div>
+
+<div id="xsignature-storage">
+    <div class="box" id="data-name" x-show="data.name" :style="data.format.name.box_style">
+        <template x-if="data.name">
+            <div :style="data.format.name.style">
+                <span x-text="data.name"></span><template x-if='data.format.name.layout == "row"'><span style="white-space:pre" x-text="data.name_separator"></span></template>
+            </div>
+        </template>
+    </div>
+
+    <div class="box" id="data-position" x-show="data.position" :style="data.format.position.box_style">
+        <template x-if="data.position">
+            <div :style="data.format.position.style">
+                <span x-text="data.position"></span><template x-if='data.format.position.layout == "row"'><span style="white-space:pre" x-text="data.position_separator"></span></template>
+            </div>
+        </template>
+    </div>
+
+    <div class="box" id="data-organization" x-show="data.organization" :style="data.format.organization.box_style">
+        <template x-if="data.organization">
+            <div :style="data.format.organization.style">
+                <span x-text="data.organization"></span><template x-if='data.format.organization.layout == "row"'><span style="white-space:pre" x-text="data.organization_separator"></span></template>
+            </div>
+        </template>
+    </div>
+
+    <div class="box" id="data-social">
+        <template x-if="data.social_items.length">
+            <div :style="`${style.data}text-align:${data.format.social.align};`">
+                <template x-for="item in data.social_items" :key="item.name + item.link">
+                    <a :href="item.link" :style='data.social_icon_layout == "column" ? "display:block;padding-bottom:5px;" : "display:inline-block;padding-right:5px;"'>
+                        <img :src="item.src" :alt="item.name" :height="item.size" :width="item.size" />
+                    </a>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <div class="box" id="data-details">
+        <template x-if="data.details.length">
+            <div :style="style.data">
+                <template x-if='data.detail_layout == "column"'>
+                    <table class="compact-table" :style="style.table">
+                        <template x-for="(item, index) in data.details" :key="index">
+                            <tr>
+                                <template x-if="hasDetailTitles && data.detail_show_title">
+                                    <td :style="`${style.td}padding:0 5px 0 0;color:${data.detail_title_color};${data.format.detail_title.style}`" x-text="item.title"></td>
+                                </template>
+                                <td :style="`${style.td}padding:0 5px 0 0;${data.format.detail_value.style}`" x-html="item.output"></td>
+                            </tr>
+                        </template>
+                    </table>
+                </template>
+                <template x-if='data.detail_layout != "column"'>
+                    <div style="max-width:250px;">
+                        <template x-for="(item, index) in data.details" :key="index">
+                            <span>
+                                <template x-if="item.title && data.detail_show_title">
+                                    <span :style="`color:${data.detail_title_color};${data.format.detail_title.style}`" x-text="item.title"></span>
+                                </template>
+                                <span :style="data.format.detail_value.style" x-html="item.output"></span>
+                                <template x-if="data.detail_separator && index < data.details.length - 1">
+                                    <span x-text="data.detail_separator"></span>
+                                </template>
+                            </span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <div class="box" id="data-logo">
+        <template x-if="data.logo">
+            <div :style="`${style.data}${style.logoWidth}`" id="xsignature-logo"></div>
+        </template>
+    </div>
+</div>

@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Podpis';
+$labels['app_menu_title'] = 'Podpis';
+$labels['signature_preview'] = 'Podgląd podpisu';
+$labels['signature_builder'] = 'Projektant Podpisu';
+$labels['enable'] = 'Włącz Projektanta Podpisu';
+$labels['preview'] = 'Podgląd';
+$labels['main'] = 'Główny';
+$labels['details'] = 'Szczegóły';
+$labels['social'] = 'Społeczny';
+$labels['disclaimer'] = 'Zastrzeżenie';
+$labels['style'] = 'Styl';
+$labels['export'] = 'Eksport';
+$labels['select_design'] = 'Wybierz design';
+$labels['name'] = 'Nazwa';
+$labels['position'] = 'Pozycja';
+$labels['user'] = 'Użytkownik';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Kliknij i przeciągnij obraz wyświetlany w podglądzie by zmienić jego rozmiar.';
+$labels['colors'] = 'Kolory';
+$labels['fonts'] = 'Czcionki';
+$labels['items'] = 'Obiekty';
+$labels['image'] = 'Obraz';
+$labels['text'] = 'Tekst';
+$labels['social_hand_drawn'] = 'Ręcznie rysowane';
+$labels['social_logotype'] = 'Logotyp';
+$labels['social_logotype_black'] = 'Czarny Logotyp';
+$labels['social_outline'] = 'Szkic';
+$labels['social_round_black'] = 'Czarny okrągły';
+$labels['social_round_flat'] = 'Płaski okrągły';
+$labels['social_round_gloss'] = 'Lśniący okrągły';
+$labels['social_square_black'] = 'Czarny kwadratowy';
+$labels['social_square_flat'] = 'Płaski kwadratowy';
+$labels['social_square_gloss'] = 'Lśniący kwadratowy';
+$labels['social_xmas'] = 'Świąteczny';
+$labels['templates'] = 'Szablony';
+$labels['template_note'] = 'Użycie szablonu nadpisze wszystkie zmiany dokonane przy użyciu edytora designu.';
+$labels['enable_image_resizing'] = 'Włącz skalowanie obrazu';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Separator';
+$labels['column'] = 'Kolumna';
+$labels['row'] = 'Rząd';
+$labels['include_in_plain_text'] = 'Zawrzyj w podpisie zwyczajnym tekstem';
+$labels['show'] = 'Pokaż';
+$labels['hide'] = 'Ukryj';
+$labels['no_change'] = 'Bez zmian';
+$labels['text_color'] = 'Kolor tekstu';
+$labels['show_titles'] = 'Pokaż napisy';
+$labels['title_color'] = 'Kolor tytułu';
+$labels['title_style'] = 'Styl tytułu';
+$labels['link_color'] = 'Kolor linku';
+$labels['font_family'] = 'Rodzina czcionek';
+$labels['font_size'] = 'Rozmiar czcionki';
+$labels['alignment'] = 'Dopasowywanie';
+$labels['disclaimer_size'] = 'Rozmiar czcionki zastrzeżenia';
+$labels['social_icon_style'] = 'Styl ikony społecznościowej';
+$labels['social_icon_size'] = 'Rozmiar ikony społecznościowej';
+$labels['add_item'] = 'Dodaj obiekt';
+$labels['small'] = 'Mały';
+$labels['medium'] = 'Średni';
+$labels['large'] = 'Duży';
+$labels['tiny'] = 'Malutki';
+$labels['normal'] = 'Normalny';
+$labels['bold'] = 'Pogrubienie';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursywa';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Otwórz edytor designu';
+$labels['finish_designing'] = 'Zamknij edytor designu';
+$labels['designer_info'] = 'Przeciągnij i upuść elementy w tabelce poniżej by zmienić ich pozycje. Kliknij ikonkę koła zębatego by dostosować właściwości komórek.';
+$labels['cell_properties'] = 'Właściwości komórek';
+$labels['left_padding'] = 'Lewy margines';
+$labels['right_padding'] = 'Prawy margines';
+$labels['top_padding'] = 'Górny margines';
+$labels['bottom_padding'] = 'Dolny margines';
+$labels['left_border'] = 'Lewe obramowanie';
+$labels['right_border'] = 'Prawe obramowanie';
+$labels['top_border'] = 'Górne obramowanie';
+$labels['bottom_border'] = 'Dolne obramowanie';
+$labels['border'] = 'obramowanie:';
+$labels['left'] = 'Lewo';
+$labels['right'] = 'Prawo';
+$labels['top'] = 'Góra';
+$labels['bottom'] = 'Dół';
+$labels['middle'] = 'Środek';
+$labels['vertical_align'] = 'Dopasowanie pionowe:';
+$labels['export_note'] = 'Użyj tego kodu HTML, aby umieścić swój podpis w innym programie pocztowym.';
+$labels['copy_to_clipboard'] = 'Kopiuj do schowka';
+$labels['close_design_editor_note'] = 'Zamknij edytor aby otrzymać kod HTML podpisu.';
+$labels['copy_success_note'] = 'Podpis został skopiowany do schowka';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Strona internetowa:';
+$labels['details_phone'] = 'Tel. stacjonarny:';
+$labels['details_mobile'] = 'Tel. komórkowy:';
+$labels['details_address'] = 'Adres:';
+$labels['image_alternative_text'] = 'Alternatywny tekst';

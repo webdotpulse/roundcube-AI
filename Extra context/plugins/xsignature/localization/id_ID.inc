@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Tanda tangan';
+$labels['app_menu_title'] = 'Tanda tangan';
+$labels['signature_preview'] = 'Pratinjau Tanda Tangan';
+$labels['signature_builder'] = 'Pembuat Tanda Tangan';
+$labels['enable'] = 'Mengaktifkan Pembuat Tanda Tangan';
+$labels['preview'] = 'Pratinjau';
+$labels['main'] = 'Utama';
+$labels['details'] = 'Detail';
+$labels['social'] = 'Sosial';
+$labels['disclaimer'] = 'Penafian';
+$labels['style'] = 'Gaya';
+$labels['export'] = 'Ekspor';
+$labels['select_design'] = 'Pilih desain';
+$labels['name'] = 'Nama';
+$labels['position'] = 'Posisi';
+$labels['user'] = 'Pengguna';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Klik dan seret gambar yang ditampilkan dalam pratinjau untuk mengubah ukurannya.';
+$labels['colors'] = 'Warna';
+$labels['fonts'] = 'Font';
+$labels['items'] = 'Item';
+$labels['image'] = 'Gambar';
+$labels['text'] = 'Teks';
+$labels['social_hand_drawn'] = 'Digambar dengan tangan';
+$labels['social_logotype'] = 'Logo';
+$labels['social_logotype_black'] = 'Logo hitam';
+$labels['social_outline'] = 'Garis besar';
+$labels['social_round_black'] = 'Bulat hitam';
+$labels['social_round_flat'] = 'Bulat datar';
+$labels['social_round_gloss'] = 'Kilauan bulat';
+$labels['social_square_black'] = 'Hitam persegi';
+$labels['social_square_flat'] = 'Persegi datar';
+$labels['social_square_gloss'] = 'Kilap persegi';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Templat';
+$labels['template_note'] = 'Menerapkan templat akan menimpa semua modifikasi yang Anda buat menggunakan editor desain.';
+$labels['enable_image_resizing'] = 'Mengaktifkan pengubahan ukuran gambar';
+$labels['layout'] = 'Tata letak';
+$labels['separator'] = 'Pemisah';
+$labels['column'] = 'Kolom';
+$labels['row'] = 'Baris';
+$labels['include_in_plain_text'] = 'Sertakan dalam tanda tangan teks biasa';
+$labels['show'] = 'Tampilkan';
+$labels['hide'] = 'Sembunyikan';
+$labels['no_change'] = 'Tidak ada perubahan';
+$labels['text_color'] = 'Warna teks';
+$labels['show_titles'] = 'Tampilkan judul';
+$labels['title_color'] = 'Warna judul';
+$labels['title_style'] = 'Gaya judul';
+$labels['link_color'] = 'Warna tautan';
+$labels['font_family'] = 'Keluarga font';
+$labels['font_size'] = 'Ukuran huruf';
+$labels['alignment'] = 'Penjajaran';
+$labels['disclaimer_size'] = 'Ukuran font sangkalan';
+$labels['social_icon_style'] = 'Gaya ikon sosial';
+$labels['social_icon_size'] = 'Ukuran ikon sosial';
+$labels['add_item'] = 'Tambahkan item';
+$labels['small'] = 'Kecil';
+$labels['medium'] = 'Sedang';
+$labels['large'] = 'Besar';
+$labels['tiny'] = 'Kecil';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Tebal';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursif';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Buka editor desain';
+$labels['finish_designing'] = 'Tutup editor desain';
+$labels['designer_info'] = 'Seret dan jatuhkan elemen pada tabel di bawah ini untuk mengatur ulang posisinya. Klik ikon roda gigi untuk menyesuaikan properti sel.';
+$labels['cell_properties'] = 'Properti sel';
+$labels['left_padding'] = 'Bantalan kiri';
+$labels['right_padding'] = 'Bantalan yang tepat';
+$labels['top_padding'] = 'Bantalan atas';
+$labels['bottom_padding'] = 'Bantalan bawah';
+$labels['left_border'] = 'Batas kiri';
+$labels['right_border'] = 'Batas kanan';
+$labels['top_border'] = 'Batas atas';
+$labels['bottom_border'] = 'Batas bawah';
+$labels['border'] = 'Perbatasan:';
+$labels['left'] = 'Kiri';
+$labels['right'] = 'Benar.';
+$labels['top'] = 'Atas';
+$labels['bottom'] = 'Bawah';
+$labels['middle'] = 'Tengah';
+$labels['vertical_align'] = 'Penjajaran vertikal:';
+$labels['export_note'] = 'Gunakan kode HTML ini jika Anda ingin menyertakan tanda tangan Anda di program email lain.';
+$labels['copy_to_clipboard'] = 'Menyalin ke papan klip';
+$labels['close_design_editor_note'] = 'Tutup editor desain untuk mendapatkan kode HTML tanda tangan.';
+$labels['copy_success_note'] = 'Tanda tangan disalin ke papan klip';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Situs web:';
+$labels['details_phone'] = 'Telepon:';
+$labels['details_mobile'] = 'Ponsel:';
+$labels['details_address'] = 'Alamat:';
+$labels['image_alternative_text'] = 'Teks alternatif';

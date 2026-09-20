@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = '서명';
+$labels['app_menu_title'] = '서명';
+$labels['signature_preview'] = '서명 미리보기';
+$labels['signature_builder'] = '서명 빌더';
+$labels['enable'] = '서명 빌더 사용';
+$labels['preview'] = '미리 보기';
+$labels['main'] = '메인';
+$labels['details'] = '세부 정보';
+$labels['social'] = '소셜';
+$labels['disclaimer'] = '면책 조항';
+$labels['style'] = '스타일';
+$labels['export'] = '내보내기';
+$labels['select_design'] = '디자인 선택';
+$labels['name'] = '이름';
+$labels['position'] = '위치';
+$labels['user'] = '사용자';
+$labels['logo'] = '로고';
+$labels['resize_note'] = '미리 보기에 표시된 이미지를 클릭하고 드래그하여 크기를 조정합니다.';
+$labels['colors'] = '색상';
+$labels['fonts'] = '글꼴';
+$labels['items'] = '항목';
+$labels['image'] = '이미지';
+$labels['text'] = '텍스트';
+$labels['social_hand_drawn'] = '손으로 그린';
+$labels['social_logotype'] = '로고 유형';
+$labels['social_logotype_black'] = '검은색 로고';
+$labels['social_outline'] = '개요';
+$labels['social_round_black'] = '둥근 검은색';
+$labels['social_round_flat'] = '둥근 평면';
+$labels['social_round_gloss'] = '원형 광택';
+$labels['social_square_black'] = '정사각형 검정';
+$labels['social_square_flat'] = '정사각형 평면';
+$labels['social_square_gloss'] = '정사각형 광택';
+$labels['social_xmas'] = '크리스마스';
+$labels['templates'] = '템플릿';
+$labels['template_note'] = '템플릿을 적용하면 디자인 편집기를 사용하여 수정한 모든 내용을 덮어쓰게 됩니다.';
+$labels['enable_image_resizing'] = '이미지 크기 조정 활성화';
+$labels['layout'] = '레이아웃';
+$labels['separator'] = '구분 기호';
+$labels['column'] = '칼럼';
+$labels['row'] = '행';
+$labels['include_in_plain_text'] = '일반 텍스트 서명에 포함';
+$labels['show'] = '표시';
+$labels['hide'] = '숨기기';
+$labels['no_change'] = '변경 사항 없음';
+$labels['text_color'] = '텍스트 색상';
+$labels['show_titles'] = '제목 표시';
+$labels['title_color'] = '제목 색상';
+$labels['title_style'] = '제목 스타일';
+$labels['link_color'] = '링크 색상';
+$labels['font_family'] = '글꼴 패밀리';
+$labels['font_size'] = '글꼴 크기';
+$labels['alignment'] = '정렬';
+$labels['disclaimer_size'] = '면책 조항 글꼴 크기';
+$labels['social_icon_style'] = '소셜 아이콘 스타일';
+$labels['social_icon_size'] = '소셜 아이콘 크기';
+$labels['add_item'] = '항목 추가';
+$labels['small'] = 'Small';
+$labels['medium'] = 'Medium';
+$labels['large'] = '대형';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = '보통';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = '산세리프';
+$labels['cursive'] = '필기체';
+$labels['monospace'] = '모노스페이스';
+$labels['start_designing'] = '디자인 편집기 열기';
+$labels['finish_designing'] = '디자인 편집기 닫기';
+$labels['designer_info'] = '아래 표의 요소를 끌어다 놓아 위치를 재정렬합니다. 톱니바퀴 아이콘을 클릭하여 셀 속성을 조정합니다.';
+$labels['cell_properties'] = '셀 속성';
+$labels['left_padding'] = '왼쪽 패딩';
+$labels['right_padding'] = '오른쪽 패딩';
+$labels['top_padding'] = '탑 패딩';
+$labels['bottom_padding'] = '하의 패딩';
+$labels['left_border'] = '왼쪽 테두리';
+$labels['right_border'] = '오른쪽 테두리';
+$labels['top_border'] = '상단 테두리';
+$labels['bottom_border'] = '하단 테두리';
+$labels['border'] = 'Border:';
+$labels['left'] = '왼쪽';
+$labels['right'] = '오른쪽';
+$labels['top'] = 'Top';
+$labels['bottom'] = '하단';
+$labels['middle'] = '가운데';
+$labels['vertical_align'] = '수직 정렬:';
+$labels['export_note'] = '다른 이메일 프로그램에 서명을 포함하려면 이 HTML 코드를 사용하세요.';
+$labels['copy_to_clipboard'] = '클립보드에 복사';
+$labels['close_design_editor_note'] = '디자인 편집기를 닫아 서명 HTML 코드를 가져옵니다.';
+$labels['copy_success_note'] = '서명이 클립보드에 복사됨';
+$labels['details_email'] = '이메일:';
+$labels['details_website'] = '웹사이트:';
+$labels['details_phone'] = '전화:';
+$labels['details_mobile'] = '모바일:';
+$labels['details_address'] = '주소:';
+$labels['image_alternative_text'] = '대체 텍스트';

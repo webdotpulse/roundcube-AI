@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Signatur';
+$labels['app_menu_title'] = 'Signatur';
+$labels['signature_preview'] = 'Forhåndsvisning av signatur';
+$labels['signature_builder'] = 'Signaturbygger';
+$labels['enable'] = 'Aktiver signaturbygger';
+$labels['preview'] = 'Forhåndsvisning';
+$labels['main'] = 'Hoved';
+$labels['details'] = 'Nærmere opplysninger';
+$labels['social'] = 'Sosialt';
+$labels['disclaimer'] = 'Ansvarsfraskrivelse';
+$labels['style'] = 'Stil';
+$labels['export'] = 'Eksport';
+$labels['select_design'] = 'Velg design';
+$labels['name'] = 'Navn';
+$labels['position'] = 'Stilling';
+$labels['user'] = 'Bruker';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Klikk og dra i bildet som vises i forhåndsvisningen for å endre størrelsen.';
+$labels['colors'] = 'Farger';
+$labels['fonts'] = 'Skrifttyper';
+$labels['items'] = 'Elementer';
+$labels['image'] = 'Bilde';
+$labels['text'] = 'Tekst';
+$labels['social_hand_drawn'] = 'Håndtegnet';
+$labels['social_logotype'] = 'Logotype';
+$labels['social_logotype_black'] = 'Logotype svart';
+$labels['social_outline'] = 'Oversikt';
+$labels['social_round_black'] = 'Rund svart';
+$labels['social_round_flat'] = 'Rund flat';
+$labels['social_round_gloss'] = 'Rund glans';
+$labels['social_square_black'] = 'Kvadratisk svart';
+$labels['social_square_flat'] = 'Kvadratisk flat';
+$labels['social_square_gloss'] = 'Firkantet glans';
+$labels['social_xmas'] = 'Jul';
+$labels['templates'] = 'Maler';
+$labels['template_note'] = 'Bruk av en mal vil overskrive alle endringene du har gjort ved hjelp av designredigeringsprogrammet.';
+$labels['enable_image_resizing'] = 'Aktiver endring av bildestørrelse';
+$labels['layout'] = 'Utforming';
+$labels['separator'] = 'Separator';
+$labels['column'] = 'Spalte';
+$labels['row'] = 'Row';
+$labels['include_in_plain_text'] = 'Inkluder i signatur i klartekst';
+$labels['show'] = 'Vis';
+$labels['hide'] = 'Skjul';
+$labels['no_change'] = 'Ingen endring';
+$labels['text_color'] = 'Tekstfarge';
+$labels['show_titles'] = 'Vis titler';
+$labels['title_color'] = 'Tittelfarge';
+$labels['title_style'] = 'Tittelstil';
+$labels['link_color'] = 'Lenke farge';
+$labels['font_family'] = 'Skriftfamilie';
+$labels['font_size'] = 'Skriftstørrelse';
+$labels['alignment'] = 'Tilpasning';
+$labels['disclaimer_size'] = 'Ansvarsfraskrivelse skriftstørrelse';
+$labels['social_icon_style'] = 'Sosial ikon-stil';
+$labels['social_icon_size'] = 'Størrelse på sosiale ikoner';
+$labels['add_item'] = 'Legg til element';
+$labels['small'] = 'Liten';
+$labels['medium'] = 'Middels';
+$labels['large'] = 'Stor';
+$labels['tiny'] = 'Liten';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Fet';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursiv';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Åpne designredigering';
+$labels['finish_designing'] = 'Lukk designredigering';
+$labels['designer_info'] = 'Dra og slipp elementene i tabellen nedenfor for å omorganisere posisjonene deres. Klikk på tannhjulikonene for å justere celleegenskapene.';
+$labels['cell_properties'] = 'Celleegenskaper';
+$labels['left_padding'] = 'Venstre polstring';
+$labels['right_padding'] = 'Riktig polstring';
+$labels['top_padding'] = 'Topp polstring';
+$labels['bottom_padding'] = 'Bunnpolstring';
+$labels['left_border'] = 'Venstre kant';
+$labels['right_border'] = 'Høyre grense';
+$labels['top_border'] = 'Øverste kant';
+$labels['bottom_border'] = 'Nederste kant';
+$labels['border'] = 'Grense:';
+$labels['left'] = 'Venstre';
+$labels['right'] = 'Høyre';
+$labels['top'] = 'Topp';
+$labels['bottom'] = 'Nederst';
+$labels['middle'] = 'Midten';
+$labels['vertical_align'] = 'Vertikal justering:';
+$labels['export_note'] = 'Bruk denne HTML-koden hvis du vil inkludere signaturen din i et annet e-postprogram.';
+$labels['copy_to_clipboard'] = 'Kopier til utklippstavlen';
+$labels['close_design_editor_note'] = 'Lukk designredigeringsprogrammet for å få signaturens HTML-kode.';
+$labels['copy_success_note'] = 'Signatur kopiert til utklippstavlen';
+$labels['details_email'] = 'E-post:';
+$labels['details_website'] = 'Nettsted:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobil:';
+$labels['details_address'] = 'Adresse:';
+$labels['image_alternative_text'] = 'Alternativ tekst';

@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = '簽名';
+$labels['app_menu_title'] = '簽名';
+$labels['signature_preview'] = '簽名預覽';
+$labels['signature_builder'] = '簽名製造商';
+$labels['enable'] = '啟用簽名建立程式';
+$labels['preview'] = '預覽';
+$labels['main'] = '主頁';
+$labels['details'] = '詳細資訊';
+$labels['social'] = '社會';
+$labels['disclaimer'] = '免責聲明';
+$labels['style'] = '風格';
+$labels['export'] = '出口';
+$labels['select_design'] = '選擇設計';
+$labels['name'] = '名稱';
+$labels['position'] = '職位';
+$labels['user'] = '使用者';
+$labels['logo'] = '標誌';
+$labels['resize_note'] = '按一下並拖曳預覽中顯示的影像，以調整其大小。';
+$labels['colors'] = '顏色';
+$labels['fonts'] = '字體';
+$labels['items'] = '項目';
+$labels['image'] = '圖片';
+$labels['text'] = '正文';
+$labels['social_hand_drawn'] = '手繪';
+$labels['social_logotype'] = '標誌';
+$labels['social_logotype_black'] = '黑色標誌';
+$labels['social_outline'] = '概要';
+$labels['social_round_black'] = '圓形黑色';
+$labels['social_round_flat'] = '圓形平面';
+$labels['social_round_gloss'] = '圓形光澤';
+$labels['social_square_black'] = '方形黑色';
+$labels['social_square_flat'] = '方形平面';
+$labels['social_square_gloss'] = '方形光澤';
+$labels['social_xmas'] = '聖誕節';
+$labels['templates'] = '範本';
+$labels['template_note'] = '套用範本會覆蓋您使用設計編輯器所做的所有修改。';
+$labels['enable_image_resizing'] = '啟用影像大小調整';
+$labels['layout'] = '佈局';
+$labels['separator'] = '分離器';
+$labels['column'] = '專欄';
+$labels['row'] = '行數';
+$labels['include_in_plain_text'] = '包含在純文字簽章中';
+$labels['show'] = '顯示';
+$labels['hide'] = '隱藏';
+$labels['no_change'] = '無變更';
+$labels['text_color'] = '文字顏色';
+$labels['show_titles'] = '顯示標題';
+$labels['title_color'] = '標題顏色';
+$labels['title_style'] = '標題樣式';
+$labels['link_color'] = '連結顏色';
+$labels['font_family'] = '字型系列';
+$labels['font_size'] = '字型大小';
+$labels['alignment'] = '對齊';
+$labels['disclaimer_size'] = '免責聲明字型大小';
+$labels['social_icon_style'] = '社交圖示風格';
+$labels['social_icon_size'] = '社交圖示大小';
+$labels['add_item'] = '新增項目';
+$labels['small'] = '小型';
+$labels['medium'] = '中型';
+$labels['large'] = '大型';
+$labels['tiny'] = '微小';
+$labels['normal'] = '正常';
+$labels['bold'] = '粗體';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = '無襯字';
+$labels['cursive'] = '草書';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = '開啟設計編輯器';
+$labels['finish_designing'] = '關閉設計編輯器';
+$labels['designer_info'] = '拖放下表中的元素以重新排列其位置。按一下齒輪圖示調整儲存格屬性。';
+$labels['cell_properties'] = '細胞特性';
+$labels['left_padding'] = '左填充';
+$labels['right_padding'] = '右填充';
+$labels['top_padding'] = '頂部襯墊';
+$labels['bottom_padding'] = '底部襯墊';
+$labels['left_border'] = '左邊界';
+$labels['right_border'] = '右邊界';
+$labels['top_border'] = '頂部邊界';
+$labels['bottom_border'] = '底部邊框';
+$labels['border'] = '邊界：';
+$labels['left'] = '左邊';
+$labels['right'] = '對';
+$labels['top'] = '回頂端';
+$labels['bottom'] = '底部';
+$labels['middle'] = '中間';
+$labels['vertical_align'] = '垂直對齊：';
+$labels['export_note'] = '如果您想在其他電子郵件程式中加入簽名，請使用此 HTML 代碼。';
+$labels['copy_to_clipboard'] = '複製到剪貼簿';
+$labels['close_design_editor_note'] = '關閉設計編輯器，取得簽名的 HTML 程式碼。';
+$labels['copy_success_note'] = '簽名複製到剪貼簿';
+$labels['details_email'] = '電子郵件：';
+$labels['details_website'] = '網站：';
+$labels['details_phone'] = '電話：';
+$labels['details_mobile'] = '手機：';
+$labels['details_address'] = '地址：';
+$labels['image_alternative_text'] = '替代文本';

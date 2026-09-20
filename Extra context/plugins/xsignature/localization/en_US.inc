@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Signature';
+$labels['app_menu_title'] = 'Signature';
+$labels['signature_preview'] = 'Signature Preview';
+$labels['signature_builder'] = 'Signature Builder';
+$labels['enable'] = 'Enable Signature Builder';
+$labels['preview'] = 'Preview';
+$labels['main'] = 'Main';
+$labels['details'] = 'Details';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Disclaimer';
+$labels['style'] = 'Style';
+$labels['export'] = 'Export';
+$labels['select_design'] = 'Select design';
+$labels['name'] = 'Name';
+$labels['position'] = 'Position';
+$labels['user'] = 'User';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Click and drag the image displayed in the preview to resize it.';
+$labels['colors'] = 'Colors';
+$labels['fonts'] = 'Fonts';
+$labels['items'] = 'Items';
+$labels['image'] = 'Image';
+$labels['text'] = 'Text';
+$labels['social_hand_drawn'] = 'Hand-drawn';
+$labels['social_logotype'] = 'Logotype';
+$labels['social_logotype_black'] = 'Logotype black';
+$labels['social_outline'] = 'Outline';
+$labels['social_round_black'] = 'Round black';
+$labels['social_round_flat'] = 'Round flat';
+$labels['social_round_gloss'] = 'Round gloss';
+$labels['social_square_black'] = 'Square black';
+$labels['social_square_flat'] = 'Square flat';
+$labels['social_square_gloss'] = 'Square gloss';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Templates';
+$labels['template_note'] = 'Applying a template will overwrite all the modifications you\'ve made using the design editor.';
+$labels['enable_image_resizing'] = 'Enable image resizing';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Separator';
+$labels['column'] = 'Column';
+$labels['row'] = 'Row';
+$labels['include_in_plain_text'] = 'Include in plain text signature';
+$labels['show'] = 'Show';
+$labels['hide'] = 'Hide';
+$labels['no_change'] = 'No change';
+$labels['text_color'] = 'Text color';
+$labels['show_titles'] = 'Show titles';
+$labels['title_color'] = 'Title color';
+$labels['title_style'] = 'Title style';
+$labels['link_color'] = 'Link color';
+$labels['font_family'] = 'Font family';
+$labels['font_size'] = 'Font size';
+$labels['alignment'] = 'Alignment';
+$labels['disclaimer_size'] = 'Disclaimer font size';
+$labels['social_icon_style'] = 'Social icon style';
+$labels['social_icon_size'] = 'Social icon size';
+$labels['add_item'] = 'Add item';
+$labels['small'] = 'Small';
+$labels['medium'] = 'Medium';
+$labels['large'] = 'Large';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Cursive';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Open design editor';
+$labels['finish_designing'] = 'Close design editor';
+$labels['designer_info'] = 'Drag and drop the elements in the table below to rearrange their positions. Click the gear icons to adjust cell properties.';
+$labels['cell_properties'] = 'Cell properties';
+$labels['left_padding'] = 'Left padding';
+$labels['right_padding'] = 'Right padding';
+$labels['top_padding'] = 'Top padding';
+$labels['bottom_padding'] = 'Bottom padding';
+$labels['left_border'] = 'Left border';
+$labels['right_border'] = 'Right border';
+$labels['top_border'] = 'Top border';
+$labels['bottom_border'] = 'Bottom border';
+$labels['border'] = 'Border:';
+$labels['left'] = 'Left';
+$labels['right'] = 'Right';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Bottom';
+$labels['middle'] = 'Middle';
+$labels['vertical_align'] = 'Vertical alignment:';
+$labels['export_note'] = 'Use this HTML code if you want to include your signature in another email program.';
+$labels['copy_to_clipboard'] = 'Copy to clipboard';
+$labels['close_design_editor_note'] = 'Close the design editor to get the signature HTML code.';
+$labels['copy_success_note'] = 'Signature copied to clipboard';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Website:';
+$labels['details_phone'] = 'Phone:';
+$labels['details_mobile'] = 'Mobile:';
+$labels['details_address'] = 'Address:';
+$labels['image_alternative_text'] = 'Alternative text';

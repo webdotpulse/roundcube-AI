@@ -1,0 +1,54 @@
+ROUNDCUBE PLUS SIGNATURE PLUGIN
+===============================
+
+This plugin makes it possible for users to visually build complex email signatures. To use the signature builder
+after the plugin has been installed and enabled, go to Settings / Identities, select the identity to edit, and check
+the "Enable Signature Builder" checkbox. A signature builder with a preview and all its options will be displayed.
+
+REQUIREMENTS
+------------
+- Roundcube: 1.6, 1.7
+- PHP: 8.0 or higher
+- PHP GD2 extension
+- Database: SQLite / MySQL / Postgres
+
+INSTALLATION
+------------
+1. Copy the directories xsignature and xframework included in this package to the 'plugins' directory of your Roundcube
+   installation.
+
+2. Rename the file <roundcube>/plugins/xsignature/config.inc.php.dist to config.inc.php.
+
+3. Edit the file <roundcube>/plugins/xsignature/config.inc.php and configure the plugin according to your needs.
+
+4. Make sure the directory for the logo images you specified in the config file exists and that the server can write to it.
+
+5. Edit the file <roundcube>/config/config.inc.php, add xsignature to the plugins array and specify your license key.
+
+For more information on installing Roundcube Plus plugins see:
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=29
+
+COMPATIBILITY
+-------------
+1. This plugin has been created for the standard version of Roundcube as provided on the Roundcube website:
+   https://roundcube.net. It might not work properly with customized versions of Roundcube including the version
+   provided as part of the Kolab system. Please note that we cannot provide any technical support for the plugin
+   deployed on a non-standard version of Roundcube.
+
+2. The design editor is disabled on mobile devices, since its drag-and-drop functionality is not supported on
+   touch screens.
+
+DATABASE
+--------
+The plugin stores its information in the 'identities' table of the Roundcube database. The plugin will add the necessary
+columns to the table when you first navigate to the identities settings page in the browser. There's no need to modify
+the table manually before using the plugin.
+
+LICENSE
+-------
+This plugin is distributed under a commercial license. In order to use the plugin, you must purchase the license
+from Tecorama LLC. See the LICENSE file for details.
+
+COPYRIGHT
+---------
+Copyright (c) 2026, Tecorama LLC

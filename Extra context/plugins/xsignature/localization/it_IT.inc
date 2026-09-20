@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Firma';
+$labels['app_menu_title'] = 'Firma';
+$labels['signature_preview'] = 'Anteprima firma';
+$labels['signature_builder'] = 'Crea firme';
+$labels['enable'] = 'Abilita la progettazione firme';
+$labels['preview'] = 'Anteprima';
+$labels['main'] = 'Principale';
+$labels['details'] = 'Dettagli';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Disclaimer';
+$labels['style'] = 'Stile';
+$labels['export'] = 'Esporta';
+$labels['select_design'] = 'Seleziona uno stile';
+$labels['name'] = 'Nome';
+$labels['position'] = 'Posizione';
+$labels['user'] = 'Utente';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Fai clic e trascina l\'immagine visualizzata nell\'anteprima per ridimensionarla.';
+$labels['colors'] = 'Colori';
+$labels['fonts'] = 'Caratteri';
+$labels['items'] = 'Articoli';
+$labels['image'] = 'Immagine';
+$labels['text'] = 'Testo';
+$labels['social_hand_drawn'] = 'Disegnato a mano';
+$labels['social_logotype'] = 'Logo';
+$labels['social_logotype_black'] = 'Logo nero';
+$labels['social_outline'] = 'Contorno';
+$labels['social_round_black'] = 'Tondo nero';
+$labels['social_round_flat'] = 'Tondo piatto';
+$labels['social_round_gloss'] = 'Tondo Lucido';
+$labels['social_square_black'] = 'Quadrato nero';
+$labels['social_square_flat'] = 'Quadrato piatto';
+$labels['social_square_gloss'] = 'Quadrato lucido';
+$labels['social_xmas'] = 'Natale';
+$labels['templates'] = 'Modelli';
+$labels['template_note'] = 'L\'applicazione di un modello sovrascriverà tutte le modifiche apportate utilizzando la progettazione firme.';
+$labels['enable_image_resizing'] = 'Abilita ridimensionamento immagine';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Separatore';
+$labels['column'] = 'Colonna';
+$labels['row'] = 'Riga';
+$labels['include_in_plain_text'] = 'Includi firma in testo semplice';
+$labels['show'] = 'Mostra';
+$labels['hide'] = 'Nascondi';
+$labels['no_change'] = 'Nessuna modifica';
+$labels['text_color'] = 'Colore testo';
+$labels['show_titles'] = 'Mostra titoli';
+$labels['title_color'] = 'Colore del titolo';
+$labels['title_style'] = 'Stile del titolo';
+$labels['link_color'] = 'Colore del collegamento';
+$labels['font_family'] = 'Famiglia di caratteri';
+$labels['font_size'] = 'Dimensione carattere';
+$labels['alignment'] = 'Allineamento';
+$labels['disclaimer_size'] = 'Dimensione carattere disclaimer';
+$labels['social_icon_style'] = 'Stile icona social';
+$labels['social_icon_size'] = 'Dimensione icona social';
+$labels['add_item'] = 'Aggiungi elemento';
+$labels['small'] = 'Piccolo';
+$labels['medium'] = 'Medio';
+$labels['large'] = 'Grande';
+$labels['tiny'] = 'Sottile';
+$labels['normal'] = 'Normale';
+$labels['bold'] = 'Grassetto';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Cursive';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Apri la progettazione firme';
+$labels['finish_designing'] = 'Chiudi la progettazione firme';
+$labels['designer_info'] = 'Trascina e rilascia gli elementi nella tabella sottostante per riorganizzare le loro posizioni. Fare clic sulle icone a forma di ingranaggio per regolare le proprietà della cella.';
+$labels['cell_properties'] = 'Proprietà cella';
+$labels['left_padding'] = 'Padding sinistro';
+$labels['right_padding'] = 'Padding destro';
+$labels['top_padding'] = 'Padding superiore';
+$labels['bottom_padding'] = 'Padding inferiore';
+$labels['left_border'] = 'Bordo sinistro';
+$labels['right_border'] = 'Bordo destro';
+$labels['top_border'] = 'Bordo superiore';
+$labels['bottom_border'] = 'Bordo inferiore';
+$labels['border'] = 'Bordo:';
+$labels['left'] = 'Sinistra';
+$labels['right'] = 'Destra';
+$labels['top'] = 'Alto';
+$labels['bottom'] = 'Sotto';
+$labels['middle'] = 'Medio';
+$labels['vertical_align'] = 'Allineamento verticale:';
+$labels['export_note'] = 'Usa questo codice HTML se vuoi includere la tua firma in un altro programma di posta.';
+$labels['copy_to_clipboard'] = 'Copia negli appunti';
+$labels['close_design_editor_note'] = 'Chiudi la progettazione firme per ottenere il codice HTML della firma.';
+$labels['copy_success_note'] = 'Firma copiata negli appunti';
+$labels['details_email'] = 'E-mail:';
+$labels['details_website'] = 'Sito web:';
+$labels['details_phone'] = 'Telefono:';
+$labels['details_mobile'] = 'Cellulare:';
+$labels['details_address'] = 'Indirizzo:';
+$labels['image_alternative_text'] = 'Testo alternativo';

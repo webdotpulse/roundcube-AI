@@ -1,0 +1,49 @@
+<div class="xformatting">
+    <template x-if='data.format.[~item~].hasOwnProperty("layout")'>
+        <span class="group layout">
+            <select name="xsignature_format[[~item~]][layout]" x-model="data.format.[~item~].layout"
+                    class="form-control custom-select pretty-select">
+                <option value="column">[+xsignature.column+]</option>
+                <option value="row">[+xsignature.row+]</option>
+            </select>
+        </span>
+    </template>
+    <template x-if='data.format.[~item~].hasOwnProperty("bold")'>
+        <span class="group checkboxes">
+            <input type="checkbox" class="no-switchbox" id="xfb-[~item~]" name="xsignature_format[[~item~]][bold]"
+                   value="true" x-model="data.format.[~item~].bold">
+            <label for="xfb-[~item~]" class="first format-label" :class="{checked: data.format.[~item~].bold}">
+                <span class="format-button button-bold">B</span>
+            </label>
+            <input type="checkbox" class="no-switchbox" id="xfi-[~item~]" name="xsignature_format[[~item~]][italic]"
+                   value="true" x-model="data.format.[~item~].italic">
+            <label for="xfi-[~item~]" class="format-label" :class="{checked: data.format.[~item~].italic}">
+                <span class="format-button button-italic">I</span>
+            </label>
+            <input type="checkbox" class="no-switchbox" id="xfu-[~item~]" name="xsignature_format[[~item~]][underline]"
+                   value="true" x-model="data.format.[~item~].underline">
+            <label for="xfu-[~item~]" class="last format-label" :class="{checked: data.format.[~item~].underline}">
+                <span class="format-button button-underline">U</span>
+            </label>
+        </span>
+    </template>
+    <template x-if='data.format.[~item~].hasOwnProperty("align") && data.format.[~item~].layout == "column"'>
+        <span class="group radioboxes">
+            <input type="radio" class="no-switchbox" id="xfl-[~item~]" name="xsignature_format[[~item~]][align]"
+                   value="left" x-model="data.format.[~item~].align">
+            <label for="xfl-[~item~]" class="first format-label" :class="{checked: data.format.[~item~].align == 'left'}">
+                <span class="format-button button-align-left"></span>
+            </label>
+            <input type="radio" class="no-switchbox" id="xfc-[~item~]" name="xsignature_format[[~item~]][align]"
+                   value="center" x-model="data.format.[~item~].align">
+            <label for="xfc-[~item~]" class="format-label" :class="{checked: data.format.[~item~].align == 'center'}">
+                <span class="format-button button-align-center"></span>
+            </label>
+            <input type="radio" class="no-switchbox" id="xfr-[~item~]" name="xsignature_format[[~item~]][align]"
+                   value="right" x-model="data.format.[~item~].align">
+            <label for="xfr-[~item~]" class="last format-label" :class="{checked: data.format.[~item~].align == 'right'}">
+                <span class="format-button button-align-right"></span>
+            </label>
+        </span>
+    </template>
+</div>

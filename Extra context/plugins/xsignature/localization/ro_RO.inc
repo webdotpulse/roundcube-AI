@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Semnătură';
+$labels['app_menu_title'] = 'Semnătura';
+$labels['signature_preview'] = 'Previzualizare semnătură';
+$labels['signature_builder'] = 'Constructor de semnături';
+$labels['enable'] = 'Activați Constructorul de semnături';
+$labels['preview'] = 'Previzualizare';
+$labels['main'] = 'Principal';
+$labels['details'] = 'Detalii';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Disclaimer';
+$labels['style'] = 'Stil';
+$labels['export'] = 'Export';
+$labels['select_design'] = 'Selectați designul';
+$labels['name'] = 'Nume';
+$labels['position'] = 'Poziția';
+$labels['user'] = 'Utilizator';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Faceți clic și trageți imaginea afișată în previzualizare pentru a o redimensiona.';
+$labels['colors'] = 'Culori';
+$labels['fonts'] = 'Fonturi';
+$labels['items'] = 'Articole';
+$labels['image'] = 'Imagine';
+$labels['text'] = 'Text';
+$labels['social_hand_drawn'] = 'Desenat de mână';
+$labels['social_logotype'] = 'Logotip';
+$labels['social_logotype_black'] = 'Logotip negru';
+$labels['social_outline'] = 'Schiță';
+$labels['social_round_black'] = 'Rotund negru';
+$labels['social_round_flat'] = 'Rotund plat';
+$labels['social_round_gloss'] = 'Rotund lucios';
+$labels['social_square_black'] = 'Pătrat negru';
+$labels['social_square_flat'] = 'Pătrat plat';
+$labels['social_square_gloss'] = 'Luciu pătrat';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Șabloane';
+$labels['template_note'] = 'Aplicarea unui șablon va suprascrie toate modificările pe care le-ați făcut cu ajutorul editorului de design.';
+$labels['enable_image_resizing'] = 'Activați redimensionarea imaginii';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Separator';
+$labels['column'] = 'Coloana';
+$labels['row'] = 'Rândul';
+$labels['include_in_plain_text'] = 'Includeți în semnătura în text simplu';
+$labels['show'] = 'Arată';
+$labels['hide'] = 'Ascundeți';
+$labels['no_change'] = 'Nici o schimbare';
+$labels['text_color'] = 'Culoarea textului';
+$labels['show_titles'] = 'Afișați titlurile';
+$labels['title_color'] = 'Culoare de titlu';
+$labels['title_style'] = 'Stil de titlu';
+$labels['link_color'] = 'Culoarea legăturii';
+$labels['font_family'] = 'Familie de fonturi';
+$labels['font_size'] = 'Mărimea fontului';
+$labels['alignment'] = 'Aliniere';
+$labels['disclaimer_size'] = 'Mărimea fontului de renunțare';
+$labels['social_icon_style'] = 'Stilul pictogramei sociale';
+$labels['social_icon_size'] = 'Dimensiunea pictogramei sociale';
+$labels['add_item'] = 'Adăugați un articol';
+$labels['small'] = 'Mici';
+$labels['medium'] = 'Mediu';
+$labels['large'] = 'Mare';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Cursiv';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Deschideți editorul de design';
+$labels['finish_designing'] = 'Închideți editorul de design';
+$labels['designer_info'] = 'Trageți și fixați elementele din tabelul de mai jos pentru a le rearanja pozițiile. Faceți clic pe pictogramele cu rotițe pentru a ajusta proprietățile celulelor.';
+$labels['cell_properties'] = 'Proprietățile celulelor';
+$labels['left_padding'] = 'Căptușeală stânga';
+$labels['right_padding'] = 'Căptușeală dreapta';
+$labels['top_padding'] = 'Căptușeală superioară';
+$labels['bottom_padding'] = 'Căptușeală inferioară';
+$labels['left_border'] = 'Marginea stângă';
+$labels['right_border'] = 'Marginea dreaptă';
+$labels['top_border'] = 'Marginea de sus';
+$labels['bottom_border'] = 'Margine inferioară';
+$labels['border'] = 'Frontieră:';
+$labels['left'] = 'Stânga';
+$labels['right'] = 'Dreapta';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Partea de jos';
+$labels['middle'] = 'Mijlocul';
+$labels['vertical_align'] = 'Aliniere verticală:';
+$labels['export_note'] = 'Folosiți acest cod HTML dacă doriți să vă includeți semnătura într-un alt program de e-mail.';
+$labels['copy_to_clipboard'] = 'Copiere în clipboard';
+$labels['close_design_editor_note'] = 'Închideți editorul de design pentru a obține codul HTML al semnăturii.';
+$labels['copy_success_note'] = 'Semnătură copiată în clipboard';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Site web:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobil:';
+$labels['details_address'] = 'Adresă:';
+$labels['image_alternative_text'] = 'Text alternativ';

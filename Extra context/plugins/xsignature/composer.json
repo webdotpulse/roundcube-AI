@@ -1,0 +1,16 @@
+{
+    "name": "roundcubeplus/xsignature",
+    "type": "roundcube-plugin",
+    "description": "Enables the users to visually build complex email signatures.",
+    "license": "Commercial",
+    "version": "1.6",
+    "homepage": "https://roundcubeplus.com",
+    "authors": [
+        {
+            "name": "Roundcube Plus",
+            "email": "contact@roundcubeplus.com"
+        }
+    ],
+    "repositories": [],
+    "require": {}
+}

@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Paraksts';
+$labels['app_menu_title'] = 'Paraksts';
+$labels['signature_preview'] = 'Paraksta priekšskatījums';
+$labels['signature_builder'] = 'Paraksta konstruktors';
+$labels['enable'] = 'Iespējot paraksta konstruktoru';
+$labels['preview'] = 'Priekšskatījums';
+$labels['main'] = 'Galvenais';
+$labels['details'] = 'Sīkāka informācija';
+$labels['social'] = 'Sociālā vietne';
+$labels['disclaimer'] = 'Atruna';
+$labels['style'] = 'Stils';
+$labels['export'] = 'Eksportēt';
+$labels['select_design'] = 'Izvēlieties dizainu';
+$labels['name'] = 'Nosaukums';
+$labels['position'] = 'Pozīcija';
+$labels['user'] = 'Lietotājs';
+$labels['logo'] = 'Logotips';
+$labels['resize_note'] = 'Lai mainītu priekšskatījumā redzamā attēla lielumu, noklikšķiniet uz tā un velciet to.';
+$labels['colors'] = 'Krāsas';
+$labels['fonts'] = 'Fonti';
+$labels['items'] = 'Preces';
+$labels['image'] = 'Attēls';
+$labels['text'] = 'Teksts';
+$labels['social_hand_drawn'] = 'Ar roku zīmēts';
+$labels['social_logotype'] = 'Logotips';
+$labels['social_logotype_black'] = 'Logotips melns';
+$labels['social_outline'] = 'Kontūra';
+$labels['social_round_black'] = 'Apaļš melns';
+$labels['social_round_flat'] = 'Apaļš plakans';
+$labels['social_round_gloss'] = 'Apaļš spīdums';
+$labels['social_square_black'] = 'Kvadrātveida melns';
+$labels['social_square_flat'] = 'Kvadrātveida dzīvoklis';
+$labels['social_square_gloss'] = 'Kvadrātveida spīdums';
+$labels['social_xmas'] = 'Ziemassvētki';
+$labels['templates'] = 'Šabloni';
+$labels['template_note'] = 'Piemērojot veidni, tiks pārrakstītas visas izmaiņas, kas veiktas, izmantojot dizaina redaktoru.';
+$labels['enable_image_resizing'] = 'Iespējot mainīt attēla izmēru';
+$labels['layout'] = 'Izkārtojums';
+$labels['separator'] = 'Separators';
+$labels['column'] = 'Kolonna';
+$labels['row'] = 'Rinda';
+$labels['include_in_plain_text'] = 'Iekļaut vienkāršā teksta parakstā';
+$labels['show'] = 'Rādīt';
+$labels['hide'] = 'Paslēpt';
+$labels['no_change'] = 'Nav izmaiņu';
+$labels['text_color'] = 'Teksta krāsa';
+$labels['show_titles'] = 'Rādīt nosaukumus';
+$labels['title_color'] = 'Virsraksta krāsa';
+$labels['title_style'] = 'Virsraksta stils';
+$labels['link_color'] = 'Saites krāsa';
+$labels['font_family'] = 'Fontu ģimene';
+$labels['font_size'] = 'Fonta lielums';
+$labels['alignment'] = 'Saskaņošana';
+$labels['disclaimer_size'] = 'Atruna par atrunu fonta izmērs';
+$labels['social_icon_style'] = 'Sociālo ikonu stils';
+$labels['social_icon_size'] = 'Sociālās vietnes ikonas izmērs';
+$labels['add_item'] = 'Pievienot objektu';
+$labels['small'] = 'Mazs';
+$labels['medium'] = 'Vidēja';
+$labels['large'] = 'Liels';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Parasts';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursīvs';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Atvērt dizaina redaktoru';
+$labels['finish_designing'] = 'Aizvērt dizaina redaktors';
+$labels['designer_info'] = 'Velciet un nometiet tālāk tabulā redzamos elementus, lai mainītu to atrašanās vietas. Noklikšķiniet uz pārnesumu ikonām, lai pielāgotu šūnu īpašības.';
+$labels['cell_properties'] = 'Šūnu īpašības';
+$labels['left_padding'] = 'Kreisais polsterējums';
+$labels['right_padding'] = 'Tiesības polsterējums';
+$labels['top_padding'] = 'Augšējais polsterējums';
+$labels['bottom_padding'] = 'Apakšējais polsterējums';
+$labels['left_border'] = 'Kreisā robeža';
+$labels['right_border'] = 'Labā robeža';
+$labels['top_border'] = 'Augšējā robeža';
+$labels['bottom_border'] = 'Apakšējā robeža';
+$labels['border'] = 'Robeža:';
+$labels['left'] = 'Kreisā';
+$labels['right'] = 'Tiesības';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Apakšējā daļa';
+$labels['middle'] = 'Middle';
+$labels['vertical_align'] = 'Vertikālais izlīdzinājums:';
+$labels['export_note'] = 'Izmantojiet šo HTML kodu, ja vēlaties iekļaut savu parakstu citā e-pasta programmā.';
+$labels['copy_to_clipboard'] = 'Kopēt uz starpliktuvi';
+$labels['close_design_editor_note'] = 'Aizveriet dizaina redaktoru, lai iegūtu paraksta HTML kodu.';
+$labels['copy_success_note'] = 'Paraksta kopēšana uz starpliktuvi';
+$labels['details_email'] = 'E-pasts:';
+$labels['details_website'] = 'Tīmekļa vietne:';
+$labels['details_phone'] = 'Tālrunis:';
+$labels['details_mobile'] = 'Mobilais tālrunis:';
+$labels['details_address'] = 'Adrese:';
+$labels['image_alternative_text'] = 'Alternatīvais teksts';

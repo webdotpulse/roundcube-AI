@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Aláírás';
+$labels['app_menu_title'] = 'Aláírás';
+$labels['signature_preview'] = 'Aláírás előnézet';
+$labels['signature_builder'] = 'Signature Builder';
+$labels['enable'] = 'Aláíráskészítő engedélyezése';
+$labels['preview'] = 'Előnézet';
+$labels['main'] = 'Főoldal';
+$labels['details'] = 'Részletek';
+$labels['social'] = 'Szociális';
+$labels['disclaimer'] = 'Felelősségi nyilatkozat';
+$labels['style'] = 'Stílus';
+$labels['export'] = 'Exportálás';
+$labels['select_design'] = 'Válassza ki a designt';
+$labels['name'] = 'Név';
+$labels['position'] = 'Pozíció';
+$labels['user'] = 'Felhasználó';
+$labels['logo'] = 'Logó';
+$labels['resize_note'] = 'Kattintson és húzza az előnézetben megjelenő képet a méret módosításához.';
+$labels['colors'] = 'Színek';
+$labels['fonts'] = 'Betűtípusok';
+$labels['items'] = 'Tételek';
+$labels['image'] = 'Kép';
+$labels['text'] = 'Szöveg';
+$labels['social_hand_drawn'] = 'Kézzel rajzolt';
+$labels['social_logotype'] = 'Logotype';
+$labels['social_logotype_black'] = 'Logó fekete';
+$labels['social_outline'] = 'Vázlat';
+$labels['social_round_black'] = 'Kerek fekete';
+$labels['social_round_flat'] = 'Kerek lapos';
+$labels['social_round_gloss'] = 'Kerek fényesség';
+$labels['social_square_black'] = 'Négyzet alakú fekete';
+$labels['social_square_flat'] = 'Négyzet alakú lapos';
+$labels['social_square_gloss'] = 'Négyzet alakú fényesség';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Sablonok';
+$labels['template_note'] = 'A sablon alkalmazása felülírja az összes olyan módosítást, amelyet a tervezőszerkesztővel végzett.';
+$labels['enable_image_resizing'] = 'Képméret módosítás engedélyezése';
+$labels['layout'] = 'Elrendezés';
+$labels['separator'] = 'Elválasztó';
+$labels['column'] = 'Oszlop';
+$labels['row'] = 'Sor';
+$labels['include_in_plain_text'] = 'Beleértve a sima szöveges aláírásba';
+$labels['show'] = 'Mutasd meg a';
+$labels['hide'] = 'Rejtsd el';
+$labels['no_change'] = 'Nincs változás';
+$labels['text_color'] = 'Szöveg színe';
+$labels['show_titles'] = 'Címek megjelenítése';
+$labels['title_color'] = 'Cím szín';
+$labels['title_style'] = 'Cím stílus';
+$labels['link_color'] = 'Link szín';
+$labels['font_family'] = 'Betűcsalád';
+$labels['font_size'] = 'Betűméret';
+$labels['alignment'] = 'Kiegyenlítés';
+$labels['disclaimer_size'] = 'Felelősségi nyilatkozat betűméret';
+$labels['social_icon_style'] = 'Szociális ikon stílus';
+$labels['social_icon_size'] = 'Szociális ikon mérete';
+$labels['add_item'] = 'Tétel hozzáadása';
+$labels['small'] = 'Kis';
+$labels['medium'] = 'Közepes';
+$labels['large'] = 'Nagy';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Normál';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kurzív';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Tervezőszerkesztő megnyitása';
+$labels['finish_designing'] = 'Zárja a tervezési szerkesztőt';
+$labels['designer_info'] = 'Az alábbi táblázatban található elemeket húzza és ejtse el, hogy átrendezze a pozíciójukat. Kattintson a fogaskerék ikonokra a cellák tulajdonságainak beállításához.';
+$labels['cell_properties'] = 'A sejtek tulajdonságai';
+$labels['left_padding'] = 'Bal oldali kitöltés';
+$labels['right_padding'] = 'Jobb oldali kitöltés';
+$labels['top_padding'] = 'Felső párnázás';
+$labels['bottom_padding'] = 'Alsó párnázás';
+$labels['left_border'] = 'Bal oldali szegély';
+$labels['right_border'] = 'Jobb oldali határ';
+$labels['top_border'] = 'Felső határ';
+$labels['bottom_border'] = 'Alsó szegély';
+$labels['border'] = 'Határ:';
+$labels['left'] = 'Balra';
+$labels['right'] = 'Jobbra';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Alul';
+$labels['middle'] = 'Középső';
+$labels['vertical_align'] = 'Függőleges igazítás:';
+$labels['export_note'] = 'Használja ezt a HTML-kódot, ha az aláírását egy másik e-mail programban is be szeretné illeszteni.';
+$labels['copy_to_clipboard'] = 'Másolás a vágólapra';
+$labels['close_design_editor_note'] = 'Zárja be a tervezőszerkesztőt, hogy megkapja az aláírás HTML-kódját.';
+$labels['copy_success_note'] = 'Aláírás a vágólapra másolva';
+$labels['details_email'] = 'E-mail:';
+$labels['details_website'] = 'Weboldal:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobil:';
+$labels['details_address'] = 'Cím:';
+$labels['image_alternative_text'] = 'Alternatív szöveg';

@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'İmza';
+$labels['app_menu_title'] = 'İmza';
+$labels['signature_preview'] = 'İmza Önizlemesi';
+$labels['signature_builder'] = 'İmza Oluşturucu';
+$labels['enable'] = 'İmza Oluşturucuyu Etkinleştir';
+$labels['preview'] = 'Önizleme';
+$labels['main'] = 'Ana';
+$labels['details'] = 'Detaylar';
+$labels['social'] = 'Sosyal';
+$labels['disclaimer'] = 'Sorumluluk Reddi';
+$labels['style'] = 'Stil';
+$labels['export'] = 'İhracat';
+$labels['select_design'] = 'Tasarım seçin';
+$labels['name'] = 'İsim';
+$labels['position'] = 'Pozisyon';
+$labels['user'] = 'Kullanıcı';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Yeniden boyutlandırmak için önizlemede görüntülenen görüntüye tıklayın ve sürükleyin.';
+$labels['colors'] = 'Renkler';
+$labels['fonts'] = 'Yazı Tipleri';
+$labels['items'] = 'Eşyalar';
+$labels['image'] = 'Resim';
+$labels['text'] = 'Metin';
+$labels['social_hand_drawn'] = 'Elle çizilmiş';
+$labels['social_logotype'] = 'Logotype';
+$labels['social_logotype_black'] = 'Logotype siyah';
+$labels['social_outline'] = 'Anahatlar';
+$labels['social_round_black'] = 'Yuvarlak siyah';
+$labels['social_round_flat'] = 'Yuvarlak düz';
+$labels['social_round_gloss'] = 'Yuvarlak parlaklık';
+$labels['social_square_black'] = 'Kare siyah';
+$labels['social_square_flat'] = 'Kare düz';
+$labels['social_square_gloss'] = 'Kare parlaklık';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Şablonlar';
+$labels['template_note'] = 'Bir şablon uygulamak, tasarım düzenleyicisini kullanarak yaptığınız tüm değişikliklerin üzerine yazacaktır.';
+$labels['enable_image_resizing'] = 'Görüntü yeniden boyutlandırmayı etkinleştir';
+$labels['layout'] = 'Düzen';
+$labels['separator'] = 'Ayırıcı';
+$labels['column'] = 'Sütun';
+$labels['row'] = 'Sıra';
+$labels['include_in_plain_text'] = 'Düz metin imzasına dahil edin';
+$labels['show'] = 'Göster';
+$labels['hide'] = 'Gizle';
+$labels['no_change'] = 'Değişiklik yok';
+$labels['text_color'] = 'Metin rengi';
+$labels['show_titles'] = 'Başlıkları göster';
+$labels['title_color'] = 'Başlık rengi';
+$labels['title_style'] = 'Başlık stili';
+$labels['link_color'] = 'Bağlantı rengi';
+$labels['font_family'] = 'Yazı tipi ailesi';
+$labels['font_size'] = 'Yazı tipi boyutu';
+$labels['alignment'] = 'Hizalama';
+$labels['disclaimer_size'] = 'Sorumluluk reddi yazı tipi boyutu';
+$labels['social_icon_style'] = 'Sosyal simge stili';
+$labels['social_icon_size'] = 'Sosyal simge boyutu';
+$labels['add_item'] = 'Ürün ekle';
+$labels['small'] = 'Küçük';
+$labels['medium'] = 'Orta';
+$labels['large'] = 'Büyük';
+$labels['tiny'] = 'Küçük';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Kalın';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'El yazısı';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Açık tasarım editörü';
+$labels['finish_designing'] = 'Tasarım editörünü kapatın';
+$labels['designer_info'] = 'Konumlarını yeniden düzenlemek için aşağıdaki tablodaki öğeleri sürükleyip bırakın. Hücre özelliklerini ayarlamak için dişli simgelerine tıklayın.';
+$labels['cell_properties'] = 'Hücre özellikleri';
+$labels['left_padding'] = 'Sol dolgu';
+$labels['right_padding'] = 'Sağ dolgu';
+$labels['top_padding'] = 'Üst dolgu';
+$labels['bottom_padding'] = 'Alt dolgu';
+$labels['left_border'] = 'Sol kenarlık';
+$labels['right_border'] = 'Sağ kenarlık';
+$labels['top_border'] = 'Üst sınır';
+$labels['bottom_border'] = 'Alt kenarlık';
+$labels['border'] = 'Sınır:';
+$labels['left'] = 'Sol';
+$labels['right'] = 'Doğru.';
+$labels['top'] = 'Üst';
+$labels['bottom'] = 'Alt';
+$labels['middle'] = 'Orta';
+$labels['vertical_align'] = 'Dikey hizalama:';
+$labels['export_note'] = 'İmzanızı başka bir e-posta programına eklemek istiyorsanız bu HTML kodunu kullanın.';
+$labels['copy_to_clipboard'] = 'Panoya kopyala';
+$labels['close_design_editor_note'] = 'İmza HTML kodunu almak için tasarım düzenleyicisini kapatın.';
+$labels['copy_success_note'] = 'İmza panoya kopyalandı';
+$labels['details_email'] = 'E-posta:';
+$labels['details_website'] = 'Web sitesi:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Cep telefonu:';
+$labels['details_address'] = 'Adres:';
+$labels['image_alternative_text'] = 'Alternatif metin';

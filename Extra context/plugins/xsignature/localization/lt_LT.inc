@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Parašas';
+$labels['app_menu_title'] = 'Parašas';
+$labels['signature_preview'] = 'Parašo peržiūra';
+$labels['signature_builder'] = '"Signature Builder';
+$labels['enable'] = 'Įjungti parašo kūrimo funkciją';
+$labels['preview'] = 'Peržiūra';
+$labels['main'] = 'Pagrindinis';
+$labels['details'] = 'Išsami informacija';
+$labels['social'] = 'Socialinis';
+$labels['disclaimer'] = 'Atsakomybės apribojimas';
+$labels['style'] = 'Stilius';
+$labels['export'] = 'Eksportuoti';
+$labels['select_design'] = 'Pasirinkite dizainą';
+$labels['name'] = 'Pavadinimas';
+$labels['position'] = 'Pozicija';
+$labels['user'] = 'Vartotojas';
+$labels['logo'] = 'Logotipas';
+$labels['resize_note'] = 'Spustelėkite ir vilkite peržiūroje rodomą vaizdą, kad pakeistumėte jo dydį.';
+$labels['colors'] = 'Spalvos';
+$labels['fonts'] = 'Šriftai';
+$labels['items'] = 'Prekės';
+$labels['image'] = 'Vaizdas';
+$labels['text'] = 'Tekstas';
+$labels['social_hand_drawn'] = 'Rankomis pieštas';
+$labels['social_logotype'] = 'Logotipas';
+$labels['social_logotype_black'] = 'Juodos spalvos logotipas';
+$labels['social_outline'] = 'Kontūras';
+$labels['social_round_black'] = 'Apvali juoda spalva';
+$labels['social_round_flat'] = 'Apvalus plokščias';
+$labels['social_round_gloss'] = 'Apvalus blizgesys';
+$labels['social_square_black'] = 'Kvadratinė juoda spalva';
+$labels['social_square_flat'] = 'Kvadratinis plokščias';
+$labels['social_square_gloss'] = 'Kvadratinis blizgesys';
+$labels['social_xmas'] = 'Kalėdos';
+$labels['templates'] = 'Šablonai';
+$labels['template_note'] = 'Pritaikius šabloną bus perrašyti visi pakeitimai, kuriuos atlikote naudodami dizaino redaktorių.';
+$labels['enable_image_resizing'] = 'Įjungti vaizdo dydžio keitimą';
+$labels['layout'] = 'Maketavimas';
+$labels['separator'] = 'Separatorius';
+$labels['column'] = 'Stulpelis';
+$labels['row'] = 'Eilutė';
+$labels['include_in_plain_text'] = 'Įtraukti į paprastojo teksto parašą';
+$labels['show'] = 'Rodyti';
+$labels['hide'] = 'Paslėpti';
+$labels['no_change'] = 'Be pakeitimų';
+$labels['text_color'] = 'Teksto spalva';
+$labels['show_titles'] = 'Rodyti pavadinimus';
+$labels['title_color'] = 'Pavadinimo spalva';
+$labels['title_style'] = 'Pavadinimo stilius';
+$labels['link_color'] = 'Nuorodos spalva';
+$labels['font_family'] = 'Šriftų šeima';
+$labels['font_size'] = 'Šrifto dydis';
+$labels['alignment'] = 'Suderinimas';
+$labels['disclaimer_size'] = 'Atsakomybės apribojimo šrifto dydis';
+$labels['social_icon_style'] = 'Socialinių piktogramų stilius';
+$labels['social_icon_size'] = 'Socialinės piktogramos dydis';
+$labels['add_item'] = 'Pridėti elementą';
+$labels['small'] = 'Mažas';
+$labels['medium'] = 'Vidutinis';
+$labels['large'] = 'Didelis';
+$labels['tiny'] = 'Mažytis';
+$labels['normal'] = 'Normalus';
+$labels['bold'] = 'Drąsiai';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursyvas';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Atviras dizaino redaktorius';
+$labels['finish_designing'] = 'Uždaryti dizaino redaktorių';
+$labels['designer_info'] = 'Norėdami pakeisti toliau pateiktos lentelės elementų padėtį, vilkite ir nuleiskite juos. Spustelėkite krumpliaračių piktogramas, kad pakoreguotumėte ląstelių savybes.';
+$labels['cell_properties'] = 'Ląstelių savybės';
+$labels['left_padding'] = 'Kairės pusės paminkštinimas';
+$labels['right_padding'] = 'Dešinysis paminkštinimas';
+$labels['top_padding'] = 'Viršutinės trinkelės';
+$labels['bottom_padding'] = 'Apatinis paminkštinimas';
+$labels['left_border'] = 'Kairė riba';
+$labels['right_border'] = 'Dešinysis pasienis';
+$labels['top_border'] = 'Viršutinė riba';
+$labels['bottom_border'] = 'Apatinis apvadas';
+$labels['border'] = 'Pasienyje:';
+$labels['left'] = 'Kairėje pusėje';
+$labels['right'] = 'Teisė';
+$labels['top'] = 'Viršuje';
+$labels['bottom'] = 'Dugnas';
+$labels['middle'] = 'Vidurio';
+$labels['vertical_align'] = 'Vertikalus lygiavimas:';
+$labels['export_note'] = 'Naudokite šį HTML kodą, jei norite įtraukti parašą į kitą el. pašto programą.';
+$labels['copy_to_clipboard'] = 'Kopijuoti į iškarpinę';
+$labels['close_design_editor_note'] = 'Uždarykite dizaino redaktorių, kad gautumėte parašo HTML kodą.';
+$labels['copy_success_note'] = 'Parašas nukopijuotas į iškarpinę';
+$labels['details_email'] = 'El. paštas:';
+$labels['details_website'] = 'Interneto svetainė:';
+$labels['details_phone'] = 'Telefonas:';
+$labels['details_mobile'] = 'Mobilusis telefonas:';
+$labels['details_address'] = 'Adresas:';
+$labels['image_alternative_text'] = 'Alternatyvus tekstas';

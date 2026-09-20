@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Assinatura';
+$labels['app_menu_title'] = 'Assinatura';
+$labels['signature_preview'] = 'Pré-visualização da Assinatura';
+$labels['signature_builder'] = 'Construtor de Assinaturas';
+$labels['enable'] = 'Habilitar Assinatura Builder';
+$labels['preview'] = 'Pré-visualização';
+$labels['main'] = 'Principal';
+$labels['details'] = 'Detalhes';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Isenção de responsabilidade';
+$labels['style'] = 'Estilo';
+$labels['export'] = 'Exportação';
+$labels['select_design'] = 'Selecione o projeto';
+$labels['name'] = 'Nome';
+$labels['position'] = 'Posição';
+$labels['user'] = 'Usuário';
+$labels['logo'] = 'Logotipo';
+$labels['resize_note'] = 'Clique e arraste a imagem exibida na visualização para redimensioná-la.';
+$labels['colors'] = 'Cores';
+$labels['fonts'] = 'Fontes';
+$labels['items'] = 'Itens';
+$labels['image'] = 'Imagem';
+$labels['text'] = 'Texto';
+$labels['social_hand_drawn'] = 'Desenhado à mão';
+$labels['social_logotype'] = 'Logotipo';
+$labels['social_logotype_black'] = 'Logotipo preto';
+$labels['social_outline'] = 'Esboço';
+$labels['social_round_black'] = 'Preto redondo';
+$labels['social_round_flat'] = 'Plano redondo';
+$labels['social_round_gloss'] = 'Brilho redondo';
+$labels['social_square_black'] = 'Preto quadrado';
+$labels['social_square_flat'] = 'Quadrado plano';
+$labels['social_square_gloss'] = 'Gloss quadrado';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Modelos';
+$labels['template_note'] = 'A aplicação de um modelo sobregravará todas as modificações que você fez usando o editor de design.';
+$labels['enable_image_resizing'] = 'Habilitar redimensionamento de imagem';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Separador';
+$labels['column'] = 'Coluna';
+$labels['row'] = 'Fila';
+$labels['include_in_plain_text'] = 'Incluir em texto simples a assinatura';
+$labels['show'] = 'Mostrar';
+$labels['hide'] = 'Esconder';
+$labels['no_change'] = 'Nenhuma mudança';
+$labels['text_color'] = 'Cor do texto';
+$labels['show_titles'] = 'Mostrar títulos';
+$labels['title_color'] = 'Cor do título';
+$labels['title_style'] = 'Estilo do título';
+$labels['link_color'] = 'Cor do link';
+$labels['font_family'] = 'Família de fontes';
+$labels['font_size'] = 'Tamanho de letra';
+$labels['alignment'] = 'Alinhamento';
+$labels['disclaimer_size'] = 'Tamanho da fonte de isenção de responsabilidade';
+$labels['social_icon_style'] = 'Estilo ícone social';
+$labels['social_icon_size'] = 'Tamanho do ícone social';
+$labels['add_item'] = 'Adicionar item';
+$labels['small'] = 'Pequeno';
+$labels['medium'] = 'Médio';
+$labels['large'] = 'Grande';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Ousado';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Cursivo';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Editor de design aberto';
+$labels['finish_designing'] = 'Editor de projeto próximo';
+$labels['designer_info'] = 'Arraste e solte os elementos da tabela abaixo para reordenar suas posições. Clique nos ícones das engrenagens para ajustar as propriedades das células.';
+$labels['cell_properties'] = 'Propriedades celulares';
+$labels['left_padding'] = 'Forro esquerdo';
+$labels['right_padding'] = 'Enchimento correto';
+$labels['top_padding'] = 'Forro superior';
+$labels['bottom_padding'] = 'Forro inferior';
+$labels['left_border'] = 'Borda esquerda';
+$labels['right_border'] = 'Borda direita';
+$labels['top_border'] = 'Borda superior';
+$labels['bottom_border'] = 'Borda inferior';
+$labels['border'] = 'Fronteira:';
+$labels['left'] = 'À esquerda';
+$labels['right'] = 'Certo';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Abaixo';
+$labels['middle'] = 'Médio';
+$labels['vertical_align'] = 'Alinhamento vertical:';
+$labels['export_note'] = 'Use este código HTML se você quiser incluir sua assinatura em outro programa de e-mail.';
+$labels['copy_to_clipboard'] = 'Cópia para prancheta';
+$labels['close_design_editor_note'] = 'Feche o editor de design para obter o código HTML de assinatura.';
+$labels['copy_success_note'] = 'Assinatura copiada para prancheta';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Website:';
+$labels['details_phone'] = 'Telefone:';
+$labels['details_mobile'] = 'Móvel:';
+$labels['details_address'] = 'Endereço:';
+$labels['image_alternative_text'] = 'Texto alternativo';

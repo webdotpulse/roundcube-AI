@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Podpis';
+$labels['app_menu_title'] = 'Podpis';
+$labels['signature_preview'] = 'Predogled podpisa';
+$labels['signature_builder'] = 'Graditelj podpisov';
+$labels['enable'] = 'Omogočanje oblikovalca podpisov';
+$labels['preview'] = 'Predogled';
+$labels['main'] = 'Glavna stran';
+$labels['details'] = 'Podrobnosti';
+$labels['social'] = 'Družabni';
+$labels['disclaimer'] = 'Izjava o omejitvi odgovornosti';
+$labels['style'] = 'Slog';
+$labels['export'] = 'Izvoz';
+$labels['select_design'] = 'Izberite zasnovo';
+$labels['name'] = 'Ime';
+$labels['position'] = 'Položaj';
+$labels['user'] = 'Uporabnik';
+$labels['logo'] = 'Logotip';
+$labels['resize_note'] = 'Kliknite in povlecite sliko, prikazano v predogledu, da spremenite njeno velikost.';
+$labels['colors'] = 'Barve';
+$labels['fonts'] = 'Pisave';
+$labels['items'] = 'Elementi';
+$labels['image'] = 'Slika';
+$labels['text'] = 'Besedilo';
+$labels['social_hand_drawn'] = 'Ročno narisan';
+$labels['social_logotype'] = 'Logotip';
+$labels['social_logotype_black'] = 'Logotip črne barve';
+$labels['social_outline'] = 'Osnutek';
+$labels['social_round_black'] = 'Okrogla črna';
+$labels['social_round_flat'] = 'Okrogla ravna površina';
+$labels['social_round_gloss'] = 'Okrogel sijaj';
+$labels['social_square_black'] = 'Kvadratna črna';
+$labels['social_square_flat'] = 'Kvadratna ravnina';
+$labels['social_square_gloss'] = 'Kvadratni sijaj';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Predloge';
+$labels['template_note'] = 'Uporaba predloge bo prepisala vse spremembe, ki ste jih opravili z urejevalnikom oblikovanja.';
+$labels['enable_image_resizing'] = 'Omogočite spreminjanje velikosti slike';
+$labels['layout'] = 'Postavitev';
+$labels['separator'] = 'Separator';
+$labels['column'] = 'Stolpec';
+$labels['row'] = 'Vrstica';
+$labels['include_in_plain_text'] = 'Vključitev v podpis v navadnem besedilu';
+$labels['show'] = 'Prikaži';
+$labels['hide'] = 'Skrij';
+$labels['no_change'] = 'Brez sprememb';
+$labels['text_color'] = 'Barva besedila';
+$labels['show_titles'] = 'Prikaži naslove';
+$labels['title_color'] = 'Barva naslova';
+$labels['title_style'] = 'slog naslova';
+$labels['link_color'] = 'Barva povezave';
+$labels['font_family'] = 'Družina pisav';
+$labels['font_size'] = 'Velikost pisave';
+$labels['alignment'] = 'Uskladitev';
+$labels['disclaimer_size'] = 'Velikost pisave za zavrnitev odgovornosti';
+$labels['social_icon_style'] = 'Slog socialnih ikon';
+$labels['social_icon_size'] = 'Velikost ikon socialnih omrežij';
+$labels['add_item'] = 'Dodajte element';
+$labels['small'] = 'Majhna';
+$labels['medium'] = 'Srednja';
+$labels['large'] = 'Velika';
+$labels['tiny'] = 'Drobne';
+$labels['normal'] = 'Normalno';
+$labels['bold'] = 'Krepko';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kurzivna pisava';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Odprite urejevalnik oblikovanja';
+$labels['finish_designing'] = 'Zapri urejevalnik oblikovanja';
+$labels['designer_info'] = 'Povlecite in spustite elemente v spodnji tabeli, da spremenite njihov položaj. S klikom na ikone z zobniki prilagodite lastnosti celic.';
+$labels['cell_properties'] = 'Lastnosti celic';
+$labels['left_padding'] = 'Levo oblazinjenje';
+$labels['right_padding'] = 'Desno oblazinjenje';
+$labels['top_padding'] = 'Zgornje oblazinjenje';
+$labels['bottom_padding'] = 'Spodnje oblazinjenje';
+$labels['left_border'] = 'Levi rob';
+$labels['right_border'] = 'Desni rob';
+$labels['top_border'] = 'Zgornja meja';
+$labels['bottom_border'] = 'Spodnji rob';
+$labels['border'] = 'Meja:';
+$labels['left'] = 'Leva stran';
+$labels['right'] = 'Desno';
+$labels['top'] = 'Vrh';
+$labels['bottom'] = 'Spodnji del';
+$labels['middle'] = 'Sredina';
+$labels['vertical_align'] = 'Navpična poravnava:';
+$labels['export_note'] = 'To kodo HTML uporabite, če želite podpis vključiti v drug program za e-pošto.';
+$labels['copy_to_clipboard'] = 'Kopiranje v odložišče';
+$labels['close_design_editor_note'] = 'Zaprite urejevalnik zasnove, da dobite kodo HTML za podpis.';
+$labels['copy_success_note'] = 'Podpis kopiran v odložišče';
+$labels['details_email'] = 'Elektronska pošta:';
+$labels['details_website'] = 'Spletna stran:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobilni telefon:';
+$labels['details_address'] = 'Naslov:';
+$labels['image_alternative_text'] = 'Alternativno besedilo';

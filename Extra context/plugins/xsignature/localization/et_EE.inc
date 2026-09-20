@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Allkiri';
+$labels['app_menu_title'] = 'Allkiri';
+$labels['signature_preview'] = 'Allkirja eelvaade';
+$labels['signature_builder'] = 'Allkirja ehitaja';
+$labels['enable'] = 'Allkirja koostaja lubamine';
+$labels['preview'] = 'Eelvaade';
+$labels['main'] = 'Main';
+$labels['details'] = 'Üksikasjad';
+$labels['social'] = 'Sotsiaalne';
+$labels['disclaimer'] = 'Vastutusnõue';
+$labels['style'] = 'Stiil';
+$labels['export'] = 'Eksport';
+$labels['select_design'] = 'Valige disain';
+$labels['name'] = 'Nimi';
+$labels['position'] = 'Positsioon';
+$labels['user'] = 'Kasutaja';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Klõpsake ja lohistage eelvaates kuvatavat pilti, et muuta selle suurust.';
+$labels['colors'] = 'Värvid';
+$labels['fonts'] = 'Kirjatüübid';
+$labels['items'] = 'Artiklid';
+$labels['image'] = 'Pilt';
+$labels['text'] = 'Tekst';
+$labels['social_hand_drawn'] = 'Käsitsi joonistatud';
+$labels['social_logotype'] = 'Logotüüp';
+$labels['social_logotype_black'] = 'Logotüüp must';
+$labels['social_outline'] = 'Ümbrised';
+$labels['social_round_black'] = 'Ümmargune must';
+$labels['social_round_flat'] = 'Ümmargune lame';
+$labels['social_round_gloss'] = 'Ümmargune läige';
+$labels['social_square_black'] = 'Ruudukujuline must';
+$labels['social_square_flat'] = 'Ruudukujuline korter';
+$labels['social_square_gloss'] = 'Ruudukujuline läige';
+$labels['social_xmas'] = 'Xmas';
+$labels['templates'] = 'Mallid';
+$labels['template_note'] = 'Malli rakendamine kirjutab üle kõik muudatused, mida olete teinud disainiredaktori abil.';
+$labels['enable_image_resizing'] = 'Võimaldab pildi suuruse muutmise';
+$labels['layout'] = 'Paigutus';
+$labels['separator'] = 'Eraldaja';
+$labels['column'] = 'Veerg';
+$labels['row'] = 'Rida';
+$labels['include_in_plain_text'] = 'Sisaldab lihtkirjaliku allkirja';
+$labels['show'] = 'Näita';
+$labels['hide'] = 'Peida';
+$labels['no_change'] = 'Ei ole muutusi';
+$labels['text_color'] = 'Teksti värvus';
+$labels['show_titles'] = 'Näita pealkirju';
+$labels['title_color'] = 'Pealkirja värvus';
+$labels['title_style'] = 'Pealkirja stiil';
+$labels['link_color'] = 'Lingi värvus';
+$labels['font_family'] = 'Kirjatüüpkond';
+$labels['font_size'] = 'Kirjasuurus';
+$labels['alignment'] = 'Kohandamine';
+$labels['disclaimer_size'] = 'Vastutusest loobumise kirjasuurus';
+$labels['social_icon_style'] = 'Sotsiaalsete ikoonide stiil';
+$labels['social_icon_size'] = 'Sotsiaalse ikooni suurus';
+$labels['add_item'] = 'Lisa objekt';
+$labels['small'] = 'Väike';
+$labels['medium'] = 'Keskmine';
+$labels['large'] = 'Suur';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Tavaline';
+$labels['bold'] = 'Bold';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursiivne';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Avatud disainiredaktor';
+$labels['finish_designing'] = 'Sulge disaini toimetaja';
+$labels['designer_info'] = 'Lohistage ja libistage allolevas tabelis olevaid elemente, et nende asukohti ümber paigutada. Klõpsake lahtri omaduste reguleerimiseks hammasratta ikoonidel.';
+$labels['cell_properties'] = 'Raku omadused';
+$labels['left_padding'] = 'Vasakpoolne polsterdus';
+$labels['right_padding'] = 'Õige polsterdus';
+$labels['top_padding'] = 'Ülemine polsterdus';
+$labels['bottom_padding'] = 'Alumine polsterdus';
+$labels['left_border'] = 'Vasakpoolne piir';
+$labels['right_border'] = 'Õige piir';
+$labels['top_border'] = 'Ülemine piir';
+$labels['bottom_border'] = 'Alumine piir';
+$labels['border'] = 'Piir:';
+$labels['left'] = 'Vasakpoolne';
+$labels['right'] = 'Õigus';
+$labels['top'] = 'Top';
+$labels['bottom'] = 'Alumine';
+$labels['middle'] = 'Keskmine';
+$labels['vertical_align'] = 'Vertikaalne joondamine:';
+$labels['export_note'] = 'Kasutage seda HTML-koodi, kui soovite lisada oma allkirja mõnda teise e-posti programmi.';
+$labels['copy_to_clipboard'] = 'Kopeeri lõikelauale';
+$labels['close_design_editor_note'] = 'Sulgege kujundusredaktor, et saada allkirja HTML-kood.';
+$labels['copy_success_note'] = 'Allkiri kopeeritakse lõikelauale';
+$labels['details_email'] = 'E-post:';
+$labels['details_website'] = 'Veebileht:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobiilne:';
+$labels['details_address'] = 'Aadress:';
+$labels['image_alternative_text'] = 'Alternatiivne tekst';

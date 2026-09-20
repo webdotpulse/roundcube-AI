@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Unterschrift';
+$labels['app_menu_title'] = 'Unterschrift';
+$labels['signature_preview'] = 'Vorschau Unterschrift';
+$labels['signature_builder'] = 'Signatur Baukasten';
+$labels['enable'] = 'Signatur Baukasten aktivieren';
+$labels['preview'] = 'Vorschau';
+$labels['main'] = 'Main';
+$labels['details'] = 'Details';
+$labels['social'] = 'Social';
+$labels['disclaimer'] = 'Haftungsausschluss';
+$labels['style'] = 'Stil';
+$labels['export'] = 'Export';
+$labels['select_design'] = 'Design auswählen';
+$labels['name'] = 'Name';
+$labels['position'] = 'Position';
+$labels['user'] = 'Benutzer';
+$labels['logo'] = 'Logo';
+$labels['resize_note'] = 'Klicken und ziehen Sie das in der Vorschau angezeigte Bild, um seine Größe zu ändern.';
+$labels['colors'] = 'Farben';
+$labels['fonts'] = 'Schriftarten';
+$labels['items'] = 'Elemente';
+$labels['image'] = 'Bild';
+$labels['text'] = 'Text';
+$labels['social_hand_drawn'] = 'Handgezeichnet';
+$labels['social_logotype'] = 'Logotyp';
+$labels['social_logotype_black'] = 'Logotyp schwarz';
+$labels['social_outline'] = 'Umriss';
+$labels['social_round_black'] = 'Rund schwarz';
+$labels['social_round_flat'] = 'Rund flach';
+$labels['social_round_gloss'] = 'Rund glänzend';
+$labels['social_square_black'] = 'Quadratisch schwarz';
+$labels['social_square_flat'] = 'Quadratisch flach';
+$labels['social_square_gloss'] = 'Quadratisch glänzend';
+$labels['social_xmas'] = 'Weihnachten';
+$labels['templates'] = 'Templates';
+$labels['template_note'] = 'Das Anwenden einer Vorlage überschreibt alle Änderungen, die Sie mit dem Design-Editor vorgenommen haben.';
+$labels['enable_image_resizing'] = 'Bildgrößenänderung aktivieren';
+$labels['layout'] = 'Layout';
+$labels['separator'] = 'Trennzeichen';
+$labels['column'] = 'Spalte';
+$labels['row'] = 'Zeile';
+$labels['include_in_plain_text'] = 'In die (Text-)Signatur einbeziehen';
+$labels['show'] = 'Anzeigen';
+$labels['hide'] = 'Verbergen';
+$labels['no_change'] = 'Keine Änderung';
+$labels['text_color'] = 'Textfarbe';
+$labels['show_titles'] = 'Titel anzeigen';
+$labels['title_color'] = 'Titelfarbe';
+$labels['title_style'] = 'Stil des Titels';
+$labels['link_color'] = 'Linkfarbe';
+$labels['font_family'] = 'Schriftart';
+$labels['font_size'] = 'Schriftgröße';
+$labels['alignment'] = 'Ausrichtung';
+$labels['disclaimer_size'] = 'Schriftgröße des Haftungsausschlusses';
+$labels['social_icon_style'] = 'Social-Icon Stil';
+$labels['social_icon_size'] = 'Social-Icon Größe';
+$labels['add_item'] = 'Element hinzufügen';
+$labels['small'] = 'Klein';
+$labels['medium'] = 'Mittel';
+$labels['large'] = 'Groß';
+$labels['tiny'] = 'Winzig klein';
+$labels['normal'] = 'Normal';
+$labels['bold'] = 'Fett';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Kursiv';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Design-Editor öffnen';
+$labels['finish_designing'] = 'Design-Editor schließen';
+$labels['designer_info'] = 'Ziehen Sie die Elemente in der unten stehenden Tabelle und legen Sie sie ab, um ihre Positionen neu anzuordnen. Klicken Sie auf die Zahnradsymbole, um die Zelleigenschaften anzupassen.';
+$labels['cell_properties'] = 'Zelleneigenschaften';
+$labels['left_padding'] = 'Abstand links';
+$labels['right_padding'] = 'Abstand rechts';
+$labels['top_padding'] = 'Abstand oben';
+$labels['bottom_padding'] = 'Abstand unten';
+$labels['left_border'] = 'Linker Rand';
+$labels['right_border'] = 'Rechter Rand';
+$labels['top_border'] = 'Oberer Rand';
+$labels['bottom_border'] = 'Unterer Rand';
+$labels['border'] = 'Rand:';
+$labels['left'] = 'Links';
+$labels['right'] = 'Rechts';
+$labels['top'] = 'Oben';
+$labels['bottom'] = 'Unten';
+$labels['middle'] = 'Mitte';
+$labels['vertical_align'] = 'Vertikale Ausrichtung:';
+$labels['export_note'] = 'Verwenden Sie diesen HTML-Code, wenn Sie Ihre Signatur in einem anderen E-Mail-Programm nutzen möchten.';
+$labels['copy_to_clipboard'] = 'In die Zwischenablage kopieren';
+$labels['close_design_editor_note'] = 'Schließen Sie den Design-Editor, um den HTML-Code der Signatur zu erhalten.';
+$labels['copy_success_note'] = 'Signatur in die Zwischenablage kopiert';
+$labels['details_email'] = 'Email:';
+$labels['details_website'] = 'Website:';
+$labels['details_phone'] = 'Telefon:';
+$labels['details_mobile'] = 'Mobil:';
+$labels['details_address'] = 'Adresse:';
+$labels['image_alternative_text'] = 'Alternativer Text';

@@ -1,0 +1,292 @@
+1.6 (2026-05-19)
+================
+- ensured compatibility with Roundcube 1.7
+- dropped support for Roundcube 1.5
+- migrated frontend from deprecated AngularJS to Alpine.js
+- improved design editor UI
+- improved sample data content
+- improved config documentation
+- added signature data validation to prevent injection and tampering
+- added a button to restore default logo
+- added config validators
+- fixed potential errors caused by invalid config entries
+- fixed UI issues in signature settings forms
+- fixed link creation encoding
+- fixed js number conversion function
+- fixed url validation in signature details
+- fixed a potential json decode error in identity update
+- fixed permissions on the signature image directory
+
+1.5.3 (2025-12-03)
+==================
+- fixed issues with scss compilation
+
+1.5.2 (2025-12-03)
+==================
+- made the plugin compatible with RC 1.7
+- translation improvements
+
+1.5.1 (2025-10-14)
+==================
+- added technical documentation for AI Assistant
+
+1.5 (2025-02-24)
+================
+- fixed js app compatibility
+
+1.4.9 (2024-11-08)
+==================
+- added Arabic translation
+- added Bulgarian translation
+- added Chinese (Simplified) translation
+- added Chinese (Traditional) translation
+- added Estonian translation
+- added Greek translation
+- added Hungarian translation
+- added Japanese translation
+- added Korean translation
+- added Latvian translation
+- added Portuguese (Portugal) translation
+- added Slovak translation
+- added Swedish translation
+- updated license agreement
+
+1.4.8 (2024-07-15)
+==================
+- added X social icon
+- standardized icon sizes and formats
+
+1.4.7 (2024-01-31)
+==================
+- improved icon management
+
+1.4.6 (2023-05-09)
+==================
+- added Norwegian translation
+
+1.4.5 (2023-02-15)
+==================
+- made the plugin fully compatible with PHP 8.2
+- increased the quality of image to base64 conversion
+- added Czech translation
+- added Danish translation
+- added Dutch translation
+- added Finnish translation
+- added Indonesian translation
+- added Lithuanian translation
+- added Portuguese translation
+- added Romanian translation
+- added Slovenian translation
+- added Spanish translation
+- added Turkish translation
+- updated French translation
+- updated Russian translation
+
+1.4.4 (2022-12-16)
+==================
+- fixed log warnings on PHP 8
+
+1.4.3 (2022-11-01)
+==================
+- changed the default social icons format from svg to png due to display problems in some email programs
+- added a config option to set social icons format
+- added config option validation
+- fixed problems with uploading svg logos on RC 1.6
+
+1.4.2 (2022-05-30)
+==================
+- fixed the signature builder settings positioning on RC 1.5
+- removed PHP warnings when the first identity record doesn't exist
+
+1.4.1 (2022-02-15)
+==================
+- fixed Google+ related PHP warnings
+
+1.4 (2022-01-31)
+================
+- fixed PHP warnings in the Roundcube 1.5.2 about dialog
+- updated the Italian translation
+
+1.3.9 (2022-01-11)
+==================
+- internal template changes
+- added the Italian translation
+- fixed a few small js and css code issues
+- upgraded the PHP code syntax
+- changed the minimum required Roundcube version to 1.4
+
+1.3.8 (2021-08-05)
+==================
+- added support for logos in svg format
+- added a config option that specifies the default logo
+- made the embedding images option permanent
+- made the social icon svg format permanent
+- optimized and reduced the size of the final signature code
+- updated and fixed the social icons
+- reduced the social icon size
+- changed black social icon color to dark gray
+- added Signal social item
+- updated the default config values
+- changed the default max logo upload size to 100kB
+- fixed the dark mode textarea issues
+- fixed the text color style that wasn't applied
+- fixed the social icon column layout formatting
+- fixed the fold/italic/underline button group highlighting
+- fixed the user align button visibility problems
+- fixed the design editor dialog window UI
+- fixed the space problems with the user info separators
+- added German translation
+
+1.3.7 (2021-05-25)
+==================
+- made the plugin compatible with the dark mode
+- replaced the default logo image with transparent png
+
+1.3.6 (2021-01-11)
+==================
+- a small fix in the config file description
+
+1.3.5 (2020-11-25)
+==================
+- added WhatsApp social item
+- added Telegram social item
+- fixed some social item icons
+
+1.3.4 (2020-08-10)
+==================
+- added an option to include the HTML alt attributes for the logo image
+- added the HTML attributes for the social icons
+
+1.3.3 (2020-03-02)
+==================
+- fixed a small html standard compliance issue
+
+1.3.2 (2020-02-14)
+==================
+- added an option for embedding signature images to ensure they are displayed on the recipient's side
+- fixed potential problems with default logo url
+
+1.3.1 (2020-02-04)
+==================
+- fixed signature saving issues on RC 1.4
+
+1.3 (2020-01-09)
+================
+- added the missing translation variables for the Details tab
+
+1.2.9 (2019-11-07)
+==================
+- fixed color swatch size
+- changed default signature logo path to relative
+- upgraded the plugin to be compatible with Roundcube 1.4 RC2
+
+1.2.8 (2019-09-04)
+==================
+- small fixes to the image upload functions
+
+1.2.7 (2019-09-02)
+==================
+- fixed a potential security vulnerability in image handling
+- changed the image upload function to re-save the files and limit formats to jpg, png, and gif
+- changed plugin requirements to include the GD2 PHP extension
+
+1.2.6 (2019-07-11)
+==================
+- translated to French
+
+1.2.5 (2019-05-22)
+==================
+- upgraded to be compatible with Roundcube 1.4 RC1
+
+1.2.4 (2019-03-08)
+==================
+- fixed 32-bit platform compatibility
+
+1.2.3 (2018-12-17)
+==================
+- removed support for Google Plus
+
+1.2.2 (2018-07-17)
+==================
+- added a mechanism for using logo image as a relative url, enabling dynamic changes of protocol and config logo_url
+- enabled using absolute urls in config logo_url
+
+1.2.1 (2018-07-09)
+==================
+- fixed bugs with the upload/remove logo buttons
+
+1.2 (2018-06-04)
+================
+- added postgres support
+- upgraded the plugin to be compatible with Elastic beta
+
+1.1.4 (2017-12-12)
+==================
+- improved the UI styling of the settings page
+
+1.1.3 (2017-09-04)
+==================
+- fixed problems with the logo image files being deleted when saving identity
+- fixed problems with formatting buttons appearance
+
+1.1.2 (2017-03-07)
+==================
+- added Polish translation
+
+1.1.1 (2017-03-01)
+==================
+- fixed a problem with saving identity when signature builder was disabled
+
+1.1 (2017-02-07)
+==================
+- fixed cell properties translation problems
+- replaced font awesome with skin-aware rc+ font
+- added function to automatically edit the first identity on app link click
+
+1.0.9 (2017-01-10)
+==================
+- made the plugin compatible with SQLite
+
+1.0.8 (2017-01-04)
+==================
+- added new protected properties to make the plugin compatible with upgraded xframework
+
+1.0.7 (2016-12-09)
+==================
+- made plugin compatible with xactivate
+- updated license agreement
+
+1.0.6 (2016-11-30)
+==================
+- made plugin compatible with the updated framework
+
+1.0.5 (2016-11-16)
+==================
+- made plugin compatible with db_prefix
+- removed references to legacy functions
+
+1.0.4 (2016-10-26)
+==================
+- changed social png icons to larger size so they scale better on high definitions displays
+- added svg icons and an option to select png or svg
+- added a function to copy the signature html to clipboard
+- fixed the problem with some details getting deleted from signature when saving
+- fixed the problem with signature items losing their style properties
+
+1.0.3 (2016-10-11)
+==================
+- made plugin compatible with the new way of including assets
+- made plugin compatible with xbackground
+- changed the templates to use the new translation label system
+
+1.0.2 (2016-09-16)
+==================
+- small interface fixes
+
+1.0.1 (2016-08-09)
+==================
+- upgraded to work with mysql 5.7
+
+1.0 (2016-06-01)
+================
+- initial release

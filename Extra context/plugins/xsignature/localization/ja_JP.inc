@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = '署名';
+$labels['app_menu_title'] = '署名';
+$labels['signature_preview'] = 'サインプレビュー';
+$labels['signature_builder'] = 'シグネチャービルダー';
+$labels['enable'] = '署名ビルダーを有効にする';
+$labels['preview'] = 'プレビュー';
+$labels['main'] = 'メイン';
+$labels['details'] = '詳細';
+$labels['social'] = 'ソーシャル';
+$labels['disclaimer'] = '免責事項';
+$labels['style'] = 'スタイル';
+$labels['export'] = '輸出';
+$labels['select_design'] = 'デザインを選択';
+$labels['name'] = '名称';
+$labels['position'] = 'ポジション';
+$labels['user'] = 'ユーザー';
+$labels['logo'] = 'ロゴ';
+$labels['resize_note'] = 'プレビューに表示されている画像をクリック＆ドラッグしてサイズを変更します。';
+$labels['colors'] = 'カラー';
+$labels['fonts'] = 'フォント';
+$labels['items'] = 'アイテム';
+$labels['image'] = '画像';
+$labels['text'] = 'テキスト';
+$labels['social_hand_drawn'] = '手描き';
+$labels['social_logotype'] = 'ロゴタイプ';
+$labels['social_logotype_black'] = 'ロゴタイプ黒';
+$labels['social_outline'] = '概要';
+$labels['social_round_black'] = 'ラウンドブラック';
+$labels['social_round_flat'] = 'ラウンドフラット';
+$labels['social_round_gloss'] = 'ラウンドグロス';
+$labels['social_square_black'] = 'スクエア・ブラック';
+$labels['social_square_flat'] = 'スクエアフラット';
+$labels['social_square_gloss'] = '正方形の光沢';
+$labels['social_xmas'] = 'Xマス';
+$labels['templates'] = 'テンプレート';
+$labels['template_note'] = 'テンプレートを適用すると、デザインエディターで行った修正はすべて上書きされます。';
+$labels['enable_image_resizing'] = '画像のリサイズを有効にする';
+$labels['layout'] = 'レイアウト';
+$labels['separator'] = 'セパレーター';
+$labels['column'] = 'コラム';
+$labels['row'] = '列';
+$labels['include_in_plain_text'] = 'プレーンテキスト署名に含める';
+$labels['show'] = 'ショー';
+$labels['hide'] = '隠す';
+$labels['no_change'] = '変更なし';
+$labels['text_color'] = '文字色';
+$labels['show_titles'] = 'タイトルを表示';
+$labels['title_color'] = 'タイトルカラー';
+$labels['title_style'] = 'タイトル・スタイル';
+$labels['link_color'] = 'リンクカラー';
+$labels['font_family'] = 'フォントファミリー';
+$labels['font_size'] = '文字サイズ';
+$labels['alignment'] = 'アライメント';
+$labels['disclaimer_size'] = '免責事項のフォントサイズ';
+$labels['social_icon_style'] = 'ソーシャル・アイコン・スタイル';
+$labels['social_icon_size'] = 'ソーシャル・アイコンのサイズ';
+$labels['add_item'] = '項目を追加';
+$labels['small'] = '小さい';
+$labels['medium'] = 'ミディアム';
+$labels['large'] = '大型';
+$labels['tiny'] = '小さい';
+$labels['normal'] = 'ノーマル';
+$labels['bold'] = '太字';
+$labels['serif'] = 'セリフ';
+$labels['sans_serif'] = 'サンセリフ';
+$labels['cursive'] = '筆記体';
+$labels['monospace'] = 'モノスペース';
+$labels['start_designing'] = 'デザインエディターを開く';
+$labels['finish_designing'] = 'クローズ・デザイン・エディター';
+$labels['designer_info'] = '下の表の要素をドラッグ・アンド・ドロップして、位置を並べ替えます。歯車のアイコンをクリックして、セルのプロパティを調整します。';
+$labels['cell_properties'] = 'セル特性';
+$labels['left_padding'] = '左パディング';
+$labels['right_padding'] = '右詰め';
+$labels['top_padding'] = 'トップ・パディング';
+$labels['bottom_padding'] = 'ボトムパッド';
+$labels['left_border'] = '左ボーダー';
+$labels['right_border'] = '右ボーダー';
+$labels['top_border'] = 'トップ・ボーダー';
+$labels['bottom_border'] = 'ボトムボーダー';
+$labels['border'] = '国境だ：';
+$labels['left'] = '左';
+$labels['right'] = '右';
+$labels['top'] = 'トップ';
+$labels['bottom'] = 'ボトム';
+$labels['middle'] = 'ミドル';
+$labels['vertical_align'] = '縦のアライメント：';
+$labels['export_note'] = '他のメールソフトに署名を入れたい場合は、このHTMLコードを使用してください。';
+$labels['copy_to_clipboard'] = 'クリップボードにコピー';
+$labels['close_design_editor_note'] = 'デザインエディターを閉じて、署名のHTMLコードを取得します。';
+$labels['copy_success_note'] = 'クリップボードにコピーされた署名';
+$labels['details_email'] = 'Eメール';
+$labels['details_website'] = 'ウェブサイト';
+$labels['details_phone'] = '電話';
+$labels['details_mobile'] = 'モバイル';
+$labels['details_address'] = '住所';
+$labels['image_alternative_text'] = '代替テキスト';

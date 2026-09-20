@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = '签名';
+$labels['app_menu_title'] = '签名';
+$labels['signature_preview'] = '签名预览';
+$labels['signature_builder'] = '签名建造者';
+$labels['enable'] = '启用签名生成器';
+$labels['preview'] = '预览';
+$labels['main'] = '主页';
+$labels['details'] = '详细信息';
+$labels['social'] = '社会';
+$labels['disclaimer'] = '免责声明';
+$labels['style'] = '风格';
+$labels['export'] = '出口';
+$labels['select_design'] = '选择设计';
+$labels['name'] = '名称';
+$labels['position'] = '职位';
+$labels['user'] = '用户';
+$labels['logo'] = '标志';
+$labels['resize_note'] = '单击并拖动预览中显示的图像以调整其大小。';
+$labels['colors'] = '颜色';
+$labels['fonts'] = '字体';
+$labels['items'] = '项目';
+$labels['image'] = '图片';
+$labels['text'] = '文本';
+$labels['social_hand_drawn'] = '手绘';
+$labels['social_logotype'] = '标志';
+$labels['social_logotype_black'] = '黑色标识';
+$labels['social_outline'] = '概要';
+$labels['social_round_black'] = '圆形黑色';
+$labels['social_round_flat'] = '圆形平面';
+$labels['social_round_gloss'] = '圆形光泽';
+$labels['social_square_black'] = '方形黑色';
+$labels['social_square_flat'] = '方形平面';
+$labels['social_square_gloss'] = '方形光泽';
+$labels['social_xmas'] = '圣诞节';
+$labels['templates'] = '模板';
+$labels['template_note'] = '应用模板将覆盖您使用设计编辑器所做的所有修改。';
+$labels['enable_image_resizing'] = '启用图像大小调整';
+$labels['layout'] = '布局';
+$labels['separator'] = '分离器';
+$labels['column'] = '专栏';
+$labels['row'] = '行';
+$labels['include_in_plain_text'] = '包含在纯文本签名中';
+$labels['show'] = '显示';
+$labels['hide'] = '隐藏';
+$labels['no_change'] = '无变化';
+$labels['text_color'] = '文字颜色';
+$labels['show_titles'] = '显示标题';
+$labels['title_color'] = '标题颜色';
+$labels['title_style'] = '标题风格';
+$labels['link_color'] = '链接颜色';
+$labels['font_family'] = '字体系列';
+$labels['font_size'] = '字体大小';
+$labels['alignment'] = '对齐';
+$labels['disclaimer_size'] = '免责声明字体大小';
+$labels['social_icon_style'] = '社交图标风格';
+$labels['social_icon_size'] = '社交图标大小';
+$labels['add_item'] = '添加项目';
+$labels['small'] = '小型';
+$labels['medium'] = '中型';
+$labels['large'] = '大型';
+$labels['tiny'] = '微小';
+$labels['normal'] = '正常';
+$labels['bold'] = '粗体';
+$labels['serif'] = '衬线';
+$labels['sans_serif'] = '无衬线';
+$labels['cursive'] = '草书';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = '打开设计编辑器';
+$labels['finish_designing'] = '关闭设计编辑器';
+$labels['designer_info'] = '拖放下表中的元素，重新排列它们的位置。点击齿轮图标调整单元格属性。';
+$labels['cell_properties'] = '细胞特性';
+$labels['left_padding'] = '左填充';
+$labels['right_padding'] = '右侧填充';
+$labels['top_padding'] = '顶部填充';
+$labels['bottom_padding'] = '底部衬垫';
+$labels['left_border'] = '左边界';
+$labels['right_border'] = '右边界';
+$labels['top_border'] = '顶部边界';
+$labels['bottom_border'] = '底部边框';
+$labels['border'] = '边界：';
+$labels['left'] = '左侧';
+$labels['right'] = '对';
+$labels['top'] = '返回顶部';
+$labels['bottom'] = '底部';
+$labels['middle'] = '中层';
+$labels['vertical_align'] = '垂直排列：';
+$labels['export_note'] = '如果您想在其他电子邮件程序中加入签名，请使用此 HTML 代码。';
+$labels['copy_to_clipboard'] = '复制到剪贴板';
+$labels['close_design_editor_note'] = '关闭设计编辑器，获取签名 HTML 代码。';
+$labels['copy_success_note'] = '将签名复制到剪贴板';
+$labels['details_email'] = '电子邮件：';
+$labels['details_website'] = '网站：';
+$labels['details_phone'] = '电话';
+$labels['details_mobile'] = '移动电话';
+$labels['details_address'] = '地址';
+$labels['image_alternative_text'] = '备选案文';

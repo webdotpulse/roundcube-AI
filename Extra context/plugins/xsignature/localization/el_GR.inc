@@ -1,0 +1,106 @@
+<?php
+/**
+ * Roundcube Plus Quotes plugin.
+ *
+ * Copyright 2016, Tecorama LLC.
+ *
+ * @license Commercial. See the LICENSE file for details.
+ */
+
+$labels = [];
+$labels['plugin_name'] = 'Υπογραφή';
+$labels['app_menu_title'] = 'Υπογραφή';
+$labels['signature_preview'] = 'Προεπισκόπηση υπογραφής';
+$labels['signature_builder'] = 'Υπογραφή Builder';
+$labels['enable'] = 'Ενεργοποίηση του Signature Builder';
+$labels['preview'] = 'Προεπισκόπηση';
+$labels['main'] = 'Κύρια';
+$labels['details'] = 'Λεπτομέρειες';
+$labels['social'] = 'Κοινωνικό';
+$labels['disclaimer'] = 'Αποποίηση ευθύνης';
+$labels['style'] = 'Στυλ';
+$labels['export'] = 'Εξαγωγή';
+$labels['select_design'] = 'Επιλέξτε σχέδιο';
+$labels['name'] = 'Όνομα';
+$labels['position'] = 'Θέση';
+$labels['user'] = 'Χρήστης';
+$labels['logo'] = 'Λογότυπο';
+$labels['resize_note'] = 'Κάντε κλικ και σύρετε την εικόνα που εμφανίζεται στην προεπισκόπηση για να αλλάξετε το μέγεθός της.';
+$labels['colors'] = 'Χρώματα';
+$labels['fonts'] = 'Γραμματοσειρές';
+$labels['items'] = 'Στοιχεία';
+$labels['image'] = 'Εικόνα';
+$labels['text'] = 'Κείμενο';
+$labels['social_hand_drawn'] = 'Χειροποίητο';
+$labels['social_logotype'] = 'Λογότυπο';
+$labels['social_logotype_black'] = 'Λογότυπο μαύρο';
+$labels['social_outline'] = 'Περίγραμμα';
+$labels['social_round_black'] = 'Στρογγυλό μαύρο';
+$labels['social_round_flat'] = 'Στρογγυλό επίπεδο';
+$labels['social_round_gloss'] = 'Στρογγυλή γυαλάδα';
+$labels['social_square_black'] = 'Τετράγωνο μαύρο';
+$labels['social_square_flat'] = 'Τετράγωνο επίπεδο';
+$labels['social_square_gloss'] = 'Τετράγωνη γυαλάδα';
+$labels['social_xmas'] = 'Χριστούγεννα';
+$labels['templates'] = 'Πρότυπα';
+$labels['template_note'] = 'Η εφαρμογή ενός προτύπου θα αντικαταστήσει όλες τις τροποποιήσεις που έχετε κάνει χρησιμοποιώντας τον επεξεργαστή σχεδιασμού.';
+$labels['enable_image_resizing'] = 'Ενεργοποίηση αλλαγής μεγέθους εικόνας';
+$labels['layout'] = 'Διάταξη';
+$labels['separator'] = 'Διαχωριστής';
+$labels['column'] = 'Στήλη';
+$labels['row'] = 'Σειρά';
+$labels['include_in_plain_text'] = 'Συμπερίληψη στην υπογραφή απλού κειμένου';
+$labels['show'] = 'Εμφάνιση';
+$labels['hide'] = 'Απόκρυψη';
+$labels['no_change'] = 'Καμία αλλαγή';
+$labels['text_color'] = 'Χρώμα κειμένου';
+$labels['show_titles'] = 'Εμφάνιση τίτλων';
+$labels['title_color'] = 'Χρώμα τίτλου';
+$labels['title_style'] = 'Στυλ τίτλου';
+$labels['link_color'] = 'Χρώμα συνδέσμου';
+$labels['font_family'] = 'Οικογένεια γραμματοσειρών';
+$labels['font_size'] = 'Μέγεθος γραμματοσειράς';
+$labels['alignment'] = 'Ευθυγράμμιση';
+$labels['disclaimer_size'] = 'Μέγεθος γραμματοσειράς αποποίησης ευθύνης';
+$labels['social_icon_style'] = 'Στυλ κοινωνικών εικονιδίων';
+$labels['social_icon_size'] = 'Μέγεθος εικονιδίου κοινωνικής δικτύωσης';
+$labels['add_item'] = 'Προσθήκη αντικειμένου';
+$labels['small'] = 'Μικρό';
+$labels['medium'] = 'Μεσαίο';
+$labels['large'] = 'Μεγάλο';
+$labels['tiny'] = 'Tiny';
+$labels['normal'] = 'Κανονικό';
+$labels['bold'] = 'Τολμηρό';
+$labels['serif'] = 'Serif';
+$labels['sans_serif'] = 'Sans-serif';
+$labels['cursive'] = 'Ορθογραφία';
+$labels['monospace'] = 'Monospace';
+$labels['start_designing'] = 'Ανοίξτε τον επεξεργαστή σχεδιασμού';
+$labels['finish_designing'] = 'Κλείστε τον επεξεργαστή σχεδιασμού';
+$labels['designer_info'] = 'Σύρετε και αφήστε τα στοιχεία στον παρακάτω πίνακα για να αλλάξετε τη θέση τους. Κάντε κλικ στα εικονίδια με τα γρανάζια για να προσαρμόσετε τις ιδιότητες των κελιών.';
+$labels['cell_properties'] = 'Ιδιότητες κυττάρων';
+$labels['left_padding'] = 'Αριστερή επένδυση';
+$labels['right_padding'] = 'Δεξιά επένδυση';
+$labels['top_padding'] = 'Κορυφαία επένδυση';
+$labels['bottom_padding'] = 'Επένδυση κάτω μέρους';
+$labels['left_border'] = 'Αριστερό περίγραμμα';
+$labels['right_border'] = 'Δεξιά σύνορα';
+$labels['top_border'] = 'Κορυφαία σύνορα';
+$labels['bottom_border'] = 'Κάτω περιθώριο';
+$labels['border'] = 'Σύνορα:';
+$labels['left'] = 'Αριστερά';
+$labels['right'] = 'Δεξιά';
+$labels['top'] = 'Κορυφή';
+$labels['bottom'] = 'Κάτω μέρος';
+$labels['middle'] = 'Μέση';
+$labels['vertical_align'] = 'Κάθετη ευθυγράμμιση:';
+$labels['export_note'] = 'Χρησιμοποιήστε αυτόν τον κώδικα HTML αν θέλετε να συμπεριλάβετε την υπογραφή σας σε άλλο πρόγραμμα ηλεκτρονικού ταχυδρομείου.';
+$labels['copy_to_clipboard'] = 'Αντιγραφή στο πρόχειρο';
+$labels['close_design_editor_note'] = 'Κλείστε τον επεξεργαστή σχεδίασης για να λάβετε τον κώδικα HTML της υπογραφής.';
+$labels['copy_success_note'] = 'Αντιγραφή υπογραφής στο πρόχειρο';
+$labels['details_email'] = 'Ηλεκτρονικό ταχυδρομείο:';
+$labels['details_website'] = 'Ιστοσελίδα:';
+$labels['details_phone'] = 'Τηλέφωνο:';
+$labels['details_mobile'] = 'Κινητό:';
+$labels['details_address'] = 'Διεύθυνση:';
+$labels['image_alternative_text'] = 'Εναλλακτικό κείμενο';
