@@ -46,7 +46,7 @@
                     <tr>
                         <td class="title"><label for="xtx_color"><roundcube:label name="xcalendar.tx_color" /></label></td>
                         <td class="input">
-                            <input type="color" name="bg_color" id="xtx_color" class="form-control" x-model="data.tx_color">
+                            <input type="color" name="tx_color" id="xtx_color" class="form-control" x-model="data.tx_color">
                         </td>
                     </tr>
                 </tbody>
@@ -467,10 +467,19 @@
                         <template x-if="data.id">
                             <div>
                                 <p><roundcube:label name="xcalendar.publish_full" /></p>
-                                <p x-show='data.publish.code_full'>
-                                    <a :href="data.publish.url + data.publish.code_full + '.ics'" target='_blank'
-                                       x-text="data.publish.url + data.publish.code_full + '.ics'"></a><span class="xclipboard"></span>
-                                </p>
+                                <div class='publish-url-box' x-show='data.publish.code_full' style='margin-bottom: 0.75rem;'>
+                                    <div class='input-group'>
+                                        <input type='text' class='form-control' readonly :value="data.publish.url + data.publish.code_full + '.ics'" aria-label="Full Calendar iCal Feed URL" style='cursor: text; font-family: monospace; font-size: 0.875rem;'>
+                                        <div class='input-group-append'>
+                                            <button type='button' class='btn btn-secondary' @click="xframework.copyToClipboard(data.publish.url + data.publish.code_full + '.ics')" title="Copy URL" aria-label="Copy feed URL">
+                                                <span class="xclipboard" style="margin: 0; display: inline;"></span>
+                                            </button>
+                                            <a :href="data.publish.url + data.publish.code_full + '.ics'" target='_blank' class='btn btn-outline-secondary' title="Open in browser" aria-label="Open feed in browser">
+                                                <span>&#x2197;</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class='mask-container button-bar'>
                                     <div class='mask' x-show='publishing == "full"'></div>
                                     <button type='button' class='btn btn-secondary' x-show='!data.publish.code_full' @click='publish(1, false)'>
@@ -485,10 +494,19 @@
                                 </div>
 
                                 <p><roundcube:label name="xcalendar.publish_busy" /></p>
-                                <p x-show='data.publish.code_busy'>
-                                    <a :href="data.publish.url + data.publish.code_busy + '.ics'" target='_blank'
-                                       x-text="data.publish.url + data.publish.code_busy + '.ics'"></a><span class="xclipboard"></span>
-                                </p>
+                                <div class='publish-url-box' x-show='data.publish.code_busy' style='margin-bottom: 0.75rem;'>
+                                    <div class='input-group'>
+                                        <input type='text' class='form-control' readonly :value="data.publish.url + data.publish.code_busy + '.ics'" aria-label="Free/Busy Calendar iCal Feed URL" style='cursor: text; font-family: monospace; font-size: 0.875rem;'>
+                                        <div class='input-group-append'>
+                                            <button type='button' class='btn btn-secondary' @click="xframework.copyToClipboard(data.publish.url + data.publish.code_busy + '.ics')" title="Copy URL" aria-label="Copy feed URL">
+                                                <span class="xclipboard" style="margin: 0; display: inline;"></span>
+                                            </button>
+                                            <a :href="data.publish.url + data.publish.code_busy + '.ics'" target='_blank' class='btn btn-outline-secondary' title="Open in browser" aria-label="Open feed in browser">
+                                                <span>&#x2197;</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class='mask-container button-bar'>
                                     <div class='mask' x-show='publishing == "busy"'></div>
                                     <button type='button' class='btn btn-secondary' x-show='!data.publish.code_busy' @click='publish(0, false)'>

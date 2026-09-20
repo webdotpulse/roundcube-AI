@@ -202,6 +202,25 @@ $config['xcalendar_calendar_share_enabled'] = true;
 // Default: true
 $config['xcalendar_calendar_publish_enabled'] = true;
 
+// Maximum number of subscription feed requests per minute allowed per client IP/token.
+// Set to 0 to disable rate limiting.
+//
+// Type: integer
+// Default: 60
+$config['xcalendar_publish_rate_limit'] = 60;
+
+// Whether to strip attendee details from published calendar subscription feeds.
+//
+// Type: boolean
+// Default: false
+$config['xcalendar_publish_hide_attendees'] = false;
+
+// Whether to strip event descriptions/notes from published calendar subscription feeds.
+//
+// Type: boolean
+// Default: false
+$config['xcalendar_publish_hide_notes'] = false;
+
 // Whether birthday calendar functionality is enabled. Birthday calendars collect birthday information from the local
 // address book and display it as calendar events. One birthday calendar is available per user.
 //

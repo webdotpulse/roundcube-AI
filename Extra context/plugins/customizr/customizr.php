@@ -56,6 +56,8 @@ class customizr extends rcube_plugin
     private $custom_sidebar_bg;
     private $custom_topbar_bg;
     private $custom_compose_bg;
+    private $compose_button_bg_color;
+    private $compose_button_text_color;
 
     /**
      * Resolves an image path: if it is a local upload path (e.g. plugins/customizr/uploads/custom_...),
@@ -123,7 +125,9 @@ class customizr extends rcube_plugin
         $this->watermark_image = $this->rcmail->config->get('custom_watermark_image');
         $this->custom_sidebar_bg = $this->rcmail->config->get('custom_sidebar_bg');
         $this->custom_topbar_bg = $this->rcmail->config->get('custom_topbar_bg');
-        $this->custom_compose_bg = $this->rcmail->config->get('custom_compose_bg');
+        $this->custom_compose_bg = $this->rcmail->config->get('compose_button_bg_color', $this->rcmail->config->get('custom_compose_bg'));
+        $this->compose_button_bg_color = $this->custom_compose_bg;
+        $this->compose_button_text_color = $this->rcmail->config->get('compose_button_text_color');
 
         // Resolve images to data URIs if they reference local uploads
         $this->custom_logo = self::resolve_image_url($this->custom_logo);
@@ -160,6 +164,8 @@ class customizr extends rcube_plugin
             || !empty($this->custom_sidebar_bg)
             || !empty($this->custom_topbar_bg)
             || !empty($this->custom_compose_bg)
+            || !empty($this->compose_button_bg_color)
+            || !empty($this->compose_button_text_color)
         ) {
             $this->add_hook('render_page', array($this, 'render_page'));
             $this->register_action('plugin.watermark', array($this, 'watermark_page'));
@@ -466,14 +472,26 @@ class customizr extends rcube_plugin
         }
 
         // 10. Custom Compose Button Background
-        if (!in_array('custom_compose_bg', $dont_override)) {
-            $field_id = 'rcmfd_custom_compose_bg';
-            $value = $this->rcmail->config->get('custom_compose_bg', '');
-            $title = $this->gettext('custom_compose_bg');
-            $desc = $this->gettext('custom_compose_bg_desc');
-            $args['blocks']['customizr']['options']['custom_compose_bg'] = [
+        if (!in_array('compose_button_bg_color', $dont_override) && !in_array('custom_compose_bg', $dont_override)) {
+            $field_id = 'rcmfd_compose_button_bg_color';
+            $value = $this->rcmail->config->get('compose_button_bg_color', $this->rcmail->config->get('custom_compose_bg', ''));
+            $title = $this->gettext('compose_button_bg_color') ?: $this->gettext('custom_compose_bg');
+            $desc = $this->gettext('compose_button_bg_color_desc') ?: $this->gettext('custom_compose_bg_desc');
+            $args['blocks']['customizr']['options']['compose_button_bg_color'] = [
                 'title' => html::label($field_id, rcube::Q($title)),
-                'content' => $this->render_color_field('custom_compose_bg', $field_id, $value, $title, $desc),
+                'content' => $this->render_color_field('compose_button_bg_color', $field_id, $value, $title, $desc),
+            ];
+        }
+
+        // 11. Custom Compose Button Text / Icon Color
+        if (!in_array('compose_button_text_color', $dont_override)) {
+            $field_id = 'rcmfd_compose_button_text_color';
+            $value = $this->rcmail->config->get('compose_button_text_color', '');
+            $title = $this->gettext('compose_button_text_color');
+            $desc = $this->gettext('compose_button_text_color_desc');
+            $args['blocks']['customizr']['options']['compose_button_text_color'] = [
+                'title' => html::label($field_id, rcube::Q($title)),
+                'content' => $this->render_color_field('compose_button_text_color', $field_id, $value, $title, $desc),
             ];
         }
 
@@ -727,6 +745,8 @@ JS;
             'custom_sidebar_bg',
             'custom_topbar_bg',
             'custom_compose_bg',
+            'compose_button_bg_color',
+            'compose_button_text_color',
         ];
 
         foreach ($color_fields as $field) {
@@ -735,10 +755,21 @@ JS;
                 if ($val === '') {
                     $val = trim((string) rcube_utils::get_input_value($field, rcube_utils::INPUT_POST));
                 }
+                if ($field === 'compose_button_bg_color' && $val === '') {
+                    $legacy = trim((string) rcube_utils::get_input_value('_custom_compose_bg', rcube_utils::INPUT_POST));
+                    if ($legacy === '') $legacy = trim((string) rcube_utils::get_input_value('custom_compose_bg', rcube_utils::INPUT_POST));
+                    if ($legacy !== '') $val = $legacy;
+                }
                 if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
-                    $args['prefs'][$field] = $val;
+                    $args['prefs'][$field] = strtoupper($val);
+                    if ($field === 'compose_button_bg_color') {
+                        $args['prefs']['custom_compose_bg'] = strtoupper($val);
+                    }
                 } else {
                     $args['prefs'][$field] = '';
+                    if ($field === 'compose_button_bg_color') {
+                        $args['prefs']['custom_compose_bg'] = '';
+                    }
                 }
             }
         }
@@ -821,8 +852,20 @@ JS;
         if (!empty($this->custom_topbar_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_topbar_bg)) {
             $color_css .= "html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($this->custom_topbar_bg, ENT_QUOTES) . " !important; }\n";
         }
-        if (!empty($this->custom_compose_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->custom_compose_bg)) {
-            $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($this->custom_compose_bg, ENT_QUOTES) . " !important; }\n";
+        $compose_bg = !empty($this->compose_button_bg_color) ? $this->compose_button_bg_color : $this->custom_compose_bg;
+        if (!empty($compose_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose_bg)) {
+            $escComposeBg = htmlspecialchars($compose_bg, ENT_QUOTES);
+            $color_css .= ":root, html, body { --compose-btn-bg: {$escComposeBg} !important; }\n";
+            $color_css .= "#compose-plus, #compose-plus a, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose { background-color: {$escComposeBg} !important; border-color: {$escComposeBg} !important; }\n";
+            $color_css .= "#compose-plus:hover, #compose-plus a:hover, a.button.compose:hover, .floating-action-buttons a.button.compose:hover, a.compose:hover, a.button-compose:hover, .btn.compose:hover, .btn.btn-compose:hover { filter: brightness(0.92) !important; }\n";
+            $color_css .= "#compose-plus:active, #compose-plus a:active, a.button.compose:active, .floating-action-buttons a.button.compose:active, a.compose:active, a.button-compose:active, .btn.compose:active, .btn.btn-compose:active { filter: brightness(0.85) !important; }\n";
+            $color_css .= "#compose-plus:focus, #compose-plus:focus-visible, a.button.compose:focus, a.button.compose:focus-visible, .floating-action-buttons a.button.compose:focus, .floating-action-buttons a.button.compose:focus-visible, .btn.compose:focus, .btn.compose:focus-visible { outline: 2px solid {$escComposeBg} !important; outline-offset: 2px !important; }\n";
+        }
+        if (!empty($this->compose_button_text_color) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $this->compose_button_text_color)) {
+            $escComposeText = htmlspecialchars($this->compose_button_text_color, ENT_QUOTES);
+            $color_css .= ":root, html, body { --compose-btn-color: {$escComposeText} !important; }\n";
+            $color_css .= "#compose-plus, #compose-plus a, #compose-plus span, a.button.compose, a.button.compose span, a.button.compose .button-inner, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose { color: {$escComposeText} !important; }\n";
+            $color_css .= "#compose-plus svg, #compose-plus a svg, a.button.compose svg, .floating-action-buttons a.button.compose svg, a.compose svg, a.button-compose svg, .btn.compose svg, .btn.btn-compose svg { fill: {$escComposeText} !important; color: {$escComposeText} !important; }\n";
         }
         if (!empty($color_css)) {
             $css_tag = html::tag('style', ['type' => 'text/css', 'id' => 'customizr-custom-colors'], "\n" . $color_css);

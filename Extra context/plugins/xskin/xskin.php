@@ -45,6 +45,8 @@ class xskin extends XFramework\Plugin
         'custom_sidebar_bg' => ['type' => 'string', 'default' => ''],
         'custom_topbar_bg' => ['type' => 'string', 'default' => ''],
         'custom_compose_bg' => ['type' => 'string', 'default' => ''],
+        'compose_button_bg_color' => ['type' => 'string', 'default' => ''],
+        'compose_button_text_color' => ['type' => 'string', 'default' => ''],
         'custom_btn_primary_bg' => ['type' => 'string', 'default' => ''],
         'custom_btn_secondary_bg' => ['type' => 'string', 'default' => ''],
         'custom_btn_radius' => ['type' => 'string', 'default' => ''],
@@ -321,7 +323,8 @@ class xskin extends XFramework\Plugin
 
         $sidebar = $this->rcmail->config->get('custom_sidebar_bg');
         $topbar = $this->rcmail->config->get('custom_topbar_bg');
-        $compose = $this->rcmail->config->get('custom_compose_bg');
+        $compose_bg = $this->rcmail->config->get('compose_button_bg_color', $this->rcmail->config->get('custom_compose_bg'));
+        $compose_text = $this->rcmail->config->get('compose_button_text_color');
         $btn_primary = $this->rcmail->config->get('custom_btn_primary_bg');
         $btn_secondary = $this->rcmail->config->get('custom_btn_secondary_bg');
         $btn_radius = $this->rcmail->config->get('custom_btn_radius');
@@ -333,8 +336,19 @@ class xskin extends XFramework\Plugin
         if (!empty($topbar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $topbar)) {
             $color_css .= "html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header { background-color: " . htmlspecialchars($topbar, ENT_QUOTES) . " !important; }\n";
         }
-        if (!empty($compose) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose)) {
-            $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($compose, ENT_QUOTES) . " !important; }\n";
+        if (!empty($compose_bg) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose_bg)) {
+            $escComposeBg = htmlspecialchars($compose_bg, ENT_QUOTES);
+            $color_css .= ":root, html, body { --compose-btn-bg: {$escComposeBg} !important; }\n";
+            $color_css .= "#compose-plus, #compose-plus a, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose, #preview-fab-btn { background-color: {$escComposeBg} !important; border-color: {$escComposeBg} !important; }\n";
+            $color_css .= "#compose-plus:hover, #compose-plus a:hover, a.button.compose:hover, .floating-action-buttons a.button.compose:hover, a.compose:hover, a.button-compose:hover, .btn.compose:hover, .btn.btn-compose:hover, #preview-fab-btn:hover { filter: brightness(0.92) !important; }\n";
+            $color_css .= "#compose-plus:active, #compose-plus a:active, a.button.compose:active, .floating-action-buttons a.button.compose:active, a.compose:active, a.button-compose:active, .btn.compose:active, .btn.btn-compose:active, #preview-fab-btn:active { filter: brightness(0.85) !important; }\n";
+            $color_css .= "#compose-plus:focus, #compose-plus:focus-visible, a.button.compose:focus, a.button.compose:focus-visible, .floating-action-buttons a.button.compose:focus, .floating-action-buttons a.button.compose:focus-visible, .btn.compose:focus, .btn.compose:focus-visible, #preview-fab-btn:focus { outline: 2px solid {$escComposeBg} !important; outline-offset: 2px !important; }\n";
+        }
+        if (!empty($compose_text) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose_text)) {
+            $escComposeText = htmlspecialchars($compose_text, ENT_QUOTES);
+            $color_css .= ":root, html, body { --compose-btn-color: {$escComposeText} !important; }\n";
+            $color_css .= "#compose-plus, #compose-plus a, #compose-plus span, a.button.compose, a.button.compose span, a.button.compose .button-inner, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose, #preview-fab-btn { color: {$escComposeText} !important; }\n";
+            $color_css .= "#compose-plus svg, #compose-plus a svg, a.button.compose svg, .floating-action-buttons a.button.compose svg, a.compose svg, a.button-compose svg, .btn.compose svg, .btn.btn-compose svg, #preview-fab-btn svg { fill: {$escComposeText} !important; color: {$escComposeText} !important; }\n";
         }
         if (!empty($btn_primary) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $btn_primary)) {
             $escColor = htmlspecialchars($btn_primary, ENT_QUOTES);
@@ -639,7 +653,8 @@ class xskin extends XFramework\Plugin
         $colorFields = [
             'custom_sidebar_bg' => 'setting_custom_sidebar_bg',
             'custom_topbar_bg' => 'setting_custom_topbar_bg',
-            'custom_compose_bg' => 'setting_custom_compose_bg',
+            'compose_button_bg_color' => 'setting_compose_button_bg_color',
+            'compose_button_text_color' => 'setting_compose_button_text_color',
             'custom_btn_primary_bg' => 'setting_custom_btn_primary_bg',
             'custom_btn_secondary_bg' => 'setting_custom_btn_secondary_bg',
         ];
@@ -659,8 +674,13 @@ class xskin extends XFramework\Plugin
         foreach ($colorFields as $field => $labelKey) {
             if (!$this->getDontOverride($field)) {
                 $val = (string)$this->rcmail->config->get($field, '');
+                if ($field === 'compose_button_bg_color' && empty($val)) {
+                    $val = (string)$this->rcmail->config->get('custom_compose_bg', '');
+                }
                 $escapedVal = htmlspecialchars($val, ENT_QUOTES);
-                $pickerVal = (!empty($val) && preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) ? $val : (($field === 'custom_btn_primary_bg') ? '#1a73e8' : (($field === 'custom_btn_secondary_bg') ? '#e8f0fe' : '#ffffff'));
+                $pickerDefault = ($field === 'custom_btn_primary_bg' || $field === 'compose_button_bg_color') ? '#1a73e8' : (($field === 'custom_btn_secondary_bg') ? '#e8f0fe' : '#ffffff');
+                $pickerVal = (!empty($val) && preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) ? $val : $pickerDefault;
+                $placeholder = ($field === 'custom_btn_primary_bg' || $field === 'compose_button_bg_color') ? '#1A73E8' : (($field === 'custom_btn_secondary_bg') ? '#E8F0FE' : (($field === 'compose_button_text_color') ? '#FFFFFF' : '#RRGGBB'));
                 $html = html::tag('input', [
                     'type' => 'color',
                     'id' => $field . '_picker',
@@ -677,7 +697,7 @@ class xskin extends XFramework\Plugin
                     'value' => $escapedVal,
                     'class' => 'form-control font-monospace',
                     'style' => 'width: 110px; display: inline-block; vertical-align: middle; margin-left: 8px; text-transform: uppercase;',
-                    'placeholder' => ($field === 'custom_btn_primary_bg') ? '#1A73E8' : (($field === 'custom_btn_secondary_bg') ? '#E8F0FE' : '#RRGGBB'),
+                    'placeholder' => $placeholder,
                     'pattern' => '^#[0-9A-Fa-f]{6}$',
                     'oninput' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
                     'onchange' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
@@ -690,14 +710,14 @@ class xskin extends XFramework\Plugin
                 ], rcube::Q($this->gettext('clear_color')));
 
                 // Add quick color swatches for primary button color
-                if ($field === 'custom_btn_primary_bg') {
+                if ($field === 'custom_btn_primary_bg' || $field === 'compose_button_bg_color') {
                     $swatchHtml = '<div style="margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">';
                     foreach ($buttonSwatches as $hex => $name) {
                         $swatchHtml .= html::tag('button', [
                             'type' => 'button',
                             'title' => $name,
                             'style' => "width: 24px; height: 24px; border-radius: 50%; background-color: {$hex}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); cursor: pointer; padding: 0;",
-                            'onclick' => "document.getElementById('custom_btn_primary_bg').value = '{$hex}'; document.getElementById('custom_btn_primary_bg_picker').value = '{$hex}'; xskin.applyCustomColor('custom_btn_primary_bg', '{$hex}');",
+                            'onclick' => "document.getElementById('{$field}').value = '{$hex}'; document.getElementById('{$field}_picker').value = '{$hex}'; xskin.applyCustomColor('{$field}', '{$hex}');",
                         ], '');
                     }
                     $swatchHtml .= '</div>';
@@ -738,7 +758,7 @@ class xskin extends XFramework\Plugin
             <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-primary" id="preview-primary-btn" style="background-color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); color: #fff; border-radius: var(--btn-radius, var(--md-btn-radius, 20px)); border: none; padding: 8px 24px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">Primary Action</button>
                 <button type="button" class="btn btn-secondary" id="preview-secondary-btn" style="background-color: var(--btn-secondary-bg, var(--md-btn-secondary-bg, #e8f0fe)); color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); border-radius: var(--btn-radius, var(--md-btn-radius, 20px)); border: 1px solid #c4c7c5; padding: 8px 20px; font-weight: 500; cursor: pointer;">Secondary</button>
-                <a class="button compose" id="preview-fab-btn" style="background-color: var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8)); color: #fff; border-radius: var(--btn-radius, var(--md-btn-radius, 24px)); padding: 8px 20px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                <a class="button compose" id="preview-fab-btn" style="background-color: var(--compose-btn-bg, var(--btn-primary-bg, var(--md-btn-primary-bg, #1a73e8))); color: var(--compose-btn-color, #fff); border-radius: var(--btn-radius, var(--md-btn-radius, 24px)); padding: 8px 20px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
                     <svg style="width: 18px; height: 18px; margin-right: 6px; fill: currentColor; vertical-align: middle;" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg> Compose
                 </a>
             </div>
@@ -756,7 +776,9 @@ class xskin extends XFramework\Plugin
                 var selMap = {
                     custom_topbar_bg: 'html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header',
                     custom_sidebar_bg: 'html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist',
-                    custom_compose_bg: '#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose',
+                    custom_compose_bg: '#compose-plus, #compose-plus a, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose, #preview-fab-btn',
+                    compose_button_bg_color: '#compose-plus, #compose-plus a, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose, #preview-fab-btn',
+                    compose_button_text_color: '#compose-plus, #compose-plus a, #compose-plus span, a.button.compose, a.button.compose span, a.button.compose .button-inner, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.compose, .btn.btn-compose, #preview-fab-btn',
                     custom_btn_primary_bg: 'html body[class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-primary:not(.btn.btn-danger), html [class*=\"xcolor-\"] body .btn.btn-primary:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body [class*=\"xcolor-\"] .btn.btn-success:not(.btn.btn-danger), html body[class*=\"xcolor-\"] .floating-action-buttons a.button, html body [class*=\"xcolor-\"] .floating-action-buttons a.button, html body[class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body [class*=\"xcolor-\"] div.tox .tox-dialog__footer .tox-button, html body[class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body [class*=\"xcolor-\"] .mce-window .mce-foot .mce-btn.mce-primary, html body .btn-primary, html body .btn.btn-primary, html body button.mainaction, html body input[type=\"submit\"].mainaction, html body .formbuttons .btn-primary, html body .formbuttons input.mainaction, html body .formbuttons button.mainaction, html body .floating-action-buttons a.button, html body #compose-plus, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-primary, #preview-primary-btn, #preview-fab-btn',
                     custom_btn_secondary_bg: 'html body .btn-secondary, html body .btn.btn-secondary, html body .btn-outline-secondary, html body button.cancel, html body a.button.cancel, html body .formbuttons .btn-secondary, html body .formbuttons button.cancel, html body .ui-dialog .ui-dialog-buttonpane button.ui-button-secondary, #preview-secondary-btn'
                 };
@@ -768,6 +790,10 @@ class xskin extends XFramework\Plugin
                         cssText = ':root, html, body { --btn-primary-bg: ' + hex + ' !important; --md-btn-primary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; border-color: ' + hex + ' !important; color: #ffffff !important; }';
                     } else if (field === 'custom_btn_secondary_bg') {
                         cssText = ':root, html, body { --btn-secondary-bg: ' + hex + ' !important; --md-btn-secondary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
+                    } else if (field === 'compose_button_bg_color' || field === 'custom_compose_bg') {
+                        cssText = ':root, html, body { --compose-btn-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; border-color: ' + hex + ' !important; } ' + sel + ':hover { filter: brightness(0.92) !important; }';
+                    } else if (field === 'compose_button_text_color') {
+                        cssText = ':root, html, body { --compose-btn-color: ' + hex + ' !important; } ' + sel + ' { color: ' + hex + ' !important; } ' + sel + ' svg { fill: ' + hex + ' !important; color: ' + hex + ' !important; }';
                     } else {
                         cssText = sel + ' { background-color: ' + hex + ' !important; }';
                     }
@@ -852,13 +878,23 @@ class xskin extends XFramework\Plugin
             ["xskin_icons_$this->skin", "xskin_list_icons_$this->skin", "xskin_button_icons_$this->skin",
                 "xskin_font_family_$this->skin", "xskin_font_size_$this->skin", "xskin_thick_font_$this->skin",
                 "xskin_color_$this->skin", "custom_sidebar_bg", "custom_topbar_bg", "custom_compose_bg",
+                "compose_button_bg_color", "compose_button_text_color",
                 "custom_btn_primary_bg", "custom_btn_secondary_bg", "custom_btn_radius"]
         );
 
-        foreach (['custom_sidebar_bg', 'custom_topbar_bg', 'custom_compose_bg', 'custom_btn_primary_bg', 'custom_btn_secondary_bg', 'custom_btn_radius'] as $colorField) {
+        foreach (['custom_sidebar_bg', 'custom_topbar_bg', 'custom_compose_bg', 'compose_button_bg_color', 'compose_button_text_color', 'custom_btn_primary_bg', 'custom_btn_secondary_bg', 'custom_btn_radius'] as $colorField) {
             $val = trim((string)\rcube_utils::get_input_value($colorField, \rcube_utils::INPUT_POST));
             if ($val === '') {
                 $val = trim((string)\rcube_utils::get_input_value('_' . $colorField, \rcube_utils::INPUT_POST));
+            }
+            if ($colorField === 'compose_button_bg_color' && $val === '') {
+                $legacyVal = trim((string)\rcube_utils::get_input_value('custom_compose_bg', \rcube_utils::INPUT_POST));
+                if ($legacyVal === '') {
+                    $legacyVal = trim((string)\rcube_utils::get_input_value('_custom_compose_bg', \rcube_utils::INPUT_POST));
+                }
+                if ($legacyVal !== '') {
+                    $val = $legacyVal;
+                }
             }
             if ($colorField === 'custom_btn_radius') {
                 if ($val !== '' && preg_match('/^[0-9]+px$/', $val)) {
@@ -867,10 +903,16 @@ class xskin extends XFramework\Plugin
                     $arg['prefs'][$colorField] = '';
                 }
             } else {
-                if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
-                    $arg['prefs'][$colorField] = $val;
+                if ($val !== '' && preg_match('/^#[0-9A-Fa-f]{3,6}$/', $val)) {
+                    $arg['prefs'][$colorField] = strtoupper($val);
+                    if ($colorField === 'compose_button_bg_color') {
+                        $arg['prefs']['custom_compose_bg'] = strtoupper($val);
+                    }
                 } elseif ($val === '') {
                     $arg['prefs'][$colorField] = '';
+                    if ($colorField === 'compose_button_bg_color') {
+                        $arg['prefs']['custom_compose_bg'] = '';
+                    }
                 }
             }
         }

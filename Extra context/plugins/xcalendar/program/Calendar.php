@@ -238,7 +238,11 @@ class Calendar extends Entity
     public function createPublishCode(): string
     {
         do {
-            $code = Utils::getToken(48);
+            try {
+                $code = bin2hex(random_bytes(32));
+            } catch (\Throwable) {
+                $code = bin2hex(openssl_random_pseudo_bytes(32));
+            }
         } while ($this->db->row('xcalendar_published', ['code' => $code]));
 
         return $code;
@@ -541,26 +545,122 @@ class Calendar extends Entity
     }
 
     /**
-     * Outputs
+     * Checks if request rate limit has been exceeded for published calendar feed.
+     *
+     * @param string $ip
+     * @param string $code
+     * @return bool
+     */
+    protected function checkPublishRateLimit(string $ip, string $code): bool
+    {
+        $limit = (int)$this->rcmail->config->get('xcalendar_publish_rate_limit', 60);
+        if ($limit <= 0) {
+            return true;
+        }
+
+        $now = time();
+        $ipKey = 'rl_pub_ip_' . md5($ip);
+        $codeKey = 'rl_pub_code_' . md5($code);
+
+        $cache = null;
+        if (method_exists($this->rcmail, 'get_cache')) {
+            try {
+                $cache = $this->rcmail->get_cache('xcalendar_rate', 'db', 120);
+            } catch (\Throwable) {}
+        }
+
+        $tempDir = $this->rcmail->config->get('temp_dir') ?: sys_get_temp_dir();
+        $rateDir = rtrim($tempDir, '/\\') . '/xcalendar_rate_limit';
+
+        foreach ([$ipKey, $codeKey] as $key) {
+            $data = null;
+            if ($cache) {
+                try {
+                    $cached = $cache->get($key);
+                    if (is_array($cached)) {
+                        $data = $cached;
+                    }
+                } catch (\Throwable) {}
+            }
+            if (!$data && is_dir($rateDir)) {
+                $file = $rateDir . '/' . $key . '.json';
+                if (file_exists($file)) {
+                    $json = @file_get_contents($file);
+                    $data = $json ? json_decode($json, true) : null;
+                }
+            }
+
+            if (!is_array($data) || ($now - ($data['start'] ?? 0)) >= 60) {
+                $data = ['count' => 1, 'start' => $now];
+            } else {
+                $data['count']++;
+                if ($data['count'] > $limit) {
+                    return false;
+                }
+            }
+
+            if ($cache) {
+                try {
+                    $cache->set($key, $data);
+                } catch (\Throwable) {}
+            } else {
+                if (!is_dir($rateDir)) {
+                    @mkdir($rateDir, 0700, true);
+                }
+                @file_put_contents($rateDir . '/' . $key . '.json', json_encode($data), LOCK_EX);
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Outputs RFC 5545 iCalendar content for published secret subscription feeds.
      *
      * @param string $code
      */
     public function getPublishedContent(string $code): void
     {
         try {
-            if (!$this->rcmail->config->get('xcalendar_calendar_publish_enabled', true) ||
-                !($publishedCalendar = $this->db->row('xcalendar_published', ['code' => explode('.', $code)[0]])) ||
-                !($calendar = $this->db->row('xcalendar_calendars', ['id' => $publishedCalendar['calendar_id']]))
-            ) {
-                throw new \Exception();
+            if (!$this->rcmail->config->get('xcalendar_calendar_publish_enabled', true)) {
+                Utils::exit404();
             }
 
-            if (empty($events = $this->db->all(
+            $rawCode = explode('.', $code)[0];
+            if (!preg_match('/^[a-fA-F0-9]{32,64}$|^[a-zA-Z0-9_-]{16,64}$/', $rawCode)) {
+                Utils::exit404();
+            }
+
+            $clientIp = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+            if ($this->rcmail->config->get('proxy_whitelist')) {
+                $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
+                if ($forwarded) {
+                    $parts = explode(',', $forwarded);
+                    $clientIp = trim($parts[0]);
+                }
+            }
+
+            if (!$this->checkPublishRateLimit($clientIp, $rawCode)) {
+                header('HTTP/1.1 429 Too Many Requests', true, 429);
+                header('Retry-After: 60');
+                header('Content-Type: text/plain; charset=utf-8');
+                exit('Too Many Requests. Rate limit exceeded.');
+            }
+
+            $publishedCalendar = $this->db->row('xcalendar_published', ['code' => $rawCode]);
+            if (!$publishedCalendar || !hash_equals((string)$publishedCalendar['code'], $rawCode)) {
+                Utils::exit404();
+            }
+
+            $calendar = $this->db->row('xcalendar_calendars', ['id' => $publishedCalendar['calendar_id']]);
+            if (!$calendar || !empty($calendar['removed_at'])) {
+                Utils::exit404();
+            }
+
+            $events = $this->db->all(
                 "SELECT * FROM {xcalendar_events} WHERE calendar_id = ? AND removed_at IS NULL",
                 [$publishedCalendar['calendar_id']]
-            ))) {
-                throw new \Exception();
-            }
+            ) ?: [];
 
             try {
                 $timezone = new \DateTimeZone($this->rcmail->config->get('timezone', 'UTC'));
@@ -571,16 +671,33 @@ class Calendar extends Entity
             $vcalendar = new \Sabre\VObject\Component\VCalendar();
             $resultEvents = [];
             $resultTimezones = [];
+            $lastModifiedTime = 0;
+
+            $hideAttendees = (bool)$this->rcmail->config->get('xcalendar_publish_hide_attendees', false);
+            $hideNotes = (bool)$this->rcmail->config->get('xcalendar_publish_hide_notes', false);
 
             foreach ($events as $event) {
-                // if private event, don't show
+                // Check timestamps for Last-Modified
+                foreach (['updated_at', 'created_at'] as $tField) {
+                    if (!empty($event[$tField])) {
+                        $ts = strtotime($event[$tField]);
+                        if ($ts > $lastModifiedTime) {
+                            $lastModifiedTime = $ts;
+                        }
+                    }
+                }
+
+                // If private event, do not include in feed
                 if ($event['visibility'] == "private" ||
                     ($event['visibility'] == 'default' && $calendar['default_event_visibility'] == 'private')
                 ) {
                     continue;
                 }
 
-                // get the timezones for this event and add to the list of timezones we'll be including as vtimezone
+                $isConfidential = ($event['visibility'] == 'confidential' ||
+                    ($event['visibility'] == 'default' && $calendar['default_event_visibility'] == 'confidential'));
+
+                // Collect timezones for this event
                 foreach ([$event['timezone_start'], $event['timezone_end']] as $value) {
                     if ($value && !array_key_exists($value, $resultTimezones) && ($tz = Timezone::getVTimezone($value))) {
                         $resultTimezones[$value] = $tz;
@@ -588,17 +705,58 @@ class Calendar extends Entity
                 }
 
                 if ($publishedCalendar['full']) {
-                    // output full event information: take it from the vevent field
-                    // if vevent in db includes vcalendar wrapper, need to cut it out
+                    // Full event output with sanitization
                     if ($i = strpos($event['vevent'], 'END:VCALENDAR')) {
                         if ($j = strpos($event['vevent'], 'BEGIN:VEVENT')) {
-                            $resultEvents[] = substr($event['vevent'], $j, $i - $j);
+                            $veventStr = substr($event['vevent'], $j, $i - $j);
+                        } else {
+                            $veventStr = $event['vevent'];
                         }
                     } else {
-                        $resultEvents[] = $event['vevent'];
+                        $veventStr = $event['vevent'];
                     }
+
+                    if ($isConfidential || $hideAttendees || $hideNotes) {
+                        try {
+                            $parsed = \Sabre\VObject\Reader::read(Event::wrapInVCalendar($veventStr));
+                            if (isset($parsed->VEVENT)) {
+                                $v = $parsed->VEVENT;
+                                if ($isConfidential) {
+                                    $v->SUMMARY = '[' . $this->rcmail->gettext('xcalendar.busy') . ']';
+                                    unset($v->DESCRIPTION);
+                                    unset($v->LOCATION);
+                                    unset($v->ATTENDEE);
+                                    unset($v->COMMENT);
+                                    $v->CLASS = 'CONFIDENTIAL';
+                                } else {
+                                    if ($hideAttendees) {
+                                        unset($v->ATTENDEE);
+                                    }
+                                    if ($hideNotes) {
+                                        unset($v->DESCRIPTION);
+                                        unset($v->COMMENT);
+                                    }
+                                }
+                                $veventStr = $v->serialize();
+                            }
+                        } catch (\Throwable) {
+                            if ($isConfidential) {
+                                $veventStr = preg_replace('/^SUMMARY:.*$/mi', 'SUMMARY:[' . $this->rcmail->gettext('xcalendar.busy') . ']', $veventStr);
+                                $veventStr = preg_replace('/^(LOCATION|DESCRIPTION|COMMENT|ATTENDEE)[^\r\n]*(\r?\n[ \t][^\r\n]*)*\r?\n?/mi', '', $veventStr);
+                            } else {
+                                if ($hideAttendees) {
+                                    $veventStr = preg_replace('/^ATTENDEE[^\r\n]*(\r?\n[ \t][^\r\n]*)*\r?\n?/mi', '', $veventStr);
+                                }
+                                if ($hideNotes) {
+                                    $veventStr = preg_replace('/^(DESCRIPTION|COMMENT)[^\r\n]*(\r?\n[ \t][^\r\n]*)*\r?\n?/mi', '', $veventStr);
+                                }
+                            }
+                        }
+                    }
+
+                    $resultEvents[] = trim($veventStr);
                 } else {
-                    // output only busy/available information, create it from scratch
+                    // Busy/available information only
                     $vevent = new \Sabre\VObject\Component\VEvent(
                         $vcalendar,
                         'VEVENT',
@@ -640,11 +798,45 @@ class Calendar extends Entity
                     $visibility = $event['visibility'] == 'default' ? $calendar['default_event_visibility'] : $event['visibility'];
                     $visibility != 'public' && $vevent->add('CLASS', strtoupper($visibility));
                     $event['repeat_rule'] && $vevent->add('RRULE', $event['repeat_rule']);
-                    $resultEvents[] = $vevent->serialize();
+                    $resultEvents[] = trim($vevent->serialize());
                 }
             }
 
-            exit(Event::wrapInVCalendar(implode("\n", $resultEvents), implode("\n", $resultTimezones)));
+            $vcalOutput = Event::wrapInVCalendar(implode("\r\n", $resultEvents), implode("\r\n", $resultTimezones));
+            // Ensure standard RFC 5545 CRLF line endings
+            $vcalOutput = preg_replace("/(?<!\r)\n/", "\r\n", $vcalOutput);
+
+            $etag = '"' . md5($vcalOutput) . '"';
+            $calName = !empty($calendar['name']) ? preg_replace('/[^a-zA-Z0-9_\-]/', '_', $calendar['name']) : 'calendar';
+            $filename = $calName . ($publishedCalendar['full'] ? '' : '_busy') . '.ics';
+
+            if ($lastModifiedTime <= 0) {
+                $lastModifiedTime = time();
+            }
+            $lastModifiedGmt = gmdate('D, d M Y H:i:s \G\M\T', $lastModifiedTime);
+
+            // Conditional GET check (304 Not Modified)
+            $ifNoneMatch = isset($_SERVER['HTTP_IF_NONE_MATCH']) ? trim($_SERVER['HTTP_IF_NONE_MATCH']) : '';
+            $ifModifiedSince = isset($_SERVER['HTTP_IF_MODIFIED_SINCE']) ? strtotime(trim($_SERVER['HTTP_IF_MODIFIED_SINCE'])) : 0;
+
+            if ($ifNoneMatch === $etag || ($ifModifiedSince > 0 && $ifModifiedSince >= $lastModifiedTime)) {
+                header('HTTP/1.1 304 Not Modified', true, 304);
+                header('ETag: ' . $etag);
+                header('Last-Modified: ' . $lastModifiedGmt);
+                header('Cache-Control: private, max-age=300, must-revalidate');
+                exit;
+            }
+
+            header('HTTP/1.1 200 OK', true, 200);
+            header('Content-Type: text/calendar; charset=utf-8');
+            header('Content-Disposition: inline; filename="' . $filename . '"');
+            header('Content-Length: ' . strlen($vcalOutput));
+            header('Cache-Control: private, max-age=300, must-revalidate');
+            header('ETag: ' . $etag);
+            header('Last-Modified: ' . $lastModifiedGmt);
+
+            exit($vcalOutput);
+
         } catch (\Exception) {
             Utils::exit404();
         }
