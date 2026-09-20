@@ -133,7 +133,7 @@ class newsletter extends rcube_plugin
 
         ob_start();
         ?>
-        <div id="newsletter-studio" class="newsletter-studio-wrapper boxcontent uibox">
+        <div id="newsletter-studio" class="newsletter-studio-wrapper content formcontent scroller boxcontent uibox">
             <!-- Studio Header -->
             <div class="newsletter-header card mb-4">
                 <div class="newsletter-header-content">
@@ -499,30 +499,52 @@ class newsletter extends rcube_plugin
     }
 
     /**
+     * Send JSON HTTP response to client with proper headers and exit
+     */
+    public function jsonResponse(array $data): void
+    {
+        // Support test environment mock if method is provided
+        if (is_object($this->rcmail->output) && method_exists($this->rcmail->output, 'json_response')) {
+            $this->rcmail->output->json_response($data);
+            return;
+        }
+
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
+        echo json_encode($data);
+        exit;
+    }
+
+    /**
      * AJAX Action: List contact groups and sources
      */
     public function action_groups(): void
     {
         $groups = [];
-        $sources = $this->rcmail->get_address_sources(true);
+        $sources = (array)$this->rcmail->get_address_sources(true);
 
         foreach ($sources as $source) {
-            $abook = $this->rcmail->get_address_book($source['id']);
+            $sourceId = (string)($source['id'] ?? '');
+            if ($sourceId === '') {
+                continue;
+            }
+            $abook = $this->rcmail->get_address_book($sourceId);
             if ($abook) {
                 $groupList = $abook->list_groups();
                 if (is_array($groupList)) {
                     foreach ($groupList as $g) {
                         $groups[] = [
-                            'id' => $source['id'] . ':' . ($g['ID'] ?? $g['id']),
-                            'name' => $g['name'] ?? 'Group',
-                            'source' => $source['name'] ?? 'Address Book',
+                            'id' => $sourceId . ':' . ($g['ID'] ?? $g['id'] ?? ''),
+                            'name' => (string)($g['name'] ?? 'Group'),
+                            'source' => (string)($source['name'] ?? 'Address Book'),
                         ];
                     }
                 }
             }
         }
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'groups' => $groups,
             'sources' => $sources,
@@ -541,7 +563,7 @@ class newsletter extends rcube_plugin
 
         $recipients = $this->resolveRecipients($sourceType, $selectedGroups, $customText);
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'total_count' => count($recipients['deliverable']) + count($recipients['suppressed']),
             'deliverable_count' => count($recipients['deliverable']),
@@ -562,7 +584,7 @@ class newsletter extends rcube_plugin
 
         $analysis = $this->analyzeSpamRisk($subject, $body, $from);
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'score' => $analysis['score'],
             'severity' => $analysis['severity'],
@@ -585,7 +607,7 @@ class newsletter extends rcube_plugin
         $throttleMs = (int)$this->rcmail->config->get('newsletter_throttle_ms', 150);
 
         if (empty($recipientsChunk)) {
-            $this->rcmail->output->json_response([
+            $this->jsonResponse([
                 'success' => false,
                 'error' => 'No recipients provided for this batch.',
             ]);
@@ -600,28 +622,22 @@ class newsletter extends rcube_plugin
             $recipientEmail = is_array($recipient) ? ($recipient['email'] ?? '') : (string)$recipient;
             $recipientName = is_array($recipient) ? ($recipient['name'] ?? '') : '';
 
-            $recipientEmail = trim($recipientEmail);
-            if (!filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+            if (empty($recipientEmail) || !filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
                 $failedCount++;
-                $errors[] = "Invalid address: {$recipientEmail}";
+                $errors[] = "Invalid email format: {$recipientEmail}";
                 continue;
             }
 
-            // Check suppression list
             if ($this->isSuppressed($recipientEmail)) {
                 $failedCount++;
                 $errors[] = "Suppressed: {$recipientEmail}";
                 continue;
             }
 
-            // Personalize tokens
             $personalized = $this->personalizeContent($subject, $bodyHtml, $recipientEmail, $recipientName, (string)$campaignId);
-
-            // Construct RFC 8058 headers
             $rfcHeaders = $this->buildRfc8058Headers($recipientEmail, (string)$campaignId);
 
-            // Dispatch 1-to-1 envelope message
-            $deliverySuccess = $this->deliverNewsletterMessage(
+            $delivered = $this->deliverNewsletterMessage(
                 $fromEmail,
                 $fromName,
                 $recipientEmail,
@@ -632,11 +648,11 @@ class newsletter extends rcube_plugin
                 $rfcHeaders
             );
 
-            if ($deliverySuccess) {
+            if ($delivered) {
                 $sentCount++;
             } else {
                 $failedCount++;
-                $errors[] = "Failed sending to {$recipientEmail}";
+                $errors[] = "Failed delivery to {$recipientEmail}";
             }
 
             // Micro-throttling between dispatches
@@ -648,7 +664,7 @@ class newsletter extends rcube_plugin
         // Record or update campaign record
         $this->recordBatchMetrics($campaignId, $sentCount, $failedCount, $subject, $fromEmail, $fromName, $bodyHtml);
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'sent' => $sentCount,
             'failed' => $failedCount,
@@ -666,17 +682,17 @@ class newsletter extends rcube_plugin
 
         if ($subAction === 'add' && !empty($email)) {
             $this->addSuppression($email, 'manual_admin');
-            $this->rcmail->output->json_response(['success' => true, 'suppressions' => $this->getSuppressions()]);
+            $this->jsonResponse(['success' => true, 'suppressions' => $this->getSuppressions()]);
             return;
         }
 
         if ($subAction === 'remove' && !empty($email)) {
             $this->removeSuppression($email);
-            $this->rcmail->output->json_response(['success' => true, 'suppressions' => $this->getSuppressions()]);
+            $this->jsonResponse(['success' => true, 'suppressions' => $this->getSuppressions()]);
             return;
         }
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'suppressions' => $this->getSuppressions(),
         ]);
@@ -687,7 +703,7 @@ class newsletter extends rcube_plugin
      */
     public function action_campaigns(): void
     {
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'campaigns' => $this->getCampaignsHistory(),
         ]);
@@ -705,7 +721,7 @@ class newsletter extends rcube_plugin
 
         $personalized = $this->personalizeContent($subject, $body, $sampleEmail, $sampleName, 'sample');
 
-        $this->rcmail->output->json_response([
+        $this->jsonResponse([
             'success' => true,
             'subject' => $personalized['subject'],
             'body_html' => $personalized['body_html'],
@@ -1061,61 +1077,66 @@ HTML;
         if ($sourceType === 'custom' || !empty($customText)) {
             // Parse custom text (newlines, commas, semicolons)
             $tokens = preg_split('/[\r\n,;]+/', $customText);
-            foreach ($tokens as $token) {
-                $token = trim($token);
-                if (empty($token)) {
-                    continue;
-                }
-                $extracted = $this->parseEmailAndName($token);
-                if ($extracted) {
-                    $rawRecipients[] = $extracted;
+            if (is_array($tokens)) {
+                foreach ($tokens as $token) {
+                    $token = trim($token);
+                    if (empty($token)) {
+                        continue;
+                    }
+                    $extracted = $this->parseEmailAndName($token);
+                    if ($extracted) {
+                        $rawRecipients[] = $extracted;
+                    }
                 }
             }
         } else {
-            // Query Roundcube address book sources
-            $sources = $this->rcmail->get_address_sources(true);
-            foreach ($sources as $source) {
-                $abook = $this->rcmail->get_address_book($source['id']);
-                if (!$abook) {
-                    continue;
-                }
+            // Query Roundcube address book sources safely
+            try {
+                $sources = (array)$this->rcmail->get_address_sources(true);
+                foreach ($sources as $source) {
+                    $sourceId = (string)($source['id'] ?? '');
+                    if ($sourceId === '') {
+                        continue;
+                    }
+                    $abook = $this->rcmail->get_address_book($sourceId);
+                    if (!$abook) {
+                        continue;
+                    }
 
-                if ($sourceType === 'groups' && !empty($selectedGroups)) {
-                    foreach ($selectedGroups as $groupToken) {
-                        $parts = explode(':', (string)$groupToken);
-                        $sourceId = $parts[0];
-                        $groupId = $parts[1] ?? '';
-                        if ($sourceId === $source['id'] && !empty($groupId)) {
-                            if (method_exists($abook, 'set_group')) {
-                                $abook->set_group($groupId);
-                            }
-                            $records = $abook->list_records();
-                            if (is_array($records)) {
-                                foreach ($records as $r) {
-                                    $rawRecipients[] = $this->extractContactRecord($r);
+                    if ($sourceType === 'groups' && !empty($selectedGroups)) {
+                        foreach ($selectedGroups as $groupToken) {
+                            $parts = explode(':', (string)$groupToken);
+                            $sId = $parts[0] ?? '';
+                            $groupId = $parts[1] ?? '';
+                            if ($sId === $sourceId && !empty($groupId)) {
+                                if (method_exists($abook, 'set_group')) {
+                                    $abook->set_group($groupId);
                                 }
-                            } elseif (is_object($records) && method_exists($records, 'next')) {
-                                while ($rec = $records->next()) {
-                                    $rawRecipients[] = $this->extractContactRecord($rec);
-                                }
+                                $records = $abook->list_records();
+                                $this->collectAddressBookRecords($records, $rawRecipients);
                             }
                         }
-                    }
-                } else {
-                    // All contacts in this address book
-                    if (method_exists($abook, 'reset')) {
-                        $abook->reset();
-                    }
-                    $records = $abook->list_records();
-                    if (is_array($records)) {
-                        foreach ($records as $r) {
-                            $rawRecipients[] = $this->extractContactRecord($r);
+                    } else {
+                        // All contacts in this address book
+                        if (method_exists($abook, 'reset')) {
+                            $abook->reset();
                         }
-                    } elseif (is_object($records) && method_exists($records, 'next')) {
-                        while ($rec = $records->next()) {
-                            $rawRecipients[] = $this->extractContactRecord($rec);
+                        if (method_exists($abook, 'set_group')) {
+                            $abook->set_group('');
                         }
+                        $records = $abook->list_records();
+                        $this->collectAddressBookRecords($records, $rawRecipients);
                     }
+                }
+            } catch (\Throwable $e) {
+                if (class_exists('rcube')) {
+                    rcube::raise_error([
+                        'code' => 500,
+                        'type' => 'php',
+                        'file' => __FILE__,
+                        'line' => __LINE__,
+                        'message' => 'Newsletter resolveRecipients address book error: ' . $e->getMessage()
+                    ], true, false);
                 }
             }
         }
@@ -1155,6 +1176,37 @@ HTML;
     }
 
     /**
+     * Safely iterate and collect records from address book results
+     */
+    protected function collectAddressBookRecords(mixed $records, array &$rawRecipients): void
+    {
+        if (is_array($records)) {
+            foreach ($records as $r) {
+                $extracted = $this->extractContactRecord($r);
+                if (!empty($extracted['email'])) {
+                    $rawRecipients[] = $extracted;
+                }
+            }
+        } elseif (is_object($records)) {
+            if (method_exists($records, 'next')) {
+                while ($rec = $records->next()) {
+                    $extracted = $this->extractContactRecord($rec);
+                    if (!empty($extracted['email'])) {
+                        $rawRecipients[] = $extracted;
+                    }
+                }
+            } elseif (is_iterable($records)) {
+                foreach ($records as $r) {
+                    $extracted = $this->extractContactRecord($r);
+                    if (!empty($extracted['email'])) {
+                        $rawRecipients[] = $extracted;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Parse email and optional name from string like "John Doe <john@example.com>"
      */
     protected function parseEmailAndName(string $input): ?array
@@ -1172,23 +1224,37 @@ HTML;
     }
 
     /**
-     * Extract email and name from an address book record array
+     * Extract email and name from an address book record array or object
      */
-    protected function extractContactRecord(array $record): array
+    public function extractContactRecord(mixed $record): array
     {
-        $email = '';
-        if (!empty($record['email'])) {
-            $email = is_array($record['email']) ? $record['email'][0] : (string)$record['email'];
+        if (is_object($record)) {
+            if (method_exists($record, 'get_fields')) {
+                $record = (array)$record->get_fields();
+            } elseif (method_exists($record, 'toArray')) {
+                $record = (array)$record->toArray();
+            } else {
+                $record = (array)$record;
+            }
         }
 
-        $name = $record['name'] ?? '';
+        if (!is_array($record)) {
+            return ['email' => '', 'name' => ''];
+        }
+
+        $email = '';
+        if (!empty($record['email'])) {
+            $email = is_array($record['email']) ? (string)($record['email'][0] ?? '') : (string)$record['email'];
+        }
+
+        $name = (string)($record['name'] ?? '');
         if (empty($name)) {
-            $firstName = $record['firstname'] ?? '';
-            $surname = $record['surname'] ?? '';
+            $firstName = (string)($record['firstname'] ?? '');
+            $surname = (string)($record['surname'] ?? '');
             $name = trim("{$firstName} {$surname}");
         }
 
-        return ['email' => $email, 'name' => $name];
+        return ['email' => trim($email), 'name' => trim($name)];
     }
 
     /**
@@ -1287,14 +1353,16 @@ HTML;
      */
     public function getSuppressions(): array
     {
-        $file = $this->dataDir . '/suppressions.json';
-        if (file_exists($file)) {
-            $content = file_get_contents($file);
-            $data = json_decode((string)$content, true);
-            if (is_array($data)) {
-                return $data;
+        try {
+            $file = $this->dataDir . '/suppressions.json';
+            if (file_exists($file)) {
+                $content = @file_get_contents($file);
+                $data = json_decode((string)$content, true);
+                if (is_array($data)) {
+                    return $data;
+                }
             }
-        }
+        } catch (\Throwable) {}
         return [];
     }
 
@@ -1303,8 +1371,15 @@ HTML;
      */
     protected function saveSuppressions(array $data): bool
     {
-        $file = $this->dataDir . '/suppressions.json';
-        return (bool)file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        try {
+            if (!is_dir($this->dataDir)) {
+                @mkdir($this->dataDir, 0770, true);
+            }
+            $file = $this->dataDir . '/suppressions.json';
+            return (bool)@file_put_contents($file, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     /**
@@ -1319,34 +1394,39 @@ HTML;
         string $fromName,
         string $bodyHtml
     ): void {
-        $file = $this->dataDir . '/campaigns.json';
-        $campaigns = [];
-        if (file_exists($file)) {
-            $campaigns = json_decode((string)file_get_contents($file), true) ?: [];
-        }
+        try {
+            if (!is_dir($this->dataDir)) {
+                @mkdir($this->dataDir, 0770, true);
+            }
+            $file = $this->dataDir . '/campaigns.json';
+            $campaigns = [];
+            if (file_exists($file)) {
+                $campaigns = json_decode((string)@file_get_contents($file), true) ?: [];
+            }
 
-        $id = $campaignId > 0 ? (string)$campaignId : (string)time();
-        if (!isset($campaigns[$id])) {
-            $analysis = $this->analyzeSpamRisk($subject, $bodyHtml, $fromEmail);
-            $campaigns[$id] = [
-                'id' => $id,
-                'created_at' => date('Y-m-d H:i:s'),
-                'subject' => $subject,
-                'from_email' => $fromEmail,
-                'from_name' => $fromName,
-                'recipients_sent' => 0,
-                'recipients_failed' => 0,
-                'spam_score' => $analysis['score'],
-                'status' => 'sending',
-            ];
-        }
+            $id = $campaignId > 0 ? (string)$campaignId : (string)time();
+            if (!isset($campaigns[$id])) {
+                $analysis = $this->analyzeSpamRisk($subject, $bodyHtml, $fromEmail);
+                $campaigns[$id] = [
+                    'id' => $id,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'subject' => $subject,
+                    'from_email' => $fromEmail,
+                    'from_name' => $fromName,
+                    'recipients_sent' => 0,
+                    'recipients_failed' => 0,
+                    'spam_score' => $analysis['score'],
+                    'status' => 'sending',
+                ];
+            }
 
-        $campaigns[$id]['recipients_sent'] += $sent;
-        $campaigns[$id]['recipients_failed'] += $failed;
-        $campaigns[$id]['updated_at'] = date('Y-m-d H:i:s');
-        $campaigns[$id]['status'] = 'completed';
+            $campaigns[$id]['recipients_sent'] += $sent;
+            $campaigns[$id]['recipients_failed'] += $failed;
+            $campaigns[$id]['updated_at'] = date('Y-m-d H:i:s');
+            $campaigns[$id]['status'] = 'completed';
 
-        @file_put_contents($file, json_encode($campaigns, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            @file_put_contents($file, json_encode($campaigns, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        } catch (\Throwable) {}
     }
 
     /**
@@ -1354,13 +1434,15 @@ HTML;
      */
     public function getCampaignsHistory(): array
     {
-        $file = $this->dataDir . '/campaigns.json';
-        if (file_exists($file)) {
-            $campaigns = json_decode((string)file_get_contents($file), true);
-            if (is_array($campaigns)) {
-                return array_values($campaigns);
+        try {
+            $file = $this->dataDir . '/campaigns.json';
+            if (file_exists($file)) {
+                $campaigns = json_decode((string)@file_get_contents($file), true);
+                if (is_array($campaigns)) {
+                    return array_values($campaigns);
+                }
             }
-        }
+        } catch (\Throwable) {}
         return [];
     }
 

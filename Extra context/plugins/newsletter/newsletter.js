@@ -93,6 +93,19 @@
         init: function () {
             var self = this;
 
+            // Automatically append Roundcube CSRF token (_token) to all POST requests
+            if (window.rcmail && rcmail.env && rcmail.env.request_token) {
+                $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+                    if (options.type && options.type.toUpperCase() === 'POST') {
+                        if (typeof options.data === 'string' && options.data.indexOf('_token=') === -1) {
+                            options.data += (options.data ? '&' : '') + '_token=' + encodeURIComponent(rcmail.env.request_token);
+                        } else if (typeof options.data === 'object' && options.data !== null && !(options.data instanceof FormData)) {
+                            options.data._token = rcmail.env.request_token;
+                        }
+                    }
+                });
+            }
+
             // Check if we are on the newsletter studio page
             if ($('#newsletter-studio').length > 0) {
                 self.setupStudioUI();
@@ -264,7 +277,9 @@
 
         loadContactGroups: function () {
             var self = this;
-            $.post('?_task=newsletter&_action=plugin.newsletter-groups', {}, function (res) {
+            $.post('?_task=newsletter&_action=plugin.newsletter-groups', {
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
+            }, function (res) {
                 if (res && res.groups) {
                     var html = '';
                     if (res.groups.length === 0) {
@@ -302,7 +317,8 @@
             $.post('?_task=newsletter&_action=plugin.newsletter-recipients', {
                 source_type: sourceType,
                 groups: selectedGroups,
-                custom_text: customText
+                custom_text: customText,
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function (res) {
                 if (res && res.success) {
                     self.recipients.deliverable = res.deliverable || [];
@@ -318,8 +334,17 @@
                     } else {
                         $('#btn-start-sending').prop('disabled', false).removeClass('disabled');
                     }
+                } else {
+                    $('#recipient-count').text('0');
+                    $('#deliverable-count').text('0');
+                    $('#suppressed-count').text('0');
                 }
-            }, 'json');
+            }, 'json').fail(function (xhr, status, err) {
+                console.error('Newsletter recipients check failed:', status, err);
+                $('#recipient-count').text('0');
+                $('#deliverable-count').text('0');
+                $('#suppressed-count').text('0');
+            });
         },
 
         runSpamCheck: function () {
@@ -330,7 +355,8 @@
             $.post('?_task=newsletter&_action=plugin.newsletter-spam-score', {
                 subject: subject,
                 body: body,
-                from: from
+                from: from,
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function (res) {
                 if (res && res.success) {
                     var score = res.score;
@@ -380,7 +406,10 @@
                     }
                     $('#spam-suggestions').html(html);
                 }
-            }, 'json');
+            }, 'json').fail(function (xhr, status, err) {
+                console.error('Newsletter spam check failed:', status, err);
+                $('#spam-score-value').text('0');
+            });
         },
 
         renderLivePreview: function () {
@@ -391,7 +420,8 @@
                 subject: subject,
                 body: body,
                 sample_email: 'sarah.connor@example.com',
-                sample_name: 'Sarah Connor'
+                sample_name: 'Sarah Connor',
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function (res) {
                 if (res && res.success) {
                     var html = '<div class="preview-header mb-3 p-3 bg-light border rounded">' +
@@ -474,7 +504,8 @@
                     from_email: fromEmail,
                     from_name: fromName,
                     body_html: bodyHtml,
-                    recipients: batchSlice
+                    recipients: batchSlice,
+                    _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
                 },
                 dataType: 'json',
                 success: function (res) {
@@ -565,7 +596,9 @@
         },
 
         loadHistory: function () {
-            $.post('?_task=newsletter&_action=plugin.newsletter-campaigns', {}, function (res) {
+            $.post('?_task=newsletter&_action=plugin.newsletter-campaigns', {
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
+            }, function (res) {
                 if (res && res.campaigns) {
                     var html = '';
                     if (res.campaigns.length === 0) {
@@ -596,7 +629,9 @@
 
         loadSuppressions: function () {
             var self = this;
-            $.post('?_task=newsletter&_action=plugin.newsletter-suppressions', {}, function (res) {
+            $.post('?_task=newsletter&_action=plugin.newsletter-suppressions', {
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
+            }, function (res) {
                 if (res && res.suppressions) {
                     var html = '';
                     var entries = Object.values(res.suppressions);
@@ -630,7 +665,8 @@
             var self = this;
             $.post('?_task=newsletter&_action=plugin.newsletter-suppressions', {
                 sub_action: 'add',
-                email: email
+                email: email,
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function () {
                 self.loadSuppressions();
                 self.refreshRecipients();
@@ -641,7 +677,8 @@
             var self = this;
             $.post('?_task=newsletter&_action=plugin.newsletter-suppressions', {
                 sub_action: 'remove',
-                email: email
+                email: email,
+                _token: (window.rcmail && rcmail.env && rcmail.env.request_token) ? rcmail.env.request_token : ''
             }, function () {
                 self.loadSuppressions();
                 self.refreshRecipients();

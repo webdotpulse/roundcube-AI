@@ -370,4 +370,49 @@ assert_test(str_contains($skinCss, 'overflow:visible !important') && str_contain
 assert_test(str_contains($skinCss, '#layout-menu #taskmenu') && str_contains($skinCss, 'overflow-x:visible !important'), "styles.css contains overflow-x:visible !important for #layout-menu #taskmenu");
 assert_test(str_contains($skinCss, 'right:calc(100% + 10px) !important'), "styles.css contains unclipped tooltip positioning");
 
-echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (10/10) ***\n";
+// --------------------------------------------------------------------------
+// Test Suite 10: Action Endpoints & Scrolling Layout CSS Fixes
+// --------------------------------------------------------------------------
+echo "\n--- Test Suite 10: Action Endpoints & Scrolling Layout CSS Fixes ---\n";
+
+// 1. action_spam_score
+rcube_utils::$mockPost = [
+    'subject' => 'Exclusive Member Updates',
+    'body' => '<p>Hello {first_name}, here is your weekly news. <a href="{unsubscribe_url}">Unsubscribe</a></p>',
+    'from' => 'newsletter@example.com'
+];
+$newsletter->action_spam_score();
+$res = rcmail::get_instance()->output->lastJsonResponse;
+assert_test(is_array($res) && ($res['success'] ?? false) === true, "action_spam_score executes and outputs success");
+assert_test(isset($res['score']) && isset($res['severity']), "action_spam_score returns score and severity");
+
+// 2. action_recipients
+rcube_utils::$mockPost = [
+    'source_type' => 'custom',
+    'custom_text' => "Alice Smith <alice@example.com>\nBob Jones <bob@example.com>"
+];
+$newsletter->action_recipients();
+$res = rcmail::get_instance()->output->lastJsonResponse;
+assert_test(is_array($res) && ($res['success'] ?? false) === true, "action_recipients executes and outputs success");
+assert_test(($res['deliverable_count'] ?? 0) === 2, "action_recipients resolves 2 custom recipients");
+
+// 3. extractContactRecord with object mock
+class mock_contact_record {
+    public function get_fields(): array {
+        return ['email' => 'object_contact@example.com', 'firstname' => 'Object', 'surname' => 'User'];
+    }
+}
+$extracted = $newsletter->extractContactRecord(new mock_contact_record());
+assert_test($extracted['email'] === 'object_contact@example.com', "extractContactRecord handles contact objects with get_fields()");
+assert_test($extracted['name'] === 'Object User', "extractContactRecord handles contact object names");
+
+// 4. Scrolling CSS verification
+$newsletterCss = file_get_contents($pluginDir . '/newsletter.css');
+assert_test(str_contains($newsletterCss, 'body.task-newsletter #layout-content') && str_contains($newsletterCss, 'overflow-y: auto !important;'), "newsletter.css enables overflow-y: auto on #layout-content");
+assert_test(str_contains($newsletterCss, '.newsletter-studio-wrapper') && str_contains($newsletterCss, 'flex: 1 0 auto;'), "newsletter.css configures .newsletter-studio-wrapper for unclipped flex expansion");
+
+// 5. Template layout classes
+$renderedUi = $newsletter->render_newsletter_ui();
+assert_test(str_contains($renderedUi, 'class="newsletter-studio-wrapper content formcontent scroller boxcontent uibox"'), "render_newsletter_ui includes content, formcontent, and scroller classes");
+
+echo "\n*** ALL NEWSLETTER & SYSTEM TESTS PASSED SUCCESSFULLY (11/11) ***\n";
