@@ -111,7 +111,12 @@ assert_true(strpos($htaccessContent, 'Deny from all') !== false, "Attachments .h
 // Test 3b: xsignature Specific Post-Install Verifications
 echo "\n--- Test 3b: xsignature Specific Post-Install Verifications ---\n";
 assert_true(file_exists($tempDir . '/plugins/xsignature/config.inc.php'), "xsignature config.inc.php exists");
-assert_true(is_dir($tempDir . '/data/xsignature'), "xsignature data/xsignature logo directory created");
+assert_true(is_dir($tempDir . '/plugins/xsignature/data'), "xsignature plugins/xsignature/data logo directory created");
+assert_true(file_exists($tempDir . '/plugins/xsignature/data/.htaccess'), "xsignature plugins/xsignature/data .htaccess created");
+assert_true(file_exists($tempDir . '/plugins/xsignature/data/.gitignore'), "xsignature plugins/xsignature/data .gitignore created");
+assert_true(is_dir($tempDir . '/data/xsignature'), "xsignature legacy data/xsignature logo directory created");
+$sigCfg = file_get_contents($tempDir . '/plugins/xsignature/config.inc.php');
+assert_true(strpos($sigCfg, "plugins/xsignature/data") !== false, "xsignature config.inc.php configured with plugins/xsignature/data");
 
 // Test 4: Configuration Activation Verification
 echo "\n--- Test 4: Configuration Activation Verification ---\n";

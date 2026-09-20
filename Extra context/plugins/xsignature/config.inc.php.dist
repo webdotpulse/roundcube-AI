@@ -9,10 +9,20 @@
 
 // File system directory where the signature logos are stored. Make sure the web server has write permission to this
 // directory.
+// In Roundcube 1.7+, DocumentRoot is public_html/ and static assets are served through static.php, so the default
+// location is inside plugins/xsignature/data.
 //
 // Type: string
-// Default: RCUBE_INSTALL_PATH . 'data/xsignature'
-$config['logo_dir'] = RCUBE_INSTALL_PATH . 'data/xsignature';
+// Default: RCUBE_INSTALL_PATH . 'plugins/xsignature/data'
+$config['logo_dir'] = RCUBE_INSTALL_PATH . 'plugins/xsignature/data';
+
+// Web URL base where the signature logos can be accessed publicly.
+// In Roundcube 1.7+, this automatically resolves via static.php ('static.php/plugins/xsignature/data/').
+// Set to null to use automatic detection.
+//
+// Type: string or null
+// Default: null
+$config['logo_url'] = null;
 
 // User's name.
 //

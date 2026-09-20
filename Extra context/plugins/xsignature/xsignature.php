@@ -182,8 +182,17 @@ class xsignature extends XFramework\Plugin
             $signatures = $this->rcmail->output->get_env("signatures");
             foreach ($identities as $identity) {
                 if ($identity['html'] && $identity['plain']) {
+                    $html = $identity['html'];
+                    // Fix legacy data/xsignature URLs in saved HTML signature if applicable
+                    if (str_contains($html, '/data/xsignature/')) {
+                        $html = preg_replace(
+                            '~https?://[^/]+/data/xsignature/~',
+                            $this->getLogoUrlBase(),
+                            $html
+                        );
+                    }
                     $signatures[$identity['id']] = [
-                        "html" => "-- <br />" . $identity['html'],
+                        "html" => "-- <br />" . $html,
                         "text" => "-- \n" . $identity['plain'],
                     ];
                 }
@@ -203,6 +212,11 @@ class xsignature extends XFramework\Plugin
      */
     public function identityForm(array $arg): array
     {
+        // Suppress browser Permissions-Policy unload violation warnings caused by TinyMCE
+        if (!headers_sent()) {
+            @header('Permissions-Policy: unload=(self)');
+        }
+
         // make sure all the xsignature variables are set
         (array_key_exists("record", $arg) && is_array($arg['record'])) || $arg['record'] = [];
         array_key_exists("xsignature_enabled", $arg['record']) || $arg['record']['xsignature_enabled'] = 1;
@@ -454,7 +468,20 @@ class xsignature extends XFramework\Plugin
      */
     protected function getLogoDirectory(): string
     {
-        return Utils::addSlash($this->rcmail->config->get("logo_dir", RCUBE_INSTALL_PATH . "data/xsignature"));
+        $dir = $this->rcmail->config->get("logo_dir");
+        $legacyDefault = RCUBE_INSTALL_PATH . "data/xsignature";
+
+        // In Roundcube 1.7+, DocumentRoot is public_html/ and static assets are served
+        // via static.php. The plugins/ path is whitelisted in static.php ALLOWED_PATHS,
+        // so storing logos under plugins/xsignature/data ensures they are publicly accessible.
+        if (empty($dir) || rtrim(str_replace('\\', '/', (string)$dir), '/') === rtrim(str_replace('\\', '/', $legacyDefault), '/')) {
+            if (version_compare(explode('-', RCMAIL_VERSION)[0], '1.7', '>=')) {
+                return Utils::addSlash(__DIR__ . "/data");
+            }
+            return Utils::addSlash($legacyDefault);
+        }
+
+        return Utils::addSlash((string)$dir);
     }
 
     /**
@@ -478,9 +505,16 @@ class xsignature extends XFramework\Plugin
      */
     protected function getLogoUrlBase(): string
     {
-        return Utils::addSlash(
-            Utils::getUrl((string)$this->rcmail->config->get("logo_url", "data/xsignature"))
-        );
+        $url = $this->rcmail->config->get("logo_url");
+
+        if (empty($url) || trim((string)$url, '/') === "data/xsignature") {
+            if (version_compare(explode('-', RCMAIL_VERSION)[0], '1.7', '>=')) {
+                return Utils::addSlash(Utils::getAssetUrl() . "plugins/xsignature/data");
+            }
+            return Utils::addSlash(Utils::getUrl("data/xsignature"));
+        }
+
+        return Utils::addSlash(Utils::getUrl((string)$url));
     }
 
     /**
@@ -501,7 +535,28 @@ class xsignature extends XFramework\Plugin
             return $url;
         }
 
-        return $this->getLogoUrlBase() . implode("/", array_slice($array, -3));
+        $relPath = implode("/", array_slice($array, -3));
+        $this->migrateLegacyLogo($relPath);
+
+        return $this->getLogoUrlBase() . $relPath;
+    }
+
+    /**
+     * Migrates a logo file from legacy data/xsignature to the current logo directory if needed.
+     *
+     * @param string $relPath
+     * @return void
+     */
+    protected function migrateLegacyLogo(string $relPath): void
+    {
+        $legacyFile = RCUBE_INSTALL_PATH . "data/xsignature/" . $relPath;
+        $currentDir = $this->getLogoDirectory();
+        $newFile = $currentDir . $relPath;
+
+        if (file_exists($legacyFile) && !file_exists($newFile)) {
+            Utils::makeDir(dirname($newFile));
+            @copy($legacyFile, $newFile);
+        }
     }
 
     /**

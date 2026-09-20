@@ -257,20 +257,77 @@ class RoundcubeExtraContentInstaller
             $this->success("  [✓] PHP GD extension is loaded.");
         }
 
-        // 2. Default signature logo directory setup
+        // 2. Signature logo directory setup (plugins/xsignature/data for RC 1.7+ static.php routing & data/xsignature for legacy)
+        $pluginDataDir = $destination . DIRECTORY_SEPARATOR . 'data';
+        if (!is_dir($pluginDataDir)) {
+            if ($this->dryRun) {
+                $this->info("  -> Would create plugin logos directory: {$pluginDataDir}");
+            } else {
+                if (@mkdir($pluginDataDir, 0775, true)) {
+                    $this->success("  -> Created plugin logos directory: {$pluginDataDir}");
+                }
+            }
+        } else {
+            $this->info("  -> Preserving existing plugin logos directory at {$pluginDataDir}");
+        }
+
+        // Secure plugin data directory with .htaccess and .gitignore
+        if (!$this->dryRun && is_dir($pluginDataDir)) {
+            $htaccess = $pluginDataDir . DIRECTORY_SEPARATOR . '.htaccess';
+            if (!file_exists($htaccess)) {
+                @file_put_contents($htaccess, "# Disable script execution\n<FilesMatch \"\\.(php|phtml|php3|php4|php5|php7|phps|inc|cgi|pl|sh)$\">\nOrder Deny,Allow\nDeny from all\n</FilesMatch>\nOptions -Indexes\n");
+            }
+            $gitignore = $pluginDataDir . DIRECTORY_SEPARATOR . '.gitignore';
+            if (!file_exists($gitignore)) {
+                @file_put_contents($gitignore, "*\n!.htaccess\n!.gitignore\n");
+            }
+        }
+
         $targetDir = $roundcubeDir ?? $this->findRoundcubeDir();
         if ($targetDir) {
+            // Legacy / fallback logo directory
             $logoDir = $targetDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'xsignature';
             if (!is_dir($logoDir)) {
                 if ($this->dryRun) {
-                    $this->info("  -> Would create signature logos directory: {$logoDir}");
+                    $this->info("  -> Would create legacy signature logos directory: {$logoDir}");
                 } else {
                     if (@mkdir($logoDir, 0775, true)) {
-                        $this->success("  -> Created signature logos directory: {$logoDir}");
+                        $this->success("  -> Created legacy signature logos directory: {$logoDir}");
                     }
                 }
             } else {
                 $this->info("  -> Preserving existing signature logos directory at {$logoDir}");
+            }
+
+            // Sync any existing legacy logos to plugins/xsignature/data
+            if (!$this->dryRun && is_dir($logoDir) && is_dir($pluginDataDir)) {
+                $this->copyRecursive($logoDir, $pluginDataDir);
+            }
+
+            // If public_html exists (Roundcube 1.7+), ensure data symlink exists if possible
+            $publicHtml = $targetDir . DIRECTORY_SEPARATOR . 'public_html';
+            $publicData = $publicHtml . DIRECTORY_SEPARATOR . 'data';
+            if (is_dir($publicHtml) && !file_exists($publicData) && !is_link($publicData)) {
+                if ($this->dryRun) {
+                    $this->info("  -> Would create public_html/data symlink to ../data");
+                } else {
+                    @symlink('../data', $publicData);
+                }
+            }
+        }
+
+        // Migrate config in plugins/xsignature/config.inc.php if pointing to legacy data/xsignature
+        $sigConfig = $destination . DIRECTORY_SEPARATOR . 'config.inc.php';
+        if (!$this->dryRun && file_exists($sigConfig)) {
+            $content = file_get_contents($sigConfig);
+            if (strpos($content, "RCUBE_INSTALL_PATH . 'data/xsignature'") !== false) {
+                $content = str_replace(
+                    "RCUBE_INSTALL_PATH . 'data/xsignature'",
+                    "RCUBE_INSTALL_PATH . 'plugins/xsignature/data'",
+                    $content
+                );
+                @file_put_contents($sigConfig, $content);
+                $this->info("  -> Updated xsignature config.inc.php to use plugins/xsignature/data");
             }
         }
 

@@ -247,189 +247,219 @@ class lifeprisma_ai extends rcube_plugin
      */
     public function handle_triage()
     {
-        if (!$this->check_csrf()) {
-            header('Content-Type: application/json; charset=utf-8', true, 403);
-            echo json_encode(['status' => 'error', 'message' => 'Invalid or expired CSRF token']);
-            exit;
-        }
-
-        $action = 'triage';
-        if (!$this->check_rate_limit($action)) {
-            header('Content-Type: application/json; charset=utf-8');
-            echo json_encode(['status' => 'error', 'message' => 'Please wait a moment between requests.']);
-            exit;
-        }
-
-        $rcmail = rcmail::get_instance();
-        header('Content-Type: application/json; charset=utf-8');
-
-        $uid = rcube_utils::get_input_string('msg_uid', rcube_utils::INPUT_POST);
-        $mbox = rcube_utils::get_input_string('mbox', rcube_utils::INPUT_POST) ?: 'INBOX';
-        $force = (bool) rcube_utils::get_input_string('force', rcube_utils::INPUT_POST);
-
-        if (empty($uid)) {
-            echo json_encode(['status' => 'error', 'message' => 'Missing msg_uid']);
-            exit;
-        }
-
-        $gemini = $this->get_gemini_config();
-        if (empty($gemini['api_key'])) {
-            echo json_encode([
-                'status' => 'error',
-                'code' => 'no_api_key',
-                'message' => 'Google Gemini API key not configured. Please add your key in Settings -> Gemini Assistant Admin or config.inc.php.'
-            ]);
-            exit;
-        }
-
-        $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
-        if (!$force) {
-            $cached = $this->cache_get($cache_key);
-            if ($cached !== null) {
-                $cached['cached'] = 'server';
-                echo json_encode($cached);
+        try {
+            if (!$this->check_csrf()) {
+                header('Content-Type: application/json; charset=utf-8', true, 403);
+                echo json_encode(['status' => 'error', 'message' => 'Invalid or expired CSRF token']);
                 exit;
             }
 
-            // Check user preferences log
-            if ($rcmail->user) {
-                $prefs = $rcmail->user->get_prefs();
-                $triage_log = $prefs['genia_triage_log'] ?? [];
-                $item_key = "{$mbox}:{$uid}";
-                if (isset($triage_log[$item_key]) && (time() - ($triage_log[$item_key]['time'] ?? 0) < 86400 * 7)) {
-                    $item = $triage_log[$item_key];
-                    $item['status'] = 'success';
-                    $item['cached'] = 'local';
-                    echo json_encode($item);
+            $action = 'triage';
+            if (!$this->check_rate_limit($action)) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['status' => 'error', 'message' => 'Please wait a moment between requests.']);
+                exit;
+            }
+
+            $rcmail = rcmail::get_instance();
+            header('Content-Type: application/json; charset=utf-8');
+
+            $uid = rcube_utils::get_input_string('msg_uid', rcube_utils::INPUT_POST);
+            $mbox = rcube_utils::get_input_string('mbox', rcube_utils::INPUT_POST) ?: 'INBOX';
+            $force = (bool) rcube_utils::get_input_string('force', rcube_utils::INPUT_POST);
+
+            if (empty($uid)) {
+                echo json_encode(['status' => 'error', 'message' => 'Missing msg_uid']);
+                exit;
+            }
+
+            $gemini = $this->get_gemini_config();
+            if (empty($gemini['api_key'])) {
+                echo json_encode([
+                    'status' => 'error',
+                    'code' => 'no_api_key',
+                    'message' => 'Google Gemini API key not configured. Please add your key in Settings -> Gemini Assistant Admin or config.inc.php.'
+                ]);
+                exit;
+            }
+
+            $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
+            if (!$force) {
+                $cached = $this->cache_get($cache_key);
+                if ($cached !== null) {
+                    $cached['cached'] = 'server';
+                    echo json_encode($cached);
                     exit;
                 }
-            }
-        }
 
-        $ctx = $this->fetch_message_context($uid, $mbox);
-        if (empty($ctx) || empty($ctx['body'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Empty or unreadable message body']);
-            exit;
-        }
-
-        $raw_headers = $this->fetch_raw_headers($uid, $mbox);
-        $is_bulk = false;
-        if (!empty($raw_headers)) {
-            if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers) ||
-                preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers) ||
-                preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
-                $is_bulk = true;
-            }
-        }
-
-        // Check if sent by user themselves
-        $user_emails = [];
-        $identities = $rcmail->user ? $rcmail->user->list_identities() : [];
-        foreach ($identities as $ident) {
-            if (!empty($ident['email'])) $user_emails[] = strtolower(trim($ident['email']));
-        }
-        $is_self = false;
-        $from_email = strtolower($ctx['from']);
-        foreach ($user_emails as $ue) {
-            if ($ue && strpos($from_email, $ue) !== false) {
-                $is_self = true;
-                break;
-            }
-        }
-
-        $identity = $rcmail->user ? $rcmail->user->get_identity() : [];
-        $user_name = trim(($identity['name'] ?? '') . ' <' . ($identity['email'] ?? '') . '>');
-        $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
-        $language = $prefs['genia_language'] ?? 'English';
-        $tone = $prefs['genia_tone'] ?? 'professional';
-
-        // Close session early to prevent webmail lockup during external AI generation
-        session_write_close();
-
-        // Single-shot executive triage via Google Gemini
-        $result = $this->call_gemini_triage($ctx, $raw_headers, $user_name, $language, $tone, $gemini, $is_bulk, $is_self);
-
-        if (!$result || empty($result['analysis'])) {
-            echo json_encode(['status' => 'error', 'message' => 'Failed to generate executive analysis from Gemini']);
-            exit;
-        }
-
-        $analysis = $result['analysis'];
-        $model = $result['model'];
-        $tokens = $result['tokens'];
-
-        // Assign IMAP label flag if triage labels are enabled (roundcube-labels integration)
-        if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
-            $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
-                'action_required_high' => '$Label1',
-                'action_required'      => '$Label4',
-                'meeting'              => '$Label2',
-                'follow_up'            => '$Label4',
-                'fyi'                  => '$Label5',
-                'scam'                 => '$Label1',
-            ]);
-            $cat = $analysis['category'] ?? 'fyi';
-            $urgency = $analysis['urgency'] ?? 'low';
-            $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
-            $flag = $label_map[$mapKey] ?? ($label_map[$cat] ?? null);
-            if ($flag) {
-                $storage = $rcmail->get_storage();
-                if ($storage) {
-                    $storage->set_flag($uid, $flag, $mbox);
+                // Check user preferences log
+                if ($rcmail->user) {
+                    try {
+                        $prefs = $rcmail->user->get_prefs();
+                        $triage_log = $prefs['genia_triage_log'] ?? [];
+                        $item_key = "{$mbox}:{$uid}";
+                        if (isset($triage_log[$item_key]) && (time() - ($triage_log[$item_key]['time'] ?? 0) < 86400 * 7)) {
+                            $item = $triage_log[$item_key];
+                            $item['status'] = 'success';
+                            $item['cached'] = 'local';
+                            echo json_encode($item);
+                            exit;
+                        }
+                    } catch (\Throwable $e) {
+                        $this->ai_log("[TRIAGE PREFS CHECK ERROR] " . $e->getMessage());
+                    }
                 }
-                $analysis['assigned_label'] = $flag;
             }
-        }
 
-        // Save to cache
-        $cache_payload = [
-            'status' => 'success',
-            'analysis' => $analysis,
-            'model' => $model,
-            'tokens' => $tokens,
-            'time' => time(),
-        ];
-        $this->cache_set($cache_key, $cache_payload, 86400 * 7);
-
-        // Save in user preferences log (FIFO capped at 200 items)
-        if ($rcmail->user) {
-            $tlog = $prefs['genia_triage_log'] ?? [];
-            $item_key = "{$mbox}:{$uid}";
-            $tlog[$item_key] = $cache_payload;
-            if (count($tlog) > 200) {
-                $cutoff = time() - (86400 * 7);
-                $tlog = array_filter($tlog, function ($e) use ($cutoff) { return ($e['time'] ?? 0) > $cutoff; });
-                if (count($tlog) > 150) $tlog = array_slice($tlog, -150, null, true);
+            $ctx = $this->fetch_message_context($uid, $mbox);
+            if (empty($ctx) || empty($ctx['body'])) {
+                echo json_encode(['status' => 'error', 'message' => 'Empty or unreadable message body']);
+                exit;
             }
-            $rcmail->user->save_prefs(['genia_triage_log' => $tlog]);
-        }
 
-        // Auto-save draft to IMAP Drafts if user preference enables background creation
-        $auto_draft_mode = $prefs['genia_auto_draft_mode'] ?? 'open';
-        if ($auto_draft_mode === 'open' && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && !empty($prefs['genia_auto_draft'])) {
-            $orig_msg_id = '';
-            if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
-                $orig_msg_id = trim($m[1]);
+            $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+            $is_bulk = false;
+            if (!empty($raw_headers)) {
+                if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers) ||
+                    preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers) ||
+                    preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
+                    $is_bulk = true;
+                }
             }
-            $this->create_imap_draft(
-                $ctx['from'],
-                $ctx['subject'],
-                $analysis['draft_reply'],
-                $orig_msg_id,
-                $ctx['date'],
-                $ctx['from'],
-                $ctx['body']
-            );
-        }
 
-        echo json_encode([
-            'status' => 'success',
-            'analysis' => $analysis,
-            'model' => $model,
-            'tokens' => $tokens,
-            'cached' => false,
-        ]);
-        exit;
+            // Check if sent by user themselves
+            $user_emails = [];
+            $identities = $rcmail->user ? $rcmail->user->list_identities() : [];
+            if (is_array($identities)) {
+                foreach ($identities as $ident) {
+                    if (!empty($ident['email'])) $user_emails[] = strtolower(trim($ident['email']));
+                }
+            }
+            $is_self = false;
+            $from_email = strtolower($ctx['from'] ?? '');
+            foreach ($user_emails as $ue) {
+                if ($ue && strpos($from_email, $ue) !== false) {
+                    $is_self = true;
+                    break;
+                }
+            }
+
+            $identity = $rcmail->user ? $rcmail->user->get_identity() : [];
+            if (!is_array($identity)) $identity = [];
+            $user_name = trim(($identity['name'] ?? '') . ' <' . ($identity['email'] ?? '') . '>');
+            $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
+            if (!is_array($prefs)) $prefs = [];
+            $language = $prefs['genia_language'] ?? 'English';
+            $tone = $prefs['genia_tone'] ?? 'professional';
+
+            // Close session early to prevent webmail lockup during external AI generation
+            session_write_close();
+
+            // Single-shot executive triage via Google Gemini
+            $result = $this->call_gemini_triage($ctx, $raw_headers, $user_name, $language, $tone, $gemini, $is_bulk, $is_self);
+
+            if (!$result || empty($result['analysis'])) {
+                echo json_encode(['status' => 'error', 'message' => 'Failed to generate executive analysis from Gemini']);
+                exit;
+            }
+
+            $analysis = $result['analysis'];
+            $model = $result['model'];
+            $tokens = $result['tokens'];
+
+            // Assign IMAP label flag if triage labels are enabled (roundcube-labels integration)
+            if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
+                try {
+                    $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
+                        'action_required_high' => '$Label1',
+                        'action_required'      => '$Label4',
+                        'meeting'              => '$Label2',
+                        'follow_up'            => '$Label4',
+                        'fyi'                  => '$Label5',
+                        'scam'                 => '$Label1',
+                    ]);
+                    $cat = $analysis['category'] ?? 'fyi';
+                    $urgency = $analysis['urgency'] ?? 'low';
+                    $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
+                    $flag = $label_map[$mapKey] ?? ($label_map[$cat] ?? null);
+                    if ($flag) {
+                        $storage = $rcmail->get_storage();
+                        if ($storage) {
+                            $storage->set_flag($uid, $flag, $mbox);
+                        }
+                        $analysis['assigned_label'] = $flag;
+                    }
+                } catch (\Throwable $e) {
+                    $this->ai_log("[TRIAGE LABEL ERROR] " . $e->getMessage());
+                }
+            }
+
+            // Save to cache (multi-tier resilient cache)
+            $cache_payload = [
+                'status' => 'success',
+                'analysis' => $analysis,
+                'model' => $model,
+                'tokens' => $tokens,
+                'time' => time(),
+            ];
+            $this->cache_set($cache_key, $cache_payload, 86400 * 7);
+
+            // Save in user preferences log (FIFO capped at 200 items, using no_session = true post session_write_close)
+            if ($rcmail->user) {
+                try {
+                    $tlog = $prefs['genia_triage_log'] ?? [];
+                    if (!is_array($tlog)) $tlog = [];
+                    $item_key = "{$mbox}:{$uid}";
+                    $tlog[$item_key] = $cache_payload;
+                    if (count($tlog) > 200) {
+                        $cutoff = time() - (86400 * 7);
+                        $tlog = array_filter($tlog, function ($e) use ($cutoff) { return ($e['time'] ?? 0) > $cutoff; });
+                        if (count($tlog) > 150) $tlog = array_slice($tlog, -150, null, true);
+                    }
+                    $rcmail->user->save_prefs(['genia_triage_log' => $tlog], true);
+                } catch (\Throwable $e) {
+                    $this->ai_log("[TRIAGE SAVE PREFS ERROR] " . $e->getMessage());
+                }
+            }
+
+            // Auto-save draft to IMAP Drafts if user preference enables background creation
+            try {
+                $auto_draft_mode = $prefs['genia_auto_draft_mode'] ?? 'open';
+                if ($auto_draft_mode === 'open' && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && !empty($prefs['genia_auto_draft'])) {
+                    $orig_msg_id = '';
+                    if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
+                        $orig_msg_id = trim($m[1]);
+                    }
+                    $this->create_imap_draft(
+                        $ctx['from'],
+                        $ctx['subject'],
+                        $analysis['draft_reply'],
+                        $orig_msg_id,
+                        $ctx['date'],
+                        $ctx['from'],
+                        $ctx['body']
+                    );
+                }
+            } catch (\Throwable $e) {
+                $this->ai_log("[TRIAGE AUTODRAFT ERROR] " . $e->getMessage());
+            }
+
+            echo json_encode([
+                'status' => 'success',
+                'analysis' => $analysis,
+                'model' => $model,
+                'tokens' => $tokens,
+                'cached' => false,
+            ]);
+            exit;
+        } catch (\Throwable $e) {
+            $this->ai_log("[TRIAGE FATAL ERROR] " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Executive triage error: ' . $e->getMessage(),
+            ]);
+            exit;
+        }
     }
 
     /**
@@ -1154,6 +1184,11 @@ Body:
         try {
             $rcmail = rcmail::get_instance();
             $storage = $rcmail->get_storage();
+            if (!$storage) {
+                $this->ai_log("[AUTODRAFT ERROR] Storage connection unavailable");
+                return false;
+            }
+
             $drafts_mbox = $rcmail->config->get('drafts_mbox', 'Drafts');
 
             if (!$storage->folder_exists($drafts_mbox)) {
@@ -1161,6 +1196,7 @@ Body:
             }
 
             $identity = $rcmail->user ? $rcmail->user->get_identity() : [];
+            if (!is_array($identity)) $identity = [];
             $from_name = $identity['name'] ?? '';
             $from_email = $identity['email'] ?? '';
             $from_str = $from_name ? "\"$from_name\" <$from_email>" : $from_email;
@@ -1208,7 +1244,7 @@ Body:
 
             $raw_message = implode("\r\n", $headers) . "\r\n\r\n" . $full_body;
             return (bool) $storage->save_message($drafts_mbox, $raw_message, '', false, ['SEEN', 'DRAFT']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->ai_log("[AUTODRAFT EXCEPTION] " . $e->getMessage());
             return false;
         }
@@ -1222,20 +1258,31 @@ Body:
         try {
             $rcmail = rcmail::get_instance();
             $storage = $rcmail->get_storage();
-            if (!empty($mbox)) $storage->set_folder($mbox);
+            if (!$storage) {
+                return [];
+            }
+            if (!empty($mbox)) {
+                $storage->set_folder($mbox);
+            }
 
-            $msg = new rcube_message((int) $uid);
+            $msg = new rcube_message((int) $uid, $mbox ?: null);
             if (empty($msg->headers)) return [];
 
             $body = '';
+            $part = null;
             $text_body = $msg->first_text_part($part);
             if (!empty($text_body)) {
                 $body = $text_body;
             } else {
+                $part = null;
                 $html_body = $msg->first_html_part($part);
                 if (!empty($html_body)) {
-                    $h2t = new rcube_html2text($html_body);
-                    $body = $h2t->get_text();
+                    if (class_exists('rcube_html2text')) {
+                        $h2t = new rcube_html2text($html_body);
+                        $body = $h2t->get_text();
+                    } else {
+                        $body = strip_tags($html_body);
+                    }
                 }
             }
 
@@ -1266,7 +1313,8 @@ Body:
                 'body' => trim($body),
                 'spam_score' => $spam_score,
             ];
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->ai_log("[FETCH CONTEXT ERROR] " . $e->getMessage());
             return [];
         }
     }
@@ -1276,44 +1324,58 @@ Body:
      */
     private function fetch_raw_headers($uid, $mbox = '')
     {
-        $rcmail = rcmail::get_instance();
-        $storage = $rcmail->get_storage();
-        if (!empty($mbox)) $storage->set_folder($mbox);
-
-        $raw = $storage->get_raw_headers((int) $uid);
-        if (empty($raw)) return '';
-
-        $relevant_headers = [
-            'From', 'To', 'Reply-To', 'Return-Path', 'Subject', 'Date',
-            'Message-ID', 'X-Mailer', 'X-Originating-IP',
-            'Received-SPF', 'Authentication-Results', 'DKIM-Signature',
-            'ARC-Authentication-Results', 'X-Spam-Status', 'X-Spam-Score',
-            'Content-Type', 'MIME-Version', 'Received',
-            'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'
-        ];
-
-        $lines = explode("\n", $raw);
-        $filtered = [];
-        $capturing = false;
-
-        foreach ($lines as $line) {
-            if (preg_match('/^([A-Za-z\-]+):\s*(.*)$/', $line, $m)) {
-                $capturing = false;
-                foreach ($relevant_headers as $h) {
-                    if (strcasecmp($m[1], $h) === 0) {
-                        $filtered[] = $line;
-                        $capturing = true;
-                        break;
-                    }
-                }
-            } elseif ($capturing && preg_match('/^\s+/', $line)) {
-                $filtered[] = $line;
-            } else {
-                $capturing = false;
+        try {
+            $rcmail = rcmail::get_instance();
+            $storage = $rcmail->get_storage();
+            if (!$storage) {
+                return '';
             }
-        }
+            if (!empty($mbox)) {
+                $storage->set_folder($mbox);
+            }
 
-        return implode("\n", $filtered);
+            if (!method_exists($storage, 'get_raw_headers')) {
+                return '';
+            }
+
+            $raw = $storage->get_raw_headers((int) $uid);
+            if (empty($raw) || !is_string($raw)) return '';
+
+            $relevant_headers = [
+                'From', 'To', 'Reply-To', 'Return-Path', 'Subject', 'Date',
+                'Message-ID', 'X-Mailer', 'X-Originating-IP',
+                'Received-SPF', 'Authentication-Results', 'DKIM-Signature',
+                'ARC-Authentication-Results', 'X-Spam-Status', 'X-Spam-Score',
+                'Content-Type', 'MIME-Version', 'Received',
+                'List-Unsubscribe', 'List-Id', 'Precedence', 'Auto-Submitted'
+            ];
+
+            $lines = explode("\n", $raw);
+            $filtered = [];
+            $capturing = false;
+
+            foreach ($lines as $line) {
+                if (preg_match('/^([A-Za-z\-]+):\s*(.*)$/', $line, $m)) {
+                    $capturing = false;
+                    foreach ($relevant_headers as $h) {
+                        if (strcasecmp($m[1], $h) === 0) {
+                            $filtered[] = $line;
+                            $capturing = true;
+                            break;
+                        }
+                    }
+                } elseif ($capturing && preg_match('/^\s+/', $line)) {
+                    $filtered[] = $line;
+                } else {
+                    $capturing = false;
+                }
+            }
+
+            return implode("\n", $filtered);
+        } catch (\Throwable $e) {
+            $this->ai_log("[FETCH RAW HEADERS ERROR] " . $e->getMessage());
+            return '';
+        }
     }
 
     private function get_attachment_info($uid, $mbox = '')
@@ -1321,9 +1383,14 @@ Body:
         try {
             $rcmail = rcmail::get_instance();
             $storage = $rcmail->get_storage();
-            if (!empty($mbox)) $storage->set_folder($mbox);
+            if (!$storage) {
+                return [];
+            }
+            if (!empty($mbox)) {
+                $storage->set_folder($mbox);
+            }
 
-            $msg = new rcube_message((int) $uid);
+            $msg = new rcube_message((int) $uid, $mbox ?: null);
             if (empty($msg->headers) || empty($msg->attachments)) return [];
 
             $attachments = [];
@@ -1335,7 +1402,8 @@ Body:
                 ];
             }
             return $attachments;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+            $this->ai_log("[FETCH ATTACHMENT ERROR] " . $e->getMessage());
             return [];
         }
     }
@@ -1751,19 +1819,66 @@ Body:
     /**
      * Cache helpers
      */
+    /**
+     * Cache helpers with resilient multi-tier fallback:
+     * Tier 1: Static in-memory request-level cache
+     * Tier 2: Redis (checked with class_exists, connect timeout, and Throwable guard)
+     * Tier 3: Roundcube core database cache via $rcmail->get_cache()
+     * Tier 4: Local JSON file cache fallback in plugin data directory or temp dir
+     */
+    private static $in_memory_cache = [];
+
     private function redis_connect()
     {
         static $redis = null;
         if ($redis !== null) return $redis;
-        try {
-            $redis = new Redis();
-            $redis->connect('127.0.0.1', 6379, 1.0);
-            $redis->setOption(Redis::OPT_PREFIX, 'gemini:');
-            return $redis;
-        } catch (\Exception $e) {
+
+        if (!class_exists('Redis')) {
             $redis = false;
             return false;
         }
+
+        try {
+            $r = new Redis();
+            $connected = @$r->connect('127.0.0.1', 6379, 0.5);
+            if ($connected) {
+                @$r->setOption(Redis::OPT_PREFIX, 'gemini:');
+                $redis = $r;
+                return $redis;
+            }
+        } catch (\Throwable $e) {
+            // Redis connection or configuration failed
+        }
+
+        $redis = false;
+        return false;
+    }
+
+    private function get_rcube_cache($ttl = 86400)
+    {
+        try {
+            $rcmail = rcmail::get_instance();
+            if (method_exists($rcmail, 'get_cache')) {
+                return $rcmail->get_cache('lifeprisma_ai', 'db', $ttl);
+            }
+        } catch (\Throwable $e) {}
+        return null;
+    }
+
+    private function get_file_cache_dir()
+    {
+        $dir = $this->home . '/data/cache';
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        if (is_dir($dir) && is_writable($dir)) {
+            return $dir;
+        }
+        $sys_temp = sys_get_temp_dir() . '/lifeprisma_cache';
+        if (!is_dir($sys_temp)) {
+            @mkdir($sys_temp, 0755, true);
+        }
+        return is_dir($sys_temp) && is_writable($sys_temp) ? $sys_temp : sys_get_temp_dir();
     }
 
     private function cache_user_prefix()
@@ -1774,28 +1889,100 @@ Body:
 
     private function cache_get($key)
     {
-        $r = $this->redis_connect();
-        if (!$r) return null;
-        try {
-            $val = $r->get($key);
-            return $val !== false ? json_decode($val, true) : null;
-        } catch (\Exception $e) {
-            return null;
+        // 1. In-memory check
+        if (array_key_exists($key, self::$in_memory_cache)) {
+            return self::$in_memory_cache[$key];
         }
+
+        // 2. Redis check
+        $r = $this->redis_connect();
+        if ($r) {
+            try {
+                $val = $r->get($key);
+                if ($val !== false) {
+                    $decoded = json_decode($val, true);
+                    self::$in_memory_cache[$key] = $decoded;
+                    return $decoded;
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 3. Roundcube core cache check
+        $rc_cache = $this->get_rcube_cache();
+        if ($rc_cache && method_exists($rc_cache, 'get')) {
+            try {
+                $val = $rc_cache->get($key);
+                if ($val !== null && $val !== false) {
+                    $decoded = is_array($val) ? $val : json_decode((string)$val, true);
+                    if ($decoded !== null) {
+                        self::$in_memory_cache[$key] = $decoded;
+                        return $decoded;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 4. File cache fallback
+        try {
+            $file = $this->get_file_cache_dir() . '/lpai_' . md5($key) . '.json';
+            if (file_exists($file)) {
+                $raw = @file_get_contents($file);
+                if ($raw) {
+                    $wrapper = json_decode($raw, true);
+                    if (is_array($wrapper) && isset($wrapper['exp'], $wrapper['data'])) {
+                        if ($wrapper['exp'] >= time()) {
+                            self::$in_memory_cache[$key] = $wrapper['data'];
+                            return $wrapper['data'];
+                        } else {
+                            @unlink($file);
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {}
+
+        return null;
     }
 
     private function cache_set($key, $data, $ttl = 86400)
     {
+        self::$in_memory_cache[$key] = $data;
+
+        // 1. Redis
         $r = $this->redis_connect();
-        if (!$r) return;
+        if ($r) {
+            try {
+                $r->setex($key, $ttl, json_encode($data));
+                return;
+            } catch (\Throwable $e) {}
+        }
+
+        // 2. Roundcube core cache
+        $rc_cache = $this->get_rcube_cache($ttl);
+        if ($rc_cache && method_exists($rc_cache, 'set')) {
+            try {
+                $rc_cache->set($key, $data);
+                return;
+            } catch (\Throwable $e) {}
+        }
+
+        // 3. File cache fallback
         try {
-            $r->setex($key, $ttl, json_encode($data));
-        } catch (\Exception $e) {}
+            $file = $this->get_file_cache_dir() . '/lpai_' . md5($key) . '.json';
+            $wrapper = [
+                'exp' => time() + $ttl,
+                'data' => $data,
+            ];
+            @file_put_contents($file, json_encode($wrapper), LOCK_EX);
+        } catch (\Throwable $e) {}
     }
 
     private function ai_log($message)
     {
-        $log_dir = RCUBE_INSTALL_PATH . 'logs/';
+        $log_dir = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH . 'logs/' : __DIR__ . '/logs/';
+        if (!is_dir($log_dir)) {
+            $log_dir = sys_get_temp_dir() . '/';
+        }
         $line = '[' . date('Y-m-d H:i:s') . '] ' . $message . "\n";
         @file_put_contents($log_dir . 'gemini.log', $line, FILE_APPEND | LOCK_EX);
     }

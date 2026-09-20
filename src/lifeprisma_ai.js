@@ -491,10 +491,16 @@ function lpai_init_executive_triage(force) {
             } else {
                 var hub = document.getElementById('lpai-executive-hub');
                 if (hub) hub.remove();
+                if (force && data && data.message) {
+                    rcmail.display_message(data.message, 'error');
+                }
             }
         } catch (e) {
             var hub = document.getElementById('lpai-executive-hub');
             if (hub) hub.remove();
+            if (force) {
+                rcmail.display_message('Failed to load executive triage analysis', 'error');
+            }
         }
     };
     xhr.send(postData);
