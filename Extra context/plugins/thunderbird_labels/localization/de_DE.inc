@@ -58,6 +58,7 @@ $labels['op_ends_with'] = 'endet mit';
 $labels['op_regex'] = 'entspricht Regex';
 $labels['action_assign_labels'] = 'Label(s) zuweisen';
 $labels['action_move_folder'] = 'In Ordner verschieben';
+$labels['action_move_none'] = '-- Nicht verschieben --';
 $labels['action_mark_read'] = 'Als gelesen markieren';
 $labels['apply_filters_now'] = 'Filter jetzt anwenden';
 $labels['filter_rules_desc'] = 'Weisen Sie eingehenden E-Mails automatisch Labels zu oder verschieben Sie sie in Ordner.';

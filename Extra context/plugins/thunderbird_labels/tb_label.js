@@ -697,6 +697,144 @@ rcm_tb_label_show_add_modal = function () {
 };
 
 // ==========================================
+// Resolve human-readable name for mail folders
+function rcm_tb_label_folder_display_name(folderId) {
+  if (!folderId || typeof folderId !== "string") return "";
+  var lower = folderId.toLowerCase();
+  if (lower === "inbox") {
+    return (window.rcmail && rcmail.labels && rcmail.labels["inbox"]) || "Inbox";
+  }
+  if (lower === "drafts" || lower.endsWith(".drafts") || lower.endsWith("/drafts")) {
+    return (window.rcmail && rcmail.labels && rcmail.labels["drafts"]) || "Drafts";
+  }
+  if (lower === "sent" || lower.endsWith(".sent") || lower.endsWith("/sent")) {
+    return (window.rcmail && rcmail.labels && rcmail.labels["sent"]) || "Sent";
+  }
+  if (lower === "junk" || lower === "spam" || lower.endsWith(".junk") || lower.endsWith("/junk")) {
+    return (window.rcmail && rcmail.labels && rcmail.labels["junk"]) || "Junk / Spam";
+  }
+  if (lower === "trash" || lower.endsWith(".trash") || lower.endsWith("/trash")) {
+    return (window.rcmail && rcmail.labels && rcmail.labels["trash"]) || "Trash";
+  }
+  if (lower === "archive" || lower === "archives" || lower.endsWith(".archive") || lower.endsWith("/archive")) {
+    return (window.rcmail && rcmail.labels && rcmail.labels["archive"]) || "Archive";
+  }
+
+  var clean = folderId.replace(/^INBOX[./]/i, "");
+  clean = clean.replace(/[./]/g, " / ");
+  return clean || folderId;
+}
+
+// Comprehensive folder resolution helper
+rcm_tb_label_get_mail_folders = function () {
+  var folders = [];
+  var seen = {};
+
+  function addFolder(id, name) {
+    if (!id || typeof id !== "string") return;
+    id = id.trim();
+    if (!id || seen[id]) return;
+    seen[id] = true;
+    var disp = name && typeof name === "string" && name.trim() ? name.trim() : rcm_tb_label_folder_display_name(id);
+    folders.push({ id: id, name: disp });
+  }
+
+  // 1. Check server-exported tb_label_mail_folders
+  if (window.rcmail && rcmail.env && rcmail.env.tb_label_mail_folders) {
+    var srv = rcmail.env.tb_label_mail_folders;
+    if (Array.isArray(srv)) {
+      srv.forEach(function (f) {
+        if (typeof f === "string") addFolder(f, null);
+        else if (f && typeof f === "object") addFolder(f.id || f.name, f.name || f.id);
+      });
+    } else if (typeof srv === "object") {
+      $.each(srv, function (k, v) {
+        if (typeof v === "string") addFolder(k, v);
+        else if (v && typeof v === "object") addFolder(v.id || k, v.name || k);
+        else addFolder(k, null);
+      });
+    }
+  }
+
+  // 2. Check Roundcube core environment mailboxes (standard in task === 'mail')
+  if (window.rcmail && rcmail.env && rcmail.env.mailboxes) {
+    var mboxes = rcmail.env.mailboxes;
+    if (Array.isArray(mboxes)) {
+      mboxes.forEach(function (mb) {
+        if (typeof mb === "string") addFolder(mb, null);
+        else if (mb && typeof mb === "object") addFolder(mb.id || mb.mailbox || mb.name, mb.name || mb.id);
+      });
+    } else if (typeof mboxes === "object") {
+      $.each(mboxes, function (k, mb) {
+        if (mb && typeof mb === "object") {
+          addFolder(mb.id || k, mb.name || k);
+        } else {
+          addFolder(k, null);
+        }
+      });
+    }
+  }
+
+  // 3. Check mailboxlist / unread_counts
+  if (window.rcmail && rcmail.env) {
+    if (Array.isArray(rcmail.env.mailboxlist)) {
+      rcmail.env.mailboxlist.forEach(function (f) { addFolder(f, null); });
+    }
+    if (rcmail.env.unread_counts && typeof rcmail.env.unread_counts === "object") {
+      $.each(rcmail.env.unread_counts, function (k) { addFolder(k, null); });
+    }
+  }
+
+  // 4. Extract from DOM (#mailboxlist in Elastic, Larry, Classic, Gmail+)
+  var $dom = $("#mailboxlist, .mailboxlist, [role='navigation'] .treelist");
+  if ($dom.length) {
+    $dom.find("li a, li[data-mailbox], li[data-id]").each(function () {
+      var $el = $(this);
+      var id = $el.attr("rel") || $el.attr("data-mailbox") || $el.attr("data-id") || $el.data("mailbox") || $el.data("id");
+      if (!id && $el.is("a")) {
+        var $p = $el.closest("li");
+        id = $p.attr("rel") || $p.attr("data-mailbox") || $p.attr("data-id") || $p.data("mailbox") || $p.data("id");
+      }
+      if (id && typeof id === "string") {
+        var name = $el.find(".name, .mailboxname, span:not(.unreadcount)").first().text() || $el.text();
+        name = name.replace(/\(\d+\)$/, "").replace(/\d+$/, "").trim();
+        addFolder(id, name);
+      }
+    });
+  }
+
+  // 5. Fallback standard mailboxes
+  if (!folders.length) {
+    var defaults = ["INBOX", "Drafts", "Sent", "Junk", "Trash", "Archive"];
+    defaults.forEach(function (f) { addFolder(f, null); });
+  }
+
+  return folders;
+};
+
+// Helper to generate options HTML for folder select
+rcm_tb_label_build_folder_options = function (selectedFolder) {
+  var mailFolders = rcm_tb_label_get_mail_folders();
+  var noneText = (window.rcmail && rcmail.labels && rcmail.labels["thunderbird_labels.action_move_none"]) || "-- Do not move --";
+  var folderOpts = '<option value="">' + rcm_tb_label_escape_html(noneText) + '</option>';
+  var foundSelected = false;
+
+  mailFolders.forEach(function (f) {
+    var isSel = (selectedFolder && (f.id === selectedFolder || f.id.toLowerCase() === selectedFolder.toLowerCase()));
+    if (isSel) foundSelected = true;
+    var selAttr = isSel ? ' selected="selected"' : "";
+    folderOpts += '<option value="' + rcm_tb_label_escape_html(f.id) + '"' + selAttr + '>' + rcm_tb_label_escape_html(f.name) + '</option>';
+  });
+
+  if (selectedFolder && !foundSelected) {
+    var disp = rcm_tb_label_folder_display_name(selectedFolder);
+    folderOpts += '<option value="' + rcm_tb_label_escape_html(selectedFolder) + '" selected="selected">' + rcm_tb_label_escape_html(disp) + '</option>';
+  }
+
+  return folderOpts;
+};
+
+// ==========================================
 // Incoming Mail Filter Rules Modal & Table
 // ==========================================
 
@@ -722,7 +860,6 @@ rcm_tb_label_show_filter_modal = function (ruleToEdit) {
 
   var customLabels = (rcmail.env && rcmail.env.tb_label_custom_labels) || {};
   var labelColors = (rcmail.env && rcmail.env.tb_label_colors) || {};
-  var mailFolders = (rcmail.env && rcmail.env.tb_label_mail_folders) || [];
 
   // Build labels checklist HTML (supports MULTIPLE labels!)
   var labelsHtml = "";
@@ -738,12 +875,11 @@ rcm_tb_label_show_filter_modal = function (ruleToEdit) {
   });
 
   // Build folders dropdown options
-  var folderOpts = '<option value="">-- Do not move --</option>';
-  if (Array.isArray(mailFolders)) {
-    mailFolders.forEach(function (f) {
-      var selected = (f === targetFolder) ? ' selected="selected"' : "";
-      folderOpts += '<option value="' + rcm_tb_label_escape_html(f) + '"' + selected + '>' + rcm_tb_label_escape_html(f) + '</option>';
-    });
+  var folderOpts = rcm_tb_label_build_folder_options(targetFolder);
+
+  // Request latest server folders asynchronously if not loaded yet
+  if (window.rcmail && rcmail.http_post && (!rcmail.env.tb_label_mail_folders || !rcmail.env.tb_label_mail_folders.length)) {
+    rcmail.http_post("plugin.thunderbird_labels.get_folders", {});
   }
 
   var cancel_text = (rcmail.labels && rcmail.labels["thunderbird_labels.cancel"]) || "Cancel";
@@ -1605,12 +1741,29 @@ $(function () {
     }
   });
 
+  function rcm_tb_label_refresh_modal_folders(folders) {
+    if (folders && Array.isArray(folders)) {
+      rcmail.env.tb_label_mail_folders = folders;
+    }
+    var $select = $("#tb-filter-target-folder");
+    if ($select.length && typeof rcm_tb_label_build_folder_options === "function") {
+      var curVal = $select.val();
+      $select.html(rcm_tb_label_build_folder_options(curVal));
+    }
+  }
+
+  rcmail.addEventListener("plugin.thunderbird_labels.folders_list", function (data) {
+    if (data && data.folders) {
+      rcm_tb_label_refresh_modal_folders(data.folders);
+    }
+  });
+
   rcmail.addEventListener("plugin.thunderbird_labels.filters_list", function (data) {
     if (data && data.rules) {
       rcmail.env.tb_label_filters = data.rules;
     }
     if (data && data.folders) {
-      rcmail.env.tb_label_mail_folders = data.folders;
+      rcm_tb_label_refresh_modal_folders(data.folders);
     }
     rcm_tb_label_render_filter_rules_table();
   });

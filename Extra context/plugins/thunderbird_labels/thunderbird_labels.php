@@ -78,6 +78,7 @@ class thunderbird_labels extends rcube_plugin
 			$this->register_action('plugin.thunderbird_labels.delete_filter', array($this, 'action_delete_filter'));
 			$this->register_action('plugin.thunderbird_labels.toggle_filter', array($this, 'action_toggle_filter'));
 			$this->register_action('plugin.thunderbird_labels.apply_filters_now', array($this, 'action_apply_filters_now'));
+			$this->register_action('plugin.thunderbird_labels.get_folders', array($this, 'action_get_folders'));
 
 			$this->add_hook('new_messages', array($this, 'handle_new_messages'));
 
@@ -102,6 +103,7 @@ class thunderbird_labels extends rcube_plugin
 			$this->register_action('plugin.thunderbird_labels.delete_filter', array($this, 'action_delete_filter'));
 			$this->register_action('plugin.thunderbird_labels.toggle_filter', array($this, 'action_toggle_filter'));
 			$this->register_action('plugin.thunderbird_labels.apply_filters_now', array($this, 'action_apply_filters_now'));
+			$this->register_action('plugin.thunderbird_labels.get_folders', array($this, 'action_get_folders'));
 		}
 	}
 
@@ -189,11 +191,7 @@ class thunderbird_labels extends rcube_plugin
 
 		// Pass filter rules and folders to JS environment
 		$this->rc->output->set_env('tb_label_filters', tb_label_filter_engine::get_rules($this->rc));
-		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
-			try {
-				$this->rc->output->set_env('tb_label_mail_folders', $this->rc->storage->list_folders());
-			} catch (\Throwable $e) {}
-		}
+		$this->export_mail_folders();
 	}
 
 	// create a section for the tb-labels Settings
@@ -290,12 +288,7 @@ class thunderbird_labels extends rcube_plugin
 
 		$rules = tb_label_filter_engine::get_rules($this->rc);
 		$this->rc->output->set_env('tb_label_filters', $rules);
-		$folders = [];
-		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
-			try {
-				$folders = $this->rc->storage->list_folders();
-			} catch (\Throwable $e) {}
-		}
+		$folders = $this->get_mail_folders();
 		$this->rc->output->set_env('tb_label_mail_folders', $folders);
 
 		$filter_title = $this->getLabelText('filter_rules');
@@ -942,12 +935,7 @@ class thunderbird_labels extends rcube_plugin
 			$custom_labels = $this->getDefaultLabels();
 		}
 		$colors = (array) $this->rc->config->get('tb_label_colors', array());
-		$folders = [];
-		if ($this->rc->storage && method_exists($this->rc->storage, 'list_folders')) {
-			try {
-				$folders = $this->rc->storage->list_folders();
-			} catch (\Throwable $e) {}
-		}
+		$folders = $this->get_mail_folders();
 
 		$this->rc->output->command('plugin.thunderbird_labels.filters_list', array(
 			'rules' => $rules,
@@ -955,6 +943,44 @@ class thunderbird_labels extends rcube_plugin
 			'colors' => $colors,
 			'folders' => $folders,
 		));
+		$this->rc->output->send();
+	}
+
+	/**
+	 * Resolves mail folders from storage and exports them to client environment
+	 */
+	public function get_mail_folders(): array
+	{
+		$folders = [];
+		try {
+			$storage = $this->rc->get_storage();
+			if ($storage) {
+				if (method_exists($storage, 'list_folders_subscribed')) {
+					$folders = $storage->list_folders_subscribed();
+				}
+				if (empty($folders) && method_exists($storage, 'list_folders')) {
+					$folders = $storage->list_folders();
+				}
+			}
+		} catch (\Throwable $e) {}
+		return is_array($folders) ? array_values($folders) : [];
+	}
+
+	public function export_mail_folders(): void
+	{
+		$folders = $this->get_mail_folders();
+		if (!empty($folders)) {
+			$this->rc->output->set_env('tb_label_mail_folders', $folders);
+		}
+	}
+
+	/**
+	 * AJAX endpoint to return mail folders
+	 */
+	public function action_get_folders()
+	{
+		$folders = $this->get_mail_folders();
+		$this->rc->output->command('plugin.thunderbird_labels.folders_list', array('folders' => $folders));
 		$this->rc->output->send();
 	}
 

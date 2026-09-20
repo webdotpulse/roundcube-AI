@@ -58,6 +58,7 @@ $labels['op_ends_with'] = 'se termine par';
 $labels['op_regex'] = 'correspond au regex';
 $labels['action_assign_labels'] = 'Attribuer un/des libellé(s)';
 $labels['action_move_folder'] = 'Déplacer vers le dossier';
+$labels['action_move_none'] = '-- Ne pas déplacer --';
 $labels['action_mark_read'] = 'Marquer comme lu';
 $labels['apply_filters_now'] = 'Appliquer les filtres maintenant';
 $labels['filter_rules_desc'] = 'Attribuer automatiquement des libellés et/ou déplacer les e-mails entrants.';

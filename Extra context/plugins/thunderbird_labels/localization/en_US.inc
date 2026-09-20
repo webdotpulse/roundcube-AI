@@ -58,6 +58,7 @@ $labels['op_ends_with'] = 'ends with';
 $labels['op_regex'] = 'matches regex';
 $labels['action_assign_labels'] = 'Assign label(s)';
 $labels['action_move_folder'] = 'Move to folder';
+$labels['action_move_none'] = '-- Do not move --';
 $labels['action_mark_read'] = 'Mark as read';
 $labels['apply_filters_now'] = 'Run filters now';
 $labels['filter_rules_desc'] = 'Automatically apply labels and/or move incoming messages into specific folders.';

@@ -58,6 +58,7 @@ $labels['op_ends_with'] = 'eindigt met';
 $labels['op_regex'] = 'voldoet aan regex';
 $labels['action_assign_labels'] = 'Etiket(ten) toewijzen';
 $labels['action_move_folder'] = 'Verplaatsen naar map';
+$labels['action_move_none'] = '-- Niet verplaatsen --';
 $labels['action_mark_read'] = 'Markeren als gelezen';
 $labels['apply_filters_now'] = 'Filters nu uitvoeren';
 $labels['filter_rules_desc'] = 'Wijs automatisch etiketten toe en/of verplaats inkomende berichten naar een specifieke map.';

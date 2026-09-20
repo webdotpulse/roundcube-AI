@@ -114,6 +114,16 @@ if (!class_exists('rcube')) {
             $this->moved_messages[] = ['uids' => $uids, 'to' => $to, 'from' => $from];
             return true;
         }
+
+        public function list_folders_subscribed()
+        {
+            return ['INBOX', 'Drafts', 'Sent', 'Trash', 'Junk', 'Archive'];
+        }
+
+        public function list_folders()
+        {
+            return ['INBOX', 'Drafts', 'Sent', 'Trash', 'Junk', 'Archive'];
+        }
     }
 
     class rcube_user_mock
@@ -304,6 +314,8 @@ assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.get_cou
 assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.add_label']), "add_label action registered");
 assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.update_label']), "update_label action registered");
 assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.delete_label']), "delete_label action registered");
+assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.get_filters']), "get_filters action registered");
+assert_true(isset($plugin->registered_actions['plugin.thunderbird_labels.get_folders']), "get_folders action registered");
 
 // --- Test 2: Custom Labels & Color Mapping ---
 echo "\n--- Test 2: Custom Labels and Color Palette Mapping ---\n";
@@ -664,6 +676,35 @@ assert_true($counts_data['LABEL2'] === 0, "Counts strictly returns integer 0 for
 
 // Verify JS code guarantees 0 display on DOM
 assert_true(strpos($js_content, "display_count") !== false || strpos($js_content, "count > 0 ? count : 0") !== false, "tb_label.js guarantees count badge shows 0 and never ID");
+
+// --- Test 11: Filter Folders Resolution & Dropdown Building ---
+echo "\n--- Test 11: Filter Folders Resolution & Dropdown Building ---\n";
+$folders = $plugin->get_mail_folders();
+assert_true(is_array($folders) && count($folders) > 0, "get_mail_folders returns array of folders");
+assert_true(in_array('INBOX', $folders), "Folders list includes INBOX");
+assert_true(in_array('Archive', $folders), "Folders list includes Archive");
+
+$rcmail_folders = rcmail::reset_instance();
+$plugin_folders = new thunderbird_labels();
+$plugin_folders->init();
+$plugin_folders->action_get_folders();
+$cmd_folders = null;
+foreach ($rcmail_folders->output->commands as $cmd) {
+    if (($cmd['command'] ?? '') === 'plugin.thunderbird_labels.folders_list') {
+        $cmd_folders = $cmd;
+        break;
+    }
+}
+assert_true($cmd_folders !== null, "action_get_folders dispatches folders_list command to client");
+assert_true(!empty($cmd_folders['arg1']['folders']), "folders_list payload contains folders array");
+assert_true(in_array('Archive', $cmd_folders['arg1']['folders']), "folders_list includes Archive folder");
+
+// Verify JS helpers for folder options
+$js_content = file_get_contents($plugin_dir . '/tb_label.js');
+assert_true(strpos($js_content, 'rcm_tb_label_get_mail_folders') !== false, "tb_label.js defines rcm_tb_label_get_mail_folders");
+assert_true(strpos($js_content, 'rcm_tb_label_build_folder_options') !== false, "tb_label.js defines rcm_tb_label_build_folder_options");
+assert_true(strpos($js_content, 'rcm_tb_label_folder_display_name') !== false, "tb_label.js defines rcm_tb_label_folder_display_name");
+assert_true(strpos($js_content, 'rcm_tb_label_refresh_modal_folders') !== false, "tb_label.js dynamically refreshes folder select");
 
 echo "\n*** ALL THUNDERBIRD LABELS TESTS PASSED (100%) ***\n";
 
