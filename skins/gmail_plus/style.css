@@ -685,7 +685,8 @@ select.lpai-select:focus,
     box-shadow: 0 1px 2px rgba(60,64,67,0.1);
 }
 
-.lpai-qa-bar-compose {
+.lpai-qa-bar-compose,
+.lpai-qa-bar-response {
     margin: 8px 0;
 }
 

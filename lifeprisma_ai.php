@@ -70,12 +70,13 @@ class lifeprisma_ai extends rcube_plugin
 
     public function render_page($args)
     {
+        $rcmail = rcmail::get_instance();
         $template = $args['template'] ?? '';
         $is_compose = ($template === 'compose');
         $is_read = ($template === 'message' || $template === 'messagepreview' || $template === 'mail');
+        $is_response = ($template === 'responses' || $template === 'responseedit' || in_array($rcmail->action, ['responses', 'response-edit', 'response-add', 'add-response', 'edit-response'], true));
 
-        if ($is_compose || $is_read) {
-            $rcmail = rcmail::get_instance();
+        if ($is_compose || $is_read || $is_response) {
             $gemini = $this->get_gemini_config();
             $active_skin = $rcmail->config->get('skin', 'elastic');
 
@@ -2209,6 +2210,10 @@ Body:
             return "You are an email subject line expert. Generate clear, concise, high-open-rate professional subject lines. Return ONLY a numbered list of 5 subject lines.";
         }
 
+        if ($action === 'suggest_response_name') {
+            return "You are an expert at creating concise, professional titles for email canned responses and message templates. Return ONLY a clear 2-4 word title in the requested language. Do not include quotes, markdown, bullet points, or any extra text.";
+        }
+
         if ($action === 'thread_summarize') {
             return "You are an executive email analyst. Provide a structured summary of this conversation thread: Overview, Key Decisions, Action Items with assignees, and Current Status. Use markdown formatting.";
         }
@@ -2231,7 +2236,7 @@ Body:
     private function build_user_prompt($action, $instruction, $email_body, $reply_text, $subject, $language, $tone, $sender_name)
     {
         $prompt = "Task: {$action}\nLanguage: {$language}\nTone: {$tone}\n";
-        if (!empty($subject)) $prompt .= "Subject: {$subject}\n";
+        if (!empty($subject)) $prompt .= "Subject/Title: {$subject}\n";
         if (!empty($sender_name)) $prompt .= "User: {$sender_name}\n";
         if (!empty($instruction)) $prompt .= "Instruction: {$instruction}\n";
 
@@ -2239,7 +2244,7 @@ Body:
             $prompt .= "\nOriginal Email Content:\n{$reply_text}\n";
         }
         if (!empty($email_body)) {
-            $prompt .= "\nCurrent Draft:\n{$email_body}\n";
+            $prompt .= "\nCurrent Text/Template:\n{$email_body}\n";
         }
 
         return $prompt;
