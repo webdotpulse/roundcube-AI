@@ -787,6 +787,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function action_add_label()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$name = trim(rcube_utils::get_input_value('name', rcube_utils::INPUT_POST, true));
 		$color = trim(rcube_utils::get_input_value('color', rcube_utils::INPUT_POST, true));
 
@@ -844,6 +852,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function update_label()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$key = trim(rcube_utils::get_input_value('key', rcube_utils::INPUT_POST, true));
 		$name = trim(rcube_utils::get_input_value('name', rcube_utils::INPUT_POST, true));
 		$color = trim(rcube_utils::get_input_value('color', rcube_utils::INPUT_POST, true));
@@ -881,6 +897,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function delete_label()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$key = trim(rcube_utils::get_input_value('key', rcube_utils::INPUT_POST, true));
 		if ($key && $key !== 'LABEL0') {
 			$custom_labels = (array) $this->rc->config->get('tb_label_custom_labels', array());
@@ -989,6 +1013,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function action_save_filter()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$rule_json = rcube_utils::get_input_value('rule', rcube_utils::INPUT_POST, true);
 		$rule = is_string($rule_json) ? json_decode($rule_json, true) : (array) $rule_json;
 
@@ -1013,6 +1045,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function action_delete_filter()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$rule_id = trim(rcube_utils::get_input_value('id', rcube_utils::INPUT_POST, true));
 		if (!empty($rule_id)) {
 			tb_label_filter_engine::delete_rule($this->rc, $rule_id);
@@ -1031,6 +1071,14 @@ class thunderbird_labels extends rcube_plugin
 	 */
 	public function action_toggle_filter()
 	{
+		if (method_exists($this->rc, 'request_security_check')) {
+			$this->rc->request_security_check(rcube_utils::INPUT_POST);
+		} elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+			$this->rc->output->show_message('Invalid request token', 'error');
+			$this->rc->output->send();
+			return;
+		}
+
 		$rule_id = trim(rcube_utils::get_input_value('id', rcube_utils::INPUT_POST, true));
 		$enabled = rcube_utils::get_input_value('enabled', rcube_utils::INPUT_POST);
 		$enabled = ($enabled !== null && $enabled !== '') ? (bool)$enabled : null;

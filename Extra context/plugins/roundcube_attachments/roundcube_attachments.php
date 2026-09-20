@@ -587,6 +587,14 @@ class roundcube_attachments extends rcube_plugin
     {
         $this->rc->output->reset();
 
+        if (method_exists($this->rc, 'request_security_check')) {
+            $this->rc->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         if (empty($_FILES['_attachments']['tmp_name'])) {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['status' => 'error', 'message' => $this->gettext('error_file_upload')]);
@@ -655,6 +663,15 @@ class roundcube_attachments extends rcube_plugin
     public function action_delete(): void
     {
         $this->rc->output->reset();
+
+        if (method_exists($this->rc, 'request_security_check')) {
+            $this->rc->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         $id = rcube_utils::get_input_string('_id', rcube_utils::INPUT_POST);
 
         if (empty($id) || !$this->delete_attachment($id)) {
@@ -682,9 +699,16 @@ class roundcube_attachments extends rcube_plugin
         }
 
         $this->rc->output->reset();
+
+        $mime = strtolower((string)$file['mimetype']);
+        // Force download attachment for script/active content to prevent XSS in webmail domain
+        $dangerous_mimes = ['text/html', 'image/svg+xml', 'application/xhtml+xml', 'application/xml', 'text/xml', 'text/javascript', 'application/javascript'];
+        $disposition = in_array($mime, $dangerous_mimes, true) ? 'attachment' : 'inline';
+
         header('Content-Type: ' . $file['mimetype']);
         header('Content-Length: ' . $file['size']);
-        header('Content-Disposition: inline; filename="' . rawurlencode($file['name']) . '"');
+        header("Content-Disposition: {$disposition}; filename=\"" . rawurlencode($file['name']) . "\"");
+        header('X-Content-Type-Options: nosniff');
         header('Cache-Control: private, max-age=3600');
         echo $file['data'];
         exit;
@@ -695,6 +719,14 @@ class roundcube_attachments extends rcube_plugin
      */
     public function action_attach_to_compose(): void
     {
+        if (method_exists($this->rc, 'request_security_check')) {
+            $this->rc->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         $compose_id = rcube_utils::get_input_string('composeId', rcube_utils::INPUT_POST);
         $file_ids = rcube_utils::get_input_value('fileIds', rcube_utils::INPUT_POST);
         $upload_id = rcube_utils::get_input_string('uploadId', rcube_utils::INPUT_POST);
@@ -813,6 +845,15 @@ class roundcube_attachments extends rcube_plugin
     public function action_save_meta(): void
     {
         $this->rc->output->reset();
+
+        if (method_exists($this->rc, 'request_security_check')) {
+            $this->rc->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         $id = rcube_utils::get_input_string('response_id', rcube_utils::INPUT_POST);
         $subject = rcube_utils::get_input_string('subject', rcube_utils::INPUT_POST);
         $attachments = rcube_utils::get_input_value('attachments', rcube_utils::INPUT_POST);
@@ -1109,6 +1150,15 @@ class roundcube_attachments extends rcube_plugin
     public function action_update_file(): void
     {
         $this->rc->output->reset();
+
+        if (method_exists($this->rc, 'request_security_check')) {
+            $this->rc->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rc, 'check_request_token') && !$this->rc->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         $id = rcube_utils::get_input_string('_id', rcube_utils::INPUT_POST);
         $description = rcube_utils::get_input_string('description', rcube_utils::INPUT_POST);
 

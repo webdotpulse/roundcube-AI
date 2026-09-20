@@ -268,12 +268,19 @@ class email_scheduler extends rcube_plugin
      */
     public function action_cron(): void
     {
+        $isCli = (php_sapi_name() === 'cli');
         $token = (string)$this->rcmail->config->get('email_scheduler_cron_token');
-        if ($token !== '') {
-            $reqToken = rcube_utils::get_input_value('token', rcube_utils::INPUT_GET);
-            if (!hash_equals($token, (string)$reqToken)) {
+
+        if (!$isCli) {
+            if ($token !== '') {
+                $reqToken = (string)rcube_utils::get_input_value('token', rcube_utils::INPUT_GET);
+                if (!hash_equals($token, $reqToken)) {
+                    header('HTTP/1.1 403 Forbidden', true, 403);
+                    exit('Forbidden');
+                }
+            } elseif (!$this->rcmail->user) {
                 header('HTTP/1.1 403 Forbidden', true, 403);
-                exit('Forbidden');
+                exit('Forbidden: cron token required for unauthenticated web dispatch');
             }
         }
 
@@ -316,15 +323,20 @@ class email_scheduler extends rcube_plugin
 
         try {
             // Deliver using native mail delivery or PHP mail
-            $subject = $row['subject'] ?? ($headers['Subject'] ?? 'No Subject');
-            $from = $params['from'] ?? ($headers['From'] ?? 'webmail@localhost');
+            $rawSubject = $row['subject'] ?? ($headers['Subject'] ?? 'No Subject');
+            $rawFrom = $params['from'] ?? ($headers['From'] ?? 'webmail@localhost');
 
-            $mailHeaders = "From: {$from}\r\n" .
-                           "Subject: {$subject}\r\n" .
+            $cleanSubject = preg_replace('/[\r\n]+/', ' ', trim((string)$rawSubject));
+            $cleanFrom = preg_replace('/[\r\n]+/', '', trim((string)$rawFrom));
+            $cleanRecipients = preg_replace('/[\r\n]+/', '', trim((string)$recipients));
+            $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($cleanSubject, 'UTF-8') : $cleanSubject;
+
+            $mailHeaders = "From: {$cleanFrom}\r\n" .
+                           "Subject: {$encodedSubject}\r\n" .
                            "MIME-Version: 1.0\r\n" .
                            "Content-Type: text/plain; charset=UTF-8\r\n";
 
-            $delivered = @mail($recipients, $subject, $body, $mailHeaders);
+            $delivered = @mail($cleanRecipients, $encodedSubject, $body, $mailHeaders);
 
             if ($delivered) {
                 $db->query("UPDATE {$this->table} SET status = 'sent', sent_at = ? WHERE id = ?", date('Y-m-d H:i:s'), $row['id']);

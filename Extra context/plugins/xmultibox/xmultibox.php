@@ -740,6 +740,13 @@ class xmultibox extends XFramework\Plugin
      */
     public function changeIdentityAction(): void
     {
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            $this->rcmail->output->show_message("Invalid request token", "error");
+            return;
+        }
+
         if ($this->changeIdentity(rcube_utils::get_input_value('id', rcube_utils::INPUT_POST))) {
             $this->rcmail->output->redirect(['_task' => 'mail', '_mbox' => 'INBOX']);
         } else {
@@ -819,6 +826,13 @@ class xmultibox extends XFramework\Plugin
      */
     public function testImapConnection(): void
     {
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            Response::error("Invalid request token");
+            return;
+        }
+
         $ssl = trim($this->input->get("storage_ssl"));
 
         $data = [
@@ -856,6 +870,13 @@ class xmultibox extends XFramework\Plugin
      */
     public function testSmtpConnection(): void
     {
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            Response::error("Invalid request token");
+            return;
+        }
+
         $ssl = trim($this->input->get("smtp_ssl_mode"));
 
         $data = [
@@ -899,6 +920,49 @@ class xmultibox extends XFramework\Plugin
     }
 
     /**
+     * SSRF guard: Validates that a target host does not resolve to private, loopback, or cloud metadata IP ranges
+     * unless explicitly permitted by configuration or matching the server's default mail server.
+     *
+     * @param string $host
+     * @return bool
+     */
+    private function isSafeHost(string $host): bool
+    {
+        $host = trim($host);
+        if (empty($host)) {
+            return false;
+        }
+
+        if ($this->rcmail->config->get('xmultibox_allow_local_hosts', false)) {
+            return true;
+        }
+
+        if (preg_match('#^[a-z0-9+.-]+://#i', $host)) {
+            $parsed = parse_url($host, PHP_URL_HOST);
+            if (!empty($parsed)) {
+                $host = $parsed;
+            }
+        }
+
+        $default_host = (string)$this->rcmail->config->get('default_host', '');
+        $smtp_server = (string)$this->rcmail->config->get('smtp_server', '');
+        if ($host === $default_host || $host === $smtp_server) {
+            return true;
+        }
+
+        $resolved_ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : gethostbyname($host);
+        if (empty($resolved_ip) || ($resolved_ip === $host && !filter_var($host, FILTER_VALIDATE_IP))) {
+            return false;
+        }
+
+        if (filter_var($resolved_ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Validates the imap/smtp server settings specified on the identity edit page.
      *
      * @param array $data
@@ -915,7 +979,7 @@ class xmultibox extends XFramework\Plugin
         // create an array of fields that should be validated and specify the validation rules
         if (in_array("imap", $sections)) {
             $keys = array_merge($keys, [
-                "storage_host" => ["label" => "xmultibox.server", "validation" => ["required", "maxlen"]],
+                "storage_host" => ["label" => "xmultibox.server", "validation" => ["required", "maxlen", "host"]],
                 "storage_port" => ["label" => "xmultibox.port", "validation" => ["required", "port"]],
                 "username" => ["label" => "username", "validation" => ["required", "maxlen"]],
                 "password" => ["label" => "password", "validation" => ["required", "maxlen"]],
@@ -924,7 +988,7 @@ class xmultibox extends XFramework\Plugin
 
         if (in_array("smtp", $sections)) {
             $keys = array_merge($keys, [
-                "smtp_host" => ["label" => "xmultibox.server", "validation" => ["required", "maxlen"]],
+                "smtp_host" => ["label" => "xmultibox.server", "validation" => ["required", "maxlen", "host"]],
                 "smtp_port" => ["label" => "xmultibox.port", "validation" => ["required", "port"]],
             ]);
 
@@ -954,6 +1018,15 @@ class xmultibox extends XFramework\Plugin
                 (!is_numeric($data[$key]) || $data[$key] < 1 || $data[$key] > 65535)
             ) {
                 $errors[$key] = $this->getValidationErrorMessage($key, $val['label'], "port");
+                continue;
+            }
+
+            if (in_array("host", $val['validation']) &&
+                !empty($data[$key]) &&
+                !$this->isSafeHost($data[$key])
+            ) {
+                $errors[$key] = $this->getValidationErrorMessage($key, $val['label'], "host");
+                continue;
             }
         }
 
@@ -970,7 +1043,7 @@ class xmultibox extends XFramework\Plugin
      */
     private function getValidationErrorMessage(string $key, string $label, string $type): string
     {
-        return $this->gettext([
+        $text = $this->gettext([
             "name" => "xmultibox.validation_$type",
             "vars" => [
                 "n" => self::MAX_TEXT_LENGTH,
@@ -979,6 +1052,14 @@ class xmultibox extends XFramework\Plugin
                 ) . " / " . $this->gettext($label),
             ]
         ]);
+
+        if (empty($text) || $text === "xmultibox.validation_$type") {
+            return $this->gettext(
+                "xmultibox." . (str_starts_with($key, "smtp") ? "outgoing_server" : "incoming_server")
+            ) . " / " . $this->gettext($label) . ($type === 'host' ? ' is invalid or restricted.' : ' is invalid.');
+        }
+
+        return $text;
     }
 
     /**
@@ -1109,6 +1190,10 @@ class xmultibox extends XFramework\Plugin
             }
         }
 
+        if (!$this->isSafeHost($data['storage_host'])) {
+            return false;
+        }
+
         // when creating rcube_imap, some session variables are used; let's back them up and remove them to create
         // a completely clean version of rcube_imap
         $keys = ['imap_namespace', 'imap_delimiter', 'imap_list_conf'];
@@ -1158,6 +1243,10 @@ class xmultibox extends XFramework\Plugin
             if (!isset($data[$key])) {
                 return false;
             }
+        }
+
+        if (!$this->isSafeHost($data['smtp_host'])) {
+            return false;
         }
 
         // allow using empty username and password by specifying [none]

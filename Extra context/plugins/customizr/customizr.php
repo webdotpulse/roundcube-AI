@@ -656,6 +656,14 @@ JS;
             return null;
         }
 
+        if ($ext === 'svg') {
+            $sanitized = self::sanitize_svg($data);
+            if ($sanitized === null) {
+                return null;
+            }
+            $data = $sanitized;
+        }
+
         $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : ($ext === 'jpg' ? 'jpeg' : $ext)));
         $dataUri = 'data:' . $mime . ';base64,' . base64_encode($data);
 
@@ -680,10 +688,46 @@ JS;
     }
 
     /**
+     * Sanitize SVG markup to prevent XSS.
+     */
+    public static function sanitize_svg(string $content): ?string
+    {
+        if (!preg_match('/<svg\b[^>]*>/i', $content)) {
+            return null;
+        }
+
+        $disallowed_tags = ['script', 'iframe', 'object', 'embed', 'link', 'meta', 'applet', 'foreignObject'];
+        foreach ($disallowed_tags as $tag) {
+            $content = preg_replace("/<{$tag}\b[^>]*>.*?<\/{$tag}>/is", '', $content);
+            $content = preg_replace("/<{$tag}\b[^>]*\/?>/is", '', $content);
+        }
+
+        $content = preg_replace('/\son[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $content);
+        $content = preg_replace('/\s(href|xlink:href)\s*=\s*["\']\s*(javascript|vbscript|data):[^"\']*["\']/i', '', $content);
+
+        return $content;
+    }
+
+    /**
      * AJAX action: plugin.customizr_upload
      */
     public function ajax_upload()
     {
+        if (!$this->rcmail->user) {
+            header('Content-Type: application/json; charset=UTF-8');
+            http_response_code(401);
+            echo json_encode(['status' => 'error', 'message' => 'Unauthorized']);
+            exit;
+        }
+
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            header('Content-Type: application/json; charset=UTF-8');
+            echo json_encode(['status' => 'error', 'message' => 'Invalid request token']);
+            exit;
+        }
+
         $file = !empty($_FILES['file']) ? $_FILES['file'] : (!empty($_FILES['_file']) ? $_FILES['_file'] : null);
         $url = $this->save_uploaded_file($file);
 

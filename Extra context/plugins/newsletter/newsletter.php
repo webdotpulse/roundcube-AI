@@ -647,6 +647,13 @@ class newsletter extends rcube_plugin
      */
     public function action_send_batch(): void
     {
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid request token']);
+            return;
+        }
+
         $campaignId = (int)rcube_utils::get_input_value('campaign_id', rcube_utils::INPUT_POST);
         $subject = trim((string)rcube_utils::get_input_value('subject', rcube_utils::INPUT_POST));
         $fromEmail = trim((string)rcube_utils::get_input_value('from_email', rcube_utils::INPUT_POST));
@@ -729,6 +736,15 @@ class newsletter extends rcube_plugin
         $subAction = (string)rcube_utils::get_input_value('sub_action', rcube_utils::INPUT_POST);
         $email = trim(strtolower((string)rcube_utils::get_input_value('email', rcube_utils::INPUT_POST)));
 
+        if ($subAction === 'add' || $subAction === 'remove') {
+            if (method_exists($this->rcmail, 'request_security_check')) {
+                $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+            } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+                $this->jsonResponse(['success' => false, 'error' => 'Invalid request token']);
+                return;
+            }
+        }
+
         if ($subAction === 'add' && !empty($email)) {
             $this->addSuppression($email, 'manual_admin');
             $this->jsonResponse(['success' => true, 'suppressions' => $this->getSuppressions()]);
@@ -763,6 +779,13 @@ class newsletter extends rcube_plugin
      */
     public function action_preview(): void
     {
+        if (method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        } elseif (method_exists($this->rcmail, 'check_request_token') && !$this->rcmail->check_request_token(rcube_utils::INPUT_POST)) {
+            $this->jsonResponse(['success' => false, 'error' => 'Invalid request token']);
+            return;
+        }
+
         $subject = (string)rcube_utils::get_input_value('subject', rcube_utils::INPUT_POST);
         $body = (string)rcube_utils::get_input_value('body', rcube_utils::INPUT_POST);
         $sampleEmail = (string)rcube_utils::get_input_value('sample_email', rcube_utils::INPUT_POST) ?: 'john.doe@example.com';
@@ -1356,8 +1379,14 @@ HTML;
         string $bodyText,
         array $customHeaders = []
     ): bool {
-        $fromHeader = !empty($fromName) ? "\"{$fromName}\" <{$fromEmail}>" : $fromEmail;
-        $toHeader = !empty($toName) ? "\"{$toName}\" <{$toEmail}>" : $toEmail;
+        $cleanFromName = preg_replace('/[\r\n]+/', ' ', trim($fromName));
+        $cleanFromEmail = preg_replace('/[\r\n]+/', '', trim($fromEmail));
+        $cleanToName = preg_replace('/[\r\n]+/', ' ', trim($toName));
+        $cleanToEmail = preg_replace('/[\r\n]+/', '', trim($toEmail));
+        $cleanSubject = preg_replace('/[\r\n]+/', ' ', trim($subject));
+
+        $fromHeader = !empty($cleanFromName) ? "\"{$cleanFromName}\" <{$cleanFromEmail}>" : $cleanFromEmail;
+        $toHeader = !empty($cleanToName) ? "\"{$cleanToName}\" <{$cleanToEmail}>" : $cleanToEmail;
 
         if (class_exists('rcube_mime')) {
             // Build MIME message
@@ -1374,14 +1403,14 @@ HTML;
             $headers = array_merge([
                 'From' => $fromHeader,
                 'To' => $toHeader,
-                'Subject' => $subject,
+                'Subject' => $cleanSubject,
                 'Date' => date('r'),
                 'Message-ID' => '<' . md5(uniqid((string)mt_rand(), true)) . '@' . ($_SERVER['HTTP_HOST'] ?? 'localhost') . '>',
             ], $customHeaders);
 
             if (method_exists($this->rcmail, 'deliver_message')) {
                 $error = null;
-                return (bool)$this->rcmail->deliver_message($message, $fromEmail, $toEmail, $error);
+                return (bool)$this->rcmail->deliver_message($message, $cleanFromEmail, $cleanToEmail, $error);
             }
         }
 

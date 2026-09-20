@@ -256,15 +256,30 @@ class twofactor_auth extends rcube_plugin
         $ttlMinutes = (int)ceil((int)$this->rcmail->config->get('twofactor_auth_otp_ttl', 600) / 60);
 
         if ($type === 'email') {
-            $destEmail = !empty($prefs['email']) ? $prefs['email'] : $this->rcmail->user->get_username();
+            $destEmail = !empty($prefs['email']) ? $prefs['email'] : ($this->rcmail->user ? $this->rcmail->user->get_username() : '');
+            $cleanDestEmail = preg_replace('/[\r\n]+/', '', trim((string)$destEmail));
             $subjectTpl = $this->rcmail->config->get('twofactor_auth_email_notice_subject', '[%issuer%] Your Security Verification Code');
             $bodyTpl = $this->rcmail->config->get('twofactor_auth_email_notice_body', "Hello %user%,\n\nYour one-time security code is:\n\n    %code%\n\nValid for %ttl_minutes% minutes.");
 
-            $subject = str_replace(['%issuer%', '%user%'], [$issuer, $destEmail], $subjectTpl);
-            $body = str_replace(['%code%', '%user%', '%issuer%', '%ttl_minutes%'], [$otp, $destEmail, $issuer, (string)$ttlMinutes], $bodyTpl);
+            $rawSubject = str_replace(['%issuer%', '%user%'], [$issuer, $cleanDestEmail], $subjectTpl);
+            $cleanSubject = preg_replace('/[\r\n]+/', ' ', trim($rawSubject));
+            $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($cleanSubject, 'UTF-8') : $cleanSubject;
+            $body = str_replace(['%code%', '%user%', '%issuer%', '%ttl_minutes%'], [$otp, $cleanDestEmail, $issuer, (string)$ttlMinutes], $bodyTpl);
+
+            // Resolve domain safely without Host header poisoning
+            $mailDomain = '';
+            if (method_exists($this->rcmail->config, 'mail_domain')) {
+                $mailDomain = $this->rcmail->config->mail_domain($cleanDestEmail);
+            }
+            if (empty($mailDomain)) {
+                $mailDomain = preg_replace('/[^a-zA-Z0-9\.-]/', '', (string)($_SERVER['SERVER_NAME'] ?? 'localhost'));
+            }
+            if (empty($mailDomain)) {
+                $mailDomain = 'localhost';
+            }
 
             // Send via mail transport
-            @mail($destEmail, $subject, $body, "From: no-reply@{$_SERVER['SERVER_NAME']}\r\nContent-Type: text/plain; charset=UTF-8");
+            @mail($cleanDestEmail, $encodedSubject, $body, "From: no-reply@{$mailDomain}\r\nContent-Type: text/plain; charset=UTF-8");
 
             $_SESSION['2fa_email_otp_hash'] = $otpHash;
             $_SESSION['2fa_email_otp_time'] = $now;

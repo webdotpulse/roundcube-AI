@@ -74,8 +74,10 @@ class lifeprisma_ai extends rcube_plugin
         $template = $args['template'] ?? '';
         $is_compose = ($template === 'compose');
         $is_read = ($template === 'message' || $template === 'messagepreview' || $template === 'mail');
-        $is_response = ($template === 'responses' || $template === 'responseedit' || in_array($rcmail->action, ['responses', 'response-edit', 'response-add', 'add-response', 'edit-response'], true));
-        $is_newsletter = ($rcmail->task === 'newsletter' || strpos((string)$rcmail->action, 'newsletter') !== false || ($template === 'plugin' && $rcmail->task === 'newsletter'));
+        $action = $rcmail->action ?? '';
+        $task = $rcmail->task ?? '';
+        $is_response = ($template === 'responses' || $template === 'responseedit' || in_array($action, ['responses', 'response-edit', 'response-add', 'add-response', 'edit-response'], true));
+        $is_newsletter = ($task === 'newsletter' || strpos((string)$action, 'newsletter') !== false || ($template === 'plugin' && $task === 'newsletter'));
 
         if ($is_compose || $is_read || $is_response || $is_newsletter) {
             $gemini = $this->get_gemini_config();
