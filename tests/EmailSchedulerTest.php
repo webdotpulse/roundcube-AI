@@ -516,9 +516,27 @@ assert_true(isset($presets['next_monday']), "Includes 'next_monday' preset");
 $nowTs = time();
 assert_true(strtotime($presets['tomorrow_morning']) > $nowTs, "tomorrow_morning is in the future");
 assert_true(strtotime($presets['tomorrow_afternoon']) > strtotime($presets['tomorrow_morning']), "tomorrow_afternoon is after tomorrow_morning");
-assert_true(!empty($scheduler->buttons), "Registers toolbar button via add_button");
+assert_true(empty($scheduler->buttons), "Toolbar button excluded by default from right sidebar/toolbar");
+
+// Verify opt-in toolbar button when email_scheduler_toolbar_button is true
+$rcmail->config->set('email_scheduler_toolbar_button', true);
+$scheduler->buttons = [];
+$scheduler->hook_message_compose([]);
+assert_true(!empty($scheduler->buttons), "Registers toolbar button via add_button when email_scheduler_toolbar_button is true");
 assert_true($scheduler->buttons[0]['container'] === 'toolbar', "Button registered in 'toolbar' container");
 assert_true($scheduler->buttons[0]['args']['command'] === 'plugin.email_scheduler-schedule', "Button invokes 'plugin.email_scheduler-schedule'");
+
+// Reset config
+$rcmail->config->set('email_scheduler_toolbar_button', false);
+
+// Verify CSS and JS suppress Save button and right sidebar Send Later button
+$cssContent = file_get_contents($pluginDir . '/email_scheduler.css');
+assert_true(str_contains($cssContent, '.formbuttons button[command="savedraft"]') || str_contains($cssContent, 'button[command="savedraft"]'), "email_scheduler.css hides draft save button");
+assert_true(str_contains($cssContent, '#messagetoolbar a.send.schedule') && str_contains($cssContent, '#btn-send-later-toolbar'), "email_scheduler.css hides right sidebar toolbar send later button");
+
+$jsContent = file_get_contents($pluginDir . '/email_scheduler.js');
+assert_true(str_contains($jsContent, 'button[command="savedraft"]'), "email_scheduler.js removes composer Save button");
+assert_true(str_contains($jsContent, 'btn-send-later-toolbar'), "email_scheduler.js removes toolbar send later button");
 
 // --------------------------------------------------------------------------
 // Test Suite 8: Preferences UI & Save

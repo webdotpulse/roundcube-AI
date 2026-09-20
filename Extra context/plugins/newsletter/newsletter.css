@@ -1,0 +1,626 @@
+/**
+ * Roundcube Newsletter Plugin - Stylesheet
+ *
+ * Modern, responsive UI supporting Elastic and Gmail Plus skins,
+ * with light and dark mode styling, glassmorphic cards, and animated indicators.
+ */
+
+/* ==========================================================================
+   1. Taskbar Navigation Button Styling
+   ========================================================================== */
+.button-newsletter::before,
+#taskmenu a.button-newsletter::before,
+#layout-menu a.button-newsletter::before {
+    content: "📬" !important;
+    font-size: 20px !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+}
+
+/* ==========================================================================
+   2. Newsletter Studio Layout & Header
+   ========================================================================== */
+.newsletter-studio-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    box-sizing: border-box;
+}
+
+.newsletter-header {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    padding: 20px 24px;
+}
+
+.newsletter-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.newsletter-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.newsletter-icon {
+    font-size: 36px;
+    background: #eff6ff;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    border: 1px solid #dbeafe;
+}
+
+.newsletter-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    color: #0f172a;
+}
+
+.newsletter-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin: 0;
+    font-weight: 500;
+}
+
+.newsletter-tabs {
+    display: flex;
+    gap: 8px;
+    background: #f1f5f9;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.btn-tab {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-tab:hover {
+    color: #1e293b;
+}
+
+.btn-tab.active {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ==========================================================================
+   3. Studio Grid & Cards
+   ========================================================================== */
+.newsletter-tab-pane {
+    display: none;
+}
+
+.newsletter-tab-pane.active {
+    display: block;
+}
+
+.newsletter-grid {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+}
+
+@media (max-width: 1024px) {
+    .newsletter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.newsletter-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+}
+
+.newsletter-card .card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.step-badge {
+    background: #2563eb;
+    color: #ffffff;
+    width: 26px;
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: #0f172a;
+}
+
+.newsletter-card .card-body {
+    padding: 20px;
+}
+
+/* ==========================================================================
+   4. Recipient Source Cards & Badges
+   ========================================================================== */
+.recipient-source-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.radio-card {
+    position: relative;
+    cursor: pointer;
+    margin: 0;
+}
+
+.radio-card input {
+    position: absolute;
+    opacity: 0;
+}
+
+.radio-card-body {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.radio-card input:checked + .radio-card-body {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 1px #2563eb;
+}
+
+.radio-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.radio-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #1e293b;
+    margin-bottom: 2px;
+}
+
+.recipient-stats-bar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: #f8fafc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    margin-top: 14px;
+}
+
+.stat-pill {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-pill.primary {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.stat-pill.success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.stat-pill.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.stat-value {
+    font-weight: 700;
+}
+
+.tag-selector-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    max-height: 140px;
+    overflow-y: auto;
+    padding: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.group-checkbox-pill {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+}
+
+.group-checkbox-pill:hover {
+    border-color: #94a3b8;
+}
+
+/* ==========================================================================
+   5. Content Editor & Token Toolbar
+   ========================================================================== */
+.template-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.template-buttons button {
+    border-radius: 6px;
+    font-size: 12px;
+    padding: 4px 10px;
+}
+
+.template-buttons button.active {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.token-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.token-toolbar-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.btn-token {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-token:hover {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-token.highlight {
+    background: #ecfdf5;
+    border-color: #10b981;
+    color: #047857;
+}
+
+.editor-tabs {
+    display: flex;
+    gap: 6px;
+}
+
+.btn-editor-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.btn-editor-tab.active {
+    border-bottom-color: #2563eb;
+    color: #2563eb;
+}
+
+.newsletter-html-editor {
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.preview-box {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 350px;
+}
+
+/* ==========================================================================
+   6. Anti-Spam Risk Meter & Audit Badges
+   ========================================================================== */
+.spam-score-box {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.score-circle {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    border: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.score-circle.score-low {
+    border-color: #10b981;
+    color: #065f46;
+    background: #ecfdf5;
+}
+
+.score-circle.score-medium {
+    border-color: #f59e0b;
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.score-circle.score-high {
+    border-color: #ef4444;
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.score-max {
+    font-size: 10px;
+    font-weight: 500;
+    opacity: 0.7;
+    margin-top: -2px;
+}
+
+.score-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 2px;
+}
+
+.score-desc {
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.deliverability-badges {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.badge-item {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.badge-item.pass {
+    background: #ecfdf5;
+    color: #065f46;
+}
+
+.badge-item.fail {
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.badge-icon {
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.spam-suggestions-list {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
+.spam-flag {
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+
+.spam-flag p {
+    margin: 2px 0 0;
+    font-size: 11px;
+}
+
+.spam-flag.flag-danger {
+    background: #fef2f2;
+    border-left: 3px solid #ef4444;
+    color: #991b1b;
+}
+
+.spam-flag.flag-warning {
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    color: #92400e;
+}
+
+/* ==========================================================================
+   7. Batch Dispatch & Live Progress
+   ========================================================================== */
+.dispatch-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.running-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.running-controls .btn {
+    flex: 1;
+}
+
+.progress-metrics-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.metric-sent {
+    color: #10b981;
+}
+
+.metric-failed {
+    color: #ef4444;
+}
+
+/* ==========================================================================
+   8. Compose Toolbar Switch Button
+   ========================================================================== */
+#btn-newsletter-compose,
+a.button.send.newsletter {
+    background: #f0fdf4 !important;
+    border-color: #86efac !important;
+    color: #166534 !important;
+}
+
+#btn-newsletter-compose:hover,
+a.button.send.newsletter:hover {
+    background: #dcfce7 !important;
+    border-color: #4ade80 !important;
+}
+
+/* ==========================================================================
+   9. Dark Mode Support
+   ========================================================================== */
+html.dark-mode .newsletter-studio-wrapper,
+body.dark-mode .newsletter-studio-wrapper,
+[data-theme="dark"] .newsletter-studio-wrapper {
+    color: #f1f5f9;
+}
+
+html.dark-mode .newsletter-header,
+html.dark-mode .newsletter-card,
+html.dark-mode .radio-card-body,
+html.dark-mode .preview-box,
+[data-theme="dark"] .newsletter-header,
+[data-theme="dark"] .newsletter-card,
+[data-theme="dark"] .radio-card-body,
+[data-theme="dark"] .preview-box {
+    background: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+html.dark-mode .newsletter-title,
+html.dark-mode .card-title,
+html.dark-mode .radio-title,
+[data-theme="dark"] .newsletter-title,
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .radio-title {
+    color: #ffffff;
+}
+
+html.dark-mode .newsletter-card .card-header,
+[data-theme="dark"] .newsletter-card .card-header {
+    background: #1e293b;
+    border-bottom-color: #334155;
+}
+
+html.dark-mode .recipient-stats-bar,
+html.dark-mode .spam-score-box,
+html.dark-mode .token-toolbar,
+html.dark-mode .newsletter-tabs,
+[data-theme="dark"] .recipient-stats-bar,
+[data-theme="dark"] .spam-score-box,
+[data-theme="dark"] .token-toolbar,
+[data-theme="dark"] .newsletter-tabs {
+    background: #0f172a;
+    border-color: #334155;
+}
+
+html.dark-mode .btn-token,
+[data-theme="dark"] .btn-token {
+    background: #1e293b;
+    border-color: #475569;
+    color: #cbd5e1;
+}
+
+html.dark-mode .btn-tab.active,
+[data-theme="dark"] .btn-tab.active {
+    background: #334155;
+    color: #60a5fa;
+}

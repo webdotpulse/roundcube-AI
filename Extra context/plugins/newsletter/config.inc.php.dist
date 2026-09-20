@@ -1,0 +1,39 @@
+<?php
+
+/**
+ * Newsletter Plugin Configuration
+ */
+
+// Number of individual emails sent in each batch
+$config['newsletter_batch_size'] = 25;
+
+// Throttle delay between batches in seconds (gives SMTP relays breathing room)
+$config['newsletter_batch_delay'] = 2;
+
+// Micro-throttle delay in milliseconds between individual 1-to-1 envelope dispatches
+// Prevents rapid-fire SMTP connection resets or 421 rate limit flags
+$config['newsletter_throttle_ms'] = 150;
+
+// Storage driver for campaign metrics and suppression list: 'auto', 'database', or 'file'
+// 'auto' uses Roundcube SQL database when available, falling back safely to local JSON storage
+$config['newsletter_storage_driver'] = 'auto';
+
+// Warning threshold for anti-spam heuristic score (0 - 100)
+// Higher scores trigger a pre-flight deliverability advisory
+$config['newsletter_spam_score_threshold'] = 50;
+
+// Force automatic appending of RFC 8058 compliant unsubscribe footer if omitted from newsletter body
+$config['newsletter_auto_append_unsubscribe_footer'] = true;
+
+// Default HTML template for the unsubscribe footer
+$config['newsletter_default_unsubscribe_footer'] = '
+<div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 12px; color: #718096; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">
+    <p style="margin: 0 0 8px;">You received this email because you are subscribed to our updates.</p>
+    <p style="margin: 0;"><a href="{unsubscribe_url}" style="color: #4a5568; text-decoration: underline;">Unsubscribe instantly from this list</a></p>
+</div>';
+
+// Enable "Create Newsletter" button in the standard mail compose view
+$config['newsletter_enable_compose_button'] = true;
+
+// Secret salt used for HMAC generating tamper-proof unsubscribe tokens
+$config['newsletter_secret_salt'] = '';

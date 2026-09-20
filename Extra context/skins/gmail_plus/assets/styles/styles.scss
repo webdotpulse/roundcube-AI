@@ -176,9 +176,28 @@ html.dark-mode  {
 
     #taskmenu {
         a span.inner {
-            top: 3.7rem;
-            left: auto;
-            right: 30%;
+            top: 50% !important;
+            bottom: auto !important;
+            left: auto !important;
+            right: calc(100% + 10px) !important;
+            transform: translateY(-50%) !important;
+            white-space: nowrap !important;
+            width: max-content !important;
+            max-width: none !important;
+            z-index: 999999 !important;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+            pointer-events: none !important;
+
+            &::after {
+                content: '';
+                position: absolute;
+                left: 100%;
+                top: 50%;
+                margin-top: -5px;
+                border-width: 5px;
+                border-style: solid;
+                border-color: transparent transparent transparent #4b4b4b;
+            }
         }
 
         .special-buttons {
@@ -191,6 +210,7 @@ html.dark-mode  {
             align-items: center !important;
             z-index: 10 !important;
             padding-bottom: 0 !important;
+            overflow: visible !important;
 
             a {
                 padding: 0.5rem 0 !important;
@@ -208,8 +228,28 @@ html.dark-mode  {
             }
 
             a span.inner {
-                top: auto;
-                bottom: 3.5rem;
+                top: 50% !important;
+                bottom: auto !important;
+                left: auto !important;
+                right: calc(100% + 10px) !important;
+                transform: translateY(-50%) !important;
+                white-space: nowrap !important;
+                width: max-content !important;
+                max-width: none !important;
+                z-index: 999999 !important;
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+                pointer-events: none !important;
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    left: 100%;
+                    top: 50%;
+                    margin-top: -5px;
+                    border-width: 5px;
+                    border-style: solid;
+                    border-color: transparent transparent transparent #4b4b4b;
+                }
             }
         }
     }
@@ -244,7 +284,7 @@ html.dark-mode  {
         flex-direction: column !important;
         height: 100% !important;
         max-height: 100vh !important;
-        overflow: hidden !important;
+        overflow: visible !important;
 
         .popover-header {
             flex: 0 0 auto !important;
@@ -260,6 +300,7 @@ html.dark-mode  {
             align-items: center !important;
             z-index: 10 !important;
             padding-bottom: 0 !important;
+            overflow: visible !important;
         }
 
         #taskmenu {
@@ -270,7 +311,7 @@ html.dark-mode  {
             max-height: 100% !important;
             padding-bottom: 140px !important;
             overflow-y: auto !important;
-            overflow-x: hidden !important;
+            overflow-x: visible !important;
 
             a {
                 padding: 1rem 0;

@@ -73,8 +73,8 @@
             var targetNode = document.getElementById('layout-content') || document.body;
             var observer = new MutationObserver(function(mutations) {
                 if (isComposeView()) {
-                    // Quick check if buttons are missing
-                    if (!document.getElementById('btn-send-later') || !document.getElementById('btn-save-draft')) {
+                    // Quick check if Send Later button is missing
+                    if (!document.getElementById('btn-send-later')) {
                         initComposeButtons();
                     }
                 }
@@ -133,23 +133,10 @@
                     sendBtn.parentNode.insertBefore(sendLaterBtn, sendBtn.nextSibling);
                 }
 
-                // B. Insert "Save" (Save Draft) button if missing
-                if (!container.querySelector('.save-draft-btn') && !document.getElementById('btn-save-draft')) {
-                    var sendLaterEl = container.querySelector('.send-later-btn') || sendBtn;
-                    var saveBtn = document.createElement('button');
-                    saveBtn.type = 'button';
-                    saveBtn.id = 'btn-save-draft';
-                    saveBtn.className = 'btn btn-secondary save-draft-btn';
-                    saveBtn.title = saveTooltip;
-                    saveBtn.innerHTML = '<span class="inner">' + SAVE_SVG + '<span>' + saveLabel + '</span></span>';
-                    saveBtn.onclick = function(e) {
-                        e.preventDefault();
-                        saveBtn.disabled = true;
-                        rcmail.command('savedraft');
-                        setTimeout(function() { saveBtn.disabled = false; }, 1200);
-                    };
-
-                    sendLaterEl.parentNode.insertBefore(saveBtn, sendLaterEl.nextSibling);
+                    // B. Remove "Save" button from the composer window itself (.formbuttons)
+                var composerSaveBtns = container.querySelectorAll('.save-draft-btn, #btn-save-draft, button.save, button.savedraft, button[command="savedraft"], a.button.save');
+                for (var sIdx = 0; sIdx < composerSaveBtns.length; sIdx++) {
+                    composerSaveBtns[sIdx].remove();
                 }
 
                 // Setup Undo Send Interception on standard Send button
@@ -157,32 +144,14 @@
             }
         });
 
-        // 3. Inject into #messagetoolbar / .toolbar.menu (Top Header Toolbar)
+        // 3. Remove "Send Later" from the right sidebar and compose toolbar
+        var sideSendLater = document.querySelectorAll('#btn-send-later-toolbar, .button.send.schedule, #messagetoolbar a.schedule, #layout-sidebar .send-later, #layout-menu .send-later, .toolbar a.send.schedule');
+        for (var slIdx = 0; slIdx < sideSendLater.length; slIdx++) {
+            sideSendLater[slIdx].remove();
+        }
+
         var toolbar = document.getElementById('messagetoolbar') || document.querySelector('.toolbar.menu, #compose-toolbar');
         if (toolbar) {
-            // A. Send Later toolbar item
-            if (!toolbar.querySelector('#btn-send-later-toolbar') && !toolbar.querySelector('.button.send.schedule')) {
-                var tbSendLater = document.createElement('a');
-                tbSendLater.href = '#schedule';
-                tbSendLater.id = 'btn-send-later-toolbar';
-                tbSendLater.className = 'button send schedule';
-                tbSendLater.title = sendLaterLabel;
-                tbSendLater.tabIndex = 2;
-                tbSendLater.innerHTML = '<span class="inner">' + CLOCK_SVG + '<span class="btn-text">' + sendLaterLabel + '</span></span>';
-                tbSendLater.onclick = function(e) {
-                    e.preventDefault();
-                    showScheduleModal();
-                    return false;
-                };
-
-                // Append to toolbar container or insert after options
-                var optionsBtn = toolbar.querySelector('a.options, a.save');
-                if (optionsBtn && optionsBtn.nextSibling) {
-                    toolbar.insertBefore(tbSendLater, optionsBtn.nextSibling);
-                } else {
-                    toolbar.appendChild(tbSendLater);
-                }
-            }
 
             // B. Ensure Toolbar Save Draft is prominent and visible
             var existingSave = toolbar.querySelector('a.save, a.draft, a.savedraft');

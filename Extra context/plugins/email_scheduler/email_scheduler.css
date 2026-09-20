@@ -131,9 +131,8 @@
     color: #5f6368;
 }
 
-/* Compose Form Buttons (Send Later & Save Draft) */
-.formbuttons .send-later-btn,
-.formbuttons .save-draft-btn {
+/* Compose Form Buttons (Send Later kept, Save Draft suppressed from composer window) */
+.formbuttons .send-later-btn {
     margin-left: 8px !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -151,8 +150,7 @@
     text-decoration: none !important;
 }
 
-.formbuttons .send-later-btn .inner,
-.formbuttons .save-draft-btn .inner {
+.formbuttons .send-later-btn .inner {
     display: inline-flex !important;
     align-items: center !important;
 }
@@ -164,31 +162,27 @@
     color: #202124 !important;
 }
 
-.formbuttons .save-draft-btn:hover,
-.formbuttons .save-draft-btn:focus {
-    background-color: #e8eaed !important;
-    border-color: #bdc1c6 !important;
-    color: #202124 !important;
+/* Hide Save button from the composer window itself (.formbuttons) */
+.formbuttons .save-draft-btn,
+.formbuttons #btn-save-draft,
+.formbuttons button.save,
+.formbuttons a.button.save,
+.formbuttons button.savedraft,
+.formbuttons button[command="savedraft"],
+#composeview-bottom .formbuttons button.save,
+#composeview-bottom .formbuttons button.savedraft {
+    display: none !important;
 }
 
-/* Toolbar Buttons in #messagetoolbar / .toolbar.menu */
+/* Hide Send Later from toolbar and right sidebar */
 .toolbar a.button.send.schedule,
 #messagetoolbar a.send.schedule,
-.toolbar a.button.save.draft,
-#messagetoolbar a.save.draft {
-    display: inline-flex !important;
-    align-items: center !important;
-    cursor: pointer !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-}
-
-.toolbar a.button.send.schedule .inner,
-#messagetoolbar a.send.schedule .inner,
-.toolbar a.button.save.draft .inner,
-#messagetoolbar a.save.draft .inner {
-    display: inline-flex !important;
-    align-items: center !important;
+#btn-send-later-toolbar,
+#layout-sidebar a.send.schedule,
+#layout-sidebar .send-later,
+#layout-menu a.send.schedule,
+#layout-menu .send-later {
+    display: none !important;
 }
 
 /* Dark Mode Theme Support */

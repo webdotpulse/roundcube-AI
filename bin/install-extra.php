@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -255,6 +255,11 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'email_scheduler') {
             $this->postInstallEmailScheduler($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for newsletter
+        if ($type === 'plugin' && $name === 'newsletter') {
+            $this->postInstallNewsletter($destination, $this->roundcubeDir);
+        }
     }
 
     /**
@@ -421,6 +426,34 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup for newsletter plugin.
+     */
+    private function postInstallNewsletter(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring newsletter plugin ---");
+
+        // Secure data directory
+        $dataDir = $destination . DIRECTORY_SEPARATOR . 'data';
+        if (!is_dir($dataDir)) {
+            if ($this->dryRun) {
+                $this->info("  -> Would create secure data directory: {$dataDir}");
+            } else {
+                if (@mkdir($dataDir, 0770, true)) {
+                    $htaccess = $dataDir . DIRECTORY_SEPARATOR . '.htaccess';
+                    @file_put_contents(
+                        $htaccess,
+                        "# Protect newsletter suppression and campaign data from direct web access\nOrder Deny,Allow\nDeny from all\n<IfModule mod_authz_core.c>\nRequire all denied\n</IfModule>\n"
+                    );
+                    $this->success("  -> Created newsletter data directory: {$dataDir} (protected by .htaccess)");
+                }
+            }
+        }
+
+        $this->success("  [✓] Newsletter Studio plugin configured with anti-spam deliverability engine.");
+        $this->info("  [i] CLI batch cron worker available at: php {$destination}/cron.php");
+    }
+
+    /**
      * Special post-installation setup, requirements verification, and guidance for xcalendar.
      */
     private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
@@ -518,7 +551,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -528,7 +561,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

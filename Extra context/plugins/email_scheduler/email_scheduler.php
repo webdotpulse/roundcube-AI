@@ -90,7 +90,8 @@ class email_scheduler extends rcube_plugin
             'next_monday_label' => $nextMonday->format('D, M j, g:i A'),
         ]);
 
-        if ($scheduleEnabled) {
+        $toolbarBtnEnabled = (bool)$this->rcmail->config->get('email_scheduler_toolbar_button', false);
+        if ($scheduleEnabled && $toolbarBtnEnabled) {
             $this->add_button([
                 'command' => 'plugin.email_scheduler-schedule',
                 'id' => 'btn-send-later-toolbar',
