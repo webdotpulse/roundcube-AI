@@ -1,0 +1,34 @@
+1.0.5 (2026-09-09)
+==================
+- fixed problems with saving special folders
+- updated the codebase for PHP 8.0+ compatibility
+- updated method signatures for compatibility with xframework
+
+1.0.4 (2026-05-19)
+==================
+- ensured compatibility with Roundcube 1.7
+- dropped support for Roundcube 1.5
+- fixed issues with IMAP/SMTP connection testing
+- fixed potential problems with storing server POST data
+- fixed potential problems with inserting folder names as HTML
+
+1.0.3 (2025-12-03)
+==================
+- fixed issues when switching to imap servers that don't support threading
+- translation improvements
+- changed scss naming style
+
+1.0.2 (2025-10-14)
+==================
+- fixed resend (bounce) authentication issues
+- fixed problems with saving special folders
+- fixed problems with reloading folders on the mail page when changing identities
+- added technical documentation for AI Assistant
+
+1.0.1 (2025-02-24)
+==================
+- modified identity change mechanism on the mail page
+
+1.0 (2024-11-08)
+================
+- initial release

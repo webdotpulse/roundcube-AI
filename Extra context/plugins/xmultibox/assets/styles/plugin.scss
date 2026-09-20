@@ -1,0 +1,98 @@
+@use "../../../xframework/assets/styles/colors";
+@use "../../../xframework/assets/styles/icons";
+@use "../../../xframework/assets/styles/icons_map";
+
+// mail page: link that opens the menu
+#xmultibox-menu-link {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    &:after {
+        content: "▼";
+        margin-left: .5rem;
+
+        body.xelastic & {
+            font-family: Icons, sans-serif;
+            content: "\f0d7";
+        }
+
+        body.xskin & {
+            @include icons.icon(icons_map.$caret-down);
+        }
+    }
+}
+
+// mail page: identity drop down menu
+#xmultibox-menu a.identity {
+    cursor: pointer;
+    padding-right: 1rem;
+
+    &:before {
+        content: "\2713";
+        visibility: hidden;
+        padding-right: .5rem;
+
+        body.xelastic & {
+            content: "\f00c";
+        }
+
+        body.xskin & {
+            @include icons.icon(icons_map.$check);
+        }
+    }
+
+    &.checked:before {
+        visibility: visible;
+    }
+}
+
+// settings page
+fieldset.xmultibox-enable {
+    margin-top: 0 !important;
+
+    legend {
+        display: none;
+    }
+}
+
+#xmultibox-imap-test,
+#xmultibox-smtp-test {
+    button {
+        position: relative;
+        margin-right: 10px;
+
+        .xspinner {
+            display: none;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: .3rem;
+        }
+
+        &.busy {
+            cursor: not-allowed;
+
+            .button-text {
+                visibility: hidden;
+            }
+
+            .xspinner {
+                display: block;
+            }
+        }
+    }
+
+    span.message {
+        display: inline-block;
+        margin: .3rem 0;
+
+        &.success {
+            @include colors.success-text-color;
+        }
+
+        &.error {
+            @include colors.error-text-color;
+        }
+    }
+}

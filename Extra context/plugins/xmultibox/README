@@ -1,0 +1,75 @@
+ROUNDCUBE PLUS MULTIBOX PLUGIN
+==============================
+
+This plugin enables the use of multiple IMAP/SMTP servers within a single Roundcube account. To activate this feature,
+follow these steps:
+
+1. Navigate to Settings > Identities and create a new identity.
+
+2. In the new identity settings, enable "Use custom email servers."
+
+3. Specify the IMAP/SMTP servers that you want to use with that identity.
+
+Switching Between Identities
+
+1. On the mail page, your email address in the top bar will change to a dropdown menu. This allows you to select from
+your identities.
+
+2. Choosing a different identity will load the messages associated with that particular email account.
+
+3. Keep in mind that this plugin does not aggregate messages from multiple accounts; it only displays the contents of
+the currently selected account.
+
+Sending Emails with Custom Servers
+
+When composing an email, you can switch your identities by changing the selection of the From field. The program will
+use the custom SMTP server associated with that identity to send your message.
+
+Important Limitation
+
+This plugin provides basic methods for connecting to IMAP/SMTP servers and currently does not support OAuth
+authentication. As a result, it cannot be used to connect to servers like Google or Microsoft that require OAuth for
+authentication.
+
+Data Storage and Security
+
+When users configure IMAP/SMTP server settings, this information is securely stored in the database, with passwords
+encrypted for protection. While this ensures a high level of security, organizations with specific security policies may
+wish to review whether this approach meets their requirements.
+
+REQUIREMENTS
+------------
+- Roundcube: 1.6, 1.7
+- PHP: 8.0 or higher
+
+INSTALLATION
+------------
+1. Copy the directories xmultibox and xframework included in this package to the 'plugins' directory of your Roundcube
+   installation.
+
+2. Edit the file <roundcube>/config/config.inc.php, add xmultibox to the plugins array and specify your license key.
+
+For more information on installing Roundcube Plus plugins see:
+https://roundcubeplus.com/helpdesk/knowledgebase.php?article=29
+
+COMPATIBILITY
+-------------
+This plugin has been created for the standard version of Roundcube as provided on the Roundcube website:
+https://roundcube.net. It might not work properly with customized versions of Roundcube including the version provided
+as part of the Kolab system. Please note that we cannot provide any technical support for the plugin deployed on a
+non-standard version of Roundcube.
+
+DATABASE
+--------
+The plugin stores its information in the 'identities' table of the Roundcube database. The plugin will add the necessary
+columns to the table when you first navigate to the identities settings page in the browser. There's no need to modify
+the table manually before using the plugin.
+
+LICENSE
+-------
+This plugin is distributed under a commercial license. In order to use the plugin, you must purchase the license
+from Tecorama LLC. See the LICENSE file for details.
+
+COPYRIGHT
+---------
+Copyright (c) 2026, Tecorama LLC

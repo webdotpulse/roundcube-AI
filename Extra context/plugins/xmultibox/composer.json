@@ -1,0 +1,16 @@
+{
+    "name": "roundcubeplus/xmultibox",
+    "type": "roundcube-plugin",
+    "description": "Makes it possible to use multiple IMAP/SMTP servers in Roundcube.",
+    "license": "Commercial",
+    "version": "1.0.5",
+    "homepage": "https://roundcubeplus.com",
+    "authors": [
+        {
+            "name": "Roundcube Plus",
+            "email": "contact@roundcubeplus.com"
+        }
+    ],
+    "repositories": [],
+    "require": {}
+}
