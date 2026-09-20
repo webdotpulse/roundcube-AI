@@ -100,6 +100,10 @@ assert_true(file_exists($tempDir . '/plugins/roundcube_loader/config.inc.php'), 
 assert_true(is_dir($tempDir . '/plugins/xmultibox'), "Plugin 'xmultibox' installed in plugins/");
 assert_true(is_dir($tempDir . '/plugins/xsignature'), "Plugin 'xsignature' installed in plugins/");
 assert_true(file_exists($tempDir . '/plugins/xsignature/config.inc.php'), "xsignature config.inc.php initialized from dist");
+assert_true(is_dir($tempDir . '/plugins/twofactor_auth'), "Plugin 'twofactor_auth' installed in plugins/");
+assert_true(file_exists($tempDir . '/plugins/twofactor_auth/config.inc.php'), "twofactor_auth config.inc.php initialized from dist");
+assert_true(is_dir($tempDir . '/plugins/email_scheduler'), "Plugin 'email_scheduler' installed in plugins/");
+assert_true(file_exists($tempDir . '/plugins/email_scheduler/config.inc.php'), "email_scheduler config.inc.php initialized from dist");
 
 // Test 3: xcalendar Specific Post-Install Verifications
 echo "\n--- Test 3: xcalendar Specific Post-Install Verifications ---\n";
@@ -130,6 +134,8 @@ assert_true(strpos($updatedConfig, "'customizr'") !== false, "customizr added to
 assert_true(strpos($updatedConfig, "'roundcube_loader'") !== false, "roundcube_loader added to plugins array in config");
 assert_true(strpos($updatedConfig, "'xmultibox'") !== false, "xmultibox added to plugins array in config");
 assert_true(strpos($updatedConfig, "'xsignature'") !== false, "xsignature added to plugins array in config");
+assert_true(strpos($updatedConfig, "'twofactor_auth'") !== false, "twofactor_auth added to plugins array in config");
+assert_true(strpos($updatedConfig, "'email_scheduler'") !== false, "email_scheduler added to plugins array in config");
 assert_true(strpos($updatedConfig, "'archive'") !== false, "Existing 'archive' plugin preserved in config");
 assert_true(strpos($updatedConfig, "'zipdownload'") !== false, "Existing 'zipdownload' plugin preserved in config");
 assert_true(strpos($updatedConfig, "\$config['license_key'] = 'RCPLUSFREE20266u'") !== false, "license_key initialized with valid key in config");

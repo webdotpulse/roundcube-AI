@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * Email Scheduler & Undo Send Plugin Configuration
+ *
+ * Allows Roundcube users to:
+ * 1. Undo Send: delay outgoing messages by 5 to 30 seconds with an interactive
+ *    countdown toast and one-click cancellation.
+ * 2. Schedule Delivery: schedule emails to be sent automatically at future dates and times.
+ * 3. Manage, edit, reschedule, or immediately dispatch pending scheduled emails.
+ */
+
+// Enable or disable Undo Send functionality globally.
+// Type: boolean
+$config['email_scheduler_undo_enabled'] = true;
+
+// Default delay in seconds for Undo Send.
+// Allowed values: 0 (disabled), 5, 10, 20, 30
+// Type: integer
+$config['email_scheduler_default_delay'] = 10;
+
+// Maximum allowable delay for Undo Send.
+// Type: integer (seconds)
+$config['email_scheduler_max_delay'] = 30;
+
+// Enable or disable Send Later (Scheduling) functionality globally.
+// Type: boolean
+$config['email_scheduler_schedule_enabled'] = true;
+
+// Maximum days in advance an email can be scheduled.
+// Type: integer (days, default: 90)
+$config['email_scheduler_max_advance_days'] = 90;
+
+// Database table name for storing queued and scheduled messages.
+// Type: string
+$config['email_scheduler_table'] = 'email_scheduler_queue';
+
+// Whether to automatically trigger background dispatch during webmail requests
+// in addition to scheduled cron execution.
+// Type: boolean
+$config['email_scheduler_web_dispatch'] = true;
+
+// Secret token for triggering web cron endpoint (?_action=plugin.email_scheduler-cron&token=...)
+// Type: string|null
+$config['email_scheduler_cron_token'] = null;

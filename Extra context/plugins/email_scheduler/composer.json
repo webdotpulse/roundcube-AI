@@ -1,0 +1,21 @@
+{
+    "name": "roundcube/email_scheduler",
+    "type": "roundcube-plugin",
+    "description": "Email Scheduler & Undo Send plugin for Roundcube Webmail.",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webdotpulse & Contributors",
+            "email": "support@webdotpulse.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}

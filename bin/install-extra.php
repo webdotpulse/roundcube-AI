@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -245,6 +245,16 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'roundcube_attachments') {
             $this->postInstallRoundcubeAttachments($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for twofactor_auth
+        if ($type === 'plugin' && $name === 'twofactor_auth') {
+            $this->postInstallTwofactorAuth($destination, $this->roundcubeDir);
+        }
+
+        // Special post-install routine for email_scheduler
+        if ($type === 'plugin' && $name === 'email_scheduler') {
+            $this->postInstallEmailScheduler($destination, $this->roundcubeDir);
+        }
     }
 
     /**
@@ -392,6 +402,25 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup for twofactor_auth.
+     */
+    private function postInstallTwofactorAuth(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring twofactor_auth plugin ---");
+        $this->success("  [✓] Two-Factor Authentication plugin configured with TOTP, Email OTP, SMS OTP, and Recovery Codes.");
+    }
+
+    /**
+     * Special post-installation setup for email_scheduler.
+     */
+    private function postInstallEmailScheduler(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring email_scheduler plugin ---");
+        $this->success("  [✓] Email Scheduler & Undo Send plugin configured.");
+        $this->info("  [i] Cron worker available at: php {$destination}/cron.php");
+    }
+
+    /**
      * Special post-installation setup, requirements verification, and guidance for xcalendar.
      */
     private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
@@ -489,7 +518,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
             return;
         }
@@ -499,7 +528,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

@@ -1,0 +1,132 @@
+/**
+ * Stylesheet for Email Scheduler & Undo Send Plugin
+ */
+
+/* Floating Undo Send Toast */
+.undo-send-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #202124;
+    color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+    z-index: 99999;
+    min-width: 320px;
+    max-width: 480px;
+    overflow: hidden;
+    animation: toast-slide-up 0.25s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes toast-slide-up {
+    from { transform: translate(-50%, 30px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.undo-send-toast .undo-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    font-size: 14px;
+}
+
+.undo-send-toast .undo-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    width: 100%;
+}
+
+.undo-send-toast .undo-progress-fill {
+    height: 100%;
+    background: #fbbc04;
+    transition: width 0.1s linear;
+}
+
+/* Schedule Send Modal */
+.email-scheduler-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99998;
+}
+
+.email-scheduler-modal {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.email-scheduler-modal .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e2ec;
+}
+
+.email-scheduler-modal .modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.email-scheduler-modal .close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #5f6368;
+}
+
+.email-scheduler-modal .modal-body {
+    padding: 16px 20px;
+}
+
+.email-scheduler-modal .preset-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.email-scheduler-modal .btn-preset {
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.15s;
+}
+
+.email-scheduler-modal .btn-preset:hover {
+    background: #e8f0fe;
+    border-color: #1a73e8;
+    color: #1a73e8;
+}
+
+.email-scheduler-modal .custom-schedule-section {
+    border-top: 1px solid #e0e2ec;
+    padding-top: 14px;
+}
+
+.email-scheduler-modal .custom-schedule-section h4 {
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: #5f6368;
+}

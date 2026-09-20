@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * Two-Factor Authentication Plugin Configuration
+ *
+ * Provides multi-method 2FA for Roundcube Webmail:
+ * - Time-based One-Time Passwords (TOTP) via Mobile Authenticator Apps
+ *   (Google Authenticator, Microsoft Authenticator, Authy, FreeOTP, Bitwarden, etc.)
+ * - Email One-Time Passcodes (OTP)
+ * - SMS One-Time Passcodes (OTP)
+ * - Single-use Emergency Recovery Codes
+ * - Administrative Enforcement and Global Disable switches
+ * - Customizable verification messages and email notices
+ */
+
+// Globally disable the Two-Factor Authentication plugin.
+// Set to true to bypass all 2FA checks system-wide.
+// Type: boolean
+$config['twofactor_auth_disabled'] = false;
+
+// Enforce Two-Factor Authentication for all users.
+// When enabled, users who have not yet configured 2FA will be required
+// to set up at least one 2FA method immediately upon login.
+// Type: boolean
+$config['twofactor_auth_enforce'] = false;
+
+// Allowed authentication methods.
+// Supported methods: 'totp', 'email', 'sms', 'recovery'
+// Type: array
+$config['twofactor_auth_methods'] = ['totp', 'email', 'sms', 'recovery'];
+
+// Issuer name displayed in authenticator apps (e.g. "Roundcube Webmail").
+// Type: string
+$config['twofactor_auth_issuer'] = 'Roundcube Webmail';
+
+// Number of single-use emergency recovery codes to generate.
+// Type: integer (recommended: 10)
+$config['twofactor_auth_recovery_codes_count'] = 10;
+
+// Maximum number of invalid verification attempts before temporary lockout.
+// Type: integer
+$config['twofactor_auth_max_attempts'] = 5;
+
+// Lockout duration in seconds after reaching max attempts.
+// Type: integer (default: 300 seconds = 5 minutes)
+$config['twofactor_auth_lockout_duration'] = 300;
+
+// Expiration time in seconds for Email and SMS One-Time Passcodes.
+// Type: integer (default: 600 seconds = 10 minutes)
+$config['twofactor_auth_otp_ttl'] = 600;
+
+// Minimum cooldown in seconds between sending new Email/SMS OTP requests.
+// Type: integer (default: 30 seconds)
+$config['twofactor_auth_otp_resend_cooldown'] = 30;
+
+// Customizable Email Authentication Notice Subject.
+// Placeholders available: %issuer%, %user%
+// Type: string
+$config['twofactor_auth_email_notice_subject'] = '[%issuer%] Your Security Verification Code';
+
+// Customizable Email Authentication Notice Body Template.
+// Placeholders available: %code%, %user%, %issuer%, %ttl_minutes%
+// Type: string
+$config['twofactor_auth_email_notice_body'] = "Hello %user%,\n\nYour one-time security verification code is:\n\n    %code%\n\nThis code is valid for %ttl_minutes% minutes. If you did not request this code, please secure your account immediately.\n\nBest regards,\n%issuer% Security";
+
+// Customizable SMS Verification Message Template.
+// Placeholders available: %code%, %issuer%
+// Note: Keep within 160 characters for single-segment SMS delivery.
+// Type: string
+$config['twofactor_auth_sms_message'] = '%issuer% verification code: %code%. Valid for 10 minutes.';
+
+// SMS Gateway Integration.
+// Can be configured as:
+// 1. HTTP webhook URL with placeholders:
+//    'https://api.sms-provider.com/send?to=%phone%&message=%message%&apikey=YOUR_KEY'
+// 2. Custom shell command with placeholders:
+//    '/usr/local/bin/send_sms.sh "%phone%" "%message%"'
+// 3. Null/empty string if SMS is disabled or handled via custom hook.
+// Type: string|null
+$config['twofactor_auth_sms_gateway'] = null;
