@@ -75,6 +75,7 @@ assert_true(!is_dir($tempDir . '/plugins/xmultibox'), "Dry-run does NOT create x
 assert_true(!is_dir($tempDir . '/plugins/xsignature'), "Dry-run does NOT create xsignature in plugins");
 assert_true(!is_dir($tempDir . '/data/xsignature'), "Dry-run does NOT create data/xsignature directory");
 assert_true(!is_dir($tempDir . '/skins/gmail_plus'), "Dry-run does NOT create gmail_plus in skins");
+assert_true(!is_dir($tempDir . '/skins/material'), "Dry-run does NOT create material in skins");
 
 // Test 2: Full Installation with --activate
 echo "\n--- Test 2: Full Installation with --activate ---\n";
@@ -83,8 +84,14 @@ $installerFull->parseCliArgs(['--activate', '--roundcube-path=' . $tempDir]);
 $retFull = $installerFull->execute();
 assert_true($retFull === 0, "Installer returns exit code 0 on full install");
 
-// Verify skin installed
+// Verify skins installed
 assert_true(is_dir($tempDir . '/skins/gmail_plus'), "Skin 'gmail_plus' installed in skins/");
+assert_true(is_dir($tempDir . '/skins/material'), "Skin 'material' installed in skins/");
+assert_true(file_exists($tempDir . '/skins/material/meta.json'), "material skin meta.json exists");
+assert_true(file_exists($tempDir . '/skins/material/assets/styles/styles.css'), "material skin styles.css exists");
+assert_true(file_exists($tempDir . '/skins/material/assets/scripts/material.js'), "material skin material.js exists");
+assert_true(file_exists($tempDir . '/skins/material/assets/fonts/material-symbols-outlined.woff2'), "material skin woff2 font exists");
+assert_true(file_exists($tempDir . '/skins/material/config.inc.php'), "material skin config.inc.php initialized from sample");
 
 // Verify companion plugins installed
 assert_true(is_dir($tempDir . '/plugins/xskin'), "Plugin 'xskin' installed in plugins/");
@@ -140,6 +147,15 @@ preg_match_all("/['\"]([a-zA-Z0-9_\-]+)['\"]/", $inner, $matches);
 $pluginOrder = $matches[1] ?? [];
 assert_true(!empty($pluginOrder) && $pluginOrder[0] === 'xskin', "xskin is at index 0 (the beginning) of plugins array");
 assert_true(array_search('archive', $pluginOrder) > 0, "'archive' appears after 'xskin' in plugins array");
+
+// Test 4b: Activating Material Skin via --skin=material
+echo "\n--- Test 4b: Activating Material Skin via --skin=material ---\n";
+$installerMaterial = new RoundcubeExtraContentInstaller(dirname(__DIR__), $tempDir);
+$installerMaterial->parseCliArgs(['--activate', '--skin=material', '--roundcube-path=' . $tempDir]);
+$retMaterial = $installerMaterial->execute();
+assert_true($retMaterial === 0, "Installer returns exit code 0 when activating material skin");
+$materialConfig = file_get_contents($tempDir . '/config/config.inc.php');
+assert_true(strpos($materialConfig, "'skin'] = 'material'") !== false, "\$config['skin'] updated to 'material'");
 
 // Test 5: Re-running installer preserves user customized config
 echo "\n--- Test 5: Config Preservation on Update ---\n";

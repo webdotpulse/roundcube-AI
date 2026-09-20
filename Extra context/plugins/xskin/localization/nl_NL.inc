@@ -42,6 +42,16 @@ $labels['setting_custom_topbar_bg'] = 'Achtergrondkleur bovenbalk';
 $labels['setting_custom_topbar_bg_desc'] = 'Aangepaste achtergrondkleur voor de bovenste navigatiebalk (bijv. #ffffff). Leeg laten voor standaard.';
 $labels['setting_custom_compose_bg'] = 'Achtergrondkleur opstelknop';
 $labels['setting_custom_compose_bg_desc'] = 'Aangepaste achtergrondkleur voor de knop Nieuw bericht opstellen (bijv. #1a73e8). Leeg laten voor standaard.';
+$labels['setting_custom_btn_primary_bg'] = 'Primaire knopkleur';
+$labels['setting_custom_btn_primary_bg_desc'] = 'Aangepaste achtergrondkleur voor primaire actieknoppen (bijv. #1a73e8). Leeg laten voor standaard.';
+$labels['setting_custom_btn_secondary_bg'] = 'Secundaire knopkleur';
+$labels['setting_custom_btn_secondary_bg_desc'] = 'Aangepaste achtergrondkleur voor secundaire actieknoppen (bijv. #e8f0fe). Leeg laten voor standaard.';
+$labels['setting_custom_btn_radius'] = 'Knophoek vorm';
+$labels['setting_custom_btn_radius_desc'] = 'Hoekafronding voor knoppen en bedieningselementen in de interface.';
+$labels['btn_radius_pill'] = 'Pilvorm (20px)';
+$labels['btn_radius_rounded'] = 'Afgerond (8px)';
+$labels['btn_radius_square'] = 'Vierkant (4px)';
+$labels['button_preview'] = 'Live voorbeeld knoppen';
 $labels['clear_color'] = 'Wissen';
 $labels['save_hint'] = 'Vergeet niet uw instellingen op te slaan door op de knop "Opslaan" hieronder te klikken.';
 

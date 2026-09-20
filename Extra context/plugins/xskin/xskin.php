@@ -45,6 +45,9 @@ class xskin extends XFramework\Plugin
         'custom_sidebar_bg' => ['type' => 'string', 'default' => ''],
         'custom_topbar_bg' => ['type' => 'string', 'default' => ''],
         'custom_compose_bg' => ['type' => 'string', 'default' => ''],
+        'custom_btn_primary_bg' => ['type' => 'string', 'default' => ''],
+        'custom_btn_secondary_bg' => ['type' => 'string', 'default' => ''],
+        'custom_btn_radius' => ['type' => 'string', 'default' => ''],
     ];
 
     /**
@@ -319,6 +322,9 @@ class xskin extends XFramework\Plugin
         $sidebar = $this->rcmail->config->get('custom_sidebar_bg');
         $topbar = $this->rcmail->config->get('custom_topbar_bg');
         $compose = $this->rcmail->config->get('custom_compose_bg');
+        $btn_primary = $this->rcmail->config->get('custom_btn_primary_bg');
+        $btn_secondary = $this->rcmail->config->get('custom_btn_secondary_bg');
+        $btn_radius = $this->rcmail->config->get('custom_btn_radius');
 
         $color_css = '';
         if (!empty($sidebar) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $sidebar)) {
@@ -329,6 +335,21 @@ class xskin extends XFramework\Plugin
         }
         if (!empty($compose) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $compose)) {
             $color_css .= "#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose { background-color: " . htmlspecialchars($compose, ENT_QUOTES) . " !important; }\n";
+        }
+        if (!empty($btn_primary) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $btn_primary)) {
+            $escColor = htmlspecialchars($btn_primary, ENT_QUOTES);
+            $color_css .= ":root, html, body { --md-btn-primary-bg: {$escColor} !important; }\n";
+            $color_css .= ".btn-primary, button.mainaction, input[type=\"submit\"].mainaction, .formbuttons .btn-primary, .formbuttons input.mainaction, .ui-dialog .ui-dialog-buttonpane button.ui-button-primary, .btn-material-primary { background-color: {$escColor} !important; }\n";
+        }
+        if (!empty($btn_secondary) && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $btn_secondary)) {
+            $escSecColor = htmlspecialchars($btn_secondary, ENT_QUOTES);
+            $color_css .= ":root, html, body { --md-btn-secondary-bg: {$escSecColor} !important; }\n";
+            $color_css .= ".btn-secondary, .btn-outline-secondary, button.cancel, .formbuttons .btn-secondary, .formbuttons button.cancel, .ui-dialog .ui-dialog-buttonpane button.ui-button-secondary, .btn-material-secondary { background-color: {$escSecColor} !important; }\n";
+        }
+        if (!empty($btn_radius) && preg_match('/^[0-9]+px$/', $btn_radius)) {
+            $escRadius = htmlspecialchars($btn_radius, ENT_QUOTES);
+            $color_css .= ":root, html, body { --md-btn-radius: {$escRadius} !important; }\n";
+            $color_css .= ".btn-primary, .btn-secondary, button.mainaction, .btn, .formbuttons .btn-primary, .formbuttons .btn-secondary, .btn-material-primary, .btn-material-secondary { border-radius: {$escRadius} !important; }\n";
         }
 
         if (!empty($color_css)) {
@@ -619,12 +640,27 @@ class xskin extends XFramework\Plugin
             'custom_sidebar_bg' => 'setting_custom_sidebar_bg',
             'custom_topbar_bg' => 'setting_custom_topbar_bg',
             'custom_compose_bg' => 'setting_custom_compose_bg',
+            'custom_btn_primary_bg' => 'setting_custom_btn_primary_bg',
+            'custom_btn_secondary_bg' => 'setting_custom_btn_secondary_bg',
         ];
+
+        $materialSwatches = [
+            '#1A73E8' => 'Blue',
+            '#3F51B5' => 'Indigo',
+            '#7C3AED' => 'Purple',
+            '#00875A' => 'Emerald',
+            '#009688' => 'Teal',
+            '#F59E0B' => 'Amber',
+            '#EA580C' => 'Coral',
+            '#E11D48' => 'Rose',
+            '#334155' => 'Slate',
+        ];
+
         foreach ($colorFields as $field => $labelKey) {
             if (!$this->getDontOverride($field)) {
                 $val = (string)$this->rcmail->config->get($field, '');
                 $escapedVal = htmlspecialchars($val, ENT_QUOTES);
-                $pickerVal = (!empty($val) && preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) ? $val : '#ffffff';
+                $pickerVal = (!empty($val) && preg_match('/^#[0-9A-Fa-f]{6}$/', $val)) ? $val : (($field === 'custom_btn_primary_bg') ? '#1a73e8' : (($field === 'custom_btn_secondary_bg') ? '#e8f0fe' : '#ffffff'));
                 $html = html::tag('input', [
                     'type' => 'color',
                     'id' => $field . '_picker',
@@ -641,7 +677,7 @@ class xskin extends XFramework\Plugin
                     'value' => $escapedVal,
                     'class' => 'form-control font-monospace',
                     'style' => 'width: 110px; display: inline-block; vertical-align: middle; margin-left: 8px; text-transform: uppercase;',
-                    'placeholder' => '#RRGGBB',
+                    'placeholder' => ($field === 'custom_btn_primary_bg') ? '#1A73E8' : (($field === 'custom_btn_secondary_bg') ? '#E8F0FE' : '#RRGGBB'),
                     'pattern' => '^#[0-9A-Fa-f]{6}$',
                     'oninput' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
                     'onchange' => "if (/^#[0-9A-Fa-f]{6}$/.test(this.value)) { document.getElementById('{$field}_picker').value = this.value; xskin.applyCustomColor('{$field}', this.value); } else if (this.value === '') { xskin.applyCustomColor('{$field}', ''); }",
@@ -653,9 +689,61 @@ class xskin extends XFramework\Plugin
                     'onclick' => "document.getElementById('{$field}').value = ''; document.getElementById('{$field}_picker').value = '#ffffff'; xskin.applyCustomColor('{$field}', '');",
                 ], rcube::Q($this->gettext('clear_color')));
 
+                // Add quick Material swatches for primary button color
+                if ($field === 'custom_btn_primary_bg') {
+                    $swatchHtml = '<div style="margin-top: 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">';
+                    foreach ($materialSwatches as $hex => $name) {
+                        $swatchHtml .= html::tag('button', [
+                            'type' => 'button',
+                            'title' => $name,
+                            'style' => "width: 24px; height: 24px; border-radius: 50%; background-color: {$hex}; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); cursor: pointer; padding: 0;",
+                            'onclick' => "document.getElementById('custom_btn_primary_bg').value = '{$hex}'; document.getElementById('custom_btn_primary_bg_picker').value = '{$hex}'; xskin.applyCustomColor('custom_btn_primary_bg', '{$hex}');",
+                        ], '');
+                    }
+                    $swatchHtml .= '</div>';
+                    $html .= $swatchHtml;
+                }
+
                 $pref->html($html, $field, $this->gettext($labelKey), $this->gettext($labelKey . '_desc'));
             }
         }
+
+        // Button corner shape / radius setting
+        if (!$this->getDontOverride('custom_btn_radius')) {
+            $radiusVal = (string)$this->rcmail->config->get('custom_btn_radius', '20px');
+            $radiusSelect = new html_select([
+                'name' => 'custom_btn_radius',
+                'id' => 'custom_btn_radius',
+                'class' => 'form-control',
+                'style' => 'width: 180px; display: inline-block;',
+                'onchange' => "xskin.applyCustomRadius(this.value);",
+            ]);
+            $radiusSelect->add([
+                $this->gettext('btn_radius_pill'),
+                $this->gettext('btn_radius_rounded'),
+                $this->gettext('btn_radius_square'),
+            ], [
+                '20px',
+                '8px',
+                '4px',
+            ]);
+            $radiusHtml = $radiusSelect->show($radiusVal);
+            $pref->html($radiusHtml, 'custom_btn_radius', $this->gettext('setting_custom_btn_radius'), $this->gettext('setting_custom_btn_radius_desc'));
+        }
+
+        // Interactive Live Button Preview
+        $previewHtml = '
+        <div id="material-btn-preview-card" style="padding: 16px 20px; background: #f8f9fa; border: 1px solid #e0e2ec; border-radius: 16px; margin: 12px 0 16px 0; max-width: 680px;">
+            <div style="font-size: 11px; font-weight: 700; letter-spacing: 0.5px; color: #535f70; text-transform: uppercase; margin-bottom: 12px;">' . rcube::Q($this->gettext('button_preview')) . '</div>
+            <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary" id="preview-primary-btn" style="background-color: var(--md-btn-primary-bg, #1a73e8); color: #fff; border-radius: var(--md-btn-radius, 20px); border: none; padding: 8px 24px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.15);">Primary Action</button>
+                <button type="button" class="btn btn-secondary" id="preview-secondary-btn" style="background-color: var(--md-btn-secondary-bg, #e8f0fe); color: var(--md-btn-secondary-text, #1a73e8); border-radius: var(--md-btn-radius, 20px); border: 1px solid #c4c7c5; padding: 8px 20px; font-weight: 500; cursor: pointer;">Secondary</button>
+                <a class="button compose" id="preview-fab-btn" style="background-color: var(--md-btn-primary-bg, #1a73e8); color: #fff; border-radius: var(--md-btn-radius, 24px); padding: 8px 20px; text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.2);">
+                    <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 6px;">edit</span> Compose
+                </a>
+            </div>
+        </div>';
+        $pref->html($previewHtml, 'button_preview', $this->gettext('button_preview'));
 
         $pref->html(
             html::span(['class' => 'xskin-settings-save-hint'], $this->gettext('save_hint')) .
@@ -668,15 +756,55 @@ class xskin extends XFramework\Plugin
                 var selMap = {
                     custom_topbar_bg: 'html #layout div > .header, html.dark-mode #layout div > .header, body #layout div > .header, #layout div > .header, #layout > .header, .header, #layout-sidebar > .header, #layout-list > .header, #layout-content > .header, #messagelist-header, #topline, #header',
                     custom_sidebar_bg: 'html #layout-sidebar, html.dark-mode #layout-sidebar, body #layout-sidebar, #layout-sidebar, #layout-sidebar .scroller, #xsidebar, #layout-menu, .sidebar, #folderlist-content, #mailview-left, #folderlist',
-                    custom_compose_bg: '#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose'
+                    custom_compose_bg: '#compose-plus, a.button.compose, .floating-action-buttons a.button.compose, a.compose, a.button-compose, .btn.btn-compose',
+                    custom_btn_primary_bg: '.btn-primary, button.mainaction, input[type=\"submit\"].mainaction, .formbuttons .btn-primary, .formbuttons input.mainaction, .btn-material-primary, #preview-primary-btn, #preview-fab-btn',
+                    custom_btn_secondary_bg: '.btn-secondary, .btn-outline-secondary, button.cancel, .formbuttons .btn-secondary, .formbuttons button.cancel, .btn-material-secondary, #preview-secondary-btn'
                 };
                 var sel = selMap[field];
                 if (!sel) return;
-                var cssText = hex ? (sel + ' { background-color: ' + hex + ' !important; }') : '';
+                var cssText = '';
+                if (hex) {
+                    if (field === 'custom_btn_primary_bg') {
+                        cssText = ':root, html, body { --md-btn-primary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
+                    } else if (field === 'custom_btn_secondary_bg') {
+                        cssText = ':root, html, body { --md-btn-secondary-bg: ' + hex + ' !important; } ' + sel + ' { background-color: ' + hex + ' !important; }';
+                    } else {
+                        cssText = sel + ' { background-color: ' + hex + ' !important; }';
+                    }
+                }
                 function applyToDoc(d) {
                     if (!d || !d.head) return;
                     var el = d.getElementById(styleId);
                     if (!hex) {
+                        if (el) el.remove();
+                        return;
+                    }
+                    if (!el) {
+                        el = d.createElement('style');
+                        el.id = styleId;
+                        el.type = 'text/css';
+                        d.head.appendChild(el);
+                    }
+                    el.textContent = cssText;
+                }
+                try { applyToDoc(document); } catch (e) {}
+                try {
+                    if (window.parent && window.parent.document && window.parent.document !== document) {
+                        applyToDoc(window.parent.document);
+                    }
+                } catch (e) {}
+                if (window.$ && $('.xskin-settings-save-hint').length) {
+                    $('.xskin-settings-save-hint').fadeIn();
+                }
+            };
+            xskin.applyCustomRadius = function(val) {
+                var rad = (val || '').trim();
+                var styleId = 'xskin-live-custom_btn_radius';
+                var cssText = rad ? (':root, html, body { --md-btn-radius: ' + rad + ' !important; } .btn-primary, .btn-secondary, button.mainaction, #preview-primary-btn, #preview-secondary-btn, #preview-fab-btn { border-radius: ' + rad + ' !important; }') : '';
+                function applyToDoc(d) {
+                    if (!d || !d.head) return;
+                    var el = d.getElementById(styleId);
+                    if (!rad) {
                         if (el) el.remove();
                         return;
                     }
@@ -722,18 +850,27 @@ class xskin extends XFramework\Plugin
             $arg, $this->configSchema,
             ["xskin_icons_$this->skin", "xskin_list_icons_$this->skin", "xskin_button_icons_$this->skin",
                 "xskin_font_family_$this->skin", "xskin_font_size_$this->skin", "xskin_thick_font_$this->skin",
-                "xskin_color_$this->skin", "custom_sidebar_bg", "custom_topbar_bg", "custom_compose_bg"]
+                "xskin_color_$this->skin", "custom_sidebar_bg", "custom_topbar_bg", "custom_compose_bg",
+                "custom_btn_primary_bg", "custom_btn_secondary_bg", "custom_btn_radius"]
         );
 
-        foreach (['custom_sidebar_bg', 'custom_topbar_bg', 'custom_compose_bg'] as $colorField) {
+        foreach (['custom_sidebar_bg', 'custom_topbar_bg', 'custom_compose_bg', 'custom_btn_primary_bg', 'custom_btn_secondary_bg', 'custom_btn_radius'] as $colorField) {
             $val = trim((string)\rcube_utils::get_input_value($colorField, \rcube_utils::INPUT_POST));
             if ($val === '') {
                 $val = trim((string)\rcube_utils::get_input_value('_' . $colorField, \rcube_utils::INPUT_POST));
             }
-            if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
-                $arg['prefs'][$colorField] = $val;
-            } elseif ($val === '') {
-                $arg['prefs'][$colorField] = '';
+            if ($colorField === 'custom_btn_radius') {
+                if ($val !== '' && preg_match('/^[0-9]+px$/', $val)) {
+                    $arg['prefs'][$colorField] = $val;
+                } elseif ($val === '') {
+                    $arg['prefs'][$colorField] = '';
+                }
+            } else {
+                if ($val !== '' && preg_match('/^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6})$/', $val)) {
+                    $arg['prefs'][$colorField] = $val;
+                } elseif ($val === '') {
+                    $arg['prefs'][$colorField] = '';
+                }
             }
         }
 

@@ -1,0 +1,577 @@
+/**
+ * Material Design Skin for Roundcube Webmail
+ * Modern, advanced Material 3 (Material You) UI extending Elastic.
+ *
+ * @license MIT
+ * @author LifePrisma AI & Webdotpulse
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* ==========================================================================
+   1. Design System & CSS Variables (Light & Dark Theme)
+   ========================================================================== */
+
+:root {
+    /* M3 Light Palette */
+    --md-sys-color-primary: #1a73e8;
+    --md-sys-color-on-primary: #ffffff;
+    --md-sys-color-primary-container: #d3e3fd;
+    --md-sys-color-on-primary-container: #041e49;
+    --md-sys-color-secondary: #535f70;
+    --md-sys-color-on-secondary: #ffffff;
+    --md-sys-color-secondary-container: #d7e3f7;
+    --md-sys-color-on-secondary-container: #101c2b;
+    --md-sys-color-surface: #f8f9fa;
+    --md-sys-color-surface-container: #ffffff;
+    --md-sys-color-surface-container-high: #f0f4f9;
+    --md-sys-color-surface-container-highest: #e9eef6;
+    --md-sys-color-on-surface: #1f1f1f;
+    --md-sys-color-on-surface-variant: #444746;
+    --md-sys-color-outline: #747775;
+    --md-sys-color-outline-variant: #e0e2ec;
+    --md-sys-color-error: #ba1a1a;
+    --md-sys-color-error-container: #ffdad6;
+
+    /* Configurable Button Variables */
+    --md-btn-primary-bg: #1a73e8;
+    --md-btn-primary-text: #ffffff;
+    --md-btn-secondary-bg: #e8f0fe;
+    --md-btn-secondary-text: #1a73e8;
+    --md-btn-radius: 20px;
+
+    /* Elevations */
+    --md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
+    --md-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.08), 0px 1px 2px 0px rgba(0, 0, 0, 0.12);
+    --md-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.10), 0px 1px 3px 0px rgba(0, 0, 0, 0.14);
+    --md-elevation-4: 0px 6px 12px 4px rgba(0, 0, 0, 0.12), 0px 2px 4px 0px rgba(0, 0, 0, 0.16);
+
+    --md-font-family: 'Google Sans', 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    --md-transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* M3 Dark Palette */
+html.dark-mode,
+body.dark-mode {
+    --md-sys-color-primary: #a8c7fa;
+    --md-sys-color-on-primary: #062e6f;
+    --md-sys-color-primary-container: #004a77;
+    --md-sys-color-on-primary-container: #d3e3fd;
+    --md-sys-color-secondary: #bcc7db;
+    --md-sys-color-on-secondary: #263141;
+    --md-sys-color-surface: #121316;
+    --md-sys-color-surface-container: #1e1f23;
+    --md-sys-color-surface-container-high: #282a2f;
+    --md-sys-color-surface-container-highest: #33353a;
+    --md-sys-color-on-surface: #e2e2e6;
+    --md-sys-color-on-surface-variant: #c4c6d0;
+    --md-sys-color-outline: #8e9099;
+    --md-sys-color-outline-variant: #3a3b40;
+    --md-sys-color-error: #ffb4ab;
+
+    --md-btn-secondary-bg: #282a2f;
+    --md-btn-secondary-text: #a8c7fa;
+
+    --md-elevation-1: 0px 1px 3px 1px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --md-elevation-2: 0px 2px 6px 2px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --md-elevation-3: 0px 4px 8px 3px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    --md-elevation-4: 0px 6px 12px 4px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* ==========================================================================
+   2. Outline Material Design Icons via Material Symbols Outlined
+   ========================================================================== */
+
+@font-face {
+    font-family: 'Material Symbols Outlined';
+    font-style: normal;
+    font-weight: 100 700;
+    src: url('../fonts/material-symbols-outlined.woff2') format('woff2');
+    font-display: swap;
+}
+
+.material-symbols-outlined,
+.icon-material,
+.icon-outline {
+    font-family: 'Material Symbols Outlined', 'Material Icons Outlined', sans-serif !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 22px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+    vertical-align: middle;
+}
+
+/* Global Outline Icon Mappings */
+#taskmenu a::before,
+.header .toolbar a::before,
+.toolbar a.button::before,
+.floating-action-buttons a.button::before,
+#mailboxlist li.mailbox > a::before,
+.messagelist tr td span::before,
+.searchbox .icon.search::before,
+a.button-compose::before,
+#compose-plus::before {
+    font-family: 'Material Symbols Outlined', 'Material Icons Outlined', sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24 !important;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    text-transform: none !important;
+    line-height: 1 !important;
+}
+
+#taskmenu a.mail::before, #taskmenu a.button-mail::before { content: "mail"; font-size: 24px; }
+#taskmenu a.addressbook::before, #taskmenu a.button-addressbook::before, #taskmenu a.contacts::before { content: "contacts"; font-size: 24px; }
+#taskmenu a.settings::before, #taskmenu a.button-settings::before { content: "settings"; font-size: 24px; }
+#taskmenu a.logout::before, #taskmenu a.button-logout::before { content: "logout"; font-size: 24px; }
+#taskmenu a.calendar::before, #taskmenu a.button-calendar::before { content: "calendar_today"; font-size: 24px; }
+
+a.button.compose::before, a.button-compose::before, .btn-compose::before, #compose-plus::before {
+    content: "edit";
+    font-size: 20px;
+    margin-right: 6px;
+    vertical-align: -2px;
+}
+
+#mailboxlist li.mailbox > a::before { content: "folder"; font-size: 20px; margin-right: 8px; opacity: 0.85; }
+#mailboxlist li.inbox > a::before, #mailboxlist li.mailbox.inbox > a::before { content: "inbox"; color: var(--md-sys-color-primary); }
+#mailboxlist li.drafts > a::before, #mailboxlist li.mailbox.drafts > a::before { content: "drafts"; }
+#mailboxlist li.sent > a::before, #mailboxlist li.mailbox.sent > a::before { content: "send"; }
+#mailboxlist li.junk > a::before, #mailboxlist li.spam > a::before, #mailboxlist li.mailbox.junk > a::before { content: "report"; }
+#mailboxlist li.trash > a::before, #mailboxlist li.mailbox.trash > a::before { content: "delete_outline"; }
+#mailboxlist li.archive > a::before, #mailboxlist li.mailbox.archive > a::before { content: "archive"; }
+
+.toolbar a.button.checkmail::before, .toolbar a.button.refresh::before { content: "refresh"; font-size: 20px; }
+.toolbar a.button.reply::before { content: "reply"; font-size: 20px; }
+.toolbar a.button.reply-all::before { content: "reply_all"; font-size: 20px; }
+.toolbar a.button.forward::before { content: "forward"; font-size: 20px; }
+.toolbar a.button.delete::before { content: "delete_outline"; font-size: 20px; }
+.toolbar a.button.mark::before { content: "label"; font-size: 20px; }
+.toolbar a.button.archive::before { content: "archive"; font-size: 20px; }
+.toolbar a.button.print::before { content: "print"; font-size: 20px; }
+.toolbar a.button.download::before { content: "download"; font-size: 20px; }
+.toolbar a.button.search::before, .searchbox .search-icon::before { content: "search"; font-size: 20px; }
+.toolbar a.button.attach::before, a.button.attach::before { content: "attach_file"; font-size: 20px; }
+
+.messagelist tr td.flag span::before {
+    content: "star_outline";
+    font-size: 18px;
+    color: var(--md-sys-color-outline);
+    transition: color 0.15s ease;
+}
+.messagelist tr.flagged td.flag span::before,
+.messagelist tr td.flag span.flagged::before {
+    content: "star";
+    font-variation-settings: 'FILL' 1, 'wght' 400 !important;
+    color: #fbbc04 !important;
+}
+.messagelist tr td.attachment span::before { content: "attach_file"; font-size: 16px; color: var(--md-sys-color-outline); }
+.messagelist tr td.status span.unread::before {
+    content: "fiber_manual_record";
+    font-size: 12px;
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1 !important;
+}
+.ui-dialog-titlebar-close::before { content: "close"; font-family: 'Material Symbols Outlined' !important; font-size: 20px; }
+
+/* ==========================================================================
+   3. Base Layout & Material 3 Card Surfaces
+   ========================================================================== */
+
+body, html {
+    font-family: var(--md-font-family);
+    background-color: var(--md-sys-color-surface);
+    color: var(--md-sys-color-on-surface);
+    -webkit-font-smoothing: antialiased;
+}
+
+#layout {
+    background-color: var(--md-sys-color-surface);
+}
+
+/* Sidebar & Navigation Bar */
+#layout-menu {
+    background-color: var(--md-sys-color-surface) !important;
+    border-right: 1px solid var(--md-sys-color-outline-variant) !important;
+    padding-top: 8px;
+}
+
+#taskmenu a {
+    border-radius: 16px;
+    margin: 4px 8px;
+    color: var(--md-sys-color-on-surface-variant);
+    transition: var(--md-transition);
+}
+
+#taskmenu a.selected,
+#taskmenu a:hover {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+    color: var(--md-sys-color-primary) !important;
+}
+
+#layout-sidebar {
+    background-color: var(--md-sys-color-surface) !important;
+    border-right: 1px solid var(--md-sys-color-outline-variant) !important;
+}
+
+/* Mailbox Folder Pill Navigation */
+#mailboxlist {
+    padding: 8px 12px;
+}
+
+#mailboxlist li.mailbox {
+    margin-bottom: 3px;
+}
+
+#mailboxlist li.mailbox > a {
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    transition: var(--md-transition);
+    display: flex;
+    align-items: center;
+}
+
+#mailboxlist li.mailbox > a:hover {
+    background-color: var(--md-sys-color-surface-container-highest);
+    text-decoration: none;
+}
+
+#mailboxlist li.mailbox.selected > a {
+    background-color: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+    font-weight: 600;
+}
+
+#mailboxlist li.mailbox .unreadcount {
+    background-color: var(--md-sys-color-surface-container-highest);
+    color: var(--md-sys-color-primary);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: auto;
+}
+
+/* Header & Search Bar */
+#layout div > .header,
+#layout > .header,
+.header {
+    background-color: var(--md-sys-color-surface) !important;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
+    padding: 8px 16px;
+}
+
+.searchbox {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+    border-radius: 24px !important;
+    border: 1px solid transparent !important;
+    box-shadow: none !important;
+    transition: var(--md-transition);
+    padding: 4px 16px;
+}
+
+.searchbox:focus-within {
+    background-color: var(--md-sys-color-surface-container) !important;
+    border-color: var(--md-sys-color-primary) !important;
+    box-shadow: var(--md-elevation-1) !important;
+}
+
+.searchbox input {
+    background: transparent !important;
+    border: none !important;
+    color: var(--md-sys-color-on-surface) !important;
+    font-family: var(--md-font-family);
+    font-size: 14px;
+}
+
+/* Content & List Panes */
+#layout-list,
+#layout-content {
+    background-color: var(--md-sys-color-surface-container) !important;
+    border-radius: 16px 16px 0 0;
+    border: 1px solid var(--md-sys-color-outline-variant) !important;
+    box-shadow: var(--md-elevation-1);
+    overflow: hidden;
+}
+
+/* Message List Styling */
+.messagelist thead th {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+    color: var(--md-sys-color-on-surface-variant) !important;
+    font-weight: 500;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
+    padding: 10px 12px;
+}
+
+.messagelist tr {
+    background-color: var(--md-sys-color-surface-container) !important;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant) !important;
+    transition: background-color 0.15s ease;
+}
+
+.messagelist tr:hover {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+}
+
+.messagelist tr.selected td,
+.messagelist tr.selected {
+    background-color: var(--md-sys-color-primary-container) !important;
+    color: var(--md-sys-color-on-primary-container) !important;
+}
+
+.messagelist tr.unread td {
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+/* ==========================================================================
+   4. Material Buttons & Customizable Colors
+   ========================================================================== */
+
+.btn-primary,
+button.mainaction,
+input[type="submit"].mainaction,
+input[type="button"].mainaction,
+.formbuttons .btn-primary,
+.formbuttons input.mainaction,
+.ui-dialog .ui-dialog-buttonpane button.ui-button-primary,
+.btn-material-primary {
+    background-color: var(--md-btn-primary-bg, #1a73e8) !important;
+    color: var(--md-btn-primary-text, #ffffff) !important;
+    border-radius: var(--md-btn-radius, 20px) !important;
+    border: none !important;
+    font-family: var(--md-font-family);
+    font-weight: 500 !important;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    padding: 8px 24px !important;
+    box-shadow: var(--md-elevation-1);
+    transition: var(--md-transition);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary:hover,
+button.mainaction:hover,
+input[type="submit"].mainaction:hover,
+input[type="button"].mainaction:hover,
+.formbuttons .btn-primary:hover,
+.formbuttons input.mainaction:hover,
+.ui-dialog .ui-dialog-buttonpane button.ui-button-primary:hover,
+.btn-material-primary:hover {
+    box-shadow: var(--md-elevation-2);
+    filter: brightness(1.08);
+}
+
+.btn-secondary,
+.btn-outline-secondary,
+button.cancel,
+.formbuttons button.cancel,
+.formbuttons .btn-secondary,
+.ui-dialog .ui-dialog-buttonpane button.ui-button-secondary,
+.btn-material-secondary {
+    background-color: var(--md-btn-secondary-bg, #e8f0fe) !important;
+    color: var(--md-btn-secondary-text, #1a73e8) !important;
+    border-radius: var(--md-btn-radius, 20px) !important;
+    border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5) !important;
+    font-family: var(--md-font-family);
+    font-weight: 500 !important;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    padding: 8px 20px !important;
+    box-shadow: none;
+    transition: var(--md-transition);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-secondary:hover,
+.btn-outline-secondary:hover,
+button.cancel:hover,
+.formbuttons button.cancel:hover,
+.btn-material-secondary:hover {
+    box-shadow: var(--md-elevation-1);
+    filter: brightness(0.96);
+}
+
+/* Floating Action Button (FAB) Compose Button */
+#compose-plus,
+a.button.compose,
+.floating-action-buttons a.button.compose,
+a.compose,
+a.button-compose,
+.btn.btn-compose {
+    background-color: var(--md-btn-primary-bg, #1a73e8) !important;
+    color: var(--md-btn-primary-text, #ffffff) !important;
+    border-radius: var(--md-btn-radius, 24px) !important;
+    font-family: var(--md-font-family);
+    font-weight: 600 !important;
+    font-size: 14px;
+    letter-spacing: 0.25px;
+    padding: 12px 24px !important;
+    box-shadow: var(--md-elevation-3);
+    border: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    min-width: 130px;
+    height: 48px;
+    margin: 12px 16px;
+}
+
+#compose-plus:hover,
+a.button.compose:hover,
+.floating-action-buttons a.button.compose:hover,
+a.compose:hover,
+a.button-compose:hover,
+.btn.btn-compose:hover {
+    box-shadow: var(--md-elevation-4);
+    filter: brightness(1.1);
+    transform: translateY(-1px);
+}
+
+#compose-plus:active,
+a.button.compose:active,
+.floating-action-buttons a.button.compose:active {
+    box-shadow: var(--md-elevation-2);
+    transform: translateY(0);
+}
+
+/* Ripple Micro-interactions */
+.wave-container {
+    position: relative;
+    overflow: hidden;
+    transform: translate3d(0, 0, 0);
+}
+
+.wave-container .wave {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.35);
+    transform: scale(0);
+    animation: md-ripple 0.6s linear;
+    pointer-events: none;
+}
+
+html:not(.dark-mode) .btn-secondary .wave,
+html:not(.dark-mode) .btn-outline-secondary .wave {
+    background-color: rgba(26, 115, 232, 0.2);
+}
+
+@keyframes md-ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* ==========================================================================
+   5. Dark Mode Overrides
+   ========================================================================== */
+
+html.dark-mode,
+body.dark-mode {
+    background-color: var(--md-sys-color-surface) !important;
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+html.dark-mode #layout,
+html.dark-mode #layout-sidebar,
+html.dark-mode #layout-list,
+html.dark-mode #layout-content,
+html.dark-mode #layout-menu,
+html.dark-mode .sidebar,
+html.dark-mode #folderlist-content,
+html.dark-mode #mailview-left,
+html.dark-mode #mailview-right {
+    background-color: var(--md-sys-color-surface-container) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    border-color: var(--md-sys-color-outline-variant) !important;
+}
+
+html.dark-mode #layout-menu,
+html.dark-mode #taskmenu {
+    background-color: #0c0d10 !important;
+    border-right-color: var(--md-sys-color-outline-variant) !important;
+}
+
+html.dark-mode #layout div > .header,
+html.dark-mode #layout > .header,
+html.dark-mode .header,
+html.dark-mode #messagelist-header,
+html.dark-mode .toolbar {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+    border-color: var(--md-sys-color-outline-variant) !important;
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+html.dark-mode .toolbar a.button:hover,
+html.dark-mode .header .toolbar a:hover {
+    background-color: var(--md-sys-color-surface-container-highest) !important;
+    color: var(--md-sys-color-primary) !important;
+}
+
+html.dark-mode .messagelist tr {
+    background-color: var(--md-sys-color-surface-container) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    border-bottom-color: var(--md-sys-color-surface-container-high) !important;
+}
+
+html.dark-mode .messagelist tr:hover {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+}
+
+html.dark-mode .messagelist tr.selected td,
+html.dark-mode .messagelist tr.selected {
+    background-color: rgba(168, 199, 250, 0.14) !important;
+    color: #ffffff !important;
+}
+
+html.dark-mode .messagelist tr.unread td {
+    color: #ffffff !important;
+}
+
+html.dark-mode .ui-dialog,
+html.dark-mode .popupmenu,
+html.dark-mode .popover {
+    background-color: var(--md-sys-color-surface-container-high) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    border-color: var(--md-sys-color-outline-variant) !important;
+}
+
+html.dark-mode .ui-dialog-titlebar {
+    background-color: var(--md-sys-color-surface-container-highest) !important;
+    color: var(--md-sys-color-on-surface) !important;
+}
+
+html.dark-mode .btn-secondary:hover,
+html.dark-mode .btn-material-secondary:hover {
+    filter: brightness(1.15);
+}

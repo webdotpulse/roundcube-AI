@@ -25,6 +25,8 @@ class RoundcubeExtraContentInstaller
     private bool $activate = false;
     private bool $verbose = false;
     private array $logs = [];
+    private string $selectedSkin = 'gmail_plus';
+    private bool $skinExplicitlySet = false;
 
     public function __construct(?string $pluginDir = null, ?string $roundcubeDir = null)
     {
@@ -62,6 +64,9 @@ class RoundcubeExtraContentInstaller
                 $this->activate = false;
             } elseif ($arg === '-v' || $arg === '--verbose') {
                 $this->verbose = true;
+            } elseif (str_starts_with($arg, '--skin=')) {
+                $this->selectedSkin = trim(substr($arg, strlen('--skin=')));
+                $this->skinExplicitlySet = true;
             } elseif (str_starts_with($arg, '--roundcube-path=')) {
                 $path = substr($arg, strlen('--roundcube-path='));
                 $this->roundcubeDir = rtrim($path, '/\\');
@@ -521,12 +526,16 @@ class RoundcubeExtraContentInstaller
         $xskinIsFirst = (!empty($existingPlugins) && $existingPlugins[0] === 'xskin');
         $needsXskinAtBeginning = !empty($existingPlugins) && !$xskinIsFirst;
 
-        $hasGmailPlusSkin = preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]gmail_plus['\"]/", $configContent);
+        $targetSkin = $this->selectedSkin;
+        $hasTargetSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]" . preg_quote($targetSkin, '/') . "['\"]/", $configContent);
+        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus|material)['\"]/", $configContent);
+        $skinNeedsUpdate = $this->skinExplicitlySet ? !$hasTargetSkin : !$hasAnyBundledSkin;
+
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
         $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent) && !$hasEmptyLicenseKey;
         $hasRemoveVendorBranding = preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $configContent);
 
-        $needsConfigUpdate = !empty($missingPlugins) || $needsXskinAtBeginning || !$hasGmailPlusSkin || !$hasLicenseKey || !$hasRemoveVendorBranding;
+        $needsConfigUpdate = !empty($missingPlugins) || $needsXskinAtBeginning || $skinNeedsUpdate || !$hasLicenseKey || !$hasRemoveVendorBranding;
 
         if ($needsConfigUpdate) {
             $this->info("Roundcube Configuration Status:");
@@ -536,8 +545,8 @@ class RoundcubeExtraContentInstaller
             if (!empty($missingPlugins)) {
                 $this->info("  Plugins available to activate in \$config['plugins']: " . implode(', ', $missingPlugins));
             }
-            if (!$hasGmailPlusSkin) {
-                $this->info("  Skin available to activate: \$config['skin'] = 'gmail_plus';");
+            if ($skinNeedsUpdate) {
+                $this->info("  Skin available to activate: \$config['skin'] = '{$targetSkin}';");
             }
             if (!$hasLicenseKey) {
                 $this->info("  License key setting missing or empty: \$config['license_key'] = 'RCPLUSFREE20266u';");
@@ -551,7 +560,7 @@ class RoundcubeExtraContentInstaller
                     $configFile,
                     $configContent,
                     $missingPlugins,
-                    !$hasGmailPlusSkin,
+                    $skinNeedsUpdate,
                     !$hasLicenseKey,
                     !$hasRemoveVendorBranding,
                     $needsXskinAtBeginning
@@ -560,7 +569,7 @@ class RoundcubeExtraContentInstaller
                 $this->info("  (Run with --activate to automatically enable them in config.inc.php)");
             }
         } else {
-            $this->success("Roundcube configuration already has gmail_plus skin, companion plugins (with 'xskin' first), and license settings configured!");
+            $this->success("Roundcube configuration already has {$targetSkin} skin, companion plugins (with 'xskin' first), and license settings configured!");
         }
     }
 
@@ -580,14 +589,15 @@ class RoundcubeExtraContentInstaller
         $modified = false;
 
         if ($enableSkin) {
+            $skinToSet = $this->selectedSkin;
             if (preg_match("/(\\\$config\\['skin'\\]\\s*=\\s*)[^;]+;/", $content)) {
-                $content = preg_replace("/(\\\$config\\['skin'\\]\\s*=\\s*)[^;]+;/", "\$1'gmail_plus';", $content);
+                $content = preg_replace("/(\\\$config\\['skin'\\]\\s*=\\s*)[^;]+;/", "\$1'{$skinToSet}';", $content);
                 $modified = true;
             } else {
-                $content .= "\n// Default skin set by Roundcube AI installer\n\$config['skin'] = 'gmail_plus';\n";
+                $content .= "\n// Default skin set by Roundcube AI installer\n\$config['skin'] = '{$skinToSet}';\n";
                 $modified = true;
             }
-            $this->success("  -> Set \$config['skin'] = 'gmail_plus' in config.inc.php");
+            $this->success("  -> Set \$config['skin'] = '{$skinToSet}' in config.inc.php");
         }
 
         // Configure plugins array, ensuring 'xskin' is placed at the beginning
@@ -882,6 +892,7 @@ Usage:
 Options:
   --roundcube-path=DIR   Specify target Roundcube root directory
   --target=DIR           Alias for --roundcube-path
+  --skin=SKIN            Skin to activate with --activate ('material' or 'gmail_plus', default: 'gmail_plus')
   --activate             Automatically enable plugins, skin, license_key and branding removal in config/config.inc.php
   --dry-run              Simulate installation without making filesystem changes
   --verbose, -v          Verbose output

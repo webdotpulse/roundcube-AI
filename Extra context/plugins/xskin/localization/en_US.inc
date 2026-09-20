@@ -42,6 +42,16 @@ $labels['setting_custom_topbar_bg'] = 'Topbar background color';
 $labels['setting_custom_topbar_bg_desc'] = 'Custom background color for the header and top navigation bar (e.g. #ffffff). Leave empty for default.';
 $labels['setting_custom_compose_bg'] = 'Compose button background color';
 $labels['setting_custom_compose_bg_desc'] = 'Custom background color for the Compose button (e.g. #1a73e8). Leave empty for default.';
+$labels['setting_custom_btn_primary_bg'] = 'Primary button color';
+$labels['setting_custom_btn_primary_bg_desc'] = 'Custom background color for primary action buttons (e.g. #1a73e8). Leave empty for default.';
+$labels['setting_custom_btn_secondary_bg'] = 'Secondary button color';
+$labels['setting_custom_btn_secondary_bg_desc'] = 'Custom background color for secondary action buttons (e.g. #e8f0fe). Leave empty for default.';
+$labels['setting_custom_btn_radius'] = 'Button corner shape';
+$labels['setting_custom_btn_radius_desc'] = 'Corner radius style for buttons and controls across the interface.';
+$labels['btn_radius_pill'] = 'Pill (20px)';
+$labels['btn_radius_rounded'] = 'Rounded (8px)';
+$labels['btn_radius_square'] = 'Square (4px)';
+$labels['button_preview'] = 'Button live preview';
 $labels['clear_color'] = 'Clear';
 $labels['save_hint'] = 'Don\'t forget to save your settings by clicking the "Save" button below.';
 

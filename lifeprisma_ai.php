@@ -21,6 +21,8 @@ class lifeprisma_ai extends rcube_plugin
         $skin_path = $this->local_skin_path();
         if (($active_skin === 'gmail_plus' || strpos($active_skin, 'gmail') !== false) && is_dir($this->home . '/skins/gmail_plus')) {
             $skin_path = 'skins/gmail_plus';
+        } elseif (($active_skin === 'material' || strpos($active_skin, 'material') !== false) && is_dir($this->home . '/skins/material')) {
+            $skin_path = 'skins/material';
         }
         if (file_exists($this->home . "/{$skin_path}/style.min.css")) {
             $this->include_stylesheet("{$skin_path}/style.min.css");

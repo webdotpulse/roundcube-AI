@@ -1,0 +1,22 @@
+<?php
+/**
+ * Material Design Skin for Roundcube - Default Configuration Sample
+ *
+ * @license MIT
+ * @author LifePrisma AI & Webdotpulse
+ */
+
+// Default primary button background color (HEX)
+$config['material_btn_primary'] = '#1a73e8';
+
+// Default secondary button background color (HEX)
+$config['material_btn_secondary'] = '#e8f0fe';
+
+// Default button border radius ('20px' = Pill, '8px' = Rounded, '4px' = Subtle)
+$config['material_btn_radius'] = '20px';
+
+// Default layout view ('widescreen', 'desktop', 'list')
+$config['material_layout'] = 'widescreen';
+
+// Enable outline Material Design icons by default
+$config['material_outline_icons'] = true;
