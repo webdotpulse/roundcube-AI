@@ -1434,3 +1434,76 @@ body.dark-mode .lpai-qa-menu-item:hover,
 .dark-mode .lpai-qa-menu-item:hover {
     background: #3c4043;
 }
+
+/* ============================================================
+   Right Sidebar (#layout-menu) and Special Buttons Clearance
+   Ensure theme toggle, about, and logout buttons remain visible
+   ============================================================ */
+#layout-menu {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+}
+
+#layout-menu .popover-header {
+    flex: 0 0 auto !important;
+}
+
+#layout-menu #taskmenu {
+    position: static !important;
+    flex: 1 1 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    padding-bottom: 140px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+#layout-menu .special-buttons,
+#taskmenu .special-buttons,
+.special-buttons {
+    position: absolute !important;
+    bottom: 12px !important;
+    left: 0 !important;
+    right: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    z-index: 10 !important;
+    padding-bottom: 0 !important;
+}
+
+#layout-menu .special-buttons a,
+#taskmenu .special-buttons a,
+.special-buttons a {
+    padding: 0.5rem 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#layout-menu .special-buttons a.logout,
+#layout-menu .special-buttons a.button-logout,
+#taskmenu .special-buttons a.logout,
+#taskmenu .special-buttons a.button-logout,
+.special-buttons a.logout,
+.special-buttons a.button-logout {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 36px !important;
+}
+
+@media screen and (max-width: 1025px) {
+    #layout-menu .special-buttons,
+    #taskmenu .special-buttons,
+    .special-buttons {
+        bottom: 12px !important;
+        padding-bottom: 0 !important;
+    }
+}
+
