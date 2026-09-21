@@ -209,6 +209,66 @@ $(document).ready(function () {
         }
     });
 
+    /**
+     * Determine if current folder is the Inbox
+     */
+    function is_inbox_folder() {
+        var cur_mbox = (rcmail && rcmail.env && rcmail.env.mailbox) ? rcmail.env.mailbox : '';
+        return !cur_mbox || cur_mbox.toUpperCase() === 'INBOX';
+    }
+
+    /**
+     * Ensure all threads are collapsed when opening the Inbox
+     */
+    function ensure_inbox_threads_collapsed() {
+        if (!rcmail || !rcmail.message_list) {
+            return;
+        }
+
+        if (is_inbox_folder() && rcmail.env.thread_drafts_auto_collapse_inbox !== false) {
+            // Keep autoexpand disabled for Inbox so list expands are not auto-triggered
+            rcmail.env.autoexpand_threads = 0;
+
+            if (typeof rcmail.message_list.collapse_all === 'function') {
+                rcmail.message_list.collapse_all();
+            }
+        }
+    }
+
+    // Intercept init_threads so initial thread setup on Inbox does not auto-expand
+    if (typeof rcmail.init_threads === 'function') {
+        var orig_init_threads = rcmail.init_threads;
+        rcmail.init_threads = function (roots, mbox) {
+            var target_mbox = mbox || (rcmail.env ? rcmail.env.mailbox : '');
+            var is_inbox = !target_mbox || target_mbox.toUpperCase() === 'INBOX';
+
+            if (is_inbox && rcmail.env.thread_drafts_auto_collapse_inbox !== false) {
+                rcmail.env.autoexpand_threads = 0;
+            }
+
+            var ret = orig_init_threads.apply(this, arguments);
+
+            if (is_inbox && rcmail.env.thread_drafts_auto_collapse_inbox !== false) {
+                ensure_inbox_threads_collapsed();
+            }
+
+            return ret;
+        };
+    }
+
+    // Ensure threads are collapsed when opening Inbox or loading/refreshing list
+    rcmail.addEventListener('responseafterlist', function () {
+        if (is_inbox_folder()) {
+            ensure_inbox_threads_collapsed();
+        }
+    });
+
+    rcmail.addEventListener('init', function () {
+        if (is_inbox_folder()) {
+            ensure_inbox_threads_collapsed();
+        }
+    });
+
     // Check existing rows after list update in case roots need badge refreshes
     rcmail.addEventListener('listupdate', function () {
         if (!rcmail.message_list || !rcmail.message_list.rows) {
@@ -231,4 +291,10 @@ $(document).ready(function () {
             }
         });
     });
+
+    // Immediate check on document ready
+    if (is_inbox_folder()) {
+        ensure_inbox_threads_collapsed();
+    }
 });
+

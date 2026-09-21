@@ -208,4 +208,14 @@ $config['lifeprisma_ai_spam_blacklist'] = '';
 // Emails containing these keywords receive a heavy heuristic spam score penalty.
 $config['lifeprisma_ai_spam_keywords'] = '';
 
+// ============================================================
+// Mailbox & Threading Settings
+// ============================================================
+// Controls thread expansion behavior in mailbox view:
+//   0 = Do not expand threads (standard collapsed) [Default]
+//   1 = Expand all threads automatically
+//   2 = Expand only threads with unread messages
+$config['autoexpand_threads'] = 0;
+
+
 

@@ -629,8 +629,9 @@ class RoundcubeExtraContentInstaller
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
         $hasLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]/", $configContent) && !$hasEmptyLicenseKey;
         $hasRemoveVendorBranding = preg_match("/\\\$config\\[['\"]remove_vendor_branding['\"]\\]/", $configContent);
+        $hasAutoexpandThreads = preg_match("/\\\$config\\[['\"]autoexpand_threads['\"]\\]/", $configContent);
 
-        $needsConfigUpdate = !empty($missingPlugins) || $needsXskinAtBeginning || $skinNeedsUpdate || !$hasLicenseKey || !$hasRemoveVendorBranding;
+        $needsConfigUpdate = !empty($missingPlugins) || $needsXskinAtBeginning || $skinNeedsUpdate || !$hasLicenseKey || !$hasRemoveVendorBranding || !$hasAutoexpandThreads;
 
         if ($needsConfigUpdate) {
             $this->info("Roundcube Configuration Status:");
@@ -649,6 +650,10 @@ class RoundcubeExtraContentInstaller
             if (!$hasRemoveVendorBranding) {
                 $this->info("  Vendor branding setting missing: \$config['remove_vendor_branding'] = true;");
             }
+            if (!$hasAutoexpandThreads) {
+                $this->info("  Thread auto-expansion setting missing: \$config['autoexpand_threads'] = 0; (standard collapsed)");
+            }
+
 
             if ($this->activate && is_writable($configFile)) {
                 $this->updateRoundcubeConfig(
@@ -814,6 +819,13 @@ class RoundcubeExtraContentInstaller
             $modified = true;
             $this->success("  -> Configured standard favicon in \$config['favicon']");
         }
+
+        if (!preg_match("/\\\$config\\[['\"]autoexpand_threads['\"]\\]/", $content)) {
+            $content .= "\n// Standard collapsed threads when opening mailbox / inbox (0 = collapsed, 1 = expand all, 2 = expand unread)\n\$config['autoexpand_threads'] = 0;\n";
+            $modified = true;
+            $this->success("  -> Configured standard collapsed threads in \$config['autoexpand_threads'] = 0");
+        }
+
 
         if ($modified && !$this->dryRun) {
             @file_put_contents($configFile, $content);

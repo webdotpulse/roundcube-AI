@@ -34,3 +34,7 @@ $config['thread_drafts_max_replies'] = 100;
 
 // Enable subject matching as fallback when In-Reply-To and References headers are missing
 $config['thread_drafts_subject_fallback'] = false;
+
+// When opening the Inbox, standard the conversation threads should be collapsed and not expanded
+$config['thread_drafts_auto_collapse_inbox'] = true;
+

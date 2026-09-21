@@ -173,6 +173,7 @@ class ThreadDraftsTestRunner
         $this->testHierarchyInsertionCombinedReplyAndDraft();
         $this->testHierarchyInsertionDialogueSequence();
         $this->testMultipleRepliesInSameThread();
+        $this->testAutoCollapseInboxConfigAndEnvironment();
 
         echo "\n----------------------------------------\n";
         echo "Tests Completed: " . ($this->passed + $this->failed) . "\n";
@@ -598,7 +599,30 @@ class ThreadDraftsTestRunner
         $this->assertEquals(2, $result[2]->depth, 'Second reply has depth 2');
         $this->assertEquals('301-Sent', $result[2]->parent_uid, 'Second reply parent is 301-Sent');
     }
+
+    private function testAutoCollapseInboxConfigAndEnvironment()
+    {
+        echo "Test: Standard Collapsed Threads on Inbox Opening\n";
+        $configFile = dirname(__DIR__) . '/config.inc.php.dist';
+        $this->assert(file_exists($configFile), 'config.inc.php.dist exists');
+
+        $config = [];
+        include $configFile;
+
+        $this->assert(isset($config['thread_drafts_auto_collapse_inbox']), 'thread_drafts_auto_collapse_inbox is configured in config.inc.php.dist');
+        $this->assertEquals(true, $config['thread_drafts_auto_collapse_inbox'], 'thread_drafts_auto_collapse_inbox defaults to true');
+
+        // Check client script thread_drafts.js has inbox auto collapse logic
+        $jsFile = dirname(__DIR__) . '/thread_drafts.js';
+        $this->assert(file_exists($jsFile), 'thread_drafts.js exists');
+        $jsContent = file_get_contents($jsFile);
+        $this->assert(strpos($jsContent, 'ensure_inbox_threads_collapsed') !== false, 'thread_drafts.js contains ensure_inbox_threads_collapsed');
+        $this->assert(strpos($jsContent, 'is_inbox_folder') !== false, 'thread_drafts.js contains is_inbox_folder detection');
+        $this->assert(strpos($jsContent, 'autoexpand_threads = 0') !== false, 'thread_drafts.js enforces autoexpand_threads = 0 for Inbox');
+        $this->assert(strpos($jsContent, 'collapse_all') !== false, 'thread_drafts.js calls collapse_all');
+    }
 }
+
 
 // Run tests
 $runner = new ThreadDraftsTestRunner();

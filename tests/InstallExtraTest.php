@@ -143,6 +143,8 @@ assert_true(strpos($updatedConfig, "\$config['remove_vendor_branding'] = true") 
 assert_true(strpos($updatedConfig, "\$config['skin_logo']") !== false, "Standard skin_logo configured in config");
 assert_true(strpos($updatedConfig, "'login' => 'skins/gmail_plus/assets/images/logo_login.svg'") !== false, "Login Page Logo set to logo_login.svg in config");
 assert_true(strpos($updatedConfig, "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png'") !== false, "Standard favicon configured in config");
+assert_true(strpos($updatedConfig, "\$config['autoexpand_threads'] = 0") !== false, "autoexpand_threads initialized to 0 (standard collapsed) in config");
+
 assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/grid_mail.svg'), "grid_mail.svg installed in skins/gmail_plus");
 assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/logo_header.svg'), "logo_header.svg installed in skins/gmail_plus");
 assert_true(file_exists($tempDir . '/skins/gmail_plus/assets/images/logo_login.svg'), "logo_login.svg installed in skins/gmail_plus");

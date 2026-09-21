@@ -69,6 +69,7 @@ class thread_drafts extends rcube_plugin
             if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
                 $this->rc->output->set_env('thread_drafts_show_root_badge', (bool) $this->get_config('thread_drafts_show_root_badge', true));
                 $this->rc->output->set_env('thread_drafts_show_reply_badge', (bool) $this->get_config('thread_drafts_show_reply_badge', true));
+                $this->rc->output->set_env('thread_drafts_auto_collapse_inbox', (bool) $this->get_config('thread_drafts_auto_collapse_inbox', true));
                 if ($drafts_mbox = $this->rc->config->get('drafts_mbox')) {
                     $this->rc->output->set_env('drafts_mailbox', $drafts_mbox);
                 }
@@ -76,6 +77,7 @@ class thread_drafts extends rcube_plugin
                     $this->rc->output->set_env('sent_mailbox', $sent_mbox);
                 }
             }
+
         } elseif ($this->rc->task === 'settings') {
             $this->add_hook('preferences_list', [$this, 'preferences_list']);
             $this->add_hook('preferences_save', [$this, 'preferences_save']);
@@ -199,8 +201,18 @@ class thread_drafts extends rcube_plugin
             }
 
             $current_folder = $this->rc->storage->get_folder();
+            $is_inbox = empty($current_folder) || strtoupper($current_folder) === 'INBOX';
+
+            // When opening the Inbox, standard the Threads should be collapsed and not expanded
+            if ($is_inbox && $this->get_config('thread_drafts_auto_collapse_inbox', true)) {
+                if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
+                    $this->rc->output->set_env('autoexpand_threads', 0);
+                }
+            }
+
             $drafts_mbox = $this->rc->config->get('drafts_mbox');
             $sent_mbox = $this->rc->config->get('sent_mbox');
+
             $trash_mbox = $this->rc->config->get('trash_mbox');
             $junk_mbox = $this->rc->config->get('junk_mbox');
 
