@@ -1034,7 +1034,7 @@ Body:
     public function handle_new_messages($args)
     {
         $rcmail = rcmail::get_instance();
-        $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
+        $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
 
         $mbox = $args['mailbox'] ?? 'INBOX';
         if (strtoupper($mbox) !== 'INBOX') {
@@ -1044,16 +1044,11 @@ Body:
         $storage = $rcmail->get_storage();
         $storage->set_folder($mbox);
 
-        $uids = $storage->search($mbox, 'UNSEEN RECENT');
+        $res = $storage->search($mbox, 'UNSEEN RECENT');
+        $uids = (is_object($res) && method_exists($res, 'get')) ? $res->get() : (is_array($res) ? $res : []);
         if (empty($uids)) {
-            $uids = $storage->search($mbox, 'UNSEEN');
-        }
-
-        // Safe extraction from rcube_result_set to prevent PHP 8 TypeError
-        if (is_object($uids) && method_exists($uids, 'get')) {
-            $uids = $uids->get();
-        } elseif (is_object($uids) && method_exists($uids, 'count') && count($uids) === 0) {
-            $uids = [];
+            $res = $storage->search($mbox, 'UNSEEN');
+            $uids = (is_object($res) && method_exists($res, 'get')) ? $res->get() : (is_array($res) ? $res : []);
         }
 
         if (!is_array($uids) || empty($uids)) {
@@ -1071,10 +1066,19 @@ Body:
             $spam_action = $prefs['lifeprisma_ai_spam_action'] ?? $rcmail->config->get('lifeprisma_ai_spam_action', 'move_and_label');
             $auto_learn = (bool) ($prefs['lifeprisma_ai_spam_auto_learn'] ?? $rcmail->config->get('lifeprisma_ai_spam_auto_learn', true));
 
+            // Cap batch size to avoid PHP timeouts
+            $uids = array_slice($uids, 0, 50);
+
             foreach ($uids as $uid) {
                 $ctx = $this->fetch_message_context($uid, $mbox);
                 $raw_headers = $this->fetch_raw_headers($uid, $mbox);
                 if (empty($ctx)) {
+                    $non_spam_uids[] = $uid;
+                    continue;
+                }
+
+                // If already tagged as NonJunk, skip re-evaluating
+                if (!empty($ctx['flags']['nonjunk']) || !empty($ctx['flags']['$notjunk'])) {
                     $non_spam_uids[] = $uid;
                     continue;
                 }
@@ -1088,7 +1092,7 @@ Body:
                     $prefs
                 );
 
-                if ($decision['is_spam']) {
+                if (!empty($decision['is_spam'])) {
                     $spam_uids[] = $uid;
 
                     // Add SPAM label flags: Junk, $Junk, and $Label1 (thunderbird / roundcube-labels red badge)
@@ -1096,6 +1100,8 @@ Body:
                         $storage->set_flag($uid, 'Junk', $mbox);
                         $storage->set_flag($uid, '$Junk', $mbox);
                         $storage->set_flag($uid, '$Label1', $mbox);
+                        $storage->unset_flag($uid, 'NonJunk', $mbox);
+                        $storage->unset_flag($uid, '$NotJunk', $mbox);
                     }
 
                     // Auto-train Bayesian learning model on arrival
@@ -1110,6 +1116,9 @@ Body:
                     }
                 } else {
                     $non_spam_uids[] = $uid;
+                    // Tag as NonJunk so it's not repeatedly scanned on future checks
+                    $storage->set_flag($uid, 'NonJunk', $mbox);
+                    $storage->set_flag($uid, '$NotJunk', $mbox);
                 }
             }
 
@@ -1118,42 +1127,32 @@ Body:
                 $smsg = ($scount === 1)
                     ? "1 spam email detected and moved to {$junk_mbox} folder"
                     : "{$scount} spam emails detected and moved to {$junk_mbox} folder";
-                $rcmail->output->command('display_message', $smsg, 'warning');
+                $this->ai_log("[SPAM AUTO-FILTER] {$smsg}");
             }
-        } else {
-            $non_spam_uids = $uids;
         }
 
-        // 2. Auto-Draft Mode for Remaining Non-Spam Messages
-        $mode = $prefs['genia_auto_draft_mode'] ?? 'disabled';
-        if ($mode !== 'receive' || empty($non_spam_uids)) {
+        // 2. Background Auto-Draft Generation (Non-spam only)
+        $mode = $prefs['genia_auto_draft_mode'] ?? 'open';
+        if ($mode !== 'all') {
             return;
         }
 
-        // Process at most 2 most recent non-spam messages per check
-        $candidate_uids = array_slice(array_reverse($non_spam_uids), 0, 2);
-        $created_subjects = [];
-
-        foreach ($candidate_uids as $uid) {
-            $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
-            if ($subj) {
-                $created_subjects[] = $subj;
-            }
+        // Only auto-draft for emails that passed the spam filter
+        $target_uids = $spam_enabled ? $non_spam_uids : $uids;
+        if (empty($target_uids)) {
+            return;
         }
 
-        if (!empty($created_subjects)) {
-            $count = count($created_subjects);
-            $msg = ($count === 1)
-                ? "Gemini prepared an AI draft reply for '{$created_subjects[0]}' in Drafts"
-                : "Gemini prepared {$count} AI draft replies in Drafts";
-            $rcmail->output->command('display_message', $msg, 'confirmation');
+        foreach ($target_uids as $uid) {
+            $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
         }
     }
 
     /**
      * Hook triggered when rendering the mailbox message list table.
      * Detects IMAP label flags ($Label1 - $Label5) and SPAM flags (Junk, $Junk),
-     * passing them to the frontend so colored label & SPAM badges are rendered directly on rows.
+     * automatically filters incoming unread messages in INBOX,
+     * and passes them to the frontend so colored label & SPAM badges are rendered directly on rows.
      */
     public function handle_messages_list($args)
     {
@@ -1165,44 +1164,122 @@ Body:
         $row_spams = [];
         $junk_mbox = $this->get_junk_folder();
         $rcmail = rcmail::get_instance();
-        $curr_mbox = (string) ($rcmail->storage ? $rcmail->storage->get_folder() : '');
+        $storage = $rcmail->get_storage();
+        $curr_mbox = (string) ($storage ? $storage->get_folder() : '');
+        if (empty($curr_mbox)) {
+            $curr_mbox = 'INBOX';
+        }
         $is_junk_folder = (strcasecmp($curr_mbox, $junk_mbox) === 0);
+        $is_inbox = (strcasecmp($curr_mbox, 'INBOX') === 0);
 
-        foreach ($args['messages'] as $header) {
+        $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
+        $spam_enabled = (bool) ($prefs['lifeprisma_ai_spam_filter_enabled'] ?? $rcmail->config->get('lifeprisma_ai_spam_filter_enabled', true));
+        $spam_action = $prefs['lifeprisma_ai_spam_action'] ?? $rcmail->config->get('lifeprisma_ai_spam_action', 'move_and_label');
+        $auto_learn = (bool) ($prefs['lifeprisma_ai_spam_auto_learn'] ?? $rcmail->config->get('lifeprisma_ai_spam_auto_learn', true));
+        $user_id = $this->get_user_identifier();
+
+        $messages_to_remove = [];
+
+        foreach ($args['messages'] as $idx_key => $header) {
             if (empty($header) || empty($header->uid)) continue;
 
             $uid_str = (string) $header->uid;
             $has_junk_flag = false;
+            $has_nonjunk_flag = false;
 
             if (!empty($header->flags) && is_array($header->flags)) {
                 foreach ($header->flags as $flag_name => $val) {
-                    $flag_lower = strtolower((string) $flag_name);
+                    $flag_candidates = [];
+                    if (is_string($flag_name) && !is_numeric($flag_name)) {
+                        $flag_candidates[] = strtolower($flag_name);
+                    }
+                    if (is_string($val)) {
+                        $flag_candidates[] = strtolower($val);
+                    }
 
-                    if ($flag_lower === 'junk' || $flag_lower === '$junk' || $flag_lower === 'spam') {
+                    foreach ($flag_candidates as $flag_lower) {
+                        if ($flag_lower === 'junk' || $flag_lower === '$junk' || $flag_lower === 'spam') {
+                            $has_junk_flag = true;
+                        }
+                        if ($flag_lower === 'nonjunk' || $flag_lower === '$notjunk') {
+                            $has_nonjunk_flag = true;
+                        }
+
+                        $idx = null;
+                        if (preg_match('/^\$label([0-9]+)$/i', $flag_lower, $m)) {
+                            $idx = $m[1];
+                        } elseif (preg_match('/^label([0-9]+)$/i', $flag_lower, $m)) {
+                            $idx = $m[1];
+                        }
+
+                        if ($idx !== null) {
+                            $canonical = '$Label' . $idx;
+                            if (!isset($row_labels[$uid_str])) {
+                                $row_labels[$uid_str] = [];
+                            }
+                            if (!in_array($canonical, $row_labels[$uid_str], true)) {
+                                $row_labels[$uid_str][] = $canonical;
+                            }
+
+                            // Ensure row receives CSS classes in standard Roundcube rendering
+                            if (!is_array($header->list_flags)) {
+                                $header->list_flags = [];
+                            }
+                            $header->list_flags['label-' . $idx] = 1;
+                        }
+                    }
+                }
+            }
+
+            // Check headers for standard spam headers (SpamAssassin, rspamd, etc.)
+            if (!empty($header->others['x-spam-flag']) && strcasecmp(trim((string)$header->others['x-spam-flag']), 'YES') === 0) {
+                $has_junk_flag = true;
+            }
+
+            // Real-time automatic spam evaluation for incoming unseen messages in INBOX
+            $is_unseen = empty($header->flags['SEEN']) && empty($header->flags['seen']) && (empty($header->list_flags) || empty($header->list_flags['seen']));
+            if ($is_inbox && $spam_enabled && !$has_junk_flag && !$has_nonjunk_flag && $is_unseen) {
+                $ctx = $this->fetch_message_context($header->uid, $curr_mbox);
+                $raw_headers = $this->fetch_raw_headers($header->uid, $curr_mbox);
+                if (!empty($ctx)) {
+                    $decision = LpaiSpamFilter::check_message(
+                        $ctx['subject'] ?? ($header->subject ?? ''),
+                        $ctx['body'] ?? '',
+                        $raw_headers,
+                        $ctx['from'] ?? ($header->from ?? ''),
+                        $user_id,
+                        $prefs
+                    );
+
+                    if (!empty($decision['is_spam'])) {
                         $has_junk_flag = true;
-                    }
 
-                    $idx = null;
-                    if (preg_match('/^\$label([0-9]+)$/i', $flag_lower, $m)) {
-                        $idx = $m[1];
-                    } elseif (preg_match('/^label([0-9]+)$/i', $flag_lower, $m)) {
-                        $idx = $m[1];
-                    }
-
-                    if ($idx !== null) {
-                        $canonical = '$Label' . $idx;
-                        if (!isset($row_labels[$uid_str])) {
-                            $row_labels[$uid_str] = [];
-                        }
-                        if (!in_array($canonical, $row_labels[$uid_str], true)) {
-                            $row_labels[$uid_str][] = $canonical;
+                        if ($spam_action === 'move_and_label' || $spam_action === 'label_only') {
+                            if ($storage) {
+                                $storage->set_flag($header->uid, 'Junk', $curr_mbox);
+                                $storage->set_flag($header->uid, '$Junk', $curr_mbox);
+                                $storage->set_flag($header->uid, '$Label1', $curr_mbox);
+                                $storage->unset_flag($header->uid, 'NonJunk', $curr_mbox);
+                                $storage->unset_flag($header->uid, '$NotJunk', $curr_mbox);
+                            }
                         }
 
-                        // Ensure row receives CSS classes in standard Roundcube rendering
-                        if (!is_array($header->list_flags)) {
-                            $header->list_flags = [];
+                        if ($auto_learn) {
+                            $msg_id = $this->extract_message_id($raw_headers);
+                            LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
                         }
-                        $header->list_flags['label-' . $idx] = 1;
+
+                        if ($spam_action === 'move_and_label' || $spam_action === 'move_only') {
+                            if ($storage) {
+                                $storage->move_message($header->uid, $junk_mbox, $curr_mbox);
+                            }
+                            $messages_to_remove[] = $idx_key;
+                        }
+                    } else {
+                        if ($storage) {
+                            $storage->set_flag($header->uid, 'NonJunk', $curr_mbox);
+                            $storage->set_flag($header->uid, '$NotJunk', $curr_mbox);
+                        }
                     }
                 }
             }
@@ -1213,7 +1290,17 @@ Body:
                 }
                 $header->list_flags['spam'] = 1;
                 $row_spams[$uid_str] = true;
+                // Suppress regular label badges on spam so it doesn't display "To Respond"
+                unset($row_labels[$uid_str]);
             }
+        }
+
+        // Remove moved spam messages from current list if moved out of folder
+        if (!empty($messages_to_remove)) {
+            foreach ($messages_to_remove as $idx_to_remove) {
+                unset($args['messages'][$idx_to_remove]);
+            }
+            $args['messages'] = array_values($args['messages']);
         }
 
         if (!empty($row_labels)) {

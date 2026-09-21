@@ -96,6 +96,52 @@ if (window.rcmail) {
         }
     });
 
+    // Synchronously badge row on row insertion
+    rcmail.addEventListener('insertrow', function(props) {
+        if (!props) return;
+        var row = props.row;
+        var uid = props.uid || (row && row.uid);
+        if (!uid && row && row.id) {
+            var m = row.id.match(/^rcmrow(\d+)/);
+            if (m) uid = m[1];
+        }
+        if (!uid) return;
+
+        var junkMbox = (rcmail.env.lpai_junk_mbox ? rcmail.env.lpai_junk_mbox : 'Junk').toLowerCase();
+        var isJunkFolder = (rcmail.env.mailbox && rcmail.env.mailbox.toLowerCase() === junkMbox);
+        var spams = rcmail.env.lpai_row_spams || {};
+
+        if (isJunkFolder || (row && (row.classList.contains('spam') || row.classList.contains('junk'))) || spams[uid]) {
+            lpai_sync_message_row_spam(uid);
+        }
+
+        var labels = rcmail.env.lpai_row_labels || {};
+        if (labels[uid] && !isJunkFolder && !spams[uid]) {
+            lpai_sync_message_row_label(uid, labels[uid]);
+        }
+    });
+
+    // Refresh badges and toolbar after AJAX message list responses
+    rcmail.addEventListener('responseafterlist', function() {
+        lpai_sync_all_spam_badges(rcmail.env.lpai_row_spams);
+        if (rcmail.env.lpai_row_labels) {
+            Object.keys(rcmail.env.lpai_row_labels).forEach(function(uid) {
+                lpai_sync_message_row_label(uid, rcmail.env.lpai_row_labels[uid]);
+            });
+        }
+        lpai_init_spam_toolbar();
+    });
+
+    rcmail.addEventListener('responseafterrefresh', function() {
+        lpai_sync_all_spam_badges(rcmail.env.lpai_row_spams);
+        if (rcmail.env.lpai_row_labels) {
+            Object.keys(rcmail.env.lpai_row_labels).forEach(function(uid) {
+                lpai_sync_message_row_label(uid, rcmail.env.lpai_row_labels[uid]);
+            });
+        }
+        lpai_init_spam_toolbar();
+    });
+
     rcmail.addEventListener('messagelist_update', function() {
         var labels = rcmail.env.lpai_row_labels || {};
         Object.keys(labels).forEach(function(uid) {
@@ -379,9 +425,9 @@ function lpai_sync_message_row_label(uid, labelFlag) {
             badge.style.cssText = 'display:inline-block;padding:1px 6px;margin-right:4px;border-radius:4px;font-size:11px;font-weight:600;color:' + info.color + ';background:' + info.bg + ';border:1px solid ' + info.color + '44;line-height:14px;vertical-align:middle;';
             badge.innerText = info.name;
 
-            if (insertTarget) {
-                subjectCell.insertBefore(badge, insertTarget);
-            } else {
+            if (insertTarget && insertTarget.parentNode) {
+                insertTarget.parentNode.insertBefore(badge, insertTarget);
+            } else if (subjectCell) {
                 subjectCell.appendChild(badge);
             }
         });
@@ -2799,20 +2845,49 @@ function lpai_sync_message_row_spam(uid) {
         badge.className = 'lpai-spam-badge';
         badge.innerText = 'SPAM';
 
-        if (insertTarget) {
-            subjectCell.insertBefore(badge, insertTarget);
-        } else {
+        if (insertTarget && insertTarget.parentNode) {
+            insertTarget.parentNode.insertBefore(badge, insertTarget);
+        } else if (subjectCell) {
             subjectCell.appendChild(badge);
         }
     });
 }
 
 function lpai_sync_all_spam_badges(rowSpams) {
-    if (!rowSpams || typeof rowSpams !== 'object') return;
-    Object.keys(rowSpams).forEach(function(uid) {
-        if (rowSpams[uid]) {
-            lpai_sync_message_row_spam(uid);
+    var spams = rowSpams || (window.rcmail && rcmail.env.lpai_row_spams) || {};
+    var junkMbox = (window.rcmail && rcmail.env.lpai_junk_mbox ? rcmail.env.lpai_junk_mbox : 'Junk').toLowerCase();
+    var isJunkFolder = (window.rcmail && rcmail.env.mailbox && rcmail.env.mailbox.toLowerCase() === junkMbox);
+
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
         }
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    // 1. Sync from explicit spam mapping
+    if (spams && typeof spams === 'object') {
+        Object.keys(spams).forEach(function(uid) {
+            if (spams[uid]) {
+                lpai_sync_message_row_spam(uid);
+            }
+        });
+    }
+
+    // 2. Scan all rows in table: if in Junk folder or row has class 'spam' or 'junk', ensure badge is added
+    docs.forEach(function(doc) {
+        var rows = doc.querySelectorAll('tr[id^="rcmrow"]');
+        rows.forEach(function(row) {
+            var m = row.id.match(/^rcmrow(\d+)/);
+            if (!m) return;
+            var uid = m[1];
+            if (isJunkFolder || row.classList.contains('spam') || row.classList.contains('junk') || spams[uid]) {
+                lpai_sync_message_row_spam(uid);
+            }
+        });
     });
 }
 
@@ -2835,6 +2910,15 @@ function lpai_check_message_spam_banner() {
     banner.innerHTML = '<div class="lpai-spam-banner-content"><span class="lpai-spam-banner-icon">' + lpai_icon('shield_alert') + '</span><div><strong>Spam Detected:</strong> This email was identified as spam and moved to the ' + lpai_escape_html(junkMbox) + ' folder.</div></div><button type="button" class="lpai-btn-ham" onclick="lpai_mark_ham()">' + lpai_icon('shield_check') + ' <span>Not Spam (Move to Inbox)</span></button>';
 
     target.parentNode.insertBefore(banner, target);
+
+    // Also attach SPAM badge to message header subject if not already present
+    var subjElem = document.querySelector('#messageheader .subject') || document.querySelector('.message-header .subject') || document.querySelector('#message-header .subject');
+    if (subjElem && !subjElem.querySelector('.lpai-spam-badge')) {
+        var badge = document.createElement('span');
+        badge.className = 'lpai-spam-badge';
+        badge.innerText = 'SPAM';
+        subjElem.insertBefore(badge, subjElem.firstChild);
+    }
 }
 
 function lpai_mark_spam() {

@@ -2230,15 +2230,13 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 #messagelist-header .toolbar a.notjunk,
 ul.menu.toolbar a.junk,
 ul.menu.toolbar a.notjunk {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    float: none !important;
+    display: block !important;
+    float: left !important;
     height: 100% !important;
     border: 0 !important;
-    padding: 0 !important;
+    padding: .45rem !important;
     margin: 0 !important;
-    line-height: normal !important;
+    line-height: 1.5 !important;
     cursor: pointer !important;
     text-align: center !important;
     min-width: 3.2rem;
@@ -2248,16 +2246,17 @@ ul.menu.toolbar a.notjunk {
     background: transparent;
     color: inherit;
     text-decoration: none !important;
-    vertical-align: middle !important;
+    vertical-align: top !important;
     box-sizing: border-box !important;
 }
 
 ul.menu.toolbar > li.lpai-toolbar-spam-item {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    vertical-align: middle !important;
+    display: inline-block !important;
+    float: left !important;
+    vertical-align: top !important;
     height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 #layout-sidebar a.button.lpai-toolbar-spam-btn,
@@ -2271,12 +2270,6 @@ ul.menu.toolbar > li.lpai-toolbar-spam-item {
     border: none;
     background: transparent;
     color: inherit;
-}
-
-/* Topbar (#messagetoolbar): Ensure item in <ul> toolbar behaves seamlessly as a native menuitem */
-ul.menu.toolbar > li.lpai-toolbar-spam-item {
-    display: inline-block;
-    vertical-align: middle;
 }
 
 /* Tooltip representation for span.inner matching Gmail Plus */
@@ -2353,8 +2346,6 @@ html.dark-mode .toolbar a.notjunk:hover {
 /* Font icon on :before pseudo-element - perfectly aligned with sibling toolbar buttons */
 #messagetoolbar a.junk:before,
 #mailtoolbar a.junk:before,
-#messagelist-header a.junk:before,
-#messagelist-header .toolbar a.junk:before,
 .header .toolbar a.junk:before,
 .header a.junk:before,
 .toolbar a.junk:before,
@@ -2363,8 +2354,6 @@ a.junk.xi-shield:before,
 .xi-shield:before,
 #messagetoolbar a.notjunk:before,
 #mailtoolbar a.notjunk:before,
-#messagelist-header a.notjunk:before,
-#messagelist-header .toolbar a.notjunk:before,
 .header .toolbar a.notjunk:before,
 .header a.notjunk:before,
 .toolbar a.notjunk:before,
@@ -2375,10 +2364,6 @@ ul.menu.toolbar a.notjunk:before,
 #mailtoolbar a.lpai-toolbar-spam-btn:before,
 #messagetoolbar a.button.lpai-toolbar-spam-btn:before,
 #messagetoolbar a.lpai-toolbar-spam-btn:before,
-#messagelist-header a.button.lpai-toolbar-spam-btn:before,
-#messagelist-header a.lpai-toolbar-spam-btn:before,
-#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn:before,
-#messagelist-header .toolbar a.lpai-toolbar-spam-btn:before,
 .header .toolbar a.button.lpai-toolbar-spam-btn:before,
 .header .toolbar a.lpai-toolbar-spam-btn:before,
 .header a.button.lpai-toolbar-spam-btn:before,
@@ -2394,17 +2379,29 @@ ul.menu.toolbar a.notjunk:before,
     -moz-osx-font-smoothing: grayscale;
     background-image: none !important;
     text-indent: 0 !important;
-    display: inline-block !important;
+    display: block !important;
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0.6rem !important;
+    top: 0 !important;
     font-size: 1.5em !important;
     width: auto !important;
-    height: auto !important;
-    line-height: normal !important;
+    height: 1.75rem !important;
+    line-height: 1.75rem !important;
     text-align: center !important;
     transition: color 0.2s ease, transform 0.2s ease !important;
+}
+
+/* Left cluster (#messagelist-header): Sibling header buttons use top: 0.6rem */
+#messagelist-header a.junk:before,
+#messagelist-header a.notjunk:before,
+#messagelist-header .toolbar a.junk:before,
+#messagelist-header .toolbar a.notjunk:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header a.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.lpai-toolbar-spam-btn:before {
+    top: 0.6rem !important;
 }
 
 /* SVG icon rules: support 24x24 centered SVG shield icons inheriting colors and stroke */
@@ -2412,10 +2409,6 @@ ul.menu.toolbar a.notjunk:before,
 #messagetoolbar a.notjunk svg,
 #mailtoolbar a.junk svg,
 #mailtoolbar a.notjunk svg,
-#messagelist-header a.junk svg,
-#messagelist-header a.notjunk svg,
-#messagelist-header .toolbar a.junk svg,
-#messagelist-header .toolbar a.notjunk svg,
 .header .toolbar a.junk svg,
 .header a.junk svg,
 .toolbar a.junk svg,
@@ -2424,7 +2417,28 @@ ul.menu.toolbar a.notjunk:before,
 .toolbar a.lpai-toolbar-spam-btn svg,
 ul.menu.toolbar a.junk svg,
 ul.menu.toolbar a.notjunk svg {
-    display: inline-block !important;
+    display: block !important;
+    vertical-align: middle !important;
+    width: 24px !important;
+    height: 24px !important;
+    fill: currentColor !important;
+    stroke: currentColor !important;
+    stroke-width: inherit !important;
+    position: relative !important;
+    top: 0 !important;
+    margin: 0 auto !important;
+    transform: none !important;
+}
+
+#messagelist-header a.junk svg,
+#messagelist-header a.notjunk svg,
+#messagelist-header .toolbar a.junk svg,
+#messagelist-header .toolbar a.notjunk svg,
+#messagelist-header a.button.lpai-toolbar-spam-btn svg,
+#messagelist-header a.lpai-toolbar-spam-btn svg,
+#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn svg,
+#messagelist-header .toolbar a.lpai-toolbar-spam-btn svg {
+    display: block !important;
     vertical-align: middle !important;
     width: 24px !important;
     height: 24px !important;

@@ -328,14 +328,39 @@ assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
 assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
 assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
-assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon with top: 0.6rem to align with siblings");
-assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon with top: 0.6rem to align with siblings");
+assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon in messagelist-header with top: 0.6rem");
+assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon in messagelist-header with top: 0.6rem");
+assert_true(strpos($gp_css, "top: 0 !important;") !== false, "gmail_plus style.css sets top: 0 for mailtoolbar spam button icon");
+assert_true(strpos($el_css, "top: 0 !important;") !== false, "elastic style.css sets top: 0 for mailtoolbar spam button icon");
 assert_true(strpos($gp_css, "#mailtoolbar a.junk") !== false, "gmail_plus style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($el_css, "#mailtoolbar a.junk") !== false, "elastic style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_plus style.css aligns spam icon font size with sibling buttons (1.5em)");
 assert_true(strpos($el_css, "font-size: 1.5em !important;") !== false, "elastic style.css aligns spam icon font size with sibling buttons (1.5em)");
-assert_true(strpos($gp_css, "display: inline-flex !important;") !== false, "gmail_plus style.css uses inline-flex for toolbar spam button alignment");
-assert_true(strpos($el_css, "display: inline-flex !important;") !== false, "elastic style.css uses inline-flex for toolbar spam button alignment");
+assert_true(strpos($gp_css, "float: left !important;") !== false, "gmail_plus style.css floats toolbar spam button left to match sibling buttons");
+assert_true(strpos($el_css, "float: left !important;") !== false, "elastic style.css floats toolbar spam button left to match sibling buttons");
+
+// --- Test Group 13: Incoming Spam Filtering & SPAM Label Badges Verification ---
+echo "\n--- Group 13: Incoming Spam Filtering & SPAM Label Badges Verification --- \n";
+
+// 1. Result set extraction fallback test in lifeprisma_ai.php
+assert_true(strpos($php_code, "res = \$storage->search(\$mbox, 'UNSEEN RECENT')") !== false || strpos($php_code, "\$storage->search(\$mbox, 'UNSEEN RECENT')") !== false, "Searches UNSEEN RECENT on incoming mail");
+assert_true(strpos($php_code, "method_exists(\$res, 'get')") !== false, "Safely extracts array from rcube_result_set before empty() check");
+assert_true(strpos($php_code, "\$storage->search(\$mbox, 'UNSEEN')") !== false, "Falls back to UNSEEN search when RECENT is empty");
+
+// 2. Real-time automatic filtering in handle_messages_list
+assert_true(strpos($php_code, "is_inbox && \$spam_enabled") !== false, "handle_messages_list detects un-triaged incoming mail in INBOX");
+assert_true(strpos($php_code, "LpaiSpamFilter::check_message(") !== false, "handle_messages_list evaluates incoming mail with spam filter");
+assert_true(strpos($php_code, "move_message(\$header->uid, \$junk_mbox") !== false, "handle_messages_list moves detected spam to Junk folder");
+assert_true(strpos($php_code, "unset(\$args['messages'][\$idx_to_remove])") !== false || strpos($php_code, "unset(\$args['messages']") !== false, "handle_messages_list removes moved spam from current view");
+assert_true(strpos($php_code, "unset(\$row_labels[\$uid_str])") !== false, "handle_messages_list suppresses regular labels (e.g. To Respond) on spam rows");
+assert_true(strpos($php_code, "\$header->list_flags['spam'] = 1") !== false, "handle_messages_list sets list_flags spam on spam messages");
+
+// 3. Frontend DOM safety & lifecycle listeners
+assert_true(strpos($js_src, "insertTarget.parentNode.insertBefore(badge, insertTarget)") !== false, "lpai_sync_message_row_spam safely inserts badge before target node via parentNode");
+assert_true(strpos($js_src, "rcmail.addEventListener('insertrow'") !== false, "src/lifeprisma_ai.js attaches to insertrow for dynamic row badging");
+assert_true(strpos($js_src, "rcmail.addEventListener('responseafterlist'") !== false, "src/lifeprisma_ai.js attaches to responseafterlist for list updates");
+assert_true(strpos($js_src, "rcmail.addEventListener('responseafterrefresh'") !== false, "src/lifeprisma_ai.js attaches to responseafterrefresh for refresh updates");
+assert_true(strpos($js_src, "row.classList.contains('spam')") !== false || strpos($js_src, "isJunkFolder") !== false, "lpai_sync_all_spam_badges inspects table rows for spam class and junk folder");
 
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));
