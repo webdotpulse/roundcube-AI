@@ -292,17 +292,31 @@ assert_true(strpos($js_src, "btn.setAttribute('tabindex', '0')") !== false, "lif
 assert_true(strpos($el_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($el_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($el_css, "RcpIconFont") !== false, "elastic style.css declares RcpIconFont for spam button font icons");
-assert_true(strpos($el_css, "\\ead3") !== false, "elastic style.css defines standard font icon glyph for spam");
+assert_true(strpos($el_css, "\\ead3") !== false || strpos($el_css, "\\eaf7") !== false, "elastic style.css defines standard font icon glyph for spam");
+assert_true(strpos($el_css, "\\ec76") !== false, "elastic style.css maps outline shield icon glyph for spam (\\ec76)");
+assert_true(strpos($el_min, "\\ec76") !== false, "elastic style.min.css contains outline shield glyph (\\ec76)");
 assert_true(strpos($el_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css adapts button for sidebar");
 
 assert_true(strpos($gp_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($gp_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($gp_css, "RcpIconFont") !== false, "gmail_plus style.css declares RcpIconFont font family");
+assert_true(strpos($gp_css, "\\ec76") !== false, "gmail_plus style.css maps outline shield icon glyph for spam (\\ec76)");
+assert_true(strpos($gp_min, "\\ec76") !== false, "gmail_plus style.min.css contains outline shield glyph (\\ec76)");
 assert_true(strpos($gp_css, "\\ed2b") !== false, "gmail_plus style.css maps material icon glyph for spam (\\ed2b)");
 assert_true(strpos($gp_css, "\\ed2c") !== false, "gmail_plus style.css maps material icon glyph for ham (\\ed2c)");
 assert_true(strpos($gp_min, "\\ed2b") !== false, "gmail_plus style.min.css contains material spam glyph");
 assert_true(strpos($gp_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css adapts button for sidebar");
 assert_true(strpos($gp_css, "border-radius: 18px") !== false || strpos($gp_css, "border-radius:18px") !== false, "gmail_plus uses theme-uniform pill button shape");
+assert_true(strpos($js_src, "#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer") !== false, "lifeprisma_ai.js excludes right side menu bar / sidebar from spam button injection");
+assert_true(strpos($gp_css, "#layout-menu .lpai-toolbar-spam-btn") !== false && strpos($gp_css, "#layout-menu a.junk") !== false, "gmail_plus style.css suppresses spam buttons in right side menu bar (#layout-menu)");
+assert_true(strpos($el_css, "#layout-menu .lpai-toolbar-spam-btn") !== false && strpos($el_css, "#layout-menu a.junk") !== false, "elastic style.css suppresses spam buttons in right side menu bar (#layout-menu)");
+assert_true(strpos($js_src, "button-gemini-ai xi-ai") !== false, "lifeprisma_ai.js sets xi-ai outline icon class on sidebar AI button");
+assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outline ai icon glyph (\\ec89)");
+assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
+assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
+assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
+
+
 
 
 // Cleanup test scratch directory

@@ -389,11 +389,10 @@ function lpai_sync_message_row_label(uid, labelFlag) {
 }
 
 // ========================================
-// Sidebar Gemini Icon Button (#taskmenu)
+// Sidebar AI Icon Button (#taskmenu)
+// Uses xskin outline font icon "ai" (\ec89 / xi-ai)
 // ========================================
 function lpai_setup_sidebar_button() {
-    var svgIcon = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>';
-
     var docs = [document];
     try {
         if (window.parent && window.parent.document && window.parent.document !== document) {
@@ -413,19 +412,26 @@ function lpai_setup_sidebar_button() {
         var aboutBtns = doc.querySelectorAll('#layout-menu a.about, #layout-menu a.button-about, #taskmenu a.about, #taskmenu a.button-about, .special-buttons a.about, .special-buttons a.button-about, a.button-about, a.about[onclick*="about"], [data-target="about"]');
         aboutBtns.forEach(function(b) { b.remove(); });
 
-        // Replace any lingering [Gemini] or Gemini text spans anywhere in sidebar buttons
-        var innerSpans = doc.querySelectorAll('a.button-gemini-ai .inner, #taskmenu-gemini-btn .inner, a[href="#gemini"] .inner');
-        innerSpans.forEach(function(span) {
-            span.outerHTML = svgIcon;
+        // Remove any spam/junk buttons from right side menu bar / sidebar (#layout-menu, #taskmenu)
+        var sidebarSpamBtns = doc.querySelectorAll('#layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, #layout-menu .lpai-toolbar-spam-btn, #layout-menu .lpai-sidebar-spam-btn, #layout-menu .lpai-toolbar-spam-item, #taskmenu .lpai-toolbar-spam-btn, #taskmenu .lpai-sidebar-spam-btn, #taskmenu .lpai-toolbar-spam-item');
+        sidebarSpamBtns.forEach(function(b) {
+            var parentLi = (b.tagName && b.tagName.toUpperCase() === 'LI') ? b : (b.closest ? b.closest('li') : b.parentNode);
+            if (parentLi && parentLi.tagName && parentLi.tagName.toUpperCase() === 'LI') {
+                parentLi.remove();
+            } else {
+                b.remove();
+            }
         });
+
+        // Strip any old SVGs inside sidebar AI button so xskin outline font icon is used
+        var oldSvgs = doc.querySelectorAll('a.button-gemini-ai svg, #taskmenu-gemini-btn svg, a[href="#gemini"] svg');
+        oldSvgs.forEach(function(svg) { svg.remove(); });
 
         var existingBtn = doc.getElementById('taskmenu-gemini-btn') || doc.querySelector('a.button-gemini-ai') || doc.querySelector('a[href="#gemini"]');
         if (existingBtn) {
-            var innerSpan = existingBtn.querySelector('.inner');
-            if (innerSpan) {
-                innerSpan.outerHTML = svgIcon;
-            } else if (!existingBtn.querySelector('svg')) {
-                existingBtn.innerHTML = svgIcon;
+            existingBtn.className = 'button-gemini-ai xi-ai';
+            if (!existingBtn.querySelector('.inner')) {
+                existingBtn.innerHTML = '<span class="inner button-inner">Gemini Assistant</span>';
             }
             existingBtn.onclick = function(e) {
                 e.preventDefault();
@@ -444,13 +450,13 @@ function lpai_setup_sidebar_button() {
         if (taskmenu) {
             var a = doc.createElement('a');
             a.id = 'taskmenu-gemini-btn';
-            a.className = 'button-gemini-ai';
+            a.className = 'button-gemini-ai xi-ai';
             a.href = '#gemini';
             a.setAttribute('role', 'button');
             a.setAttribute('tabindex', '0');
             a.setAttribute('aria-label', 'Gemini Assistant');
             a.title = 'Gemini Assistant (Alt+A)';
-            a.innerHTML = svgIcon;
+            a.innerHTML = '<span class="inner button-inner">Gemini Assistant</span>';
             a.onclick = function(e) {
                 e.preventDefault();
                 lpai_open_panel();
@@ -2645,12 +2651,14 @@ function lpai_init_spam_toolbar() {
     var labelText = isJunk ? hamText : spamText;
 
     docs.forEach(function(doc) {
-        // Remove previously inserted items or buttons across all scopes
-        var existingItems = doc.querySelectorAll('.lpai-toolbar-spam-item, .lpai-toolbar-spam-btn, li[role="menuitem"] > a.junk, li[role="menuitem"] > a.notjunk');
+        // Remove previously inserted items or buttons across all scopes, ensuring right-side menu bar / sidebar buttons are cleaned up
+        var existingItems = doc.querySelectorAll('.lpai-toolbar-spam-item, .lpai-toolbar-spam-btn, .lpai-sidebar-spam-btn, #layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, .sidebar a.junk, .sidebar a.notjunk, li[role="menuitem"] > a.junk, li[role="menuitem"] > a.notjunk');
         existingItems.forEach(function(el) {
             var isLpai = el._lpai_spam || 
                          el.classList.contains('lpai-toolbar-spam-item') || 
                          el.classList.contains('lpai-toolbar-spam-btn') || 
+                         el.classList.contains('lpai-sidebar-spam-btn') ||
+                         ((el.matches && el.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer')) || (el.closest && el.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer'))) ||
                          el.title === spamText || 
                          el.title === hamText || 
                          el.title === 'Report Spam' || 
@@ -2677,6 +2685,11 @@ function lpai_init_spam_toolbar() {
                 return;
             }
 
+            // Exclude right side menu bar / sidebar (#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer) - spam button is topbar only
+            if ((tb.matches && tb.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer')) || (tb.closest && tb.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer'))) {
+                return;
+            }
+
             // If tb is a container header that has a child toolbar, let the child toolbar handle it
             if (tb.querySelector && tb.querySelector('.toolbar') && !tb.classList.contains('toolbar')) {
                 return;
@@ -2699,14 +2712,11 @@ function lpai_init_spam_toolbar() {
             }
 
             var isUl = (tb.tagName.toUpperCase() === 'UL');
-            var isSidebar = !!(tb.closest && tb.closest('#layout-menu, #taskmenu, .sidebar'));
             var btn = doc.createElement('a');
             btn.href = '#';
             btn.setAttribute('role', 'button');
             btn.setAttribute('tabindex', '0');
-            btn.className = isSidebar
-                ? ('button icon ' + (isJunk ? 'notjunk markasnotjunk2 lpai-btn-ham' : 'junk markasjunk2 lpai-btn-spam') + ' lpai-toolbar-spam-btn lpai-sidebar-spam-btn')
-                : (isJunk ? 'notjunk' : 'junk');
+            btn.className = isJunk ? 'notjunk' : 'junk';
 
             btn.title = labelText;
             btn.innerHTML = '<span class="inner button-inner">' + labelText + '</span>';
@@ -2732,9 +2742,6 @@ function lpai_init_spam_toolbar() {
 
             if (isUl) {
                 var item = doc.createElement('li');
-                if (isSidebar) {
-                    item.className = 'lpai-toolbar-spam-item';
-                }
                 item.setAttribute('role', 'menuitem');
                 item._lpai_spam = true;
                 item.appendChild(btn);
