@@ -261,6 +261,43 @@ assert_true(strpos($config_dist, "lifeprisma_ai_spam_auto_learn") !== false, "co
 assert_true(strpos($config_dist, "lifeprisma_ai_spam_whitelist") !== false, "config.inc.php.dist documents lifeprisma_ai_spam_whitelist");
 assert_true(strpos($config_dist, "lifeprisma_ai_spam_blacklist") !== false, "config.inc.php.dist documents lifeprisma_ai_spam_blacklist");
 
+// --- Test Group 11: 404 Asset Integrity & 500 Preview Prevention ---
+echo "\n--- Group 11: 404 Assets & 500 Error Prevention --- \n";
+
+assert_true(file_exists(__DIR__ . '/../skins/custom.css') && filesize(__DIR__ . '/../skins/custom.css') > 0, "skins/custom.css exists and is non-empty");
+assert_true(file_exists(__DIR__ . '/../skins/elastic/custom.css') && filesize(__DIR__ . '/../skins/elastic/custom.css') > 0, "skins/elastic/custom.css exists and is non-empty");
+assert_true(file_exists(__DIR__ . '/../skins/gmail_plus/custom.css') && filesize(__DIR__ . '/../skins/gmail_plus/custom.css') > 0, "skins/gmail_plus/custom.css exists and is non-empty");
+
+assert_true(file_exists(__DIR__ . '/../skins/watermark.png') && filesize(__DIR__ . '/../skins/watermark.png') > 0, "skins/watermark.png exists and is non-empty");
+assert_true(file_exists(__DIR__ . '/../skins/elastic/watermark.png') && filesize(__DIR__ . '/../skins/elastic/watermark.png') > 0, "skins/elastic/watermark.png exists and is non-empty");
+assert_true(file_exists(__DIR__ . '/../skins/gmail_plus/watermark.png') && filesize(__DIR__ . '/../skins/gmail_plus/watermark.png') > 0, "skins/gmail_plus/watermark.png exists and is non-empty");
+
+$watermark_bytes = file_get_contents(__DIR__ . '/../skins/watermark.png', false, null, 0, 8);
+assert_true(substr($watermark_bytes, 1, 3) === 'PNG', "skins/watermark.png is a valid binary PNG file");
+
+assert_true(strpos($php_code, "get_message_flags(") === false, "lifeprisma_ai.php does not call undefined get_message_flags (prevents 500 on preview)");
+assert_true(strpos($php_code, "'flags' => \$flags") !== false, "fetch_message_context returns flags array");
+assert_true(strpos($php_code, "[RENDER PREVIEW CONTEXT ERROR]") !== false, "render_page wraps message context extraction in try-catch to prevent 500 preview crash");
+
+// --- Test Group 12: Theme-Uniform Spam Button in Sidebar & Topbar ---
+echo "\n--- Group 12: Theme-Uniform Spam Button in Sidebar & Topbar --- \n";
+
+assert_true(strpos($js_src, "lpai-topbar-spam-btn") !== false, "lifeprisma_ai.js identifies topbar spam button");
+assert_true(strpos($js_src, "lpai-sidebar-spam-btn") !== false, "lifeprisma_ai.js identifies sidebar spam button");
+assert_true(strpos($js_src, "inner button-inner") !== false, "lifeprisma_ai.js creates standard inner button-inner markup");
+assert_true(strpos($js_src, "btn.setAttribute('role', 'button')") !== false, "lifeprisma_ai.js sets role=button for accessibility");
+assert_true(strpos($js_src, "btn.setAttribute('tabindex', '0')") !== false, "lifeprisma_ai.js sets tabindex=0 for accessibility");
+
+assert_true(strpos($el_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($el_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($el_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css adapts button for sidebar");
+
+assert_true(strpos($gp_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($gp_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($gp_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css adapts button for sidebar");
+assert_true(strpos($gp_css, "border-radius: 18px") !== false || strpos($gp_css, "border-radius:18px") !== false, "gmail_plus uses theme-uniform pill button shape");
+
+
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));
 @rmdir($test_data_dir);

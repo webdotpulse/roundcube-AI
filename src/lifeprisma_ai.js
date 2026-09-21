@@ -2633,13 +2633,18 @@ function lpai_init_spam_toolbar() {
             var existingSpamBtn = tb.querySelector('.lpai-toolbar-spam-btn');
             if (existingSpamBtn) existingSpamBtn.remove();
 
+            var inSidebar = !!(tb.closest && tb.closest('#layout-sidebar, .sidebar, #folderlist-footer'));
             var btn = doc.createElement('a');
             btn.href = '#';
-            btn.className = 'button lpai-toolbar-spam-btn ' + (isJunk ? 'lpai-btn-ham' : 'lpai-btn-spam');
+            btn.setAttribute('role', 'button');
+            btn.setAttribute('tabindex', '0');
+            btn.className = 'button lpai-toolbar-spam-btn ' + 
+                            (inSidebar ? 'lpai-sidebar-spam-btn ' : 'lpai-topbar-spam-btn ') + 
+                            (isJunk ? 'lpai-btn-ham' : 'lpai-btn-spam');
 
             if (isJunk) {
                 btn.title = 'Not Spam: Move back to Inbox and update filter learning';
-                btn.innerHTML = '<span class="button-inner">' + lpai_icon('shield_check') + ' <span class="lpai-btn-text">Not Spam</span></span>';
+                btn.innerHTML = '<span class="inner button-inner"><span class="lpai-btn-icon">' + lpai_icon('shield_check') + '</span> <span class="lpai-btn-text">Not Spam</span></span>';
                 btn.onclick = function(e) {
                     e.preventDefault();
                     lpai_mark_ham();
@@ -2647,7 +2652,7 @@ function lpai_init_spam_toolbar() {
                 };
             } else {
                 btn.title = 'Report Spam: Add SPAM label, move to Junk folder, and train filter';
-                btn.innerHTML = '<span class="button-inner">' + lpai_icon('shield_alert') + ' <span class="lpai-btn-text">Report Spam</span></span>';
+                btn.innerHTML = '<span class="inner button-inner"><span class="lpai-btn-icon">' + lpai_icon('shield_alert') + '</span> <span class="lpai-btn-text">Report Spam</span></span>';
                 btn.onclick = function(e) {
                     e.preventDefault();
                     lpai_mark_spam();
@@ -2655,8 +2660,16 @@ function lpai_init_spam_toolbar() {
                 };
             }
 
+            btn.onkeydown = function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                    return false;
+                }
+            };
+
             // Insert near junk or delete button if possible
-            var refBtn = tb.querySelector('.markasjunk, .delete, .trash') || tb.firstChild;
+            var refBtn = tb.querySelector('.markasjunk, .junk, .delete, .trash') || tb.firstChild;
             if (refBtn && refBtn.parentNode === tb) {
                 tb.insertBefore(btn, refBtn.nextSibling);
             } else {

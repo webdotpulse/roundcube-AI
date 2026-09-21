@@ -157,31 +157,31 @@ class lifeprisma_ai extends rcube_plugin
 
             // Pass message context for read/preview view
             if ($is_read) {
-                $uid = rcube_utils::get_input_string('_uid', rcube_utils::INPUT_GET);
-                $mbox = rcube_utils::get_input_string('_mbox', rcube_utils::INPUT_GET);
-                if ($uid) {
-                    $attachments = $this->get_attachment_info((int) $uid, $mbox);
-                    if ($attachments) {
-                        $rcmail->output->set_env('lpai_attachments', $attachments);
-                    }
-                    $ctx = $this->fetch_message_context((int) $uid, $mbox);
-                    if ($ctx) {
-                        $is_msg_spam = (strcasecmp((string)$mbox, $junk_folder) === 0);
-                        $storage = $rcmail->get_storage();
-                        if ($storage && !$is_msg_spam) {
-                            $flags = $storage->get_message_flags((int) $uid);
-                            if (is_array($flags)) {
-                                $is_msg_spam = !empty($flags['Junk']) || !empty($flags['$Junk']);
-                            }
+                try {
+                    $uid = rcube_utils::get_input_string('_uid', rcube_utils::INPUT_GET);
+                    $mbox = rcube_utils::get_input_string('_mbox', rcube_utils::INPUT_GET);
+                    if ($uid) {
+                        $attachments = $this->get_attachment_info((int) $uid, $mbox);
+                        if ($attachments) {
+                            $rcmail->output->set_env('lpai_attachments', $attachments);
                         }
-                        $rcmail->output->set_env('lpai_msg_context', [
-                            'from' => $ctx['from'] ?? '',
-                            'date' => $ctx['date'] ?? '',
-                            'subject' => $ctx['subject'] ?? '',
-                            'spam_score' => $ctx['spam_score'],
-                            'is_spam' => $is_msg_spam,
-                        ]);
+                        $ctx = $this->fetch_message_context((int) $uid, $mbox);
+                        if ($ctx) {
+                            $is_msg_spam = (strcasecmp((string)$mbox, $junk_folder) === 0);
+                            if (!$is_msg_spam && !empty($ctx['flags'])) {
+                                $is_msg_spam = !empty($ctx['flags']['junk']) || !empty($ctx['flags']['$junk']) || !empty($ctx['flags']['spam']);
+                            }
+                            $rcmail->output->set_env('lpai_msg_context', [
+                                'from' => $ctx['from'] ?? '',
+                                'date' => $ctx['date'] ?? '',
+                                'subject' => $ctx['subject'] ?? '',
+                                'spam_score' => $ctx['spam_score'] ?? null,
+                                'is_spam' => $is_msg_spam,
+                            ]);
+                        }
                     }
+                } catch (\Throwable $e) {
+                    $this->ai_log("[RENDER PREVIEW CONTEXT ERROR] " . $e->getMessage());
                 }
             }
 
@@ -1450,6 +1450,18 @@ Body:
                 }
             }
 
+            $flags = [];
+            if (!empty($msg->headers->flags) && is_array($msg->headers->flags)) {
+                foreach ($msg->headers->flags as $k => $v) {
+                    if (is_string($k) && !is_numeric($k)) {
+                        $flags[strtolower($k)] = true;
+                    }
+                    if (is_string($v)) {
+                        $flags[strtolower($v)] = true;
+                    }
+                }
+            }
+
             return [
                 'subject' => $msg->headers->subject ?? '',
                 'from' => $msg->headers->from ?? '',
@@ -1457,6 +1469,7 @@ Body:
                 'date' => $msg->headers->date ?? '',
                 'body' => trim($body),
                 'spam_score' => $spam_score,
+                'flags' => $flags,
             ];
         } catch (\Throwable $e) {
             $this->ai_log("[FETCH CONTEXT ERROR] " . $e->getMessage());

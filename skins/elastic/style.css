@@ -3156,14 +3156,154 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
     color: #fecdd3;
 }
 
-.lpai-toolbar-spam-btn.lpai-btn-spam .lpai-icon,
-.lpai-toolbar-spam-btn.lpai-btn-spam svg {
-    color: #e11d48;
+/* ============================================================
+   Toolbar & Sidebar Spam Button Uniformity (Elastic Theme)
+   ============================================================ */
+.toolbar a.button.lpai-toolbar-spam-btn,
+#messagetoolbar a.button.lpai-toolbar-spam-btn,
+.header .toolbar a.button.lpai-toolbar-spam-btn,
+#layout-sidebar a.button.lpai-toolbar-spam-btn,
+#folderlist-footer a.button.lpai-toolbar-spam-btn,
+.sidebar a.button.lpai-toolbar-spam-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-family: inherit !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    line-height: 1.4 !important;
+    color: #374151 !important;
+    text-decoration: none !important;
+    cursor: pointer !important;
+    border-radius: 4px !important;
+    padding: 6px 12px !important;
+    margin: 0 2px !important;
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    box-sizing: border-box !important;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+    vertical-align: middle !important;
 }
 
-.lpai-toolbar-spam-btn.lpai-btn-ham .lpai-icon,
-.lpai-toolbar-spam-btn.lpai-btn-ham svg {
-    color: #16a34a;
+.toolbar a.button.lpai-toolbar-spam-btn .inner,
+.toolbar a.button.lpai-toolbar-spam-btn .button-inner,
+#messagetoolbar a.button.lpai-toolbar-spam-btn .inner,
+#messagetoolbar a.button.lpai-toolbar-spam-btn .button-inner {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: none !important;
+    border: none !important;
+    font-size: inherit !important;
+    color: inherit !important;
+    text-indent: 0 !important;
+    line-height: 1 !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn .lpai-btn-icon,
+.toolbar a.button.lpai-toolbar-spam-btn svg,
+#messagetoolbar a.button.lpai-toolbar-spam-btn svg {
+    width: 17px !important;
+    height: 17px !important;
+    display: inline-block !important;
+    flex-shrink: 0 !important;
+    vertical-align: middle !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn:hover,
+#messagetoolbar a.button.lpai-toolbar-spam-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #111827 !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn:active,
+#messagetoolbar a.button.lpai-toolbar-spam-btn:active {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    transform: translateY(1px) !important;
+}
+
+/* Specific Spam vs Ham accents */
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam .lpai-btn-icon,
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam svg {
+    color: #e11d48 !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover {
+    background-color: #fff1f2 !important;
+    color: #be123c !important;
+    border-color: #fecdd3 !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham .lpai-btn-icon,
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham svg {
+    color: #16a34a !important;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover {
+    background-color: #f0fdf4 !important;
+    color: #15803d !important;
+    border-color: #bbf7d0 !important;
+}
+
+/* Sidebar specific adaptation */
+#layout-sidebar a.button.lpai-toolbar-spam-btn,
+#folderlist-footer a.button.lpai-toolbar-spam-btn,
+.sidebar a.button.lpai-toolbar-spam-btn {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    border-radius: 4px !important;
+    margin: 2px !important;
+}
+
+#layout-sidebar a.button.lpai-toolbar-spam-btn svg,
+#folderlist-footer a.button.lpai-toolbar-spam-btn svg,
+.sidebar a.button.lpai-toolbar-spam-btn svg {
+    width: 15px !important;
+    height: 15px !important;
+}
+
+/* Responsive collapse on smaller viewports */
+@media screen and (max-width: 768px) {
+    .toolbar a.button.lpai-toolbar-spam-btn .lpai-btn-text,
+    #messagetoolbar a.button.lpai-toolbar-spam-btn .lpai-btn-text {
+        display: none !important;
+    }
+    .toolbar a.button.lpai-toolbar-spam-btn,
+    #messagetoolbar a.button.lpai-toolbar-spam-btn {
+        padding: 6px 8px !important;
+    }
+}
+
+/* Dark mode support */
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn {
+    color: #e2e8f0 !important;
+}
+
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn:hover,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn:hover,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #f8fafc !important;
+}
+
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover {
+    background-color: rgba(225, 29, 72, 0.2) !important;
+    color: #fca5a5 !important;
+    border-color: rgba(225, 29, 72, 0.4) !important;
+}
+
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover {
+    background-color: rgba(22, 163, 74, 0.2) !important;
+    color: #86efac !important;
+    border-color: rgba(22, 163, 74, 0.4) !important;
 }
 
 .lpai-qa-btn.lpai-qa-spam {
