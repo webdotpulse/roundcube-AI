@@ -2627,8 +2627,21 @@ function lpai_init_spam_toolbar() {
     var isJunk = (currMbox.toLowerCase() === junkMbox.toLowerCase()) || 
                  (rcmail.env.lpai_msg_context && rcmail.env.lpai_msg_context.is_spam);
 
-    var spamText = rcmail.gettext('lifeprisma_ai.report_spam') || 'Report Spam';
-    var hamText = rcmail.gettext('lifeprisma_ai.not_spam') || 'Not Spam';
+    var getLocalized = function(key, fallback) {
+        var txt = '';
+        if (window.rcmail && typeof rcmail.gettext === 'function') {
+            txt = rcmail.gettext(key, 'lifeprisma_ai');
+            if (!txt || txt === key || txt === 'lifeprisma_ai.' + key) {
+                txt = rcmail.gettext('lifeprisma_ai.' + key);
+            }
+        }
+        if (!txt || txt === key || txt === 'lifeprisma_ai.' + key) {
+            txt = fallback;
+        }
+        return txt;
+    };
+    var spamText = getLocalized('report_spam', 'Report Spam');
+    var hamText = getLocalized('not_spam', 'Not Spam');
     var labelText = isJunk ? hamText : spamText;
 
     docs.forEach(function(doc) {
@@ -2661,6 +2674,7 @@ function lpai_init_spam_toolbar() {
             }
 
             var isUl = (tb.tagName.toUpperCase() === 'UL');
+            var isSidebar = !!(tb.closest && tb.closest('#layout-menu, #taskmenu, .sidebar'));
             var btn = doc.createElement('a');
             btn.href = '#';
             btn.setAttribute('role', 'button');
@@ -2668,7 +2682,7 @@ function lpai_init_spam_toolbar() {
             btn.className = 'button icon ' + 
                             (isJunk ? 'notjunk markasnotjunk2 lpai-btn-ham' : 'junk markasjunk2 lpai-btn-spam') + 
                             ' lpai-toolbar-spam-btn ' + 
-                            (isUl ? 'lpai-topbar-spam-btn' : 'lpai-sidebar-spam-btn');
+                            (isSidebar ? 'lpai-sidebar-spam-btn' : 'lpai-topbar-spam-btn');
 
             btn.title = labelText;
             btn.innerHTML = '<span class="inner button-inner">' + labelText + '</span>';

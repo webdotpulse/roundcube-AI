@@ -18,6 +18,7 @@ class lifeprisma_ai extends rcube_plugin
     public function init()
     {
         $this->load_config();
+        $this->add_texts('localization/', true);
         $rcmail = rcmail::get_instance();
         $active_skin = $rcmail->config->get('skin', 'elastic');
         $skin_path = $this->local_skin_path();
