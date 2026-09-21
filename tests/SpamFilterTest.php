@@ -305,16 +305,16 @@ assert_true(strpos($js_src, "btn.setAttribute('tabindex', '0')") !== false, "lif
 assert_true(strpos($el_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($el_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($el_css, "RcpIconFont") !== false, "elastic style.css declares RcpIconFont for spam button font icons");
-assert_true(strpos($el_css, "\\ead3") !== false || strpos($el_css, "\\eaf7") !== false, "elastic style.css defines standard font icon glyph for spam");
-assert_true(strpos($el_css, "\\ec76") !== false, "elastic style.css maps outline shield icon glyph for spam (\\ec76)");
-assert_true(strpos($el_min, "\\ec76") !== false, "elastic style.min.css contains outline shield glyph (\\ec76)");
+assert_true(strpos($el_css, "\\ead3") !== false || strpos($el_css, "\\eaf7") !== false || strpos($el_css, "\\ec63") !== false, "elastic style.css defines standard font icon glyph for spam");
+assert_true(strpos($el_css, "\\ec63") !== false, "elastic style.css maps outline junk icon glyph for spam (\\ec63)");
+assert_true(strpos($el_min, "\\ec63") !== false, "elastic style.min.css contains outline junk glyph (\\ec63)");
 assert_true(strpos($el_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css adapts button for sidebar");
 
 assert_true(strpos($gp_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($gp_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($gp_css, "RcpIconFont") !== false, "gmail_plus style.css declares RcpIconFont font family");
-assert_true(strpos($gp_css, "\\ec76") !== false, "gmail_plus style.css maps outline shield icon glyph for spam (\\ec76)");
-assert_true(strpos($gp_min, "\\ec76") !== false, "gmail_plus style.min.css contains outline shield glyph (\\ec76)");
+assert_true(strpos($gp_css, "\\ec63") !== false, "gmail_plus style.css maps outline junk icon glyph for spam (\\ec63)");
+assert_true(strpos($gp_min, "\\ec63") !== false, "gmail_plus style.min.css contains outline junk glyph (\\ec63)");
 assert_true(strpos($gp_css, "\\ed2b") !== false, "gmail_plus style.css maps material icon glyph for spam (\\ed2b)");
 assert_true(strpos($gp_css, "\\ed2c") !== false, "gmail_plus style.css maps material icon glyph for ham (\\ed2c)");
 assert_true(strpos($gp_min, "\\ed2b") !== false, "gmail_plus style.min.css contains material spam glyph");
@@ -328,16 +328,16 @@ assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
 assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
 assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
-assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon in messagelist-header with top: 0.6rem");
-assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon in messagelist-header with top: 0.6rem");
+assert_true(strpos($gp_css, "vertical-align: middle !important;") !== false, "gmail_plus style.css aligns spam button vertically centered with sibling buttons");
+assert_true(strpos($el_css, "vertical-align: middle !important;") !== false, "elastic style.css aligns spam button vertically centered with sibling buttons");
 assert_true(strpos($gp_css, "top: 0 !important;") !== false, "gmail_plus style.css sets top: 0 for mailtoolbar spam button icon");
 assert_true(strpos($el_css, "top: 0 !important;") !== false, "elastic style.css sets top: 0 for mailtoolbar spam button icon");
 assert_true(strpos($gp_css, "#mailtoolbar a.junk") !== false, "gmail_plus style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($el_css, "#mailtoolbar a.junk") !== false, "elastic style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_plus style.css aligns spam icon font size with sibling buttons (1.5em)");
 assert_true(strpos($el_css, "font-size: 1.5em !important;") !== false, "elastic style.css aligns spam icon font size with sibling buttons (1.5em)");
-assert_true(strpos($gp_css, "float: left !important;") !== false, "gmail_plus style.css floats toolbar spam button left to match sibling buttons");
-assert_true(strpos($el_css, "float: left !important;") !== false, "elastic style.css floats toolbar spam button left to match sibling buttons");
+assert_true(strpos($gp_css, "display: inline-block !important;") !== false, "gmail_plus style.css sets uniform inline-block display for toolbar buttons");
+assert_true(strpos($el_css, "display: inline-block !important;") !== false, "elastic style.css sets uniform inline-block display for toolbar buttons");
 
 // --- Test Group 13: Incoming Spam Filtering & SPAM Label Badges Verification ---
 echo "\n--- Group 13: Incoming Spam Filtering & SPAM Label Badges Verification --- \n";
@@ -362,6 +362,18 @@ assert_true(strpos($js_src, "rcmail.addEventListener('responseafterlist'") !== f
 assert_true(strpos($js_src, "rcmail.addEventListener('responseafterrefresh'") !== false, "src/lifeprisma_ai.js attaches to responseafterrefresh for refresh updates");
 assert_true(strpos($js_src, "row.classList.contains('spam')") !== false || strpos($js_src, "isJunkFolder") !== false, "lpai_sync_all_spam_badges inspects table rows for spam class and junk folder");
 assert_true(strpos($js_src, "lpai_has_class") !== false, "src/lifeprisma_ai.js defines lpai_has_class helper for safe class checking on row elements/objects");
+
+// --- Test Group 14: Save Draft xskin Outline Font Icon Verification ---
+echo "\n--- Group 14: Save Draft xskin Outline Font Icon Verification --- \n";
+assert_true(strpos($gp_css, "\\ec2e") !== false, "gmail_plus style.css maps outline save icon glyph (\\ec2e)");
+assert_true(strpos($gp_min, "\\ec2e") !== false, "gmail_plus style.min.css contains outline save glyph (\\ec2e)");
+assert_true(strpos($el_css, "\\ec2e") !== false, "elastic style.css maps outline save icon glyph (\\ec2e)");
+assert_true(strpos($el_min, "\\ec2e") !== false, "elastic style.min.css contains outline save glyph (\\ec2e)");
+assert_true(strpos($js_src, "lpai_setup_save_draft_button") !== false, "src/lifeprisma_ai.js defines lpai_setup_save_draft_button");
+assert_true(strpos($js_src, "xi-save") !== false, "src/lifeprisma_ai.js adds xi-save class to save draft button");
+
+$sched_js = file_get_contents(__DIR__ . '/../Extra context/plugins/email_scheduler/email_scheduler.js');
+assert_true(strpos($sched_js, "xi-save") !== false, "email_scheduler.js assigns xi-save class to save draft button");
 
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));

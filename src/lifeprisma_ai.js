@@ -14,6 +14,7 @@ if (window.rcmail) {
 
         // Ensure purple Gemini icon is installed in sidebar #taskmenu
         lpai_setup_sidebar_button();
+        lpai_setup_save_draft_button();
 
         if (task === 'mail' && action === 'compose') {
             lpai_add_compose_button();
@@ -495,6 +496,14 @@ function lpai_setup_sidebar_button() {
         var oldSvgs = doc.querySelectorAll('a.button-gemini-ai svg, #taskmenu-gemini-btn svg, a[href="#gemini"] svg');
         oldSvgs.forEach(function(svg) { svg.remove(); });
 
+        // Ensure save draft buttons use xskin outline font icon "save" (\ec2e / xi-save)
+        var saveDraftBtns = doc.querySelectorAll('#messagetoolbar a.save, #messagetoolbar a.draft, #messagetoolbar a.savedraft, #btn-save-draft-toolbar, #layout-sidebar a.save, #layout-sidebar a.draft, #layout-sidebar a.savedraft, #layout-sidebar #btn-save-draft-toolbar, #layout-menu a.save, #layout-menu a.savedraft, #taskmenu a.save, #taskmenu a.savedraft, .toolbar a.button.save, .toolbar a.button.savedraft');
+        saveDraftBtns.forEach(function(btn) {
+            btn.classList.add('xi-save');
+            var svg = btn.querySelector('svg');
+            if (svg) svg.remove();
+        });
+
         var existingBtn = doc.getElementById('taskmenu-gemini-btn') || doc.querySelector('a.button-gemini-ai') || doc.querySelector('a[href="#gemini"]');
         if (existingBtn) {
             existingBtn.className = 'button-gemini-ai xi-ai';
@@ -538,6 +547,31 @@ function lpai_setup_sidebar_button() {
                 taskmenu.appendChild(a);
             }
         }
+    });
+}
+
+// ========================================
+// Save Draft Right Sidebar / Toolbar Button
+// Uses xskin outline font icon "save" (\ec2e / xi-save)
+// ========================================
+function lpai_setup_save_draft_button() {
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
+        }
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    docs.forEach(function(doc) {
+        var saveBtns = doc.querySelectorAll('#messagetoolbar a.save, #messagetoolbar a.draft, #messagetoolbar a.savedraft, #btn-save-draft-toolbar, #layout-sidebar a.save, #layout-sidebar a.draft, #layout-sidebar a.savedraft, #layout-sidebar #btn-save-draft-toolbar, #layout-menu a.save, #layout-menu a.savedraft, #taskmenu a.save, #taskmenu a.savedraft, .toolbar a.button.save, .toolbar a.button.savedraft');
+        saveBtns.forEach(function(btn) {
+            btn.classList.add('xi-save');
+            var svg = btn.querySelector('svg');
+            if (svg) svg.remove();
+        });
     });
 }
 
@@ -2784,7 +2818,7 @@ function lpai_init_spam_toolbar() {
             btn.href = '#';
             btn.setAttribute('role', 'button');
             btn.setAttribute('tabindex', '0');
-            btn.className = (isJunk ? 'notjunk' : 'junk') + ' button lpai-toolbar-spam-btn';
+            btn.className = (isJunk ? 'notjunk xi-not-junk' : 'junk xi-junk') + ' button lpai-toolbar-spam-btn';
 
             btn.title = labelText;
             btn.innerHTML = '<span class="inner button-inner">' + labelText + '</span>';

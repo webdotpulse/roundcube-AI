@@ -153,27 +153,31 @@
         var toolbar = document.getElementById('messagetoolbar') || document.querySelector('.toolbar.menu, #compose-toolbar');
         if (toolbar) {
 
-            // B. Ensure Toolbar Save Draft is prominent and visible
+            // B. Ensure Toolbar Save Draft is prominent, visible, and uses xskin outline font icon (xi-save)
             var existingSave = toolbar.querySelector('a.save, a.draft, a.savedraft');
             if (existingSave) {
                 existingSave.style.display = 'inline-flex';
                 existingSave.style.visibility = 'visible';
                 existingSave.classList.remove('disabled');
-                if (!existingSave.querySelector('svg') && !existingSave.classList.contains('icon-svg-ready')) {
-                    existingSave.classList.add('icon-svg-ready');
+                existingSave.classList.add('xi-save');
+                var oldSvg = existingSave.querySelector('svg');
+                if (oldSvg) oldSvg.remove();
+                if (!existingSave.classList.contains('icon-ready')) {
+                    existingSave.classList.add('icon-ready');
                     var innerSpan = existingSave.querySelector('span.inner') || existingSave;
-                    if (!innerSpan.innerHTML.includes('<svg')) {
-                        innerSpan.innerHTML = SAVE_SVG + '<span class="btn-text">' + (innerSpan.textContent.trim() || saveLabel) + '</span>';
+                    if (!innerSpan.querySelector('.btn-text')) {
+                        var labelText = innerSpan.textContent.trim() || saveLabel;
+                        innerSpan.innerHTML = '<span class="btn-text">' + labelText + '</span>';
                     }
                 }
             } else if (!toolbar.querySelector('#btn-save-draft-toolbar')) {
                 var tbSave = document.createElement('a');
                 tbSave.href = '#savedraft';
                 tbSave.id = 'btn-save-draft-toolbar';
-                tbSave.className = 'button save draft';
+                tbSave.className = 'button save draft xi-save';
                 tbSave.title = saveTooltip;
                 tbSave.tabIndex = 2;
-                tbSave.innerHTML = '<span class="inner">' + SAVE_SVG + '<span class="btn-text">' + saveLabel + '</span></span>';
+                tbSave.innerHTML = '<span class="inner"><span class="btn-text">' + saveLabel + '</span></span>';
                 tbSave.onclick = function(e) {
                     e.preventDefault();
                     rcmail.command('savedraft');

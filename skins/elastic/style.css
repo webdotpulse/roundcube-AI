@@ -3003,8 +3003,8 @@ textarea:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
 [tabindex]:focus-visible {
-    outline: 2px solid #2563eb !important;
-    outline-offset: 2px !important;
+    outline: none !important;
+    outline-offset: 0 !important;
 }
 
 /* Disabled Form Elements */
@@ -3095,8 +3095,8 @@ body.dark-mode textarea:focus-visible,
 html.dark-mode a:focus-visible,
 body.dark-mode a:focus-visible,
 .dark-mode a:focus-visible {
-    outline: 2px solid #60a5fa !important;
-    outline-offset: 2px !important;
+    outline: none !important;
+    outline-offset: 0 !important;
 }
 
 /* =========================================================================
@@ -3246,32 +3246,38 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 #messagelist-header .toolbar a.junk,
 #messagelist-header .toolbar a.notjunk,
 ul.menu.toolbar a.junk,
-ul.menu.toolbar a.notjunk {
-    display: block !important;
-    float: left !important;
-    height: 100% !important;
+ul.menu.toolbar a.notjunk,
+.header .toolbar a.button,
+.header a.button,
+#mailtoolbar a.button,
+#messagetoolbar a.button,
+#messagelist-header .toolbar a.button,
+.toolbar a.button {
+    display: inline-block !important;
+    float: none !important;
+    height: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    width: auto !important;
     border: 0 !important;
-    padding: .45rem !important;
-    margin: 0 !important;
-    line-height: 1.5 !important;
+    padding: 0 4px !important;
+    margin: 0 1px !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
     cursor: pointer !important;
     text-align: center !important;
-    min-width: 3.2rem;
-    max-width: 6rem;
-    width: auto;
     position: relative !important;
     background: transparent;
     color: inherit;
     text-decoration: none !important;
-    vertical-align: top !important;
     box-sizing: border-box !important;
 }
 
 ul.menu.toolbar > li.lpai-toolbar-spam-item {
     display: inline-block !important;
-    float: left !important;
-    vertical-align: top !important;
-    height: 100% !important;
+    float: none !important;
+    vertical-align: middle !important;
+    height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
 }
@@ -3326,14 +3332,16 @@ html.dark-mode .toolbar a.notjunk:hover {
 .header a.junk:before,
 .toolbar a.junk:before,
 ul.menu.toolbar a.junk:before,
-a.junk.xi-shield:before,
-.xi-shield:before,
+a.junk.xi-junk:before,
+.xi-junk:before,
 #messagetoolbar a.notjunk:before,
 #mailtoolbar a.notjunk:before,
 .header .toolbar a.notjunk:before,
 .header a.notjunk:before,
 .toolbar a.notjunk:before,
 ul.menu.toolbar a.notjunk:before,
+a.notjunk.xi-not-junk:before,
+.xi-not-junk:before,
 .toolbar a.button.lpai-toolbar-spam-btn:before,
 .toolbar a.lpai-toolbar-spam-btn:before,
 #mailtoolbar a.button.lpai-toolbar-spam-btn:before,
@@ -3344,7 +3352,15 @@ ul.menu.toolbar a.notjunk:before,
 .header .toolbar a.lpai-toolbar-spam-btn:before,
 .header a.button.lpai-toolbar-spam-btn:before,
 .header a.lpai-toolbar-spam-btn:before,
-.lpai-topbar-spam-btn:before {
+.lpai-topbar-spam-btn:before,
+#messagelist-header a.junk:before,
+#messagelist-header a.notjunk:before,
+#messagelist-header .toolbar a.junk:before,
+#messagelist-header .toolbar a.notjunk:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header a.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.lpai-toolbar-spam-btn:before {
     font-family: RcpIconFont, Icons, sans-serif !important;
     font-weight: normal !important;
     font-style: normal !important;
@@ -3355,29 +3371,18 @@ ul.menu.toolbar a.notjunk:before,
     -moz-osx-font-smoothing: grayscale;
     background-image: none !important;
     text-indent: 0 !important;
-    display: block !important;
+    display: inline-block !important;
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
     top: 0 !important;
     font-size: 1.5em !important;
     width: auto !important;
-    height: 1.75rem !important;
-    line-height: 1.75rem !important;
+    height: auto !important;
+    line-height: 1 !important;
     text-align: center !important;
+    vertical-align: middle !important;
     transition: color 0.15s ease, transform 0.15s ease !important;
-}
-
-/* Left cluster (#messagelist-header): Sibling header buttons use top: 0.6rem */
-#messagelist-header a.junk:before,
-#messagelist-header a.notjunk:before,
-#messagelist-header .toolbar a.junk:before,
-#messagelist-header .toolbar a.notjunk:before,
-#messagelist-header a.button.lpai-toolbar-spam-btn:before,
-#messagelist-header a.lpai-toolbar-spam-btn:before,
-#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn:before,
-#messagelist-header .toolbar a.lpai-toolbar-spam-btn:before {
-    top: 0.6rem !important;
 }
 
 /* SVG icon rules: support 24x24 centered SVG shield icons inheriting colors and stroke */
@@ -3447,7 +3452,7 @@ ul.menu.toolbar a.notjunk svg {
     transition: color 0.15s ease, transform 0.15s ease !important;
 }
 
-/* Junk / Spam Icon Glyphs (Shield Icon - Outline \ec76, Solid \eaf7, Material \ed3e. Legacy fallback: \ead3, \ed2b) */
+/* Junk / Spam Icon Glyphs (xskin outline junk: \ec63, outline not-junk: \ec64) */
 #messagetoolbar a.junk:before,
 #mailtoolbar a.junk:before,
 #messagelist-header a.junk:before,
@@ -3456,8 +3461,8 @@ ul.menu.toolbar a.notjunk svg {
 .header a.junk:before,
 .toolbar a.junk:before,
 ul.menu.toolbar a.junk:before,
-a.junk.xi-shield:before,
-.xi-shield:before,
+a.junk.xi-junk:before,
+.xi-junk:before,
 .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 .toolbar a.button.junk.lpai-toolbar-spam-btn:before,
 .toolbar a.button.markasjunk2.lpai-toolbar-spam-btn:before,
@@ -3472,7 +3477,7 @@ a.junk.xi-shield:before,
 .sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 .lpai-topbar-spam-btn.lpai-btn-spam:before,
 .lpai-sidebar-spam-btn.lpai-btn-spam:before {
-    content: "\eaf7" !important; /* shield solid, fallback: \ead3 */
+    content: "\ec63" !important; /* xskin outline icon "junk", fallback: \ead3 */
 }
 
 html.xicons-traditional #messagetoolbar a.junk:before,
@@ -3483,15 +3488,15 @@ html.xicons-traditional .header .toolbar a.junk:before,
 html.xicons-traditional .header a.junk:before,
 html.xicons-traditional .toolbar a.junk:before,
 html.xicons-traditional ul.menu.toolbar a.junk:before,
-html.xicons-traditional a.junk.xi-shield:before,
-html.xicons-traditional .xi-shield:before,
+html.xicons-traditional a.junk.xi-junk:before,
+html.xicons-traditional .xi-junk:before,
 html.xicons-traditional .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-traditional #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-traditional #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-traditional .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-traditional .lpai-topbar-spam-btn.lpai-btn-spam:before,
 html.xicons-traditional .lpai-sidebar-spam-btn.lpai-btn-spam:before {
-    content: "\ebb0" !important; /* shield traditional, fallback: \eb9b */
+    content: "\eb9b" !important; /* junk traditional */
 }
 
 html.xicons-outlined #messagetoolbar a.junk:before,
@@ -3502,15 +3507,15 @@ html.xicons-outlined .header .toolbar a.junk:before,
 html.xicons-outlined .header a.junk:before,
 html.xicons-outlined .toolbar a.junk:before,
 html.xicons-outlined ul.menu.toolbar a.junk:before,
-html.xicons-outlined a.junk.xi-shield:before,
-html.xicons-outlined .xi-shield:before,
+html.xicons-outlined a.junk.xi-junk:before,
+html.xicons-outlined .xi-junk:before,
 html.xicons-outlined .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-outlined #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-outlined #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-outlined .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-outlined .lpai-topbar-spam-btn.lpai-btn-spam:before,
 html.xicons-outlined .lpai-sidebar-spam-btn.lpai-btn-spam:before {
-    content: "\ec76" !important; /* shield outline, fallback: \ec63 */
+    content: "\ec63" !important; /* xskin outline icon "junk" */
 }
 
 html.xicons-material #messagetoolbar a.junk:before,
@@ -3521,15 +3526,15 @@ html.xicons-material .header .toolbar a.junk:before,
 html.xicons-material .header a.junk:before,
 html.xicons-material .toolbar a.junk:before,
 html.xicons-material ul.menu.toolbar a.junk:before,
-html.xicons-material a.junk.xi-shield:before,
-html.xicons-material .xi-shield:before,
+html.xicons-material a.junk.xi-junk:before,
+html.xicons-material .xi-junk:before,
 html.xicons-material .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-material #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-material #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-material .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-material .lpai-topbar-spam-btn.lpai-btn-spam:before,
 html.xicons-material .lpai-sidebar-spam-btn.lpai-btn-spam:before {
-    content: "\ed3e" !important; /* shield material */
+    content: "\ed2b" !important; /* material junk */
 }
 html.xicons-material .toolbar a.button.markasjunk2:before {
     content: "\ed2b" !important; /* legacy material junk fallback */
@@ -3543,15 +3548,15 @@ html.xicons-cartoon .header .toolbar a.junk:before,
 html.xicons-cartoon .header a.junk:before,
 html.xicons-cartoon .toolbar a.junk:before,
 html.xicons-cartoon ul.menu.toolbar a.junk:before,
-html.xicons-cartoon a.junk.xi-shield:before,
-html.xicons-cartoon .xi-shield:before,
+html.xicons-cartoon a.junk.xi-junk:before,
+html.xicons-cartoon .xi-junk:before,
 html.xicons-cartoon .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-cartoon #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-cartoon #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-cartoon .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
 html.xicons-cartoon .lpai-topbar-spam-btn.lpai-btn-spam:before,
 html.xicons-cartoon .lpai-sidebar-spam-btn.lpai-btn-spam:before {
-    content: "\ee06" !important; /* shield cartoon, fallback: \edf3 */
+    content: "\edf3" !important; /* cartoon junk, fallback: \edf3 */
 }
 
 /* Ham / Not Junk Icon Glyphs */
@@ -3577,7 +3582,7 @@ ul.menu.toolbar a.notjunk:before,
 .sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
 .lpai-topbar-spam-btn.lpai-btn-ham:before,
 .lpai-sidebar-spam-btn.lpai-btn-ham:before {
-    content: "\ead4" !important;
+    content: "\ec64" !important; /* xskin outline icon "not-junk" */
 }
 
 html.xicons-traditional #messagetoolbar a.notjunk:before,
@@ -3646,6 +3651,134 @@ html.xicons-cartoon .header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
 html.xicons-cartoon .lpai-topbar-spam-btn.lpai-btn-ham:before,
 html.xicons-cartoon .lpai-sidebar-spam-btn.lpai-btn-ham:before {
     content: "\edf4" !important;
+}
+
+/* =========================================================================
+   Save Draft Icon Glyphs (xskin outline icon "save": \ec2e, class: xi-save)
+   ========================================================================= */
+
+#messagetoolbar a.save:before,
+#messagetoolbar a.savedraft:before,
+#messagetoolbar a.draft:before,
+#messagetoolbar #btn-save-draft-toolbar:before,
+#mailtoolbar a.save:before,
+#mailtoolbar a.savedraft:before,
+.header .toolbar a.save:before,
+.header .toolbar a.savedraft:before,
+.header a.save:before,
+.header a.savedraft:before,
+.toolbar a.save:before,
+.toolbar a.savedraft:before,
+.toolbar a.button.save:before,
+.toolbar a.button.savedraft:before,
+ul.menu.toolbar a.save:before,
+ul.menu.toolbar a.savedraft:before,
+a.save.xi-save:before,
+a.savedraft.xi-save:before,
+a.draft.xi-save:before,
+.xi-save:before,
+#layout-sidebar a.save:before,
+#layout-sidebar a.savedraft:before,
+#layout-sidebar a.draft:before,
+#layout-sidebar #btn-save-draft-toolbar:before,
+#layout-menu a.save:before,
+#layout-menu a.savedraft:before,
+#layout-menu #taskmenu a.save:before,
+#layout-menu #taskmenu a.savedraft:before {
+    content: "\ec2e" !important; /* xskin outline icon "save" */
+    font-family: RcpIconFont, Icons, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: none !important;
+    text-indent: 0 !important;
+    display: inline-block !important;
+    float: none !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    top: 0 !important;
+    font-size: 1.5em !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    transition: color 0.2s ease, transform 0.2s ease !important;
+}
+
+html.xicons-traditional #messagetoolbar a.save:before,
+html.xicons-traditional #messagetoolbar a.savedraft:before,
+html.xicons-traditional #messagetoolbar #btn-save-draft-toolbar:before,
+html.xicons-traditional .toolbar a.button.savedraft:before,
+html.xicons-traditional .toolbar a.save:before,
+html.xicons-traditional a.save.xi-save:before,
+html.xicons-traditional a.savedraft.xi-save:before,
+html.xicons-traditional .xi-save:before,
+html.xicons-traditional #layout-sidebar a.save:before,
+html.xicons-traditional #layout-sidebar a.savedraft:before,
+html.xicons-traditional #layout-sidebar #btn-save-draft-toolbar:before {
+    content: "\eb66" !important; /* save traditional */
+}
+
+html.xicons-outlined #messagetoolbar a.save:before,
+html.xicons-outlined #messagetoolbar a.savedraft:before,
+html.xicons-outlined #messagetoolbar #btn-save-draft-toolbar:before,
+html.xicons-outlined .toolbar a.button.savedraft:before,
+html.xicons-outlined .toolbar a.save:before,
+html.xicons-outlined a.save.xi-save:before,
+html.xicons-outlined a.savedraft.xi-save:before,
+html.xicons-outlined .xi-save:before,
+html.xicons-outlined #layout-sidebar a.save:before,
+html.xicons-outlined #layout-sidebar a.savedraft:before,
+html.xicons-outlined #layout-sidebar #btn-save-draft-toolbar:before {
+    content: "\ec2e" !important; /* xskin outline icon "save" */
+}
+
+html.xicons-material #messagetoolbar a.save:before,
+html.xicons-material #messagetoolbar a.savedraft:before,
+html.xicons-material #messagetoolbar #btn-save-draft-toolbar:before,
+html.xicons-material .toolbar a.button.savedraft:before,
+html.xicons-material .toolbar a.save:before,
+html.xicons-material a.save.xi-save:before,
+html.xicons-material a.savedraft.xi-save:before,
+html.xicons-material .xi-save:before,
+html.xicons-material #layout-sidebar a.save:before,
+html.xicons-material #layout-sidebar a.savedraft:before,
+html.xicons-material #layout-sidebar #btn-save-draft-toolbar:before {
+    content: "\ecf6" !important; /* save material */
+}
+
+html.xicons-cartoon #messagetoolbar a.save:before,
+html.xicons-cartoon #messagetoolbar a.savedraft:before,
+html.xicons-cartoon #messagetoolbar #btn-save-draft-toolbar:before,
+html.xicons-cartoon .toolbar a.button.savedraft:before,
+html.xicons-cartoon .toolbar a.save:before,
+html.xicons-cartoon a.save.xi-save:before,
+html.xicons-cartoon a.savedraft.xi-save:before,
+html.xicons-cartoon .xi-save:before,
+html.xicons-cartoon #layout-sidebar a.save:before,
+html.xicons-cartoon #layout-sidebar a.savedraft:before,
+html.xicons-cartoon #layout-sidebar #btn-save-draft-toolbar:before {
+    content: "\edbe" !important; /* save cartoon */
+}
+
+/* Suppress inline SVG inside save draft buttons so xskin outline font icon renders cleanly */
+#messagetoolbar a.save svg,
+#messagetoolbar a.savedraft svg,
+#messagetoolbar #btn-save-draft-toolbar svg,
+#layout-sidebar a.save svg,
+#layout-sidebar a.savedraft svg,
+#layout-sidebar #btn-save-draft-toolbar svg,
+.toolbar a.button.save svg,
+.toolbar a.button.savedraft svg,
+a.save.xi-save svg,
+a.savedraft.xi-save svg,
+.xi-save svg {
+    display: none !important;
 }
 
 /* Topbar button hover: subtle uniform background circle/pill */
