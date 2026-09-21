@@ -328,16 +328,16 @@ assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
 assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
 assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
-assert_true(strpos($gp_css, "vertical-align: middle !important;") !== false, "gmail_plus style.css aligns spam button vertically centered with sibling buttons");
-assert_true(strpos($el_css, "vertical-align: middle !important;") !== false, "elastic style.css aligns spam button vertically centered with sibling buttons");
+assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon in messagelist-header with top: 0.6rem");
+assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon in messagelist-header with top: 0.6rem");
 assert_true(strpos($gp_css, "top: 0 !important;") !== false, "gmail_plus style.css sets top: 0 for mailtoolbar spam button icon");
 assert_true(strpos($el_css, "top: 0 !important;") !== false, "elastic style.css sets top: 0 for mailtoolbar spam button icon");
 assert_true(strpos($gp_css, "#mailtoolbar a.junk") !== false, "gmail_plus style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($el_css, "#mailtoolbar a.junk") !== false, "elastic style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_plus style.css aligns spam icon font size with sibling buttons (1.5em)");
 assert_true(strpos($el_css, "font-size: 1.5em !important;") !== false, "elastic style.css aligns spam icon font size with sibling buttons (1.5em)");
-assert_true(strpos($gp_css, "display: inline-block !important;") !== false, "gmail_plus style.css sets uniform inline-block display for toolbar buttons");
-assert_true(strpos($el_css, "display: inline-block !important;") !== false, "elastic style.css sets uniform inline-block display for toolbar buttons");
+assert_true(strpos($gp_css, "float: left !important;") !== false, "gmail_plus style.css floats toolbar spam button left to match sibling buttons");
+assert_true(strpos($el_css, "float: left !important;") !== false, "elastic style.css floats toolbar spam button left to match sibling buttons");
 
 // --- Test Group 13: Incoming Spam Filtering & SPAM Label Badges Verification ---
 echo "\n--- Group 13: Incoming Spam Filtering & SPAM Label Badges Verification --- \n";
