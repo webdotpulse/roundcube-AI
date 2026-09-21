@@ -1,0 +1,66 @@
+/* Intentionally (almost) empty.
+ * Roundcube force-loads the jqueryui plugin and resolves its theme CSS from the active skin first
+ * (plugins/jqueryui/jqueryui.php). Claiming that slot with this file means jQuery UI contributes
+ * no visible styling: dialogs, date pickers and menus are rendered by the skin's own components.
+ * Only drag & drop helpers (message → folder) still come from jQuery UI, which needs no CSS. */
+.ui-helper-hidden {
+  display: none;
+}
+.ui-helper-hidden-accessible {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+.ui-draggable-dragging {
+  z-index: 1000;
+}
+#ui-datepicker-div {
+  display: none !important;
+}
+
+/* jQuery UI tabs (plugins: hotkeys) — chips row + plain panel */
+.ui-tabs .ui-tabs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 8px 0 12px;
+  padding: 0;
+}
+.ui-tabs .ui-tabs-nav li {
+  margin: 0;
+}
+.ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+  display: inline-block;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--color-outline);
+  border-radius: 16px;
+  line-height: 30px;
+  font-size: var(--text-sm);
+  color: var(--color-on-surface);
+  text-decoration: none;
+}
+.ui-tabs .ui-tabs-nav .ui-tabs-active .ui-tabs-anchor {
+  background: var(--color-secondary-container);
+  border-color: transparent;
+  color: var(--color-on-secondary-container);
+  font-weight: 500;
+}
+.ui-tabs .ui-tabs-panel {
+  padding: 0;
+}
+.ui-helper-clearfix::after {
+  content: '';
+  display: table;
+  clear: both;
+}
+/* fixed-header clones core makes for tables in dialogs are pointless there */
+.gm-dialog table.fixedcopy {
+  display: none;
+}

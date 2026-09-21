@@ -1,0 +1,23 @@
+{
+  "name": "Gmail",
+  "author": "Ahmed Nefzaoui",
+  "license": "Creative Commons Attribution-ShareAlike 3.0",
+  "license-url": "https://creativecommons.org/licenses/by-sa/3.0/",
+  "url": "https://github.com/anefzaoui/roundcube-ultimate-gmail-theme",
+  "extends": "elastic",
+  "localization": true,
+  "config": {
+    "supported_layouts": ["widescreen", "desktop", "list"],
+    "jquery_ui_colors_theme": "bootstrap",
+    "embed_css_location": "/styles/embed.css",
+    "editor_css_location": "/styles/embed.css",
+    "dark_mode_support": true,
+    "media_browser_css_location": "none",
+    "additional_logo_types": ["dark", "small", "small-dark"]
+  },
+  "meta": {
+    "viewport": "width=device-width, initial-scale=1.0, viewport-fit=cover",
+    "theme-color": "#f8fafd",
+    "color-scheme": "light dark"
+  }
+}

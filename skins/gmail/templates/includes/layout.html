@@ -1,0 +1,57 @@
+<roundcube:add_label name="back" />
+<roundcube:add_label name="errortitle" />
+<roundcube:add_label name="options" />
+<roundcube:add_label name="plaintoggle" />
+<roundcube:add_label name="htmltoggle" />
+<roundcube:add_label name="previous" />
+<roundcube:add_label name="next" />
+<roundcube:add_label name="select" />
+<roundcube:add_label name="close" />
+<roundcube:add_label name="cancel" />
+<roundcube:add_label name="save" />
+<roundcube:add_label name="discard" />
+<roundcube:add_label name="savemessage" />
+<roundcube:add_label name="errorsaving" />
+<roundcube:add_label name="ok" />
+<roundcube:add_label name="browse" />
+<roundcube:add_label name="choosefile" />
+<roundcube:add_label name="choosefiles" />
+<roundcube:add_label name="loading" />
+<roundcube:add_label name="print" />
+<roundcube:add_label name="darkmode" />
+<roundcube:add_label name="lightmode" />
+<roundcube:object name="doctype" value="html5" />
+<roundcube:if condition="!env:framed || env:extwin" />
+<html>
+<roundcube:else />
+<html class="iframe">
+<roundcube:endif />
+<head>
+    <roundcube:object name="meta" />
+    <roundcube:object name="links" />
+    <link rel="stylesheet" href="/styles/styles.css">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/images/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <roundcube:link rel="stylesheet" href="/styles/print.css" condition="env:action == 'print'" />
+    <roundcube:if condition="env:action != 'print' && config:dark_mode_support" />
+    <script>
+    /* Pre-paint theme resolution (before CSS applies → no flash). Tri-state cookie
+       colorMode=dark|light|auto; anything else = auto = follow prefers-color-scheme. */
+    (function () {
+        try {
+            var m = (document.cookie.match(/(?:^|;\s*)colorMode=(dark|light|auto)/) || [])[1] || 'auto';
+            var dark = m === 'dark' || (m === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var h = document.documentElement;
+            if (dark) h.className += ' dark-mode';
+            if (window.frameElement && window.frameElement.classList.contains('gm-cwin-frame')) h.className += ' gm-in-popup';
+            h.setAttribute('data-theme', m);
+        } catch (e) {}
+    })();
+    </script>
+    <roundcube:endif />
+</head>
+<body class="task-<roundcube:exp expression="env:error_task ?: env:task ?: 'error'"> action-<roundcube:exp expression="asciiwords(env:action, true, '-') ?: 'none'"><roundcube:if condition="env:extwin" /> extwin<roundcube:endif /><roundcube:if condition="env:framed" /> framed<roundcube:endif />">
+    <roundcube:if condition="!env:framed || env:extwin" />
+    <div id="<roundcube:exp expression="env:action == 'print' ? 'print-' : ''">layout">
+    <roundcube:endif />

@@ -1,0 +1,79 @@
+<roundcube:add_label name="menu" />
+<roundcube:add_label name="searchmod" />
+<roundcube:add_label name="about" />
+<roundcube:add_label name="logout" />
+<roundcube:add_label name="settings" />
+<roundcube:add_label name="mail" />
+<roundcube:add_label name="contacts" />
+<div id="layout-header" role="banner">
+    <div class="gm-header-start">
+        <a href="#nav" class="gm-icon-btn gm-icon-btn-lg" id="nav-toggle" role="button" title="<roundcube:label name="menu" />" onclick="return UI.toggle_nav()"><i class="ico ico-lg ico-menu" aria-hidden="true"></i><span class="voice"><roundcube:label name="menu" /></span></a>
+        <a href="./" class="gm-brand" id="brand">
+            <roundcube:object name="logo" src="/images/logo.svg" id="logo" alt="Logo" />
+            <span class="gm-brand-name"><roundcube:object name="productname" /></span>
+        </a>
+    </div>
+    <div class="gm-header-center">
+        <roundcube:if condition="env:task == 'mail' && env:action != 'compose'" />
+            <roundcube:object name="searchform" id="mailsearchform" wrapper="gm-search" label="mailquicksearchbox" buttontitle="findmail" options="searchmenu" ariatag="h2" />
+        <roundcube:elseif condition="env:task == 'addressbook' && env:action == ''" />
+            <roundcube:object name="searchform" id="contactsearchform" wrapper="gm-search" label="contactsearchbox" buttontitle="findcontacts" options="searchmenu" ariatag="h2" />
+        <roundcube:endif />
+    </div>
+    <div class="gm-header-end">
+        <roundcube:if condition="config:support_url" />
+            <a href="<roundcube:var name='config:support_url' />" target="_blank" rel="noopener" class="gm-icon-btn" title="<roundcube:label name="support" />"><i class="ico ico-lg ico-help" aria-hidden="true"></i></a>
+        <roundcube:endif />
+        <roundcube:if condition="config:dark_mode_support" />
+            <a href="#theme" class="gm-icon-btn" id="theme-toggle" role="button" title="<roundcube:label name="darkmode" />" onclick="return UI.theme.cycle()"><i class="ico ico-lg ico-dark-mode" aria-hidden="true"></i></a>
+        <roundcube:endif />
+        <roundcube:button command="settings" type="link" class="gm-icon-btn gm-icon-settings" classSel="gm-icon-btn gm-icon-settings selected" title="settings" label="settings" innerclass="voice" />
+        <a href="#apps" class="gm-icon-btn" id="apps-toggle" role="button" title="<roundcube:label name="menu" />" data-popup="apps-menu"><i class="ico ico-lg ico-apps" aria-hidden="true"></i></a>
+        <!-- anchor for identity_switch: it splices its account dropdown before this exact span -->
+        <span class="header-title username"><roundcube:object name="username" /></span>
+        <a href="#account" class="gm-avatar" id="account-toggle" role="button" data-popup="account-menu" title="<roundcube:object name="username" />">
+            <span class="gm-avatar-initial" data-username="<roundcube:object name="username" />"></span>
+        </a>
+    </div>
+</div>
+
+<div id="apps-menu" class="popupmenu gm-menu gm-apps-menu" data-align="right">
+    <h3 id="aria-label-apps-menu" class="voice"><roundcube:label name="menu" /></h3>
+    <div class="gm-apps-card">
+        <div class="gm-apps-title"><roundcube:object name="productname" /></div>
+        <ul class="menu listing" role="menu" aria-labelledby="aria-label-apps-menu">
+            <roundcube:button command="mail" type="link-menuitem" label="mail" class="mail" classSel="mail selected" />
+            <roundcube:button command="addressbook" type="link-menuitem" label="contacts" class="contacts" classSel="contacts selected" />
+            <roundcube:button command="settings" type="link-menuitem" label="settings" class="settings" classSel="settings selected" />
+            <roundcube:container name="taskbar" id="taskmenu" />
+        </ul>
+    </div>
+    <div class="gm-apps-more">
+        <ul class="menu listing" role="menu">
+            <roundcube:button name="about" label="about" type="link-menuitem" class="about" onclick="return UI.about_dialog(this)" />
+            <roundcube:if condition="config:support_url" />
+                <li role="menuitem"><a href="<roundcube:var name='config:support_url' />" target="_blank" rel="noopener" class="help"><roundcube:label name="support" /></a></li>
+            <roundcube:endif />
+            <roundcube:button command="logout" label="logout" type="link-menuitem" class="logout" />
+        </ul>
+    </div>
+</div>
+
+<div id="account-menu" class="popupmenu gm-menu gm-account-menu" data-align="right">
+    <h3 id="aria-label-account-menu" class="voice"><roundcube:object name="username" /></h3>
+    <div class="gm-account-email"><roundcube:object name="username" /></div>
+    <div class="gm-account-card">
+        <span class="gm-avatar gm-avatar-xl"><span class="gm-avatar-initial" data-username="<roundcube:object name="username" />"></span></span>
+        <div class="gm-account-hi"><roundcube:object name="productname" /></div>
+        <roundcube:button command="settings" type="link" class="gm-btn gm-btn-outlined gm-account-manage" label="settings" title="settings" />
+    </div>
+    <div class="gm-account-actions">
+        <ul class="menu listing" role="menu" aria-labelledby="aria-label-account-menu">
+            <roundcube:button name="about" label="about" type="link-menuitem" class="about" onclick="return UI.about_dialog(this)" />
+            <roundcube:if condition="config:support_url" />
+                <li role="menuitem"><a href="<roundcube:var name='config:support_url' />" target="_blank" rel="noopener" class="help"><roundcube:label name="support" /></a></li>
+            <roundcube:endif />
+            <roundcube:button command="logout" label="logout" type="link-menuitem" class="logout" />
+        </ul>
+    </div>
+</div>
