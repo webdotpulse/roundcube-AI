@@ -45,6 +45,31 @@ $(document).ready(function () {
     }
 
     /**
+     * Check if a message UID corresponds to an embedded sent reply
+     */
+    function is_reply_message(uid) {
+        if (!uid) {
+            return false;
+        }
+
+        var msg = rcmail.env.messages ? rcmail.env.messages[uid] : null;
+        if (msg) {
+            if (msg.flags && (msg.flags.is_reply || msg.flags.is_sent)) {
+                return true;
+            }
+            if (msg.mbox && rcmail.env.sent_mailbox && msg.mbox === rcmail.env.sent_mailbox) {
+                return true;
+            }
+        }
+
+        if (rcmail.env.sent_mailbox && /^[0-9]+-(.+)$/.test(uid)) {
+            return RegExp.$1 === rcmail.env.sent_mailbox;
+        }
+
+        return false;
+    }
+
+    /**
      * Update thread root message row with a draft indicator badge
      */
     function update_thread_root_badge(uid) {
@@ -77,6 +102,28 @@ $(document).ready(function () {
 
             $subjectSpan.prepend(badgeHtml);
         }
+    }
+
+    /**
+     * Update thread root message row with a sent replies indicator
+     */
+    function update_thread_root_reply_badge(uid) {
+        if (!rcmail.message_list) {
+            return;
+        }
+
+        var root_uid = rcmail.message_list.find_root(uid);
+        if (!root_uid || root_uid === uid) {
+            return;
+        }
+
+        var root_row = rcmail.message_list.rows[root_uid];
+        if (!root_row || !root_row.obj) {
+            return;
+        }
+
+        var $rootObj = $(root_row.obj);
+        $rootObj.addClass('thread-has-replies');
     }
 
     /**
@@ -121,6 +168,34 @@ $(document).ready(function () {
         update_thread_root_badge(uid);
     }
 
+    /**
+     * Enhance a sent reply row with classes and badges
+     */
+    function enhance_reply_row(uid, row) {
+        var $row = $(row);
+        $row.addClass('thread-reply-row thread-sent-row');
+
+        var $subjectSpan = $row.find('td.subject a span');
+        if (!$subjectSpan.length) {
+            $subjectSpan = $row.find('td.subject span');
+        }
+
+        var showReplyBadge = rcmail.env.thread_drafts_show_reply_badge !== false;
+        if (showReplyBadge && $subjectSpan.length && !$subjectSpan.find('.rcube-thread-reply-badge').length) {
+            var label = rcmail.gettext('reply', 'thread_drafts') || 'Sent';
+
+            var badgeHtml = '<span class="rcube-thread-reply-badge">'
+                + '<span class="reply-badge-icon">&#8617;</span> '
+                + rcmail.quote_html(label)
+                + '</span> ';
+
+            $subjectSpan.prepend(badgeHtml);
+        }
+
+        // Mark thread root
+        update_thread_root_reply_badge(uid);
+    }
+
     // Listen for new rows inserted into message list
     rcmail.addEventListener('insertrow', function (props) {
         if (!props || !props.uid || !props.row) {
@@ -129,6 +204,8 @@ $(document).ready(function () {
 
         if (is_draft_message(props.uid)) {
             enhance_draft_row(props.uid, props.row);
+        } else if (is_reply_message(props.uid)) {
+            enhance_reply_row(props.uid, props.row);
         }
     });
 
@@ -144,6 +221,12 @@ $(document).ready(function () {
                     enhance_draft_row(uid, row.obj);
                 } else {
                     update_thread_root_badge(uid);
+                }
+            } else if (is_reply_message(uid)) {
+                if (row.obj && !$(row.obj).hasClass('thread-reply-row')) {
+                    enhance_reply_row(uid, row.obj);
+                } else {
+                    update_thread_root_reply_badge(uid);
                 }
             }
         });

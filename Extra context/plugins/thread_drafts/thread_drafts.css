@@ -94,3 +94,69 @@ tr.thread-draft-row td.subject a {
     padding: 4px 12px;
     border-radius: 4px;
 }
+
+/* Sent reply message row styling */
+tr.thread-reply-row,
+tr.thread-sent-row {
+    background-color: rgba(26, 115, 232, 0.04);
+}
+
+tr.thread-reply-row:hover,
+tr.thread-sent-row:hover {
+    background-color: rgba(26, 115, 232, 0.08) !important;
+}
+
+/* Sent reply pill badge on the message row */
+.rcube-thread-reply-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 7px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-style: normal;
+    line-height: 1.35;
+    border-radius: 12px;
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    border: 1px solid #d2e3fc;
+    vertical-align: middle;
+    margin-right: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    letter-spacing: 0.02em;
+}
+
+.rcube-thread-reply-badge .reply-badge-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+/* Indicator badge on the thread root message for replies */
+.rcube-thread-root-reply-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-style: normal;
+    line-height: 1.3;
+    border-radius: 10px;
+    background-color: #e8f0fe;
+    color: #1a73e8;
+    border: 1px solid #d2e3fc;
+    vertical-align: middle;
+    margin-right: 5px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.rcube-thread-root-reply-badge .reply-badge-icon {
+    font-size: 0.8rem;
+}
+
+/* Prefix in From/To column for sent replies */
+.reply-to-prefix {
+    font-weight: 600;
+    color: #5f6368;
+    margin-right: 2px;
+}

@@ -2844,41 +2844,57 @@ function lpai_mark_spam() {
         return;
     }
 
-    var mbox = rcmail.env.mailbox || 'INBOX';
-    var lock = rcmail.set_busy(true, 'Tagging message as spam and training filter...');
+    var confirmMsg = (rcmail.labels && (rcmail.labels['lifeprisma_ai.confirm_spam'] || rcmail.labels['confirm_spam'])) ||
+        (typeof rcmail.gettext === 'function' ? (rcmail.gettext('confirm_spam', 'lifeprisma_ai') || rcmail.gettext('lifeprisma_ai.confirm_spam')) : '') || '';
+    if (!confirmMsg || confirmMsg === 'confirm_spam' || confirmMsg === 'lifeprisma_ai.confirm_spam') {
+        confirmMsg = 'Are you sure you want to report the selected message(s) as spam? They will be moved to the Junk folder.';
+    }
 
-    $.ajax({
-        url: rcmail.url('plugin.lifeprisma_ai_spam_tag'),
-        type: 'POST',
-        dataType: 'json',
-        data: {
-            _token: rcmail.env.request_token,
-            _uids: uids,
-            _mbox: mbox
-        },
-        success: function(resp) {
-            rcmail.set_busy(false, null, lock);
-            if (resp && resp.status === 'success') {
-                rcmail.display_message(resp.message || 'Message tagged as spam and moved to Junk folder.', 'confirmation');
-                if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
-                    uids.forEach(function(uid) {
-                        rcmail.message_list.remove_row(uid);
-                    });
+    var proceed = function() {
+        var mbox = rcmail.env.mailbox || 'INBOX';
+        var lock = rcmail.set_busy(true, 'Tagging message as spam and training filter...');
+
+        $.ajax({
+            url: rcmail.url('plugin.lifeprisma_ai_spam_tag'),
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                _token: rcmail.env.request_token,
+                _uids: uids,
+                _mbox: mbox
+            },
+            success: function(resp) {
+                rcmail.set_busy(false, null, lock);
+                if (resp && resp.status === 'success') {
+                    rcmail.display_message(resp.message || 'Message tagged as spam and moved to Junk folder.', 'confirmation');
+                    if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
+                        uids.forEach(function(uid) {
+                            rcmail.message_list.remove_row(uid);
+                        });
+                    }
+                    if (rcmail.env.action === 'show') {
+                        rcmail.command('list');
+                    } else if (typeof rcmail.command === 'function') {
+                        rcmail.command('checkmail');
+                    }
+                } else {
+                    rcmail.display_message((resp && resp.message) ? resp.message : 'Failed to mark message as spam.', 'error');
                 }
-                if (rcmail.env.action === 'show') {
-                    rcmail.command('list');
-                } else if (typeof rcmail.command === 'function') {
-                    rcmail.command('checkmail');
-                }
-            } else {
-                rcmail.display_message((resp && resp.message) ? resp.message : 'Failed to mark message as spam.', 'error');
+            },
+            error: function() {
+                rcmail.set_busy(false, null, lock);
+                rcmail.display_message('Error connecting to server to report spam.', 'error');
             }
-        },
-        error: function() {
-            rcmail.set_busy(false, null, lock);
-            rcmail.display_message('Error connecting to server to report spam.', 'error');
-        }
-    });
+        });
+    };
+
+    if (typeof rcmail.confirm === 'function') {
+        rcmail.confirm(confirmMsg, proceed);
+    } else if (typeof rcmail.confirm_dialog === 'function') {
+        rcmail.confirm_dialog(confirmMsg, 'ok', proceed);
+    } else if (window.confirm(confirmMsg)) {
+        proceed();
+    }
 }
 
 function lpai_mark_ham() {

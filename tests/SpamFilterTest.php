@@ -223,11 +223,24 @@ assert_true(strpos($js_src, "lpai-spam-badge") !== false, "src/lifeprisma_ai.js 
 assert_true(strpos($js_src, "plugin.lifeprisma_ai_spam_tag") !== false, "src/lifeprisma_ai.js calls spam_tag endpoint");
 assert_true(strpos($js_src, "plugin.lifeprisma_ai_spam_untag") !== false, "src/lifeprisma_ai.js calls spam_untag endpoint");
 
+assert_true(strpos($js_src, "confirm_spam") !== false, "src/lifeprisma_ai.js looks up confirm_spam localization");
+assert_true(strpos($js_src, "rcmail.confirm") !== false && strpos($js_src, "window.confirm") !== false, "src/lifeprisma_ai.js prompts confirmation dialog before spam marking");
+
 // Bundle synchronization
 assert_true(strpos($js_min, "lpai_mark_spam") !== false, "lifeprisma_ai.min.js contains compiled lpai_mark_spam");
+assert_true(strpos($js_min, "confirm_spam") !== false, "lifeprisma_ai.min.js contains compiled confirm_spam logic");
 assert_true(strpos($js_elastic, "lpai_mark_spam") !== false, "skins/elastic contains compiled lpai_mark_spam");
 assert_true(strpos($js_gmail, "lpai_mark_spam") !== false, "skins/gmail_plus contains compiled lpai_mark_spam");
 assert_true($js_min === $js_elastic && $js_min === $js_gmail, "All 3 minified JS files are 100% byte-for-byte identical");
+
+// Localization verification
+$labels = [];
+include __DIR__ . '/../localization/en_US.inc';
+assert_true(!empty($labels['confirm_spam']), "localization/en_US.inc defines confirm_spam");
+
+$labels = [];
+include __DIR__ . '/../localization/nl_NL.inc';
+assert_true(!empty($labels['confirm_spam']), "localization/nl_NL.inc defines confirm_spam");
 
 // --- Test Group 9: CSS Skin Styles Verification ---
 echo "\n--- Group 9: Skin CSS Styles Verification --- \n";

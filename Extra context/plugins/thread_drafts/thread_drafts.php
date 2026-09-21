@@ -19,6 +19,9 @@ class thread_drafts extends rcube_plugin
     /** @var array Request-level cache for drafts headers */
     protected $drafts_cache = null;
 
+    /** @var array Request-level cache for sent replies headers */
+    protected $replies_cache = null;
+
     /**
      * Plugin initialization
      */
@@ -65,6 +68,13 @@ class thread_drafts extends rcube_plugin
             // Export settings to client environment
             if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
                 $this->rc->output->set_env('thread_drafts_show_root_badge', (bool) $this->get_config('thread_drafts_show_root_badge', true));
+                $this->rc->output->set_env('thread_drafts_show_reply_badge', (bool) $this->get_config('thread_drafts_show_reply_badge', true));
+                if ($drafts_mbox = $this->rc->config->get('drafts_mbox')) {
+                    $this->rc->output->set_env('drafts_mailbox', $drafts_mbox);
+                }
+                if ($sent_mbox = $this->rc->config->get('sent_mbox')) {
+                    $this->rc->output->set_env('sent_mailbox', $sent_mbox);
+                }
             }
         } elseif ($this->rc->task === 'settings') {
             $this->add_hook('preferences_list', [$this, 'preferences_list']);
@@ -85,6 +95,36 @@ class thread_drafts extends rcube_plugin
         }
 
         return (bool) $this->rc->config->get('thread_drafts_enabled', true);
+    }
+
+    /**
+     * Check if drafts threading is enabled
+     *
+     * @return bool
+     */
+    public function is_drafts_enabled()
+    {
+        $dont_override = (array) $this->rc->config->get('dont_override', []);
+        if (in_array('thread_drafts_include_drafts', $dont_override)) {
+            return (bool) $this->rc->config->get('thread_drafts_include_drafts', true);
+        }
+
+        return (bool) $this->rc->config->get('thread_drafts_include_drafts', true);
+    }
+
+    /**
+     * Check if sent replies threading is enabled
+     *
+     * @return bool
+     */
+    public function is_replies_enabled()
+    {
+        $dont_override = (array) $this->rc->config->get('dont_override', []);
+        if (in_array('thread_drafts_include_replies', $dont_override)) {
+            return (bool) $this->rc->config->get('thread_drafts_include_replies', true);
+        }
+
+        return (bool) $this->rc->config->get('thread_drafts_include_replies', true);
     }
 
     /**
@@ -140,7 +180,7 @@ class thread_drafts extends rcube_plugin
 
     /**
      * Handler for messages_list hook.
-     * Injects matching active drafts into conversation threads.
+     * Injects matching active drafts and sent replies into conversation threads.
      *
      * @param array $args ['messages' => array, 'cols' => array]
      *
@@ -160,27 +200,40 @@ class thread_drafts extends rcube_plugin
 
             $current_folder = $this->rc->storage->get_folder();
             $drafts_mbox = $this->rc->config->get('drafts_mbox');
+            $sent_mbox = $this->rc->config->get('sent_mbox');
             $trash_mbox = $this->rc->config->get('trash_mbox');
             $junk_mbox = $this->rc->config->get('junk_mbox');
 
-            // Do not inject drafts into the Drafts folder itself or Trash/Junk
-            if (empty($drafts_mbox) || $current_folder === $drafts_mbox
-                || (!empty($trash_mbox) && $current_folder === $trash_mbox)
+            // Do not inject drafts or replies into Trash or Junk
+            if ((!empty($trash_mbox) && $current_folder === $trash_mbox)
                 || (!empty($junk_mbox) && $current_folder === $junk_mbox)
             ) {
                 return $args;
             }
 
-            // Fetch undeleted drafts from Drafts folder
-            $draft_headers = $this->get_active_drafts($drafts_mbox);
-            if (empty($draft_headers)) {
+            $include_drafts = $this->is_drafts_enabled() && !empty($drafts_mbox) && $current_folder !== $drafts_mbox;
+            $include_replies = $this->is_replies_enabled() && !empty($sent_mbox) && $current_folder !== $sent_mbox;
+
+            if (!$include_drafts && !$include_replies) {
                 return $args;
             }
 
-            // Inject matching drafts into the thread hierarchy
-            $args['messages'] = $this->insert_drafts_into_threads(
+            // Fetch undeleted drafts from Drafts folder
+            $draft_headers = $include_drafts ? $this->get_active_drafts($drafts_mbox) : [];
+
+            // Fetch undeleted sent replies from Sent folder
+            $reply_headers = $include_replies ? $this->get_sent_replies($sent_mbox) : [];
+
+            if (empty($draft_headers) && empty($reply_headers)) {
+                return $args;
+            }
+
+            // Inject matching replies and drafts into conversation threads
+            $args['messages'] = $this->insert_conversation_items(
                 $args['messages'],
+                $reply_headers,
                 $draft_headers,
+                $sent_mbox,
                 $drafts_mbox,
                 (bool) $this->get_config('thread_drafts_subject_fallback', false)
             );
@@ -271,6 +324,106 @@ class thread_drafts extends rcube_plugin
     }
 
     /**
+     * Retrieve undeleted sent message headers from the Sent mailbox
+     *
+     * @param string $sent_mbox
+     *
+     * @return array<rcube_message_header>
+     */
+    public function get_sent_replies($sent_mbox)
+    {
+        if ($this->replies_cache !== null) {
+            return $this->replies_cache;
+        }
+
+        $this->replies_cache = [];
+
+        if (empty($sent_mbox) || !$this->rc->storage) {
+            return $this->replies_cache;
+        }
+
+        try {
+            // Check if Sent mailbox has any messages
+            $count = $this->rc->storage->count($sent_mbox, 'EXISTS');
+            if (empty($count)) {
+                return $this->replies_cache;
+            }
+
+            $current_folder = $this->rc->storage->get_folder();
+
+            // Search undeleted sent messages
+            $search_res = $this->rc->storage->search_once($sent_mbox, 'UNDELETED');
+            if (!$search_res || !method_exists($search_res, 'is_empty') || $search_res->is_empty()) {
+                return $this->replies_cache;
+            }
+
+            $uids = $search_res->get();
+            if (empty($uids) || !is_array($uids)) {
+                return $this->replies_cache;
+            }
+
+            // Limit sent replies to most recent N messages for high performance
+            $max_replies = (int) $this->get_config('thread_drafts_max_replies', 100);
+            if ($max_replies > 0 && count($uids) > $max_replies) {
+                $uids = array_slice($uids, -$max_replies);
+            }
+
+            // Fetch sent message headers
+            $this->ensure_fetch_headers();
+            $headers = $this->rc->storage->fetch_headers($sent_mbox, $uids, false);
+
+            // Ensure IMAP connection is restored to current folder
+            if ($current_folder && $current_folder !== $sent_mbox) {
+                $this->rc->storage->set_folder($current_folder);
+                if (!empty($this->rc->storage->conn) && method_exists($this->rc->storage->conn, 'select')) {
+                    $this->rc->storage->conn->select($current_folder);
+                }
+            }
+
+            if (is_array($headers)) {
+                $this->replies_cache = $headers;
+            }
+        } catch (\Throwable $e) {
+            rcube::raise_error([
+                'code'    => 500,
+                'type'    => 'php',
+                'file'    => __FILE__,
+                'line'    => __LINE__,
+                'message' => 'thread_drafts error fetching replies: ' . $e->getMessage(),
+            ], true, false);
+        }
+
+        return $this->replies_cache;
+    }
+
+    /**
+     * Helper to extract an integer Unix timestamp from a message header
+     *
+     * @param rcube_message_header $msg
+     *
+     * @return int
+     */
+    public static function get_message_timestamp($msg)
+    {
+        if (isset($msg->timestamp) && is_numeric($msg->timestamp)) {
+            return (int) $msg->timestamp;
+        }
+        if (!empty($msg->date)) {
+            $ts = strtotime($msg->date);
+            if ($ts !== false) {
+                return $ts;
+            }
+        }
+        if (!empty($msg->internaldate)) {
+            $ts = strtotime($msg->internaldate);
+            if ($ts !== false) {
+                return $ts;
+            }
+        }
+        return 0;
+    }
+
+    /**
      * Clean and normalize a Message-ID string
      *
      * @param string|null $id
@@ -344,27 +497,45 @@ class thread_drafts extends rcube_plugin
     }
 
     /**
-     * Insert matching drafts into the thread hierarchy of messages
+     * Insert matching sent replies and active drafts into conversation threads
      *
-     * @param array<rcube_message_header> $messages Current message headers
-     * @param array<rcube_message_header> $drafts   Draft message headers
-     * @param string                      $drafts_mbox
+     * @param array<rcube_message_header> $messages     Current message headers
+     * @param array<rcube_message_header> $replies      Sent reply headers
+     * @param array<rcube_message_header> $drafts       Active draft headers
+     * @param string                      $sent_mbox    Sent mailbox name
+     * @param string                      $drafts_mbox  Drafts mailbox name
      * @param bool                        $subject_fallback
      *
      * @return array<rcube_message_header>
      */
-    public function insert_drafts_into_threads($messages, $drafts, $drafts_mbox, $subject_fallback = false)
+    public function insert_conversation_items($messages, $replies, $drafts, $sent_mbox, $drafts_mbox, $subject_fallback = false)
     {
-        if (empty($messages) || empty($drafts)) {
+        if (empty($messages) || !is_array($messages)) {
             return $messages;
         }
 
-        // Build index of current message list by Message-ID and UID
+        $has_replies = !empty($replies) && !empty($sent_mbox);
+        $has_drafts = !empty($drafts) && !empty($drafts_mbox);
+
+        if (!$has_replies && !$has_drafts) {
+            return $messages;
+        }
+
+        // Build indexes of current message list by Message-ID, UID, and Subject
         $by_msgid = [];
         $by_uid = [];
         $by_subject = [];
+        $depth_ancestors = [];
 
         foreach ($messages as $idx => $msg) {
+            $msg->_seq = $idx;
+            $d = (int) ($msg->depth ?? 0);
+            $depth_ancestors[$d] = $msg->uid;
+
+            if ($d > 0 && empty($msg->parent_uid) && isset($depth_ancestors[$d - 1])) {
+                $msg->parent_uid = $depth_ancestors[$d - 1];
+            }
+
             if (!empty($msg->messageID)) {
                 $clean_id = self::clean_message_id($msg->messageID);
                 if (strlen($clean_id)) {
@@ -385,65 +556,265 @@ class thread_drafts extends rcube_plugin
             }
         }
 
-        // Identify matched drafts and determine their parent UID
-        $matched_drafts = []; // parent_uid => array of draft headers
+        // 1. Identify and resolve matched sent replies (handling multi-turn reply chains)
+        $matched_replies = []; // parent_uid => array of prepared reply headers
+        if ($has_replies) {
+            $unresolved_replies = $replies;
+            $progress = true;
 
-        foreach ($drafts as $draft) {
-            $parent_uid = $this->find_matching_parent(
-                $draft,
-                $by_msgid,
-                $by_subject,
-                $subject_fallback
-            );
+            while ($progress && !empty($unresolved_replies)) {
+                $progress = false;
+                $remaining = [];
 
-            if ($parent_uid !== null && isset($by_uid[$parent_uid])) {
-                $matched_drafts[$parent_uid][] = $draft;
+                foreach ($unresolved_replies as $reply) {
+                    $parent_uid = $this->find_matching_parent(
+                        $reply,
+                        $by_msgid,
+                        $by_subject,
+                        $subject_fallback
+                    );
+
+                    if ($parent_uid !== null && isset($by_uid[$parent_uid])) {
+                        $parent_depth = (int) ($by_uid[$parent_uid]['header']->depth ?? 0);
+                        $prepared = $this->prepare_reply_header($reply, $parent_uid, $parent_depth + 1, $sent_mbox);
+                        $prepared->_seq = 10000 + count($matched_replies, COUNT_RECURSIVE);
+                        $matched_replies[$parent_uid][] = $prepared;
+
+                        $rep_id = self::clean_message_id($reply->messageID ?? $reply->msgid ?? null);
+                        if (strlen($rep_id)) {
+                            $by_msgid[$rep_id] = $prepared->uid;
+                        }
+                        $by_uid[$prepared->uid] = [
+                            'header' => $prepared,
+                            'index'  => count($by_uid),
+                        ];
+                        $progress = true;
+                    } else {
+                        $remaining[] = $reply;
+                    }
+                }
+                $unresolved_replies = $remaining;
             }
         }
 
-        if (empty($matched_drafts)) {
+        // 2. Identify and resolve matched active drafts
+        $matched_drafts = []; // parent_uid => array of prepared draft headers
+        if ($has_drafts) {
+            foreach ($drafts as $draft) {
+                $parent_uid = $this->find_matching_parent(
+                    $draft,
+                    $by_msgid,
+                    $by_subject,
+                    $subject_fallback
+                );
+
+                if ($parent_uid !== null && isset($by_uid[$parent_uid])) {
+                    $parent_depth = (int) ($by_uid[$parent_uid]['header']->depth ?? 0);
+                    $prepared = $this->prepare_draft_header($draft, $parent_uid, $parent_depth + 1, $drafts_mbox);
+                    $prepared->_seq = 20000 + count($matched_drafts, COUNT_RECURSIVE);
+                    $matched_drafts[$parent_uid][] = $prepared;
+                }
+            }
+        }
+
+        if (empty($matched_replies) && empty($matched_drafts)) {
             return $messages;
         }
 
-        // Prepare and insert drafts into messages array
-        $result = [];
-        $len = count($messages);
-
-        for ($i = 0; $i < $len; $i++) {
-            $msg = $messages[$i];
-            $result[] = $msg;
-            $current_uid = $msg->uid;
-
-            // If this message has matching drafts, insert them after this message and its descendants
-            if (!empty($matched_drafts[$current_uid])) {
-                $msg->has_children = true;
-
-                // Mark thread root
-                $root_header = $this->find_thread_root_header($result, count($result) - 1);
-                if ($root_header) {
-                    $root_header->has_children = true;
-                    if (!isset($root_header->list_flags) || !is_array($root_header->list_flags)) {
-                        $root_header->list_flags = [];
+        // 3. Re-parent incoming messages whose In-Reply-To points to a newly spliced sent reply
+        if (!empty($matched_replies)) {
+            $reply_msgid_to_uid = [];
+            foreach ($matched_replies as $p_uid => $reps) {
+                foreach ($reps as $rep) {
+                    $clean_id = self::clean_message_id($rep->messageID ?? $rep->msgid ?? null);
+                    if (strlen($clean_id)) {
+                        $reply_msgid_to_uid[$clean_id] = $rep->uid;
                     }
-                    $root_header->list_flags['has_draft'] = 1;
                 }
+            }
 
-                // Collect any existing descendants of this message
-                $parent_depth = (int) ($msg->depth ?? 0);
-                while ($i + 1 < $len && isset($messages[$i + 1]->depth) && $messages[$i + 1]->depth > $parent_depth) {
-                    $i++;
-                    $result[] = $messages[$i];
+            if (!empty($reply_msgid_to_uid)) {
+                foreach ($messages as $msg) {
+                    if (!empty($msg->in_reply_to)) {
+                        $clean_in_reply_to = self::clean_message_id($msg->in_reply_to);
+                        if (isset($reply_msgid_to_uid[$clean_in_reply_to])) {
+                            $msg->parent_uid = $reply_msgid_to_uid[$clean_in_reply_to];
+                        }
+                    }
                 }
+            }
+        }
 
-                // Now insert the drafts at the end of this branch
-                foreach ($matched_drafts[$current_uid] as $draft) {
-                    $prepared_draft = $this->prepare_draft_header($draft, $current_uid, $parent_depth + 1, $drafts_mbox);
-                    $result[] = $prepared_draft;
+        // 4. Partition messages into independent threads by root message (depth == 0)
+        $threads = [];
+        $current_thread_index = -1;
+
+        foreach ($messages as $idx => $msg) {
+            $d = (int) ($msg->depth ?? 0);
+            if ($d === 0 || $current_thread_index === -1) {
+                $current_thread_index++;
+                $threads[$current_thread_index] = [];
+            }
+            $threads[$current_thread_index][] = $msg;
+        }
+
+        // 5. Reassemble, chronologically order, and flatten each thread
+        $result = [];
+
+        foreach ($threads as $thread_messages) {
+            $root = $thread_messages[0];
+            $thread_uids = [];
+            foreach ($thread_messages as $tm) {
+                $thread_uids[$tm->uid] = true;
+            }
+
+            // Expand thread_uids with replies attached in this thread
+            $added = true;
+            while ($added) {
+                $added = false;
+                foreach ($matched_replies as $p_uid => $reps) {
+                    if (isset($thread_uids[$p_uid])) {
+                        foreach ($reps as $rep) {
+                            if (!isset($thread_uids[$rep->uid])) {
+                                $thread_uids[$rep->uid] = true;
+                                $added = true;
+                            }
+                        }
+                    }
                 }
+            }
+
+            // Check if this thread has any external items
+            $has_external = false;
+            foreach ($thread_uids as $uid => $_) {
+                if (!empty($matched_replies[$uid]) || !empty($matched_drafts[$uid])) {
+                    $has_external = true;
+                    break;
+                }
+            }
+
+            if (!$has_external) {
+                foreach ($thread_messages as $tm) {
+                    $result[] = $tm;
+                }
+                continue;
+            }
+
+            // Build parent -> children map for this thread
+            $children_by_parent = [];
+
+            // Add existing thread messages (skipping root)
+            for ($i = 1, $len = count($thread_messages); $i < $len; $i++) {
+                $tm = $thread_messages[$i];
+                $p_uid = $tm->parent_uid;
+                if (empty($p_uid) || !isset($thread_uids[$p_uid])) {
+                    $p_uid = $root->uid;
+                }
+                $children_by_parent[$p_uid][] = $tm;
+            }
+
+            // Add matched replies and drafts to children map
+            $thread_has_draft = false;
+            $thread_has_reply = false;
+
+            foreach ($thread_uids as $uid => $_) {
+                if (!empty($matched_replies[$uid])) {
+                    $thread_has_reply = true;
+                    foreach ($matched_replies[$uid] as $rep) {
+                        $children_by_parent[$uid][] = $rep;
+                    }
+                }
+                if (!empty($matched_drafts[$uid])) {
+                    $thread_has_draft = true;
+                    foreach ($matched_drafts[$uid] as $drf) {
+                        $children_by_parent[$uid][] = $drf;
+                    }
+                }
+            }
+
+            // Sort children for each parent (chronologically, with drafts at the end)
+            foreach ($children_by_parent as $p_uid => &$children) {
+                usort($children, function ($a, $b) {
+                    $a_is_draft = !empty($a->list_flags['is_draft']);
+                    $b_is_draft = !empty($b->list_flags['is_draft']);
+                    if ($a_is_draft !== $b_is_draft) {
+                        return $a_is_draft ? 1 : -1; // Drafts always at the end
+                    }
+                    $t_a = self::get_message_timestamp($a);
+                    $t_b = self::get_message_timestamp($b);
+                    if ($t_a !== $t_b && $t_a > 0 && $t_b > 0) {
+                        return $t_a <=> $t_b;
+                    }
+                    $seq_a = $a->_seq ?? 999999;
+                    $seq_b = $b->_seq ?? 999999;
+                    return $seq_a <=> $seq_b;
+                });
+            }
+            unset($children);
+
+            // Flatten tree via pre-order traversal
+            $flatten = function ($node, $depth) use (&$flatten, &$children_by_parent, &$result) {
+                $node->depth = $depth;
+                $node_uid = $node->uid;
+                $children = $children_by_parent[$node_uid] ?? [];
+                $node->has_children = !empty($children);
+
+                $result[] = $node;
+
+                foreach ($children as $child) {
+                    $child->parent_uid = $node_uid;
+                    $flatten($child, $depth + 1);
+                }
+            };
+
+            $flatten($root, 0);
+
+            // Set flags on thread root message
+            if ($thread_has_draft) {
+                if (!isset($root->list_flags) || !is_array($root->list_flags)) {
+                    $root->list_flags = [];
+                }
+                $root->list_flags['has_draft'] = 1;
+            }
+            if ($thread_has_reply) {
+                if (!isset($root->list_flags) || !is_array($root->list_flags)) {
+                    $root->list_flags = [];
+                }
+                $root->list_flags['has_replies'] = 1;
             }
         }
 
         return $result;
+    }
+
+    /**
+     * Insert matching drafts into the thread hierarchy of messages
+     *
+     * @param array<rcube_message_header> $messages Current message headers
+     * @param array<rcube_message_header> $drafts   Draft message headers
+     * @param string                      $drafts_mbox
+     * @param bool                        $subject_fallback
+     *
+     * @return array<rcube_message_header>
+     */
+    public function insert_drafts_into_threads($messages, $drafts, $drafts_mbox, $subject_fallback = false)
+    {
+        return $this->insert_conversation_items($messages, [], $drafts, '', $drafts_mbox, $subject_fallback);
+    }
+
+    /**
+     * Insert matching sent replies into the thread hierarchy of messages
+     *
+     * @param array<rcube_message_header> $messages Current message headers
+     * @param array<rcube_message_header> $replies  Sent reply message headers
+     * @param string                      $sent_mbox
+     * @param bool                        $subject_fallback
+     *
+     * @return array<rcube_message_header>
+     */
+    public function insert_replies_into_threads($messages, $replies, $sent_mbox, $subject_fallback = false)
+    {
+        return $this->insert_conversation_items($messages, $replies, [], $sent_mbox, '', $subject_fallback);
     }
 
     /**
@@ -587,6 +958,80 @@ class thread_drafts extends rcube_plugin
     }
 
     /**
+     * Prepare a sent reply header object for insertion into the message list
+     *
+     * @param rcube_message_header $reply
+     * @param mixed                $parent_uid
+     * @param int                  $depth
+     * @param string               $sent_mbox
+     *
+     * @return rcube_message_header
+     */
+    public function prepare_reply_header($reply, $parent_uid, $depth, $sent_mbox)
+    {
+        $h = clone $reply;
+
+        // Native Roundcube multi-folder format: <UID>-<MBOX>
+        $numeric_uid = is_string($h->uid) && strpos($h->uid, '-') !== false
+            ? explode('-', $h->uid)[0]
+            : $h->uid;
+
+        $h->uid = $numeric_uid . '-' . $sent_mbox;
+        $h->folder = $sent_mbox;
+        $h->parent_uid = $parent_uid;
+        $h->depth = $depth;
+        $h->has_children = false;
+        $h->size = max(1, (int) $h->size);
+
+        if (!is_array($h->flags)) {
+            $h->flags = [];
+        }
+        $h->flags['skip_mbox_check'] = true;
+        $h->flags['seen'] = true;
+
+        if (!is_array($h->list_flags)) {
+            $h->list_flags = [];
+        }
+        $h->list_flags['skip_mbox_check'] = true;
+        $h->list_flags['is_reply'] = 1;
+        $h->list_flags['is_sent'] = 1;
+        $h->list_flags['mbox'] = $sent_mbox;
+
+        if (!is_array($h->list_cols)) {
+            $h->list_cols = [];
+        }
+
+        // Format smart From/To column for sent reply: To: <recipient>
+        $recipient = !empty($h->to) ? $h->to : (method_exists($h, 'get') ? $h->get('to') : '');
+        if (!empty($recipient)) {
+            $to_formatted = '';
+            if (class_exists('rcmail_action_mail_index') && defined('INTL_IDNA_VARIANT_UTS46')) {
+                try {
+                    $to_formatted = rcmail_action_mail_index::address_string($recipient, 3, false, null, $h->charset ?? 'UTF-8', null, false);
+                } catch (\Throwable $e) {
+                    $to_formatted = '';
+                }
+            }
+            if (empty($to_formatted)) {
+                if (class_exists('rcube') && method_exists('rcube', 'SQ')) {
+                    $to_formatted = rcube::SQ($recipient);
+                } elseif (class_exists('rcube') && method_exists('rcube', 'Q')) {
+                    $to_formatted = rcube::Q($recipient);
+                } else {
+                    $to_formatted = htmlspecialchars((string)$recipient, ENT_QUOTES, 'UTF-8');
+                }
+            }
+            $to_label = method_exists($this, 'gettext') ? $this->gettext('to') : 'To';
+            if ($to_label === 'to' || empty($to_label)) {
+                $to_label = 'To';
+            }
+            $h->list_cols['fromto'] = '<span class="reply-to-prefix">' . htmlspecialchars($to_label) . ':</span> ' . $to_formatted;
+        }
+
+        return $h;
+    }
+
+    /**
      * Handler for message_compose hook.
      * Sanitizes draft_uid parameter to strip any multi-folder suffix.
      *
@@ -719,6 +1164,16 @@ class thread_drafts extends rcube_plugin
                 ];
             }
 
+            if (!in_array('thread_drafts_include_replies', $dont_override)) {
+                $field_id = 'rcmfd_thread_drafts_replies';
+                $checkbox = new html_checkbox(['name' => '_thread_drafts_include_replies', 'id' => $field_id, 'value' => 1]);
+
+                $args['blocks']['main']['options']['thread_drafts_include_replies'] = [
+                    'title'   => html::label($field_id, rcube::Q($this->gettext('thread_replies_option'))),
+                    'content' => $checkbox->show($this->is_replies_enabled() ? 1 : 0),
+                ];
+            }
+
             if (!in_array('thread_drafts_show_message_banner', $dont_override)) {
                 $field_id = 'rcmfd_thread_drafts_banner';
                 $checkbox = new html_checkbox(['name' => '_thread_drafts_banner', 'id' => $field_id, 'value' => 1]);
@@ -747,6 +1202,10 @@ class thread_drafts extends rcube_plugin
 
             if (!in_array('thread_drafts_enabled', $dont_override)) {
                 $args['prefs']['thread_drafts_enabled'] = !empty($_POST['_thread_drafts_enabled']);
+            }
+
+            if (!in_array('thread_drafts_include_replies', $dont_override)) {
+                $args['prefs']['thread_drafts_include_replies'] = !empty($_POST['_thread_drafts_include_replies']);
             }
 
             if (!in_array('thread_drafts_show_message_banner', $dont_override)) {

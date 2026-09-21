@@ -194,17 +194,25 @@ class lifeprisma_ai extends rcube_plugin
 
         // Prevent 404s for watermark.png and custom.css across frames
         $active_skin = $rcmail->config->get('skin', 'elastic');
-        $xwatermark = $rcmail->output->get_env('xwatermark');
+        $xwatermark = method_exists($rcmail->output, 'get_env') ? $rcmail->output->get_env('xwatermark') : ($rcmail->output->env['xwatermark'] ?? null);
         if (!empty($xwatermark) && !str_starts_with($xwatermark, 'data:') && strpos($xwatermark, 'watermark.png') !== false) {
             $wm_file = __DIR__ . '/skins/watermark.png';
             if (is_file($wm_file)) {
-                $rcmail->output->set_env('xwatermark', 'data:image/png;base64,' . base64_encode(file_get_contents($wm_file)));
+                if (method_exists($rcmail->output, 'set_env')) {
+                    $rcmail->output->set_env('xwatermark', 'data:image/png;base64,' . base64_encode(file_get_contents($wm_file)));
+                } else {
+                    $rcmail->output->env['xwatermark'] = 'data:image/png;base64,' . base64_encode(file_get_contents($wm_file));
+                }
             }
         }
-        $blankpage = $rcmail->output->get_env('blankpage');
+        $blankpage = method_exists($rcmail->output, 'get_env') ? $rcmail->output->get_env('blankpage') : ($rcmail->output->env['blankpage'] ?? null);
         if (!empty($blankpage) && !str_starts_with($blankpage, 'data:') && preg_match('/watermark\.png$/i', $blankpage)) {
             $wm_html = "skins/{$active_skin}/watermark.html";
-            $rcmail->output->set_env('blankpage', $wm_html);
+            if (method_exists($rcmail->output, 'set_env')) {
+                $rcmail->output->set_env('blankpage', $wm_html);
+            } else {
+                $rcmail->output->env['blankpage'] = $wm_html;
+            }
         }
 
         // Replace sidebar button text with exact purple Gemini SVG icon

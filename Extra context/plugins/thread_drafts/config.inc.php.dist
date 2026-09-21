@@ -11,14 +11,26 @@ $config = [];
 // Enable or disable the plugin globally
 $config['thread_drafts_enabled'] = true;
 
+// Include active unsent drafts from the Drafts folder into conversation threads
+$config['thread_drafts_include_drafts'] = true;
+
+// Include sent replies from the Sent folder into conversation threads
+$config['thread_drafts_include_replies'] = true;
+
 // Display a draft badge/indicator on the thread root message when it contains a draft child
 $config['thread_drafts_show_root_badge'] = true;
+
+// Display a reply badge on sent messages in the thread
+$config['thread_drafts_show_reply_badge'] = true;
 
 // Display an alert banner when viewing a message that has an active draft reply in Drafts
 $config['thread_drafts_show_message_banner'] = true;
 
 // Maximum number of active drafts from the Drafts folder to inspect for threads (performance guard)
 $config['thread_drafts_max_drafts'] = 50;
+
+// Maximum number of sent replies from the Sent folder to inspect for threads (performance guard)
+$config['thread_drafts_max_replies'] = 100;
 
 // Enable subject matching as fallback when In-Reply-To and References headers are missing
 $config['thread_drafts_subject_fallback'] = false;
