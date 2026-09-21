@@ -282,9 +282,9 @@ assert_true(strpos($php_code, "[RENDER PREVIEW CONTEXT ERROR]") !== false, "rend
 // --- Test Group 12: Theme-Uniform Spam Button in Sidebar & Topbar ---
 echo "\n--- Group 12: Theme-Uniform Spam Button in Sidebar & Topbar --- \n";
 
-assert_true(strpos($js_src, "lpai-topbar-spam-btn") !== false, "lifeprisma_ai.js identifies topbar spam button");
+assert_true(strpos($js_src, "isJunk ? 'notjunk' : 'junk'") !== false || strpos($js_src, "'junk'") !== false, "lifeprisma_ai.js sets standard junk class on topbar spam button");
 assert_true(strpos($js_src, "lpai-sidebar-spam-btn") !== false, "lifeprisma_ai.js identifies sidebar spam button");
-assert_true(strpos($js_src, "lpai-toolbar-spam-item") !== false, "lifeprisma_ai.js wraps topbar menuitem in li.lpai-toolbar-spam-item");
+assert_true(strpos($js_src, "item.setAttribute('role', 'menuitem')") !== false || strpos($js_src, "role', 'menuitem'") !== false, "lifeprisma_ai.js wraps topbar menuitem in li with role=menuitem");
 assert_true(strpos($js_src, "inner button-inner") !== false, "lifeprisma_ai.js creates standard inner button-inner markup");
 assert_true(strpos($js_src, "btn.setAttribute('role', 'button')") !== false, "lifeprisma_ai.js sets role=button for accessibility");
 assert_true(strpos($js_src, "btn.setAttribute('tabindex', '0')") !== false, "lifeprisma_ai.js sets tabindex=0 for accessibility");
