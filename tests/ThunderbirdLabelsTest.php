@@ -491,6 +491,17 @@ assert_true(strpos($css_content, '.tb-label-delete-btn') !== false, "elastic tb_
 assert_true(strpos($css_larry, '.tb-label-delete-btn') !== false, "larry tb_label.css styles .tb-label-delete-btn");
 assert_true(strpos($css_classic, '.tb-label-delete-btn') !== false, "classic tb_label.css styles .tb-label-delete-btn");
 
+// Etiketten label-dots xskin outline font icon (\ec7d) assertions
+assert_true(strpos($css_content, "\\ec7d") !== false, "elastic tb_label.css contains label-dots outline font icon (\\ec7d)");
+$gp_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
+$gp_min = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.min.css');
+$el_css = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
+$el_min = file_get_contents(__DIR__ . '/../skins/elastic/style.min.css');
+assert_true(strpos($gp_css, "\\ec7d") !== false, "gmail_plus style.css maps label-dots icon glyph (\\ec7d)");
+assert_true(strpos($gp_min, "\\ec7d") !== false, "gmail_plus style.min.css contains label-dots icon glyph (\\ec7d)");
+assert_true(strpos($el_css, "\\ec7d") !== false, "elastic style.css maps label-dots icon glyph (\\ec7d)");
+assert_true(strpos($el_min, "\\ec7d") !== false, "elastic style.min.css contains label-dots icon glyph (\\ec7d)");
+
 // Test session cache invalidation on delete
 $_SESSION['tb_label_counts_test'] = ['data' => [1]];
 rcube_utils::$mock_inputs['key'] = 'LABEL5';

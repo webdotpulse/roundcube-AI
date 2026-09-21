@@ -3798,6 +3798,158 @@ a.savedraft.xi-save svg,
     display: none !important;
 }
 
+/* =========================================================================
+   Etiketten / Labels Icon Glyphs (xskin outline icon "label-dots": \ec7d, class: xi-label-dots)
+   ========================================================================= */
+
+#messagetoolbar a.button.tb-label:before,
+#messagetoolbar a.tb-label:before,
+#messagetoolbar a#tb_label_popuplink:before,
+#messagetoolbar a#tb-label-menulink:before,
+#mailtoolbar a.button.tb-label:before,
+#mailtoolbar a.tb-label:before,
+#mailtoolbar a#tb_label_popuplink:before,
+#mailtoolbar a#tb-label-menulink:before,
+#messagelist-header .toolbar a.button.tb-label:before,
+#messagelist-header .toolbar a.tb-label:before,
+#messagelist-header a.button.tb-label:before,
+#messagelist-header a.tb-label:before,
+.header .toolbar a.button.tb-label:before,
+.header .toolbar a.tb-label:before,
+.header a.button.tb-label:before,
+.header a.tb-label:before,
+.toolbar a.button.tb-label:before,
+.toolbar a.tb-label:before,
+.toolbar a#tb_label_popuplink:before,
+.toolbar a#tb-label-menulink:before,
+ul.menu.toolbar a.tb-label:before,
+ul.menu.toolbar a.button.tb-label:before,
+a.button.tb-label:before,
+a.tb-label:before,
+a#tb_label_popuplink:before,
+a#tb-label-menulink:before,
+.tb-label-icon:before,
+a.tb-label.xi-label-dots:before,
+.xi-label-dots:before,
+#sections-table tbody #rcmrowthunderbird_labels td.section:before,
+#sections-table tbody tr#rcmrowthunderbird_labels td.section:before,
+div.contextmenu a.rcm-uidropdown::before,
+#layout-sidebar a.button.tb-label:before,
+#layout-sidebar a.tb-label:before,
+#layout-menu a.button.tb-label:before,
+#layout-menu a.tb-label:before,
+#taskmenu a.button.tb-label:before,
+#taskmenu a.tb-label:before {
+    content: "\ec7d" !important; /* xskin outline icon "label-dots" */
+    font-family: RcpIconFont, Icons, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: none !important;
+    text-indent: 0 !important;
+    display: inline-block !important;
+    float: none !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    top: 0 !important;
+    font-size: 1.5em !important;
+    width: auto !important;
+    height: auto !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    transition: color 0.15s ease, transform 0.15s ease !important;
+}
+
+html.xicons-traditional #messagetoolbar a.button.tb-label:before,
+html.xicons-traditional #messagetoolbar a.tb-label:before,
+html.xicons-traditional #mailtoolbar a.button.tb-label:before,
+html.xicons-traditional #mailtoolbar a.tb-label:before,
+html.xicons-traditional .toolbar a.button.tb-label:before,
+html.xicons-traditional .toolbar a.tb-label:before,
+html.xicons-traditional .toolbar a#tb_label_popuplink:before,
+html.xicons-traditional a.button.tb-label:before,
+html.xicons-traditional a.tb-label:before,
+html.xicons-traditional a#tb_label_popuplink:before,
+html.xicons-traditional a#tb-label-menulink:before,
+html.xicons-traditional a.tb-label.xi-label-dots:before,
+html.xicons-traditional .xi-label-dots:before,
+html.xicons-traditional #sections-table tbody #rcmrowthunderbird_labels td.section:before,
+html.xicons-traditional div.contextmenu a.rcm-uidropdown::before {
+    content: "\ebb5" !important; /* label-dots traditional */
+}
+
+html.xicons-outlined #messagetoolbar a.button.tb-label:before,
+html.xicons-outlined #messagetoolbar a.tb-label:before,
+html.xicons-outlined #mailtoolbar a.button.tb-label:before,
+html.xicons-outlined #mailtoolbar a.tb-label:before,
+html.xicons-outlined .toolbar a.button.tb-label:before,
+html.xicons-outlined .toolbar a.tb-label:before,
+html.xicons-outlined .toolbar a#tb_label_popuplink:before,
+html.xicons-outlined a.button.tb-label:before,
+html.xicons-outlined a.tb-label:before,
+html.xicons-outlined a#tb_label_popuplink:before,
+html.xicons-outlined a#tb-label-menulink:before,
+html.xicons-outlined a.tb-label.xi-label-dots:before,
+html.xicons-outlined .xi-label-dots:before,
+html.xicons-outlined #sections-table tbody #rcmrowthunderbird_labels td.section:before,
+html.xicons-outlined div.contextmenu a.rcm-uidropdown::before {
+    content: "\ec7d" !important; /* xskin outline icon "label-dots" */
+}
+
+html.xicons-material #messagetoolbar a.button.tb-label:before,
+html.xicons-material #messagetoolbar a.tb-label:before,
+html.xicons-material #mailtoolbar a.button.tb-label:before,
+html.xicons-material #mailtoolbar a.tb-label:before,
+html.xicons-material .toolbar a.button.tb-label:before,
+html.xicons-material .toolbar a.tb-label:before,
+html.xicons-material .toolbar a#tb_label_popuplink:before,
+html.xicons-material a.button.tb-label:before,
+html.xicons-material a.tb-label:before,
+html.xicons-material a#tb_label_popuplink:before,
+html.xicons-material a#tb-label-menulink:before,
+html.xicons-material a.tb-label.xi-label-dots:before,
+html.xicons-material .xi-label-dots:before,
+html.xicons-material #sections-table tbody #rcmrowthunderbird_labels td.section:before,
+html.xicons-material div.contextmenu a.rcm-uidropdown::before {
+    content: "\ed45" !important; /* label-dots material */
+}
+
+html.xicons-cartoon #messagetoolbar a.button.tb-label:before,
+html.xicons-cartoon #messagetoolbar a.tb-label:before,
+html.xicons-cartoon #mailtoolbar a.button.tb-label:before,
+html.xicons-cartoon #mailtoolbar a.tb-label:before,
+html.xicons-cartoon .toolbar a.button.tb-label:before,
+html.xicons-cartoon .toolbar a.tb-label:before,
+html.xicons-cartoon .toolbar a#tb_label_popuplink:before,
+html.xicons-cartoon a.button.tb-label:before,
+html.xicons-cartoon a.tb-label:before,
+html.xicons-cartoon a#tb_label_popuplink:before,
+html.xicons-cartoon a#tb-label-menulink:before,
+html.xicons-cartoon a.tb-label.xi-label-dots:before,
+html.xicons-cartoon .xi-label-dots:before,
+html.xicons-cartoon #sections-table tbody #rcmrowthunderbird_labels td.section:before,
+html.xicons-cartoon div.contextmenu a.rcm-uidropdown::before {
+    content: "\ee0d" !important; /* label-dots cartoon */
+}
+
+/* Suppress inline SVG inside etiketten buttons so xskin outline font icon renders cleanly */
+#messagetoolbar a.button.tb-label svg,
+#messagetoolbar a.tb-label svg,
+#mailtoolbar a.button.tb-label svg,
+#mailtoolbar a.tb-label svg,
+.toolbar a.button.tb-label svg,
+.toolbar a.tb-label svg,
+ul.menu.toolbar a.tb-label svg,
+a.tb-label.xi-label-dots svg,
+.xi-label-dots svg {
+    display: none !important;
+}
+
 /* Topbar button hover: subtle uniform background circle/pill */
 .toolbar a.button.lpai-toolbar-spam-btn:hover,
 .toolbar a.lpai-toolbar-spam-btn:hover,

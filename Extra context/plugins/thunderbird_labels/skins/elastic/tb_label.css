@@ -139,17 +139,23 @@ div#labelbox span.tb_label_span5,
   color: #fff !important;
 }
 
-/* Contextmenu/icon decorations (kept as original) */
+/* Contextmenu/icon decorations: xskin label-dots outline font icon (\ec7d) */
 #sections-table tbody #rcmrowthunderbird_labels td.section:before {
-  content: "\f507"; /* user-tag */
+  content: "\ec7d" !important; /* label-dots */
+  font-family: RcpIconFont, Icons, sans-serif !important;
 }
 
-.toolbar a.button.tb-label:before {
-  content: "\f507"; /* user-tag */
+.toolbar a.button.tb-label:before,
+.toolbar a.tb-label:before,
+a#tb_label_popuplink:before,
+a#tb-label-menulink:before {
+  content: "\ec7d" !important; /* label-dots */
+  font-family: RcpIconFont, Icons, sans-serif !important;
 }
 
 div.contextmenu a.rcm-uidropdown::before {
-  content: "\f507"; /* user-tag */
+  content: "\ec7d" !important; /* label-dots */
+  font-family: RcpIconFont, Icons, sans-serif !important;
 }
 
 /* contextmenu color rules (kept as original) */
