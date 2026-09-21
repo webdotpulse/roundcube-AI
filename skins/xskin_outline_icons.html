@@ -1,0 +1,1904 @@
+<!DOCTYPE html>
+<html lang="en" class="xicons-outlined">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roundcube Plus (xskin) Outlined Icons Catalog</title>
+    <style>
+        @font-face {
+            font-family: 'RcpIconFont';
+            src: url('../Extra context/plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff2') format('woff2'),
+                 url('../Extra context/plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff') format('woff'),
+                 url('../Extra context/plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: block;
+        }
+
+        :root {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-bg: #eff6ff;
+            --accent-red: #ef4444;
+            --badge-bg: #f1f5f9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--surface);
+            padding: 28px 32px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.05);
+            margin-bottom: 24px;
+        }
+
+        h1 {
+            font-size: 26px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: #1e293b;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 280px;
+            padding: 10px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            border-color: var(--primary);
+        }
+
+        .category-filter {
+            padding: 10px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--surface);
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        .stats-bar {
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 16px;
+        }
+
+        .icon-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px 14px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+            cursor: pointer;
+        }
+        .icon-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -4px rgba(0,0,0,0.08);
+            border-color: #cbd5e1;
+        }
+
+        .icon-card.candidate {
+            border: 1.5px solid #f87171;
+            background: #fffafa;
+        }
+
+        .candidate-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #ef4444;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .icon-glyph {
+            font-family: 'RcpIconFont', sans-serif !important;
+            font-size: 38px;
+            line-height: 1;
+            color: #1e293b;
+            margin-bottom: 14px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.15s ease, transform 0.15s ease;
+        }
+        .icon-card:hover .icon-glyph {
+            color: var(--primary);
+            transform: scale(1.1);
+        }
+        .icon-card.candidate .icon-glyph {
+            color: #dc2626;
+        }
+
+        .icon-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e293b;
+            word-break: break-word;
+            margin-bottom: 6px;
+        }
+
+        .icon-details {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: monospace;
+            background: var(--badge-bg);
+            padding: 3px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .icon-id {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #1e293b;
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Roundcube Plus (xskin) Outlined Icons</h1>
+            <div class="subtitle">
+                Complete overview of the 160 stroke/outline icons included in <code>RcpIconFont</code> (range 2 / <code>html.xicons-outlined</code>).<br>
+                Click any card to copy its name to clipboard.
+            </div>
+            <div class="search-controls">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name (e.g. junk, shield, forbidden, trash, lock)...">
+                <select id="categoryFilter" class="category-filter">
+                    <option value="all">All Categories (160)</option>
+                    <option value="spam">⭐ Recommended for Spam Button</option>
+                    <option value="Security & Protection">Security & Protection</option>
+                    <option value="AI & Smart Tools">AI & Smart Tools</option>
+                    <option value="Mail & Messaging">Mail & Messaging</option>
+                    <option value="Actions & Organization">Actions & Organization</option>
+                    <option value="Files & Data">Files & Data</option>
+                    <option value="Alerts & Status">Alerts & Status</option>
+                    <option value="Contacts & People">Contacts & People</option>
+                    <option value="Navigation & Arrows">Navigation & Arrows</option>
+                    <option value="Services & Integrations">Services & Integrations</option>
+                    <option value="General & UI">General & UI</option>
+                </select>
+            </div>
+            <div class="stats-bar">
+                <span id="resultsCount">Showing 160 icons</span>
+                <span>Unicode Range: <code>\ebf0</code> &ndash; <code>\ec8f</code></span>
+            </div>
+        </header>
+
+        <div id="iconGrid" class="grid"></div>
+    </div>
+
+    <div id="toast" class="toast">Copied to clipboard!</div>
+
+    <script>
+        const icons = [
+  {
+    "id": 0,
+    "name": "arrow-left",
+    "hex": "\\ebf0",
+    "raw_hex": "ebf0",
+    "char": "&#xebf0;",
+    "class": "xi-arrow-left",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 1,
+    "name": "arrow-right",
+    "hex": "\\ebf1",
+    "raw_hex": "ebf1",
+    "char": "&#xebf1;",
+    "class": "xi-arrow-right",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 2,
+    "name": "arrow-up",
+    "hex": "\\ebf2",
+    "raw_hex": "ebf2",
+    "char": "&#xebf2;",
+    "class": "xi-arrow-up",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 3,
+    "name": "arrow-down",
+    "hex": "\\ebf3",
+    "raw_hex": "ebf3",
+    "char": "&#xebf3;",
+    "class": "xi-arrow-down",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 4,
+    "name": "arrow-left-circle",
+    "hex": "\\ebf4",
+    "raw_hex": "ebf4",
+    "char": "&#xebf4;",
+    "class": "xi-arrow-left-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 5,
+    "name": "arrow-right-circle",
+    "hex": "\\ebf5",
+    "raw_hex": "ebf5",
+    "char": "&#xebf5;",
+    "class": "xi-arrow-right-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 6,
+    "name": "arrow-up-circle",
+    "hex": "\\ebf6",
+    "raw_hex": "ebf6",
+    "char": "&#xebf6;",
+    "class": "xi-arrow-up-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 7,
+    "name": "arrow-down-circle",
+    "hex": "\\ebf7",
+    "raw_hex": "ebf7",
+    "char": "&#xebf7;",
+    "class": "xi-arrow-down-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 8,
+    "name": "chevron-left",
+    "hex": "\\ebf8",
+    "raw_hex": "ebf8",
+    "char": "&#xebf8;",
+    "class": "xi-chevron-left",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 9,
+    "name": "chevron-right",
+    "hex": "\\ebf9",
+    "raw_hex": "ebf9",
+    "char": "&#xebf9;",
+    "class": "xi-chevron-right",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 10,
+    "name": "chevron-up",
+    "hex": "\\ebfa",
+    "raw_hex": "ebfa",
+    "char": "&#xebfa;",
+    "class": "xi-chevron-up",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 11,
+    "name": "chevron-down",
+    "hex": "\\ebfb",
+    "raw_hex": "ebfb",
+    "char": "&#xebfb;",
+    "class": "xi-chevron-down",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 12,
+    "name": "chevron-left-circle",
+    "hex": "\\ebfc",
+    "raw_hex": "ebfc",
+    "char": "&#xebfc;",
+    "class": "xi-chevron-left-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 13,
+    "name": "chevron-right-circle",
+    "hex": "\\ebfd",
+    "raw_hex": "ebfd",
+    "char": "&#xebfd;",
+    "class": "xi-chevron-right-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 14,
+    "name": "chevron-up-circle",
+    "hex": "\\ebfe",
+    "raw_hex": "ebfe",
+    "char": "&#xebfe;",
+    "class": "xi-chevron-up-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 15,
+    "name": "chevron-down-circle",
+    "hex": "\\ebff",
+    "raw_hex": "ebff",
+    "char": "&#xebff;",
+    "class": "xi-chevron-down-circle",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 16,
+    "name": "caret-left",
+    "hex": "\\ec00",
+    "raw_hex": "ec00",
+    "char": "&#xec00;",
+    "class": "xi-caret-left",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 17,
+    "name": "caret-right",
+    "hex": "\\ec01",
+    "raw_hex": "ec01",
+    "char": "&#xec01;",
+    "class": "xi-caret-right",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 18,
+    "name": "caret-up",
+    "hex": "\\ec02",
+    "raw_hex": "ec02",
+    "char": "&#xec02;",
+    "class": "xi-caret-up",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 19,
+    "name": "caret-down",
+    "hex": "\\ec03",
+    "raw_hex": "ec03",
+    "char": "&#xec03;",
+    "class": "xi-caret-down",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 20,
+    "name": "first-page",
+    "hex": "\\ec04",
+    "raw_hex": "ec04",
+    "char": "&#xec04;",
+    "class": "xi-first-page",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 21,
+    "name": "prev-page",
+    "hex": "\\ec05",
+    "raw_hex": "ec05",
+    "char": "&#xec05;",
+    "class": "xi-prev-page",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 22,
+    "name": "next-page",
+    "hex": "\\ec06",
+    "raw_hex": "ec06",
+    "char": "&#xec06;",
+    "class": "xi-next-page",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 23,
+    "name": "last-page",
+    "hex": "\\ec07",
+    "raw_hex": "ec07",
+    "char": "&#xec07;",
+    "class": "xi-last-page",
+    "category": "Navigation & Arrows",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 24,
+    "name": "times",
+    "hex": "\\ec08",
+    "raw_hex": "ec08",
+    "char": "&#xec08;",
+    "class": "xi-times",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 25,
+    "name": "times-circle",
+    "hex": "\\ec09",
+    "raw_hex": "ec09",
+    "char": "&#xec09;",
+    "class": "xi-times-circle",
+    "category": "Alerts & Status",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 26,
+    "name": "plus",
+    "hex": "\\ec0a",
+    "raw_hex": "ec0a",
+    "char": "&#xec0a;",
+    "class": "xi-plus",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 27,
+    "name": "plus-square",
+    "hex": "\\ec0b",
+    "raw_hex": "ec0b",
+    "char": "&#xec0b;",
+    "class": "xi-plus-square",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 28,
+    "name": "plus-circle",
+    "hex": "\\ec0c",
+    "raw_hex": "ec0c",
+    "char": "&#xec0c;",
+    "class": "xi-plus-circle",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 29,
+    "name": "minus",
+    "hex": "\\ec0d",
+    "raw_hex": "ec0d",
+    "char": "&#xec0d;",
+    "class": "xi-minus",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 30,
+    "name": "minus-square",
+    "hex": "\\ec0e",
+    "raw_hex": "ec0e",
+    "char": "&#xec0e;",
+    "class": "xi-minus-square",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 31,
+    "name": "minus-circle",
+    "hex": "\\ec0f",
+    "raw_hex": "ec0f",
+    "char": "&#xec0f;",
+    "class": "xi-minus-circle",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 32,
+    "name": "check",
+    "hex": "\\ec10",
+    "raw_hex": "ec10",
+    "char": "&#xec10;",
+    "class": "xi-check",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 33,
+    "name": "check-square",
+    "hex": "\\ec11",
+    "raw_hex": "ec11",
+    "char": "&#xec11;",
+    "class": "xi-check-square",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 34,
+    "name": "sort-asc",
+    "hex": "\\ec12",
+    "raw_hex": "ec12",
+    "char": "&#xec12;",
+    "class": "xi-sort-asc",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 35,
+    "name": "sort-desc",
+    "hex": "\\ec13",
+    "raw_hex": "ec13",
+    "char": "&#xec13;",
+    "class": "xi-sort-desc",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 36,
+    "name": "exclamation",
+    "hex": "\\ec14",
+    "raw_hex": "ec14",
+    "char": "&#xec14;",
+    "class": "xi-exclamation",
+    "category": "Alerts & Status",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 37,
+    "name": "information",
+    "hex": "\\ec15",
+    "raw_hex": "ec15",
+    "char": "&#xec15;",
+    "class": "xi-information",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 38,
+    "name": "question",
+    "hex": "\\ec16",
+    "raw_hex": "ec16",
+    "char": "&#xec16;",
+    "class": "xi-question",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 39,
+    "name": "export",
+    "hex": "\\ec17",
+    "raw_hex": "ec17",
+    "char": "&#xec17;",
+    "class": "xi-export",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 40,
+    "name": "import",
+    "hex": "\\ec18",
+    "raw_hex": "ec18",
+    "char": "&#xec18;",
+    "class": "xi-import",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 41,
+    "name": "grid-large",
+    "hex": "\\ec19",
+    "raw_hex": "ec19",
+    "char": "&#xec19;",
+    "class": "xi-grid-large",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 42,
+    "name": "grid-small",
+    "hex": "\\ec1a",
+    "raw_hex": "ec1a",
+    "char": "&#xec1a;",
+    "class": "xi-grid-small",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 43,
+    "name": "list",
+    "hex": "\\ec1b",
+    "raw_hex": "ec1b",
+    "char": "&#xec1b;",
+    "class": "xi-list",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 44,
+    "name": "mail",
+    "hex": "\\ec1c",
+    "raw_hex": "ec1c",
+    "char": "&#xec1c;",
+    "class": "xi-mail",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 45,
+    "name": "user",
+    "hex": "\\ec1d",
+    "raw_hex": "ec1d",
+    "char": "&#xec1d;",
+    "class": "xi-user",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 46,
+    "name": "wrench",
+    "hex": "\\ec1e",
+    "raw_hex": "ec1e",
+    "char": "&#xec1e;",
+    "class": "xi-wrench",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 47,
+    "name": "gear",
+    "hex": "\\ec1f",
+    "raw_hex": "ec1f",
+    "char": "&#xec1f;",
+    "class": "xi-gear",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 48,
+    "name": "logout",
+    "hex": "\\ec20",
+    "raw_hex": "ec20",
+    "char": "&#xec20;",
+    "class": "xi-logout",
+    "category": "Security & Protection",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 49,
+    "name": "refresh",
+    "hex": "\\ec21",
+    "raw_hex": "ec21",
+    "char": "&#xec21;",
+    "class": "xi-refresh",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 50,
+    "name": "reply",
+    "hex": "\\ec22",
+    "raw_hex": "ec22",
+    "char": "&#xec22;",
+    "class": "xi-reply",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 51,
+    "name": "reply-all",
+    "hex": "\\ec23",
+    "raw_hex": "ec23",
+    "char": "&#xec23;",
+    "class": "xi-reply-all",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 52,
+    "name": "forward",
+    "hex": "\\ec24",
+    "raw_hex": "ec24",
+    "char": "&#xec24;",
+    "class": "xi-forward",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 53,
+    "name": "archive",
+    "hex": "\\ec25",
+    "raw_hex": "ec25",
+    "char": "&#xec25;",
+    "class": "xi-archive",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 54,
+    "name": "trash",
+    "hex": "\\ec26",
+    "raw_hex": "ec26",
+    "char": "&#xec26;",
+    "class": "xi-trash",
+    "category": "Actions & Organization",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 55,
+    "name": "recycle",
+    "hex": "\\ec27",
+    "raw_hex": "ec27",
+    "char": "&#xec27;",
+    "class": "xi-recycle",
+    "category": "Actions & Organization",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 56,
+    "name": "tag",
+    "hex": "\\ec28",
+    "raw_hex": "ec28",
+    "char": "&#xec28;",
+    "class": "xi-tag",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 57,
+    "name": "more",
+    "hex": "\\ec29",
+    "raw_hex": "ec29",
+    "char": "&#xec29;",
+    "class": "xi-more",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 58,
+    "name": "download",
+    "hex": "\\ec2a",
+    "raw_hex": "ec2a",
+    "char": "&#xec2a;",
+    "class": "xi-download",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 59,
+    "name": "folder",
+    "hex": "\\ec2b",
+    "raw_hex": "ec2b",
+    "char": "&#xec2b;",
+    "class": "xi-folder",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 60,
+    "name": "print",
+    "hex": "\\ec2c",
+    "raw_hex": "ec2c",
+    "char": "&#xec2c;",
+    "class": "xi-print",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 61,
+    "name": "send",
+    "hex": "\\ec2d",
+    "raw_hex": "ec2d",
+    "char": "&#xec2d;",
+    "class": "xi-send",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 62,
+    "name": "save",
+    "hex": "\\ec2e",
+    "raw_hex": "ec2e",
+    "char": "&#xec2e;",
+    "class": "xi-save",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 63,
+    "name": "spellcheck",
+    "hex": "\\ec2f",
+    "raw_hex": "ec2f",
+    "char": "&#xec2f;",
+    "class": "xi-spellcheck",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 64,
+    "name": "attachment",
+    "hex": "\\ec30",
+    "raw_hex": "ec30",
+    "char": "&#xec30;",
+    "class": "xi-attachment",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 65,
+    "name": "create",
+    "hex": "\\ec31",
+    "raw_hex": "ec31",
+    "char": "&#xec31;",
+    "class": "xi-create",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 66,
+    "name": "edit",
+    "hex": "\\ec32",
+    "raw_hex": "ec32",
+    "char": "&#xec32;",
+    "class": "xi-edit",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 67,
+    "name": "signature",
+    "hex": "\\ec33",
+    "raw_hex": "ec33",
+    "char": "&#xec33;",
+    "class": "xi-signature",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 68,
+    "name": "bookmark",
+    "hex": "\\ec34",
+    "raw_hex": "ec34",
+    "char": "&#xec34;",
+    "class": "xi-bookmark",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 69,
+    "name": "vcard",
+    "hex": "\\ec35",
+    "raw_hex": "ec35",
+    "char": "&#xec35;",
+    "class": "xi-vcard",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 70,
+    "name": "search",
+    "hex": "\\ec36",
+    "raw_hex": "ec36",
+    "char": "&#xec36;",
+    "class": "xi-search",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 71,
+    "name": "bars",
+    "hex": "\\ec37",
+    "raw_hex": "ec37",
+    "char": "&#xec37;",
+    "class": "xi-bars",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 72,
+    "name": "code",
+    "hex": "\\ec38",
+    "raw_hex": "ec38",
+    "char": "&#xec38;",
+    "class": "xi-code",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 73,
+    "name": "unlink",
+    "hex": "\\ec39",
+    "raw_hex": "ec39",
+    "char": "&#xec39;",
+    "class": "xi-unlink",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 74,
+    "name": "star",
+    "hex": "\\ec3a",
+    "raw_hex": "ec3a",
+    "char": "&#xec3a;",
+    "class": "xi-star",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 75,
+    "name": "flag",
+    "hex": "\\ec3b",
+    "raw_hex": "ec3b",
+    "char": "&#xec3b;",
+    "class": "xi-flag",
+    "category": "Actions & Organization",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 76,
+    "name": "flag-empty",
+    "hex": "\\ec3c",
+    "raw_hex": "ec3c",
+    "char": "&#xec3c;",
+    "class": "xi-flag-empty",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 77,
+    "name": "text-file",
+    "hex": "\\ec3d",
+    "raw_hex": "ec3d",
+    "char": "&#xec3d;",
+    "class": "xi-text-file",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 78,
+    "name": "replied-forwarded",
+    "hex": "\\ec3e",
+    "raw_hex": "ec3e",
+    "char": "&#xec3e;",
+    "class": "xi-replied-forwarded",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 79,
+    "name": "speech-bubble",
+    "hex": "\\ec3f",
+    "raw_hex": "ec3f",
+    "char": "&#xec3f;",
+    "class": "xi-speech-bubble",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 80,
+    "name": "forbidden",
+    "hex": "\\ec40",
+    "raw_hex": "ec40",
+    "char": "&#xec40;",
+    "class": "xi-forbidden",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 81,
+    "name": "clock",
+    "hex": "\\ec41",
+    "raw_hex": "ec41",
+    "char": "&#xec41;",
+    "class": "xi-clock",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 82,
+    "name": "share",
+    "hex": "\\ec42",
+    "raw_hex": "ec42",
+    "char": "&#xec42;",
+    "class": "xi-share",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 83,
+    "name": "circle-empty",
+    "hex": "\\ec43",
+    "raw_hex": "ec43",
+    "char": "&#xec43;",
+    "class": "xi-circle-empty",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 84,
+    "name": "calendar",
+    "hex": "\\ec44",
+    "raw_hex": "ec44",
+    "char": "&#xec44;",
+    "class": "xi-calendar",
+    "category": "Calendar & Dates",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 85,
+    "name": "calendar-short",
+    "hex": "\\ec45",
+    "raw_hex": "ec45",
+    "char": "&#xec45;",
+    "class": "xi-calendar-short",
+    "category": "Calendar & Dates",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 86,
+    "name": "calendar-list",
+    "hex": "\\ec46",
+    "raw_hex": "ec46",
+    "char": "&#xec46;",
+    "class": "xi-calendar-list",
+    "category": "Calendar & Dates",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 87,
+    "name": "calendar-day",
+    "hex": "\\ec47",
+    "raw_hex": "ec47",
+    "char": "&#xec47;",
+    "class": "xi-calendar-day",
+    "category": "Calendar & Dates",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 88,
+    "name": "help",
+    "hex": "\\ec48",
+    "raw_hex": "ec48",
+    "char": "&#xec48;",
+    "class": "xi-help",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 89,
+    "name": "repeat",
+    "hex": "\\ec49",
+    "raw_hex": "ec49",
+    "char": "&#xec49;",
+    "class": "xi-repeat",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 90,
+    "name": "options",
+    "hex": "\\ec4a",
+    "raw_hex": "ec4a",
+    "char": "&#xec4a;",
+    "class": "xi-options",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 91,
+    "name": "generic",
+    "hex": "\\ec4b",
+    "raw_hex": "ec4b",
+    "char": "&#xec4b;",
+    "class": "xi-generic",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 92,
+    "name": "lock",
+    "hex": "\\ec4c",
+    "raw_hex": "ec4c",
+    "char": "&#xec4c;",
+    "class": "xi-lock",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 93,
+    "name": "envelope-closed",
+    "hex": "\\ec4d",
+    "raw_hex": "ec4d",
+    "char": "&#xec4d;",
+    "class": "xi-envelope-closed",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 94,
+    "name": "envelope-open",
+    "hex": "\\ec4e",
+    "raw_hex": "ec4e",
+    "char": "&#xec4e;",
+    "class": "xi-envelope-open",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 95,
+    "name": "monitor",
+    "hex": "\\ec4f",
+    "raw_hex": "ec4f",
+    "char": "&#xec4f;",
+    "class": "xi-monitor",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 96,
+    "name": "sort-asc",
+    "hex": "\\ec50",
+    "raw_hex": "ec50",
+    "char": "&#xec50;",
+    "class": "xi-sort-asc",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 97,
+    "name": "sort-desc",
+    "hex": "\\ec51",
+    "raw_hex": "ec51",
+    "char": "&#xec51;",
+    "class": "xi-sort-desc",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 98,
+    "name": "inbox",
+    "hex": "\\ec52",
+    "raw_hex": "ec52",
+    "char": "&#xec52;",
+    "class": "xi-inbox",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 99,
+    "name": "spinner",
+    "hex": "\\ec53",
+    "raw_hex": "ec53",
+    "char": "&#xec53;",
+    "class": "xi-spinner",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 100,
+    "name": "picture",
+    "hex": "\\ec54",
+    "raw_hex": "ec54",
+    "char": "&#xec54;",
+    "class": "xi-picture",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 101,
+    "name": "dropbox",
+    "hex": "\\ec55",
+    "raw_hex": "ec55",
+    "char": "&#xec55;",
+    "class": "xi-dropbox",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 102,
+    "name": "google",
+    "hex": "\\ec56",
+    "raw_hex": "ec56",
+    "char": "&#xec56;",
+    "class": "xi-google",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 103,
+    "name": "user-circle",
+    "hex": "\\ec57",
+    "raw_hex": "ec57",
+    "char": "&#xec57;",
+    "class": "xi-user-circle",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 104,
+    "name": "newspaper",
+    "hex": "\\ec58",
+    "raw_hex": "ec58",
+    "char": "&#xec58;",
+    "class": "xi-newspaper",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 105,
+    "name": "sun",
+    "hex": "\\ec59",
+    "raw_hex": "ec59",
+    "char": "&#xec59;",
+    "class": "xi-sun",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 106,
+    "name": "home",
+    "hex": "\\ec5a",
+    "raw_hex": "ec5a",
+    "char": "&#xec5a;",
+    "class": "xi-home",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 107,
+    "name": "sidebar",
+    "hex": "\\ec5b",
+    "raw_hex": "ec5b",
+    "char": "&#xec5b;",
+    "class": "xi-sidebar",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 108,
+    "name": "columns",
+    "hex": "\\ec5c",
+    "raw_hex": "ec5c",
+    "char": "&#xec5c;",
+    "class": "xi-columns",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 109,
+    "name": "skin",
+    "hex": "\\ec5d",
+    "raw_hex": "ec5d",
+    "char": "&#xec5d;",
+    "class": "xi-skin",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 110,
+    "name": "align-left",
+    "hex": "\\ec5e",
+    "raw_hex": "ec5e",
+    "char": "&#xec5e;",
+    "class": "xi-align-left",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 111,
+    "name": "align-center",
+    "hex": "\\ec5f",
+    "raw_hex": "ec5f",
+    "char": "&#xec5f;",
+    "class": "xi-align-center",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 112,
+    "name": "align-right",
+    "hex": "\\ec60",
+    "raw_hex": "ec60",
+    "char": "&#xec60;",
+    "class": "xi-align-right",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 113,
+    "name": "dot",
+    "hex": "\\ec61",
+    "raw_hex": "ec61",
+    "char": "&#xec61;",
+    "class": "xi-dot",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 114,
+    "name": "disk",
+    "hex": "\\ec62",
+    "raw_hex": "ec62",
+    "char": "&#xec62;",
+    "class": "xi-disk",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 115,
+    "name": "junk",
+    "hex": "\\ec63",
+    "raw_hex": "ec63",
+    "char": "&#xec63;",
+    "class": "xi-junk",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 116,
+    "name": "not-junk",
+    "hex": "\\ec64",
+    "raw_hex": "ec64",
+    "char": "&#xec64;",
+    "class": "xi-not-junk",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 117,
+    "name": "dot-menu",
+    "hex": "\\ec65",
+    "raw_hex": "ec65",
+    "char": "&#xec65;",
+    "class": "xi-dot-menu",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 118,
+    "name": "filter",
+    "hex": "\\ec66",
+    "raw_hex": "ec66",
+    "char": "&#xec66;",
+    "class": "xi-filter",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 119,
+    "name": "new-window",
+    "hex": "\\ec67",
+    "raw_hex": "ec67",
+    "char": "&#xec67;",
+    "class": "xi-new-window",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 120,
+    "name": "star-empty",
+    "hex": "\\ec68",
+    "raw_hex": "ec68",
+    "char": "&#xec68;",
+    "class": "xi-star-empty",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 121,
+    "name": "move",
+    "hex": "\\ec69",
+    "raw_hex": "ec69",
+    "char": "&#xec69;",
+    "class": "xi-move",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 122,
+    "name": "copy",
+    "hex": "\\ec6a",
+    "raw_hex": "ec6a",
+    "char": "&#xec6a;",
+    "class": "xi-copy",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 123,
+    "name": "add-user",
+    "hex": "\\ec6b",
+    "raw_hex": "ec6b",
+    "char": "&#xec6b;",
+    "class": "xi-add-user",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 124,
+    "name": "remove-user",
+    "hex": "\\ec6c",
+    "raw_hex": "ec6c",
+    "char": "&#xec6c;",
+    "class": "xi-remove-user",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 125,
+    "name": "qrcode",
+    "hex": "\\ec6d",
+    "raw_hex": "ec6d",
+    "char": "&#xec6d;",
+    "class": "xi-qrcode",
+    "category": "Files & Data",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 126,
+    "name": "addressbook",
+    "hex": "\\ec6e",
+    "raw_hex": "ec6e",
+    "char": "&#xec6e;",
+    "class": "xi-addressbook",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 127,
+    "name": "vertical-menu",
+    "hex": "\\ec6f",
+    "raw_hex": "ec6f",
+    "char": "&#xec6f;",
+    "class": "xi-vertical-menu",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 128,
+    "name": "zoom-in",
+    "hex": "\\ec70",
+    "raw_hex": "ec70",
+    "char": "&#xec70;",
+    "class": "xi-zoom-in",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 129,
+    "name": "zoom-out",
+    "hex": "\\ec71",
+    "raw_hex": "ec71",
+    "char": "&#xec71;",
+    "class": "xi-zoom-out",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 130,
+    "name": "lightbulb",
+    "hex": "\\ec72",
+    "raw_hex": "ec72",
+    "char": "&#xec72;",
+    "class": "xi-lightbulb",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 131,
+    "name": "compress",
+    "hex": "\\ec73",
+    "raw_hex": "ec73",
+    "char": "&#xec73;",
+    "class": "xi-compress",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 132,
+    "name": "link",
+    "hex": "\\ec74",
+    "raw_hex": "ec74",
+    "char": "&#xec74;",
+    "class": "xi-link",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 133,
+    "name": "users",
+    "hex": "\\ec75",
+    "raw_hex": "ec75",
+    "char": "&#xec75;",
+    "class": "xi-users",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 134,
+    "name": "shield",
+    "hex": "\\ec76",
+    "raw_hex": "ec76",
+    "char": "&#xec76;",
+    "class": "xi-shield",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 135,
+    "name": "login",
+    "hex": "\\ec77",
+    "raw_hex": "ec77",
+    "char": "&#xec77;",
+    "class": "xi-login",
+    "category": "Security & Protection",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 136,
+    "name": "key",
+    "hex": "\\ec78",
+    "raw_hex": "ec78",
+    "char": "&#xec78;",
+    "class": "xi-key",
+    "category": "Security & Protection",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 137,
+    "name": "undo",
+    "hex": "\\ec79",
+    "raw_hex": "ec79",
+    "char": "&#xec79;",
+    "class": "xi-undo",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 138,
+    "name": "bell",
+    "hex": "\\ec7a",
+    "raw_hex": "ec7a",
+    "char": "&#xec7a;",
+    "class": "xi-bell",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 139,
+    "name": "eye",
+    "hex": "\\ec7b",
+    "raw_hex": "ec7b",
+    "char": "&#xec7b;",
+    "class": "xi-eye",
+    "category": "Alerts & Status",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 140,
+    "name": "rss",
+    "hex": "\\ec7c",
+    "raw_hex": "ec7c",
+    "char": "&#xec7c;",
+    "class": "xi-rss",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 141,
+    "name": "label-dots",
+    "hex": "\\ec7d",
+    "raw_hex": "ec7d",
+    "char": "&#xec7d;",
+    "class": "xi-label-dots",
+    "category": "Actions & Organization",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 142,
+    "name": "cloud",
+    "hex": "\\ec7e",
+    "raw_hex": "ec7e",
+    "char": "&#xec7e;",
+    "class": "xi-cloud",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 143,
+    "name": "connections",
+    "hex": "\\ec7f",
+    "raw_hex": "ec7f",
+    "char": "&#xec7f;",
+    "class": "xi-connections",
+    "category": "Contacts & People",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 144,
+    "name": "email-schedule",
+    "hex": "\\ec80",
+    "raw_hex": "ec80",
+    "char": "&#xec80;",
+    "class": "xi-email-schedule",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 145,
+    "name": "schedule-list",
+    "hex": "\\ec81",
+    "raw_hex": "ec81",
+    "char": "&#xec81;",
+    "class": "xi-schedule-list",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 146,
+    "name": "replied-forwarded",
+    "hex": "\\ec82",
+    "raw_hex": "ec82",
+    "char": "&#xec82;",
+    "class": "xi-replied-forwarded",
+    "category": "Mail & Messaging",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 147,
+    "name": "cpanel",
+    "hex": "\\ec83",
+    "raw_hex": "ec83",
+    "char": "&#xec83;",
+    "class": "xi-cpanel",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 148,
+    "name": "phone",
+    "hex": "\\ec84",
+    "raw_hex": "ec84",
+    "char": "&#xec84;",
+    "class": "xi-phone",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 149,
+    "name": "security-key",
+    "hex": "\\ec85",
+    "raw_hex": "ec85",
+    "char": "&#xec85;",
+    "class": "xi-security-key",
+    "category": "Security & Protection",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 150,
+    "name": "light-mode",
+    "hex": "\\ec86",
+    "raw_hex": "ec86",
+    "char": "&#xec86;",
+    "class": "xi-light-mode",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 151,
+    "name": "dark-mode",
+    "hex": "\\ec87",
+    "raw_hex": "ec87",
+    "char": "&#xec87;",
+    "class": "xi-dark-mode",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 152,
+    "name": "google-drive",
+    "hex": "\\ec88",
+    "raw_hex": "ec88",
+    "char": "&#xec88;",
+    "class": "xi-google-drive",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 153,
+    "name": "ai",
+    "hex": "\\ec89",
+    "raw_hex": "ec89",
+    "char": "&#xec89;",
+    "class": "xi-ai",
+    "category": "AI & Smart Tools",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 154,
+    "name": "eraser",
+    "hex": "\\ec8a",
+    "raw_hex": "ec8a",
+    "char": "&#xec8a;",
+    "class": "xi-eraser",
+    "category": "Actions & Organization",
+    "is_spam_candidate": true
+  },
+  {
+    "id": 155,
+    "name": "box",
+    "hex": "\\ec8b",
+    "raw_hex": "ec8b",
+    "char": "&#xec8b;",
+    "class": "xi-box",
+    "category": "General & UI",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 156,
+    "name": "world",
+    "hex": "\\ec8c",
+    "raw_hex": "ec8c",
+    "char": "&#xec8c;",
+    "class": "xi-world",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 157,
+    "name": "nextcloud",
+    "hex": "\\ec8d",
+    "raw_hex": "ec8d",
+    "char": "&#xec8d;",
+    "class": "xi-nextcloud",
+    "category": "Services & Integrations",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 158,
+    "name": "yubikey",
+    "hex": "\\ec8e",
+    "raw_hex": "ec8e",
+    "char": "&#xec8e;",
+    "class": "xi-yubikey",
+    "category": "Security & Protection",
+    "is_spam_candidate": false
+  },
+  {
+    "id": 159,
+    "name": "ai-improve",
+    "hex": "\\ec8f",
+    "raw_hex": "ec8f",
+    "char": "&#xec8f;",
+    "class": "xi-ai-improve",
+    "category": "AI & Smart Tools",
+    "is_spam_candidate": false
+  }
+];
+        const grid = document.getElementById("iconGrid");
+        const searchInput = document.getElementById("searchInput");
+        const categoryFilter = document.getElementById("categoryFilter");
+        const resultsCount = document.getElementById("resultsCount");
+        const toast = document.getElementById("toast");
+
+        function showToast(msg) {
+            toast.innerText = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2000);
+        }
+
+        function render(filtered) {
+            grid.innerHTML = "";
+            resultsCount.innerText = `Showing ${filtered.length} icon${filtered.length === 1 ? "" : "s"}`;
+            filtered.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "icon-card" + (item.is_spam_candidate ? " candidate" : "");
+                const badge = item.is_spam_candidate ? '<span class="candidate-badge">Spam Pick</span>' : '';
+                card.innerHTML = `
+                    ${badge}
+                    <div class="icon-glyph">&#x${item.raw_hex};</div>
+                    <div class="icon-name">${item.name}</div>
+                    <div class="icon-details">${item.hex}</div>
+                    <div class="icon-id">ID: ${item.id} &bull; .${item.class}</div>
+                `;
+                card.onclick = () => {
+                    navigator.clipboard.writeText(item.name);
+                    showToast(`Copied "${item.name}" to clipboard!`);
+                };
+                grid.appendChild(card);
+            });
+        }
+
+        function filter() {
+            const query = searchInput.value.toLowerCase().trim();
+            const cat = categoryFilter.value;
+            const filtered = icons.filter(item => {
+                const matchesQuery = item.name.toLowerCase().includes(query) || item.hex.includes(query) || String(item.id).includes(query);
+                const matchesCat = (cat === "all") || (cat === "spam" && item.is_spam_candidate) || (item.category === cat);
+                return matchesQuery && matchesCat;
+            });
+            render(filtered);
+        }
+
+        searchInput.addEventListener("input", filter);
+        categoryFilter.addEventListener("change", filter);
+
+        render(icons);
+    </script>
+</body>
+</html>
