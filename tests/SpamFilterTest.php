@@ -328,10 +328,10 @@ assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
 assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
 assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
-assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon in messagelist-header with top: 0.6rem");
-assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon in messagelist-header with top: 0.6rem");
-assert_true(strpos($gp_css, "top: 0 !important;") !== false, "gmail_plus style.css sets top: 0 for mailtoolbar spam button icon");
-assert_true(strpos($el_css, "top: 0 !important;") !== false, "elastic style.css sets top: 0 for mailtoolbar spam button icon");
+assert_true(strpos($gp_css, "top: 0.9rem !important;") !== false, "gmail_plus style.css offsets spam button icon with top: 0.9rem");
+assert_true(strpos($el_css, "top: 0.9rem !important;") !== false, "elastic style.css offsets spam button icon with top: 0.9rem");
+assert_true(strpos($gp_min, "top:.9rem!important") !== false, "gmail_plus style.min.css contains top: .9rem for spam button icon");
+assert_true(strpos($el_min, "top:.9rem!important") !== false, "elastic style.min.css contains top: .9rem for spam button icon");
 assert_true(strpos($gp_css, "#mailtoolbar a.junk") !== false, "gmail_plus style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($el_css, "#mailtoolbar a.junk") !== false, "elastic style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_plus style.css aligns spam icon font size with sibling buttons (1.5em)");

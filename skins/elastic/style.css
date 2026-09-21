@@ -3361,7 +3361,7 @@ a.notjunk.xi-not-junk:before,
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0 !important;
+    top: 0.9rem !important;
     font-size: 1.5em !important;
     width: auto !important;
     height: 1.75rem !important;
@@ -3370,7 +3370,7 @@ a.notjunk.xi-not-junk:before,
     transition: color 0.15s ease, transform 0.15s ease !important;
 }
 
-/* Left cluster (#messagelist-header): Sibling header buttons use top: 0.6rem */
+/* Left cluster (#messagelist-header): Sibling header buttons use top: 0.9rem */
 #messagelist-header a.junk:before,
 #messagelist-header a.notjunk:before,
 #messagelist-header .toolbar a.junk:before,
@@ -3393,7 +3393,7 @@ a.notjunk.xi-not-junk:before,
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0.6rem !important;
+    top: 0.9rem !important;
     font-size: 1.5em !important;
     width: auto !important;
     height: 1.75rem !important;
