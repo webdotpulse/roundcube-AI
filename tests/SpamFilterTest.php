@@ -328,12 +328,14 @@ assert_true(strpos($gp_css, "\\ec89") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec89") !== false, "gmail_plus style.min.css contains outline ai glyph (\\ec89)");
 assert_true(strpos($el_css, "\\ec89") !== false, "elastic style.css maps outline ai icon glyph (\\ec89)");
 assert_true(strpos($el_min, "\\ec89") !== false, "elastic style.min.css contains outline ai glyph (\\ec89)");
-assert_true(strpos($gp_css, "top: 0.6rem !important;") === false, "gmail_plus style.css does not offset spam button downwards with top: 0.6rem");
-assert_true(strpos($el_css, "top: 0.6rem !important;") === false, "elastic style.css does not offset spam button downwards with top: 0.6rem");
+assert_true(strpos($gp_css, "top: 0.6rem !important;") !== false, "gmail_plus style.css offsets spam button icon with top: 0.6rem to align with siblings");
+assert_true(strpos($el_css, "top: 0.6rem !important;") !== false, "elastic style.css offsets spam button icon with top: 0.6rem to align with siblings");
 assert_true(strpos($gp_css, "#mailtoolbar a.junk") !== false, "gmail_plus style.css targets #mailtoolbar a.junk for base toolbar sizing");
 assert_true(strpos($el_css, "#mailtoolbar a.junk") !== false, "elastic style.css targets #mailtoolbar a.junk for base toolbar sizing");
-assert_true(strpos($gp_css, "height: 1.75rem !important;") !== false, "gmail_plus style.css aligns spam icon height with sibling buttons (1.75rem)");
-assert_true(strpos($el_css, "height: 1.75rem !important;") !== false, "elastic style.css aligns spam icon height with sibling buttons (1.75rem)");
+assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_plus style.css aligns spam icon font size with sibling buttons (1.5em)");
+assert_true(strpos($el_css, "font-size: 1.5em !important;") !== false, "elastic style.css aligns spam icon font size with sibling buttons (1.5em)");
+assert_true(strpos($gp_css, "display: inline-flex !important;") !== false, "gmail_plus style.css uses inline-flex for toolbar spam button alignment");
+assert_true(strpos($el_css, "display: inline-flex !important;") !== false, "elastic style.css uses inline-flex for toolbar spam button alignment");
 
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));

@@ -2716,7 +2716,7 @@ function lpai_init_spam_toolbar() {
             btn.href = '#';
             btn.setAttribute('role', 'button');
             btn.setAttribute('tabindex', '0');
-            btn.className = isJunk ? 'notjunk' : 'junk';
+            btn.className = (isJunk ? 'notjunk' : 'junk') + ' button lpai-toolbar-spam-btn';
 
             btn.title = labelText;
             btn.innerHTML = '<span class="inner button-inner">' + labelText + '</span>';
@@ -2743,6 +2743,7 @@ function lpai_init_spam_toolbar() {
             if (isUl) {
                 var item = doc.createElement('li');
                 item.setAttribute('role', 'menuitem');
+                item.className = 'lpai-toolbar-spam-item';
                 item._lpai_spam = true;
                 item.appendChild(btn);
 

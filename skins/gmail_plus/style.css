@@ -2230,12 +2230,15 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 #messagelist-header .toolbar a.notjunk,
 ul.menu.toolbar a.junk,
 ul.menu.toolbar a.notjunk {
-    display: block !important;
-    float: left !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    float: none !important;
     height: 100% !important;
     border: 0 !important;
-    padding: .45rem !important;
-    line-height: 1.5 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: normal !important;
     cursor: pointer !important;
     text-align: center !important;
     min-width: 3.2rem;
@@ -2245,8 +2248,16 @@ ul.menu.toolbar a.notjunk {
     background: transparent;
     color: inherit;
     text-decoration: none !important;
-    vertical-align: top !important;
+    vertical-align: middle !important;
     box-sizing: border-box !important;
+}
+
+ul.menu.toolbar > li.lpai-toolbar-spam-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    vertical-align: middle !important;
+    height: 100% !important;
 }
 
 #layout-sidebar a.button.lpai-toolbar-spam-btn,
@@ -2383,17 +2394,47 @@ ul.menu.toolbar a.notjunk:before,
     -moz-osx-font-smoothing: grayscale;
     background-image: none !important;
     text-indent: 0 !important;
-    display: block !important;
+    display: inline-block !important;
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0 !important;
-    font-size: 1.25em !important;
+    top: 0.6rem !important;
+    font-size: 1.5em !important;
     width: auto !important;
-    height: 1.75rem !important;
-    line-height: 1.5 !important;
+    height: auto !important;
+    line-height: normal !important;
     text-align: center !important;
     transition: color 0.2s ease, transform 0.2s ease !important;
+}
+
+/* SVG icon rules: support 24x24 centered SVG shield icons inheriting colors and stroke */
+#messagetoolbar a.junk svg,
+#messagetoolbar a.notjunk svg,
+#mailtoolbar a.junk svg,
+#mailtoolbar a.notjunk svg,
+#messagelist-header a.junk svg,
+#messagelist-header a.notjunk svg,
+#messagelist-header .toolbar a.junk svg,
+#messagelist-header .toolbar a.notjunk svg,
+.header .toolbar a.junk svg,
+.header a.junk svg,
+.toolbar a.junk svg,
+.toolbar a.notjunk svg,
+.toolbar a.button.lpai-toolbar-spam-btn svg,
+.toolbar a.lpai-toolbar-spam-btn svg,
+ul.menu.toolbar a.junk svg,
+ul.menu.toolbar a.notjunk svg {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    width: 24px !important;
+    height: 24px !important;
+    fill: currentColor !important;
+    stroke: currentColor !important;
+    stroke-width: inherit !important;
+    position: relative !important;
+    top: 0.6rem !important;
+    margin: 0 auto !important;
+    transform: none !important;
 }
 
 #layout-sidebar a.button.lpai-toolbar-spam-btn:before,
