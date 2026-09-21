@@ -1989,3 +1989,213 @@ body.dark-mode a:focus-visible,
     outline-offset: 2px !important;
 }
 
+/* =========================================================================
+   Advanced Spam Filter & Self-Learning Engine Styles
+   ========================================================================= */
+
+.lpai-spam-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    margin-right: 5px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #b91c1c;
+    background: #fee2e2;
+    border: 1px solid #f87171;
+    line-height: 14px;
+    vertical-align: middle;
+    text-transform: uppercase;
+}
+
+html.dark-mode .lpai-spam-badge,
+body.dark-mode .lpai-spam-badge,
+[data-theme="dark"] .lpai-spam-badge {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.lpai-row-spam td {
+    background-color: rgba(254, 226, 226, 0.25) !important;
+}
+
+html.dark-mode .lpai-row-spam td,
+body.dark-mode .lpai-row-spam td,
+[data-theme="dark"] .lpai-row-spam td {
+    background-color: rgba(239, 68, 68, 0.08) !important;
+}
+
+.lpai-spam-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    margin: 8px 12px 14px 12px;
+    background: #fff1f2;
+    border: 1px solid #fecdd3;
+    border-left: 4px solid #e11d48;
+    border-radius: 6px;
+    color: #9f1239;
+    font-size: 13px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.lpai-spam-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.lpai-spam-banner-icon {
+    color: #e11d48;
+    display: flex;
+    align-items: center;
+}
+
+.lpai-spam-banner .lpai-btn-ham {
+    background: #ffffff;
+    border: 1px solid #f43f5e;
+    color: #be123c;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.lpai-spam-banner .lpai-btn-ham:hover {
+    background: #ffe4e6;
+    border-color: #e11d48;
+    color: #9f1239;
+}
+
+html.dark-mode .lpai-spam-banner,
+body.dark-mode .lpai-spam-banner,
+[data-theme="dark"] .lpai-spam-banner {
+    background: rgba(225, 29, 72, 0.12);
+    border-color: rgba(225, 29, 72, 0.3);
+    border-left-color: #fb7185;
+    color: #fecdd3;
+}
+
+html.dark-mode .lpai-spam-banner .lpai-btn-ham,
+body.dark-mode .lpai-spam-banner .lpai-btn-ham,
+[data-theme="dark"] .lpai-spam-banner .lpai-btn-ham {
+    background: #1e293b;
+    border-color: #fb7185;
+    color: #fecdd3;
+}
+
+.lpai-toolbar-spam-btn.lpai-btn-spam .lpai-icon,
+.lpai-toolbar-spam-btn.lpai-btn-spam svg {
+    color: #e11d48;
+}
+
+.lpai-toolbar-spam-btn.lpai-btn-ham .lpai-icon,
+.lpai-toolbar-spam-btn.lpai-btn-ham svg {
+    color: #16a34a;
+}
+
+.lpai-qa-btn.lpai-qa-spam {
+    color: #e11d48;
+}
+
+.lpai-qa-btn.lpai-qa-spam:hover {
+    background: #ffe4e6;
+    color: #be123c;
+}
+
+.lpai-qa-btn.lpai-qa-ham {
+    color: #16a34a;
+}
+
+.lpai-qa-btn.lpai-qa-ham:hover {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.lpai-spam-dashboard-wrap {
+    margin: 8px 0;
+}
+
+.lpai-spam-stats-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.lpai-spam-stat-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    text-align: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lpai-spam-stat-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+}
+
+.lpai-spam-stat-card .lpai-stat-number {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.lpai-spam-stat-card .lpai-stat-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lpai-spam-stat-card.lpai-stat-spam .lpai-stat-number {
+    color: #e11d48;
+}
+
+.lpai-spam-stat-card.lpai-stat-ham .lpai-stat-number {
+    color: #16a34a;
+}
+
+.lpai-spam-stat-card.lpai-stat-tokens .lpai-stat-number {
+    color: #7c3aed;
+}
+
+.lpai-spam-stat-card.lpai-stat-ratio .lpai-stat-number {
+    color: #ea580c;
+}
+
+html.dark-mode .lpai-spam-stat-card,
+body.dark-mode .lpai-spam-stat-card,
+[data-theme="dark"] .lpai-spam-stat-card {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+html.dark-mode .lpai-spam-stat-card .lpai-stat-number,
+body.dark-mode .lpai-spam-stat-card .lpai-stat-number,
+[data-theme="dark"] .lpai-spam-stat-card .lpai-stat-number {
+    color: #f8fafc;
+}
+
+html.dark-mode .lpai-spam-stat-card .lpai-stat-label,
+body.dark-mode .lpai-spam-stat-card .lpai-stat-label,
+[data-theme="dark"] .lpai-spam-stat-card .lpai-stat-label {
+    color: #94a3b8;
+}
+
+

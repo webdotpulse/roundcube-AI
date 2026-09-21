@@ -9,6 +9,8 @@
  * @license MIT
  * @author LifePrisma & Contributors
  */
+require_once __DIR__ . '/src/LpaiSpamFilter.php';
+
 class lifeprisma_ai extends rcube_plugin
 {
     public $task = '?(?!logout).*';
@@ -44,6 +46,11 @@ class lifeprisma_ai extends rcube_plugin
         $this->register_action('plugin.lifeprisma_ai_triage', [$this, 'handle_triage']);
         $this->register_action('plugin.lifeprisma_ai_memory', [$this, 'handle_memory']);
         $this->register_action('plugin.lifeprisma_ai_prepare_compose', [$this, 'handle_prepare_compose']);
+        $this->register_action('plugin.lifeprisma_ai_spam_tag', [$this, 'handle_spam_tag']);
+        $this->register_action('plugin.lifeprisma_ai_spam_untag', [$this, 'handle_spam_untag']);
+        $this->register_action('plugin.lifeprisma_ai_spam_stats', [$this, 'handle_spam_stats']);
+        $this->register_action('plugin.lifeprisma_ai_spam_reset', [$this, 'handle_spam_reset']);
+        $this->register_action('plugin.lifeprisma_ai_spam_batch_train', [$this, 'handle_spam_batch_train']);
 
         // Register hooks
         $this->add_hook('render_page', [$this, 'render_page']);
@@ -52,6 +59,7 @@ class lifeprisma_ai extends rcube_plugin
         $this->add_hook('preferences_save', [$this, 'preferences_save']);
         $this->add_hook('new_messages', [$this, 'handle_new_messages']);
         $this->add_hook('messages_list', [$this, 'handle_messages_list']);
+        $this->add_hook('messages_move', [$this, 'handle_messages_move']);
         $this->add_hook('message_compose', [$this, 'handle_message_compose']);
         $this->add_hook('message_sent', [$this, 'handle_message_sent']);
 
@@ -141,6 +149,12 @@ class lifeprisma_ai extends rcube_plugin
                 $rcmail->output->set_env('lpai_features', $features);
             }
 
+            // Pass spam environment settings
+            $junk_folder = $this->get_junk_folder();
+            $rcmail->output->set_env('lpai_junk_mbox', $junk_folder);
+            $rcmail->output->set_env('lpai_spam_enabled', (bool) ($prefs['lifeprisma_ai_spam_filter_enabled'] ?? $rcmail->config->get('lifeprisma_ai_spam_filter_enabled', true)));
+            $rcmail->output->set_env('lpai_spam_action', $prefs['lifeprisma_ai_spam_action'] ?? $rcmail->config->get('lifeprisma_ai_spam_action', 'move_and_label'));
+
             // Pass message context for read/preview view
             if ($is_read) {
                 $uid = rcube_utils::get_input_string('_uid', rcube_utils::INPUT_GET);
@@ -152,11 +166,20 @@ class lifeprisma_ai extends rcube_plugin
                     }
                     $ctx = $this->fetch_message_context((int) $uid, $mbox);
                     if ($ctx) {
+                        $is_msg_spam = (strcasecmp((string)$mbox, $junk_folder) === 0);
+                        $storage = $rcmail->get_storage();
+                        if ($storage && !$is_msg_spam) {
+                            $flags = $storage->get_message_flags((int) $uid);
+                            if (is_array($flags)) {
+                                $is_msg_spam = !empty($flags['Junk']) || !empty($flags['$Junk']);
+                            }
+                        }
                         $rcmail->output->set_env('lpai_msg_context', [
                             'from' => $ctx['from'] ?? '',
                             'date' => $ctx['date'] ?? '',
                             'subject' => $ctx['subject'] ?? '',
                             'spam_score' => $ctx['spam_score'],
+                            'is_spam' => $is_msg_spam,
                         ]);
                     }
                 }
@@ -942,17 +965,16 @@ Body:
     }
 
     /**
-     * Hook triggered when new messages arrive in mailbox
+     * Hook triggered when new messages arrive in mailbox.
+     * Evaluates incoming emails for spam on the server side:
+     * - Adds SPAM label flags (Junk, $Junk, $Label1)
+     * - Automatically moves spam emails to the Junk/Spam folder
+     * - Continues to auto-draft only for verified non-spam emails
      */
     public function handle_new_messages($args)
     {
         $rcmail = rcmail::get_instance();
         $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
-        $mode = $prefs['genia_auto_draft_mode'] ?? 'disabled';
-
-        if ($mode !== 'receive') {
-            return;
-        }
 
         $mbox = $args['mailbox'] ?? 'INBOX';
         if (strtoupper($mbox) !== 'INBOX') {
@@ -978,11 +1000,81 @@ Body:
             return;
         }
 
-        // Process at most 2 most recent messages per check
-        $uids = array_slice(array_reverse($uids), 0, 2);
+        // 1. Server-Side Automatic Spam Filter Check
+        $spam_enabled = (bool) ($prefs['lifeprisma_ai_spam_filter_enabled'] ?? $rcmail->config->get('lifeprisma_ai_spam_filter_enabled', true));
+        $spam_uids = [];
+        $non_spam_uids = [];
+
+        if ($spam_enabled) {
+            $junk_mbox = $this->get_junk_folder();
+            $user_id = $this->get_user_identifier();
+            $spam_action = $prefs['lifeprisma_ai_spam_action'] ?? $rcmail->config->get('lifeprisma_ai_spam_action', 'move_and_label');
+            $auto_learn = (bool) ($prefs['lifeprisma_ai_spam_auto_learn'] ?? $rcmail->config->get('lifeprisma_ai_spam_auto_learn', true));
+
+            foreach ($uids as $uid) {
+                $ctx = $this->fetch_message_context($uid, $mbox);
+                $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+                if (empty($ctx)) {
+                    $non_spam_uids[] = $uid;
+                    continue;
+                }
+
+                $decision = LpaiSpamFilter::check_message(
+                    $ctx['subject'] ?? '',
+                    $ctx['body'] ?? '',
+                    $raw_headers,
+                    $ctx['from'] ?? '',
+                    $user_id,
+                    $prefs
+                );
+
+                if ($decision['is_spam']) {
+                    $spam_uids[] = $uid;
+
+                    // Add SPAM label flags: Junk, $Junk, and $Label1 (thunderbird / roundcube-labels red badge)
+                    if ($spam_action === 'move_and_label' || $spam_action === 'label_only') {
+                        $storage->set_flag($uid, 'Junk', $mbox);
+                        $storage->set_flag($uid, '$Junk', $mbox);
+                        $storage->set_flag($uid, '$Label1', $mbox);
+                    }
+
+                    // Auto-train Bayesian learning model on arrival
+                    if ($auto_learn) {
+                        $msg_id = $this->extract_message_id($raw_headers);
+                        LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
+                    }
+
+                    // Move to Spam folder automatically
+                    if ($spam_action === 'move_and_label' || $spam_action === 'move_only') {
+                        $storage->move_message($uid, $junk_mbox, $mbox);
+                    }
+                } else {
+                    $non_spam_uids[] = $uid;
+                }
+            }
+
+            if (!empty($spam_uids)) {
+                $scount = count($spam_uids);
+                $smsg = ($scount === 1)
+                    ? "1 spam email detected and moved to {$junk_mbox} folder"
+                    : "{$scount} spam emails detected and moved to {$junk_mbox} folder";
+                $rcmail->output->command('display_message', $smsg, 'warning');
+            }
+        } else {
+            $non_spam_uids = $uids;
+        }
+
+        // 2. Auto-Draft Mode for Remaining Non-Spam Messages
+        $mode = $prefs['genia_auto_draft_mode'] ?? 'disabled';
+        if ($mode !== 'receive' || empty($non_spam_uids)) {
+            return;
+        }
+
+        // Process at most 2 most recent non-spam messages per check
+        $candidate_uids = array_slice(array_reverse($non_spam_uids), 0, 2);
         $created_subjects = [];
 
-        foreach ($uids as $uid) {
+        foreach ($candidate_uids as $uid) {
             $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
             if ($subj) {
                 $created_subjects[] = $subj;
@@ -1000,8 +1092,8 @@ Body:
 
     /**
      * Hook triggered when rendering the mailbox message list table.
-     * Detects IMAP label flags ($Label1 - $Label5) and passes them to the frontend
-     * so colored label badges are rendered directly on the inbox rows.
+     * Detects IMAP label flags ($Label1 - $Label5) and SPAM flags (Junk, $Junk),
+     * passing them to the frontend so colored label & SPAM badges are rendered directly on rows.
      */
     public function handle_messages_list($args)
     {
@@ -1010,14 +1102,26 @@ Body:
         }
 
         $row_labels = [];
+        $row_spams = [];
+        $junk_mbox = $this->get_junk_folder();
+        $rcmail = rcmail::get_instance();
+        $curr_mbox = (string) ($rcmail->storage ? $rcmail->storage->get_folder() : '');
+        $is_junk_folder = (strcasecmp($curr_mbox, $junk_mbox) === 0);
 
         foreach ($args['messages'] as $header) {
             if (empty($header) || empty($header->uid)) continue;
 
+            $uid_str = (string) $header->uid;
+            $has_junk_flag = false;
+
             if (!empty($header->flags) && is_array($header->flags)) {
-                $uid_str = (string) $header->uid;
                 foreach ($header->flags as $flag_name => $val) {
                     $flag_lower = strtolower((string) $flag_name);
+
+                    if ($flag_lower === 'junk' || $flag_lower === '$junk' || $flag_lower === 'spam') {
+                        $has_junk_flag = true;
+                    }
+
                     $idx = null;
                     if (preg_match('/^\$label([0-9]+)$/i', $flag_lower, $m)) {
                         $idx = $m[1];
@@ -1042,12 +1146,24 @@ Body:
                     }
                 }
             }
+
+            if ($is_junk_folder || $has_junk_flag) {
+                if (!is_array($header->list_flags)) {
+                    $header->list_flags = [];
+                }
+                $header->list_flags['spam'] = 1;
+                $row_spams[$uid_str] = true;
+            }
         }
 
         if (!empty($row_labels)) {
-            $rcmail = rcmail::get_instance();
             $rcmail->output->set_env('lpai_row_labels', $row_labels);
             $rcmail->output->command('plugin.lifeprisma_ai_sync_labels', $row_labels);
+        }
+
+        if (!empty($row_spams)) {
+            $rcmail->output->set_env('lpai_row_spams', $row_spams);
+            $rcmail->output->command('plugin.lifeprisma_ai_sync_spams', $row_spams);
         }
 
         return $args;
@@ -1446,6 +1562,10 @@ Body:
             'id' => 'genia',
             'section' => 'Gemini Assistant',
         ];
+        $args['list']['lpai_spam'] = [
+            'id' => 'lpai_spam',
+            'section' => 'Spam Filter',
+        ];
         if ($this->is_admin()) {
             $args['list']['genia_admin'] = [
                 'id' => 'genia_admin',
@@ -1459,6 +1579,9 @@ Body:
     {
         if ($args['section'] === 'genia_admin') {
             return $this->admin_preferences_list($args);
+        }
+        if ($args['section'] === 'lpai_spam') {
+            return $this->spam_preferences_list($args);
         }
         if ($args['section'] !== 'genia') return $args;
 
@@ -1519,6 +1642,9 @@ Body:
     public function preferences_save($args)
     {
         if ($args['section'] === 'genia_admin') return $args;
+        if ($args['section'] === 'lpai_spam') {
+            return $this->spam_preferences_save($args);
+        }
         if ($args['section'] !== 'genia') return $args;
 
         $args['prefs']['genia_language'] = rcube_utils::get_input_string('_genia_language', rcube_utils::INPUT_POST);
@@ -2708,5 +2834,468 @@ Return ONLY the deliverability-optimized newsletter HTML.";
         }
         return $args;
     }
+
+    // =========================================================================
+    // Advanced Spam Filter & Self-Learning Engine Integration
+    // =========================================================================
+
+    /**
+     * Resolves the current user's unique identifier for model storage.
+     */
+    public function get_user_identifier(): string
+    {
+        $rcmail = rcmail::get_instance();
+        return ($rcmail->user && method_exists($rcmail->user, 'get_username'))
+            ? (string) $rcmail->user->get_username()
+            : 'default_user';
+    }
+
+    /**
+     * Resolves the configured or special-use Junk/Spam mailbox folder name.
+     */
+    public function get_junk_folder(): string
+    {
+        $rcmail = rcmail::get_instance();
+        $junk = $rcmail->config->get('junk_mbox');
+        if (!empty($junk)) {
+            return $junk;
+        }
+        $storage = $rcmail->get_storage();
+        if ($storage && method_exists($storage, 'get_special_folder')) {
+            $sp = $storage->get_special_folder('junk');
+            if (!empty($sp)) return $sp;
+        }
+        return 'Junk';
+    }
+
+    /**
+     * Extracts Message-ID header from raw email headers.
+     */
+    private function extract_message_id(string $raw_headers): string
+    {
+        if (preg_match('/^Message-ID:\s*(<[^>]+>|[^\r\n]+)/mi', $raw_headers, $m)) {
+            return trim($m[1]);
+        }
+        return '';
+    }
+
+    /**
+     * AJAX Action: Tag selected message(s) as SPAM.
+     * - Adds SPAM label flags: Junk, $Junk, and $Label1 (Important/Warning red label)
+     * - Feeds the message to the statistical Bayesian learning engine (SPAM)
+     * - Moves the email automatically to the Junk/Spam folder
+     */
+    public function handle_spam_tag()
+    {
+        $rcmail = rcmail::get_instance();
+        $uids = rcube_utils::get_input_value('_uids', rcube_utils::INPUT_POST);
+        if (empty($uids)) {
+            $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
+            if ($uid) $uids = [$uid];
+        }
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_POST) ?: 'INBOX';
+
+        if (empty($uids)) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'No messages specified']);
+            exit;
+        }
+
+        $storage = $rcmail->get_storage();
+        $storage->set_folder($mbox);
+        $junk_mbox = $this->get_junk_folder();
+        $user_id = $this->get_user_identifier();
+
+        $count = 0;
+        foreach ((array) $uids as $uid) {
+            $ctx = $this->fetch_message_context($uid, $mbox);
+            $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+            $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+
+            // 1. Add SPAM flags (standard Junk flags + red Label1)
+            $storage->set_flag($uid, 'Junk', $mbox);
+            $storage->set_flag($uid, '$Junk', $mbox);
+            $storage->set_flag($uid, '$Label1', $mbox);
+
+            // 2. Train Bayesian engine & update sender reputation
+            if (!empty($ctx)) {
+                LpaiSpamFilter::learn_spam(
+                    $ctx['subject'] ?? '',
+                    $ctx['body'] ?? '',
+                    $raw_headers,
+                    $ctx['from'] ?? '',
+                    $user_id,
+                    $msg_id
+                );
+            }
+
+            // 3. Move message to Junk folder
+            if (strcasecmp($mbox, $junk_mbox) !== 0) {
+                $storage->move_message($uid, $junk_mbox, $mbox);
+            }
+            $count++;
+        }
+
+        header('Content-Type: application/json');
+        $msg = ($count === 1)
+            ? 'Message tagged as spam and moved to Junk folder. Spam filter learned.'
+            : "{$count} messages tagged as spam and moved to Junk folder. Spam filter learned.";
+        echo json_encode(['status' => 'success', 'message' => $msg, 'count' => $count, 'stats' => LpaiSpamFilter::get_stats($user_id)]);
+        exit;
+    }
+
+    /**
+     * AJAX Action: Untag selected message(s) (Mark as NOT SPAM / HAM).
+     * - Removes SPAM label flags: Junk, $Junk, $Label1
+     * - Feeds the message to the statistical Bayesian learning engine (HAM, reversing spam count)
+     * - Moves the email back to the INBOX
+     */
+    public function handle_spam_untag()
+    {
+        $rcmail = rcmail::get_instance();
+        $uids = rcube_utils::get_input_value('_uids', rcube_utils::INPUT_POST);
+        if (empty($uids)) {
+            $uid = rcube_utils::get_input_value('_uid', rcube_utils::INPUT_POST);
+            if ($uid) $uids = [$uid];
+        }
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_POST) ?: $this->get_junk_folder();
+
+        if (empty($uids)) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'error', 'message' => 'No messages specified']);
+            exit;
+        }
+
+        $storage = $rcmail->get_storage();
+        $storage->set_folder($mbox);
+        $inbox = 'INBOX';
+        $user_id = $this->get_user_identifier();
+
+        $count = 0;
+        foreach ((array) $uids as $uid) {
+            $ctx = $this->fetch_message_context($uid, $mbox);
+            $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+            $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+
+            // 1. Remove SPAM flags and set NonJunk
+            $storage->unset_flag($uid, 'Junk', $mbox);
+            $storage->unset_flag($uid, '$Junk', $mbox);
+            $storage->unset_flag($uid, '$Label1', $mbox);
+            $storage->set_flag($uid, 'NonJunk', $mbox);
+            $storage->set_flag($uid, '$NotJunk', $mbox);
+
+            // 2. Train Bayesian engine as HAM with automatic correction
+            if (!empty($ctx)) {
+                LpaiSpamFilter::learn_ham(
+                    $ctx['subject'] ?? '',
+                    $ctx['body'] ?? '',
+                    $raw_headers,
+                    $ctx['from'] ?? '',
+                    $user_id,
+                    $msg_id,
+                    true
+                );
+            }
+
+            // 3. Move message back to INBOX
+            if (strcasecmp($mbox, $inbox) !== 0) {
+                $storage->move_message($uid, $inbox, $mbox);
+            }
+            $count++;
+        }
+
+        header('Content-Type: application/json');
+        $msg = ($count === 1)
+            ? 'Message untagged and moved to Inbox. Learning updated.'
+            : "{$count} messages untagged and moved to Inbox. Learning updated.";
+        echo json_encode(['status' => 'success', 'message' => $msg, 'count' => $count, 'stats' => LpaiSpamFilter::get_stats($user_id)]);
+        exit;
+    }
+
+    /**
+     * Hook triggered when messages are moved between folders in Roundcube.
+     * Auto-trains the Bayesian spam filter if continuous learning is enabled.
+     */
+    public function handle_messages_move($args)
+    {
+        $rcmail = rcmail::get_instance();
+        $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
+        $auto_learn = (bool) ($prefs['lifeprisma_ai_spam_auto_learn'] ?? $rcmail->config->get('lifeprisma_ai_spam_auto_learn', true));
+        if (!$auto_learn) {
+            return $args;
+        }
+
+        $junk_mbox = $this->get_junk_folder();
+        $target = $args['target'] ?? '';
+        $source = $args['folder'] ?? '';
+        $uids = $args['uids'] ?? [];
+
+        if (empty($uids)) return $args;
+
+        $user_id = $this->get_user_identifier();
+
+        // Case A: Moving messages INTO Junk -> Auto-Learn as SPAM
+        if (strcasecmp($target, $junk_mbox) === 0 && strcasecmp($source, $junk_mbox) !== 0) {
+            foreach ((array) $uids as $uid) {
+                $ctx = $this->fetch_message_context($uid, $source);
+                $raw_headers = $this->fetch_raw_headers($uid, $source);
+                $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+                if (!empty($ctx)) {
+                    LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
+                }
+            }
+        }
+        // Case B: Moving messages OUT OF Junk -> Auto-Learn as HAM
+        elseif (strcasecmp($source, $junk_mbox) === 0 && strcasecmp($target, $junk_mbox) !== 0) {
+            foreach ((array) $uids as $uid) {
+                $ctx = $this->fetch_message_context($uid, $source);
+                $raw_headers = $this->fetch_raw_headers($uid, $source);
+                $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+                if (!empty($ctx)) {
+                    LpaiSpamFilter::learn_ham($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id, true);
+                }
+            }
+        }
+
+        return $args;
+    }
+
+    /**
+     * AJAX Action: Returns live Bayesian learning statistics.
+     */
+    public function handle_spam_stats()
+    {
+        $user_id = $this->get_user_identifier();
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'stats' => LpaiSpamFilter::get_stats($user_id),
+        ]);
+        exit;
+    }
+
+    /**
+     * AJAX Action: Resets the learned Bayesian database for the current user.
+     */
+    public function handle_spam_reset()
+    {
+        $user_id = $this->get_user_identifier();
+        LpaiSpamFilter::reset_model($user_id);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Learned spam database reset to initial state.',
+            'stats' => LpaiSpamFilter::get_stats($user_id),
+        ]);
+        exit;
+    }
+
+    /**
+     * AJAX Action: Batch train spam filter from an entire mailbox folder.
+     */
+    public function handle_spam_batch_train()
+    {
+        $rcmail = rcmail::get_instance();
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_POST) ?: $this->get_junk_folder();
+        $train_as = rcube_utils::get_input_value('_train_as', rcube_utils::INPUT_POST) ?: 'spam';
+        $storage = $rcmail->get_storage();
+        $storage->set_folder($mbox);
+        $uids = $storage->search($mbox, 'ALL');
+        if (is_object($uids) && method_exists($uids, 'get')) {
+            $uids = $uids->get();
+        }
+
+        $user_id = $this->get_user_identifier();
+        $count = 0;
+        if (is_array($uids)) {
+            // Limit to 50 messages per batch to prevent gateway timeout
+            $uids = array_slice($uids, 0, 50);
+            foreach ($uids as $uid) {
+                $ctx = $this->fetch_message_context($uid, $mbox);
+                $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+                $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+                if (!empty($ctx)) {
+                    if ($train_as === 'spam') {
+                        LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
+                    } else {
+                        LpaiSpamFilter::learn_ham($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id, true);
+                    }
+                    $count++;
+                }
+            }
+        }
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'status' => 'success',
+            'message' => "Successfully trained {$count} messages as {$train_as}.",
+            'count' => $count,
+            'stats' => LpaiSpamFilter::get_stats($user_id),
+        ]);
+        exit;
+    }
+
+    /**
+     * Render the Spam Filter section in Roundcube Preferences.
+     */
+    private function spam_preferences_list($args)
+    {
+        $rcmail = rcmail::get_instance();
+        $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
+        $user_id = $this->get_user_identifier();
+        $stats = LpaiSpamFilter::get_stats($user_id);
+
+        $spam_filter_checkbox = new html_checkbox(['name' => '_lpai_spam_enabled', 'id' => 'lpai_spam_enabled', 'value' => 1]);
+        $auto_learn_checkbox = new html_checkbox(['name' => '_lpai_spam_auto_learn', 'id' => 'lpai_spam_auto_learn', 'value' => 1]);
+        $ai_deep_scan_checkbox = new html_checkbox(['name' => '_lpai_spam_ai_deep_scan', 'id' => 'lpai_spam_ai_deep_scan', 'value' => 1]);
+
+        $action_select = new html_select(['name' => '_lpai_spam_action', 'id' => 'lpai_spam_action']);
+        $action_select->add('Move to Spam folder and add SPAM label (Recommended)', 'move_and_label');
+        $action_select->add('Add SPAM label only (Keep in Inbox)', 'label_only');
+        $action_select->add('Move to Spam folder only', 'move_only');
+
+        $threshold_select = new html_select(['name' => '_lpai_spam_threshold', 'id' => 'lpai_spam_threshold']);
+        $threshold_select->add('Aggressive (Score >= 60) — Strict protection', '60');
+        $threshold_select->add('Balanced (Score >= 75) — Standard recommended', '75');
+        $threshold_select->add('Conservative (Score >= 85) — Minimal false positives', '85');
+        $threshold_select->add('Custom High Sensitivity (Score >= 50)', '50');
+        $threshold_select->add('Custom Relaxed (Score >= 90)', '90');
+
+        $whitelist_arr = $prefs['lifeprisma_ai_spam_whitelist'] ?? $rcmail->config->get('lifeprisma_ai_spam_whitelist', []);
+        $whitelist_text = is_array($whitelist_arr) ? implode("\n", $whitelist_arr) : (string)$whitelist_arr;
+
+        $blacklist_arr = $prefs['lifeprisma_ai_spam_blacklist'] ?? $rcmail->config->get('lifeprisma_ai_spam_blacklist', []);
+        $blacklist_text = is_array($blacklist_arr) ? implode("\n", $blacklist_arr) : (string)$blacklist_arr;
+
+        $keywords_arr = $prefs['lifeprisma_ai_spam_keywords'] ?? $rcmail->config->get('lifeprisma_ai_spam_keywords', []);
+        $keywords_text = is_array($keywords_arr) ? implode("\n", $keywords_arr) : (string)$keywords_arr;
+
+        $whitelist_textarea = new html_textarea(['name' => '_lpai_spam_whitelist', 'id' => 'lpai_spam_whitelist', 'rows' => 4, 'cols' => 50, 'class' => 'form-control', 'placeholder' => "@trustedcorp.com\npartner@company.org"]);
+        $blacklist_textarea = new html_textarea(['name' => '_lpai_spam_blacklist', 'id' => 'lpai_spam_blacklist', 'rows' => 4, 'cols' => 50, 'class' => 'form-control', 'placeholder' => "@badactor.xyz\nspammer@phishing.net"]);
+        $keywords_textarea = new html_textarea(['name' => '_lpai_spam_keywords', 'id' => 'lpai_spam_keywords', 'rows' => 3, 'cols' => 50, 'class' => 'form-control', 'placeholder' => "wire transfer, bitcoin giveaway, inheritance funds, verify credentials"]);
+
+        $token_val = htmlspecialchars($rcmail->get_request_token());
+        $reset_url = htmlspecialchars($rcmail->url('plugin.lifeprisma_ai_spam_reset'));
+        $stats_url = htmlspecialchars($rcmail->url('plugin.lifeprisma_ai_spam_stats'));
+        $batch_url = htmlspecialchars($rcmail->url('plugin.lifeprisma_ai_spam_batch_train'));
+
+        $stats_html = '
+        <div class="lpai-spam-dashboard-wrap" data-reset-url="' . $reset_url . '" data-stats-url="' . $stats_url . '" data-batch-url="' . $batch_url . '" data-token="' . $token_val . '">
+            <div class="lpai-spam-stats-container">
+                <div class="lpai-spam-stat-card lpai-stat-spam">
+                    <div class="lpai-stat-number" id="lpai-stat-spam">' . (int)$stats['total_spam'] . '</div>
+                    <div class="lpai-stat-label">Spam Learned</div>
+                </div>
+                <div class="lpai-spam-stat-card lpai-stat-ham">
+                    <div class="lpai-stat-number" id="lpai-stat-ham">' . (int)$stats['total_ham'] . '</div>
+                    <div class="lpai-stat-label">Ham (Legitimate) Learned</div>
+                </div>
+                <div class="lpai-spam-stat-card lpai-stat-tokens">
+                    <div class="lpai-stat-number" id="lpai-stat-tokens">' . (int)$stats['total_tokens'] . '</div>
+                    <div class="lpai-stat-label">Learned Dictionary Tokens</div>
+                </div>
+                <div class="lpai-spam-stat-card lpai-stat-ratio">
+                    <div class="lpai-stat-number" id="lpai-stat-ratio">' . $stats['spam_ratio'] . '%</div>
+                    <div class="lpai-stat-label">Spam Ratio</div>
+                </div>
+            </div>
+            <div class="lpai-spam-actions-row" style="margin-top: 14px; display: flex; gap: 10px; align-items: center;">
+                <button type="button" class="btn btn-secondary lpai-btn-reset-db" onclick="lpai_reset_spam_db(this)"><i class="icon"></i> Reset Learned Database</button>
+                <button type="button" class="btn btn-secondary lpai-btn-train-junk" onclick="lpai_batch_train_folder(\'Junk\', \'spam\', this)"><i class="icon"></i> Train from Junk Folder</button>
+                <span id="lpai-spam-feedback" class="lpai-spam-feedback" style="display:none; font-size: 13px; color: #16a34a; font-weight: 500;"></span>
+            </div>
+        </div>';
+
+        $args['blocks']['lpai_spam_general'] = [
+            'name' => 'Spam Filter Automation & Thresholds',
+            'options' => [
+                'lpai_spam_enabled' => [
+                    'title' => 'Enable Automatic Server-Side Spam Filter',
+                    'content' => $spam_filter_checkbox->show($prefs['lifeprisma_ai_spam_filter_enabled'] ?? 1),
+                ],
+                'lpai_spam_action' => [
+                    'title' => 'Automated Action when Spam Detected',
+                    'content' => $action_select->show($prefs['lifeprisma_ai_spam_action'] ?? 'move_and_label'),
+                ],
+                'lpai_spam_threshold' => [
+                    'title' => 'Sensitivity Threshold',
+                    'content' => $threshold_select->show((string)($prefs['lifeprisma_ai_spam_threshold'] ?? '75')),
+                ],
+                'lpai_spam_ai_deep_scan' => [
+                    'title' => 'Gemini 3.8 Flash Deep Phishing & Scam Inspection',
+                    'content' => $ai_deep_scan_checkbox->show($prefs['lifeprisma_ai_spam_ai_deep_scan'] ?? 1),
+                ],
+                'lpai_spam_auto_learn' => [
+                    'title' => 'Continuous Self-Learning (Train on Tag / Drag to Junk)',
+                    'content' => $auto_learn_checkbox->show($prefs['lifeprisma_ai_spam_auto_learn'] ?? 1),
+                ],
+            ],
+        ];
+
+        $args['blocks']['lpai_spam_rules'] = [
+            'name' => 'Sender Rules & Custom Keywords',
+            'options' => [
+                'lpai_spam_whitelist' => [
+                    'title' => 'Whitelist (Allowed Senders & Domains)<br><small style="color: #64748b;">One per line. Never flagged as spam.</small>',
+                    'content' => $whitelist_textarea->show($whitelist_text),
+                ],
+                'lpai_spam_blacklist' => [
+                    'title' => 'Blacklist (Blocked Senders & Domains)<br><small style="color: #64748b;">One per line. Always moved to Spam.</small>',
+                    'content' => $blacklist_textarea->show($blacklist_text),
+                ],
+                'lpai_spam_keywords' => [
+                    'title' => 'Custom Trigger Keywords<br><small style="color: #64748b;">Keywords or phrases that boost spam probability.</small>',
+                    'content' => $keywords_textarea->show($keywords_text),
+                ],
+            ],
+        ];
+
+        $args['blocks']['lpai_spam_dashboard'] = [
+            'name' => 'Self-Learning Bayesian Intelligence',
+            'options' => [
+                'lpai_spam_stats' => [
+                    'title' => 'Learning Statistics & Memory',
+                    'content' => $stats_html,
+                ],
+            ],
+        ];
+
+        return $args;
+    }
+
+    /**
+     * Saves user preferences for the Spam Filter section.
+     */
+    private function spam_preferences_save($args)
+    {
+        $args['prefs']['lifeprisma_ai_spam_filter_enabled'] = rcube_utils::get_input_string('_lpai_spam_enabled', rcube_utils::INPUT_POST) ? 1 : 0;
+        $args['prefs']['lifeprisma_ai_spam_action'] = rcube_utils::get_input_string('_lpai_spam_action', rcube_utils::INPUT_POST) ?: 'move_and_label';
+        $args['prefs']['lifeprisma_ai_spam_threshold'] = (int) (rcube_utils::get_input_string('_lpai_spam_threshold', rcube_utils::INPUT_POST) ?: 75);
+        $args['prefs']['lifeprisma_ai_spam_ai_deep_scan'] = rcube_utils::get_input_string('_lpai_spam_ai_deep_scan', rcube_utils::INPUT_POST) ? 1 : 0;
+        $args['prefs']['lifeprisma_ai_spam_auto_learn'] = rcube_utils::get_input_string('_lpai_spam_auto_learn', rcube_utils::INPUT_POST) ? 1 : 0;
+
+        $wl_raw = rcube_utils::get_input_string('_lpai_spam_whitelist', rcube_utils::INPUT_POST);
+        $wl_lines = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $wl_raw))));
+        $args['prefs']['lifeprisma_ai_spam_whitelist'] = array_values($wl_lines);
+
+        $bl_raw = rcube_utils::get_input_string('_lpai_spam_blacklist', rcube_utils::INPUT_POST);
+        $bl_lines = array_filter(array_map('trim', explode("\n", str_replace("\r", "", $bl_raw))));
+        $args['prefs']['lifeprisma_ai_spam_blacklist'] = array_values($bl_lines);
+
+        $kw_raw = rcube_utils::get_input_string('_lpai_spam_keywords', rcube_utils::INPUT_POST);
+        $kw_lines = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $kw_raw)));
+        $args['prefs']['lifeprisma_ai_spam_keywords'] = array_values($kw_lines);
+
+        return $args;
+    }
+
+    /**
+     * Resolves the configured LpaiSpamFilter instance for the active user.
+     */
+    public function get_spam_filter(): LpaiSpamFilter
+    {
+        return new LpaiSpamFilter($this->get_user_identifier());
+    }
 }
+
 

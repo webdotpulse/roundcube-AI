@@ -165,3 +165,47 @@ $config['lifeprisma_ai_worker_accounts'] = [
 $config['lifeprisma_ai_worker_dovecot_master_user'] = '';
 $config['lifeprisma_ai_worker_dovecot_master_password'] = '';
 
+// ============================================================
+// Advanced Spam Filter & Self-Learning Engine
+// ============================================================
+// Enterprise-grade multi-tier spam filtering featuring:
+//   - Self-learning Bayesian statistical analysis (Robinson & Graham geometric weighting)
+//   - Structural header authentication heuristics (SPF, DKIM, DMARC, reverse DNS spoofing)
+//   - Dynamic sender reputation scoring (-100 to +100)
+//   - Bi-directional continuous learning (instant auto-correction on untag / move)
+//   - Automated IMAP labeling ($Label1 Red badge, Junk, $Junk flags) and folder routing
+//   - Optional Gemini 3.8 Flash AI Deep Scan for suspicious/borderline emails
+
+// Master switch to enable or disable the Spam Filter engine
+$config['lifeprisma_ai_spam_filter_enabled'] = true;
+
+// Action taken when incoming email is classified as spam:
+//   'move_and_tag' — (Recommended) Move email to Spam/Junk folder and apply IMAP tags & labels
+//   'tag_only'     — Keep in Inbox but mark as Read and apply IMAP tags & labels
+//   'disabled'     — Evaluate silently without taking action
+$config['lifeprisma_ai_spam_action'] = 'move_and_tag';
+
+// Spam probability threshold (0.50 to 0.99, default: 0.85)
+// Emails with a combined Bayesian & Heuristic score >= this threshold are treated as spam.
+$config['lifeprisma_ai_spam_threshold'] = 0.85;
+
+// Automatically train the Bayesian engine when emails are marked as spam or moved between folders
+$config['lifeprisma_ai_spam_auto_learn'] = true;
+
+// Gemini AI Deep Scan: when enabled, uses Gemini 3.8 Flash to analyze borderline/suspicious
+// emails that fall just below the spam threshold for zero-day phishing or advanced evasion.
+$config['lifeprisma_ai_spam_ai_deep_scan'] = false;
+
+// Pre-flight Sender Whitelist (domain names or email addresses, one per line or comma-separated)
+// Senders matching the whitelist are guaranteed immediate Ham delivery.
+$config['lifeprisma_ai_spam_whitelist'] = '';
+
+// Pre-flight Sender Blacklist (domain names or email addresses, one per line or comma-separated)
+// Senders matching the blacklist are immediately flagged and routed as Spam.
+$config['lifeprisma_ai_spam_blacklist'] = '';
+
+// Custom High-Risk Spam Keywords (one per line or comma-separated)
+// Emails containing these keywords receive a heavy heuristic spam score penalty.
+$config['lifeprisma_ai_spam_keywords'] = '';
+
+

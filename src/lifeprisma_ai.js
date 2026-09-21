@@ -46,6 +46,15 @@ if (window.rcmail) {
                 lpai_sync_message_row_label(uid, rcmail.env.lpai_row_labels[uid]);
             });
         }
+
+        // Render spam badges and toolbar on initial page load
+        if (rcmail.env.lpai_row_spams) {
+            lpai_sync_all_spam_badges(rcmail.env.lpai_row_spams);
+        }
+        if (task === 'mail') {
+            lpai_init_spam_toolbar();
+            lpai_check_message_spam_banner();
+        }
     });
 
     // In widescreen 3-pane mode (e.g. gmail_plus), listen for dynamic message preview loads
@@ -55,6 +64,8 @@ if (window.rcmail) {
             lpai_setup_sidebar_button();
             lpai_add_message_button();
             lpai_init_executive_triage();
+            lpai_init_spam_toolbar();
+            lpai_check_message_spam_banner();
         }, 200);
     });
 
@@ -64,6 +75,8 @@ if (window.rcmail) {
             lpai_setup_sidebar_button();
             lpai_add_message_button();
             lpai_init_executive_triage();
+            lpai_init_spam_toolbar();
+            lpai_check_message_spam_banner();
         }, 200);
     });
 
@@ -76,11 +89,21 @@ if (window.rcmail) {
         }
     });
 
+    // Render inbox message row SPAM badges whenever Roundcube renders or updates the message list
+    rcmail.addEventListener('plugin.lifeprisma_ai_sync_spams', function(rowSpams) {
+        if (rowSpams && typeof rowSpams === 'object') {
+            lpai_sync_all_spam_badges(rowSpams);
+        }
+    });
+
     rcmail.addEventListener('messagelist_update', function() {
         var labels = rcmail.env.lpai_row_labels || {};
         Object.keys(labels).forEach(function(uid) {
             lpai_sync_message_row_label(uid, labels[uid]);
         });
+        var spams = rcmail.env.lpai_row_spams || {};
+        lpai_sync_all_spam_badges(spams);
+        lpai_init_spam_toolbar();
     });
 }
 
@@ -127,6 +150,9 @@ function lpai_icon(name) {
         'copy': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>',
         'check': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
         'refresh': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>',
+        'shield_alert': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>',
+        'shield_check': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>',
+        'flame': '<svg class="lpai-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
     };
     return icons[name] || '';
 }
@@ -595,7 +621,7 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
         html += '<div class="lpai-scam-alert">';
         html += '<span class="lpai-alert-icon">&#9888;</span>';
         html += '<div><strong>Security Warning:</strong> ' + lpai_escape_html(scamReason || 'Suspicious content or sender impersonation detected.') + '</div>';
-        html += '<button type="button" class="lpai-btn-junk" onclick="rcmail.command(\'move\',\'Junk\')">Move to Spam</button>';
+        html += '<button type="button" class="lpai-btn-junk" onclick="lpai_mark_spam()">Tag as Spam & Learn</button>';
         html += '</div>';
     }
 
@@ -911,6 +937,25 @@ function lpai_add_quick_actions() {
     replyBtn.innerHTML = lpai_icon('reply') + ' <span>Reply with Gemini</span>';
     replyBtn.onclick = function() { lpai_open_panel('read'); lpai_select_action('reply'); };
     bar.appendChild(replyBtn);
+
+    // Spam / Not Spam Toggle in Quick Actions Bar
+    var junkMbox = (window.rcmail && rcmail.env.lpai_junk_mbox) ? rcmail.env.lpai_junk_mbox : 'Junk';
+    var isJunkQa = (window.rcmail && rcmail.env.mailbox && rcmail.env.mailbox.toLowerCase() === junkMbox.toLowerCase()) || 
+                   (window.rcmail && rcmail.env.lpai_msg_context && rcmail.env.lpai_msg_context.is_spam);
+
+    var spamBtn = document.createElement('button');
+    spamBtn.type = 'button';
+    spamBtn.className = 'lpai-qa-btn ' + (isJunkQa ? 'lpai-qa-ham' : 'lpai-qa-spam');
+    if (isJunkQa) {
+        spamBtn.innerHTML = lpai_icon('shield_check') + ' <span>Not Spam</span>';
+        spamBtn.title = 'Mark as legitimate email and move back to Inbox';
+        spamBtn.onclick = function() { lpai_mark_ham(); };
+    } else {
+        spamBtn.innerHTML = lpai_icon('shield_alert') + ' <span>Report Spam</span>';
+        spamBtn.title = 'Tag with SPAM label, move to Junk folder, and train learning filter';
+        spamBtn.onclick = function() { lpai_mark_spam(); };
+    }
+    bar.appendChild(spamBtn);
 
     target.parentNode.insertBefore(bar, target);
 
@@ -2548,4 +2593,332 @@ function lpai_render_admin(root, data, urlSave, token, urlConfig) {
             });
         };
     }
+}
+
+// =========================================================================
+// Advanced Spam Filter & Self-Learning Frontend Functions
+// =========================================================================
+
+function lpai_get_target_uids() {
+    var uids = [];
+    if (window.rcmail && rcmail.message_list && typeof rcmail.message_list.get_selection === 'function') {
+        var sel = rcmail.message_list.get_selection();
+        if (sel && sel.length) {
+            uids = sel;
+        }
+    }
+    if (!uids.length && window.rcmail && rcmail.env.uid) {
+        uids = [rcmail.env.uid];
+    }
+    return uids;
+}
+
+function lpai_init_spam_toolbar() {
+    if (!window.rcmail || rcmail.env.task !== 'mail') return;
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
+        }
+    } catch (e) {}
+
+    var junkMbox = rcmail.env.lpai_junk_mbox || 'Junk';
+    var currMbox = rcmail.env.mailbox || '';
+    var isJunk = (currMbox.toLowerCase() === junkMbox.toLowerCase()) || 
+                 (rcmail.env.lpai_msg_context && rcmail.env.lpai_msg_context.is_spam);
+
+    docs.forEach(function(doc) {
+        var toolbars = doc.querySelectorAll('#messagetoolbar, .messagetoolbar, #mailtoolbar, .toolbar');
+        toolbars.forEach(function(tb) {
+            var existingSpamBtn = tb.querySelector('.lpai-toolbar-spam-btn');
+            if (existingSpamBtn) existingSpamBtn.remove();
+
+            var btn = doc.createElement('a');
+            btn.href = '#';
+            btn.className = 'button lpai-toolbar-spam-btn ' + (isJunk ? 'lpai-btn-ham' : 'lpai-btn-spam');
+
+            if (isJunk) {
+                btn.title = 'Not Spam: Move back to Inbox and update filter learning';
+                btn.innerHTML = '<span class="button-inner">' + lpai_icon('shield_check') + ' <span class="lpai-btn-text">Not Spam</span></span>';
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    lpai_mark_ham();
+                    return false;
+                };
+            } else {
+                btn.title = 'Report Spam: Add SPAM label, move to Junk folder, and train filter';
+                btn.innerHTML = '<span class="button-inner">' + lpai_icon('shield_alert') + ' <span class="lpai-btn-text">Report Spam</span></span>';
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    lpai_mark_spam();
+                    return false;
+                };
+            }
+
+            // Insert near junk or delete button if possible
+            var refBtn = tb.querySelector('.markasjunk, .delete, .trash') || tb.firstChild;
+            if (refBtn && refBtn.parentNode === tb) {
+                tb.insertBefore(btn, refBtn.nextSibling);
+            } else {
+                tb.appendChild(btn);
+            }
+        });
+    });
+}
+
+function lpai_sync_message_row_spam(uid) {
+    if (!uid) return;
+    var docs = [document];
+    try {
+        if (window.parent && window.parent.document && window.parent.document !== document) {
+            docs.push(window.parent.document);
+        }
+        if (window.top && window.top.document && docs.indexOf(window.top.document) === -1) {
+            docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    docs.forEach(function(doc) {
+        var row = doc.getElementById('rcmrow' + uid);
+        if (!row) return;
+
+        row.classList.add('lpai-row-spam');
+        if (row.querySelector('.lpai-spam-badge')) return; // Already rendered
+
+        var subjectCell = row.querySelector('td.subject') || row.querySelector('.subject') || row;
+        if (!subjectCell) return;
+
+        var insertTarget = subjectCell.querySelector('a') || subjectCell.firstChild;
+        var badge = doc.createElement('span');
+        badge.className = 'lpai-spam-badge';
+        badge.innerText = 'SPAM';
+
+        if (insertTarget) {
+            subjectCell.insertBefore(badge, insertTarget);
+        } else {
+            subjectCell.appendChild(badge);
+        }
+    });
+}
+
+function lpai_sync_all_spam_badges(rowSpams) {
+    if (!rowSpams || typeof rowSpams !== 'object') return;
+    Object.keys(rowSpams).forEach(function(uid) {
+        if (rowSpams[uid]) {
+            lpai_sync_message_row_spam(uid);
+        }
+    });
+}
+
+function lpai_check_message_spam_banner() {
+    var ctx = (window.rcmail && rcmail.env.lpai_msg_context) ? rcmail.env.lpai_msg_context : null;
+    var junkMbox = (window.rcmail && rcmail.env.lpai_junk_mbox) ? rcmail.env.lpai_junk_mbox : 'Junk';
+    var isJunk = (window.rcmail && rcmail.env.mailbox && rcmail.env.mailbox.toLowerCase() === junkMbox.toLowerCase()) || (ctx && ctx.is_spam);
+
+    var existing = document.getElementById('lpai-spam-banner');
+    if (existing) existing.remove();
+
+    if (!isJunk) return;
+
+    var target = document.getElementById('messagecontent') || document.getElementById('messagepreview') || document.getElementById('messagebody') || document.getElementById('messageheader');
+    if (!target) return;
+
+    var banner = document.createElement('div');
+    banner.id = 'lpai-spam-banner';
+    banner.className = 'lpai-spam-banner';
+    banner.innerHTML = '<div class="lpai-spam-banner-content"><span class="lpai-spam-banner-icon">' + lpai_icon('shield_alert') + '</span><div><strong>Spam Detected:</strong> This email was identified as spam and moved to the ' + lpai_escape_html(junkMbox) + ' folder.</div></div><button type="button" class="lpai-btn-ham" onclick="lpai_mark_ham()">' + lpai_icon('shield_check') + ' <span>Not Spam (Move to Inbox)</span></button>';
+
+    target.parentNode.insertBefore(banner, target);
+}
+
+function lpai_mark_spam() {
+    if (!window.rcmail) return;
+    var uids = lpai_get_target_uids();
+    if (!uids || !uids.length) {
+        rcmail.display_message('Please select a message to mark as spam.', 'notice');
+        return;
+    }
+
+    var mbox = rcmail.env.mailbox || 'INBOX';
+    var lock = rcmail.set_busy(true, 'Tagging message as spam and training filter...');
+
+    $.ajax({
+        url: rcmail.url('plugin.lifeprisma_ai_spam_tag'),
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            _token: rcmail.env.request_token,
+            _uids: uids,
+            _mbox: mbox
+        },
+        success: function(resp) {
+            rcmail.set_busy(false, null, lock);
+            if (resp && resp.status === 'success') {
+                rcmail.display_message(resp.message || 'Message tagged as spam and moved to Junk folder.', 'confirmation');
+                if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
+                    uids.forEach(function(uid) {
+                        rcmail.message_list.remove_row(uid);
+                    });
+                }
+                if (rcmail.env.action === 'show') {
+                    rcmail.command('list');
+                } else if (typeof rcmail.command === 'function') {
+                    rcmail.command('checkmail');
+                }
+            } else {
+                rcmail.display_message((resp && resp.message) ? resp.message : 'Failed to mark message as spam.', 'error');
+            }
+        },
+        error: function() {
+            rcmail.set_busy(false, null, lock);
+            rcmail.display_message('Error connecting to server to report spam.', 'error');
+        }
+    });
+}
+
+function lpai_mark_ham() {
+    if (!window.rcmail) return;
+    var uids = lpai_get_target_uids();
+    if (!uids || !uids.length) {
+        rcmail.display_message('Please select a message to mark as not spam.', 'notice');
+        return;
+    }
+
+    var mbox = rcmail.env.mailbox || rcmail.env.lpai_junk_mbox || 'Junk';
+    var lock = rcmail.set_busy(true, 'Marking message as legitimate and updating filter...');
+
+    $.ajax({
+        url: rcmail.url('plugin.lifeprisma_ai_spam_untag'),
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            _token: rcmail.env.request_token,
+            _uids: uids,
+            _mbox: mbox
+        },
+        success: function(resp) {
+            rcmail.set_busy(false, null, lock);
+            if (resp && resp.status === 'success') {
+                rcmail.display_message(resp.message || 'Message unmarked as spam and moved to Inbox.', 'confirmation');
+                if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
+                    uids.forEach(function(uid) {
+                        rcmail.message_list.remove_row(uid);
+                    });
+                }
+                var banner = document.getElementById('lpai-spam-banner');
+                if (banner) banner.remove();
+
+                if (rcmail.env.action === 'show') {
+                    rcmail.command('list');
+                } else if (typeof rcmail.command === 'function') {
+                    rcmail.command('checkmail');
+                }
+            } else {
+                rcmail.display_message((resp && resp.message) ? resp.message : 'Failed to unmark message.', 'error');
+            }
+        },
+        error: function() {
+            rcmail.set_busy(false, null, lock);
+            rcmail.display_message('Error connecting to server.', 'error');
+        }
+    });
+}
+
+function lpai_reset_spam_db(btn) {
+    if (!confirm('Are you sure you want to reset the learned Bayesian spam database?\nAll learned spam and legitimate email patterns will be cleared.')) {
+        return;
+    }
+    var wrap = btn ? btn.closest('.lpai-spam-dashboard-wrap') : document.querySelector('.lpai-spam-dashboard-wrap');
+    if (!wrap) return;
+    var url = wrap.dataset.resetUrl;
+    var token = wrap.dataset.token;
+    var feedback = document.getElementById('lpai-spam-feedback');
+
+    btn.disabled = true;
+    $.ajax({
+        url: url,
+        type: 'POST',
+        dataType: 'json',
+        data: { _token: token },
+        success: function(resp) {
+            btn.disabled = false;
+            if (resp && resp.status === 'success') {
+                var elSpam = document.getElementById('lpai-stat-spam');
+                var elHam = document.getElementById('lpai-stat-ham');
+                var elTokens = document.getElementById('lpai-stat-tokens');
+                var elRatio = document.getElementById('lpai-stat-ratio');
+                if (elSpam) elSpam.innerText = '0';
+                if (elHam) elHam.innerText = '0';
+                if (elTokens) elTokens.innerText = '0';
+                if (elRatio) elRatio.innerText = '0%';
+                if (feedback) {
+                    feedback.innerText = 'Learned spam database successfully reset!';
+                    feedback.style.color = '#16a34a';
+                    feedback.style.display = 'inline';
+                    setTimeout(function() { feedback.style.display = 'none'; }, 4000);
+                }
+            }
+        },
+        error: function() {
+            btn.disabled = false;
+            if (feedback) {
+                feedback.innerText = 'Failed to reset spam database.';
+                feedback.style.color = '#dc2626';
+                feedback.style.display = 'inline';
+            }
+        }
+    });
+}
+
+function lpai_batch_train_folder(mbox, train_as, btn) {
+    var wrap = btn ? btn.closest('.lpai-spam-dashboard-wrap') : document.querySelector('.lpai-spam-dashboard-wrap');
+    if (!wrap) return;
+    var url = wrap.dataset.batchUrl;
+    var token = wrap.dataset.token;
+    var feedback = document.getElementById('lpai-spam-feedback');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="icon"></i> Training...';
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        dataType: 'json',
+        data: {
+            _token: token,
+            _mbox: mbox || 'Junk',
+            _train_as: train_as || 'spam'
+        },
+        success: function(resp) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="icon"></i> Train from Junk Folder';
+            if (resp && resp.status === 'success') {
+                if (resp.stats) {
+                    var elSpam = document.getElementById('lpai-stat-spam');
+                    var elHam = document.getElementById('lpai-stat-ham');
+                    var elTokens = document.getElementById('lpai-stat-tokens');
+                    var elRatio = document.getElementById('lpai-stat-ratio');
+                    if (elSpam) elSpam.innerText = resp.stats.total_spam;
+                    if (elHam) elHam.innerText = resp.stats.total_ham;
+                    if (elTokens) elTokens.innerText = resp.stats.total_tokens;
+                    if (elRatio) elRatio.innerText = resp.stats.spam_ratio + '%';
+                }
+                if (feedback) {
+                    feedback.innerText = resp.message || 'Training complete!';
+                    feedback.style.color = '#16a34a';
+                    feedback.style.display = 'inline';
+                    setTimeout(function() { feedback.style.display = 'none'; }, 5000);
+                }
+            }
+        },
+        error: function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="icon"></i> Train from Junk Folder';
+            if (feedback) {
+                feedback.innerText = 'Training request failed.';
+                feedback.style.color = '#dc2626';
+                feedback.style.display = 'inline';
+            }
+        }
+    });
 }

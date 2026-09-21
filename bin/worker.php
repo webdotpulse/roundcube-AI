@@ -29,6 +29,8 @@ error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
 ini_set('display_errors', '1');
 date_default_timezone_set('UTC');
 
+require_once dirname(__DIR__) . '/src/LpaiSpamFilter.php';
+
 // ============================================================
 // CLI Arguments Parsing
 // ============================================================
@@ -404,6 +406,65 @@ class LpaiImapClient {
         return $this->is_ok($final_response);
     }
 
+    public function resolve_junk_folder($preferred = 'Junk') {
+        $folders = $this->list_folders();
+        if (empty($folders)) {
+            return $preferred;
+        }
+
+        // 1. Check for SPECIAL-USE \Junk attribute
+        foreach ($folders as $f) {
+            foreach ($f['flags'] as $flag) {
+                if (strcasecmp($flag, '\\Junk') === 0 || strcasecmp($flag, '\\Spam') === 0) {
+                    return $f['name'];
+                }
+            }
+        }
+
+        // 2. Exact match for preferred
+        foreach ($folders as $f) {
+            if (strcasecmp($f['name'], $preferred) === 0) {
+                return $f['name'];
+            }
+        }
+
+        // 3. Fallback to common candidates
+        $candidates = ['Junk', 'Spam', 'INBOX.Junk', 'INBOX/Junk', 'INBOX.Spam', 'INBOX/Spam', 'Ongewenst', 'Spamverdacht'];
+        foreach ($candidates as $cand) {
+            foreach ($folders as $f) {
+                if (strcasecmp($f['name'], $cand) === 0) {
+                    return $f['name'];
+                }
+            }
+        }
+
+        return $preferred;
+    }
+
+    public function move_message($uid, $target_folder) {
+        // Try IMAP MOVE extension first
+        $response = $this->send_command("UID MOVE $uid " . $this->escape($target_folder));
+        if ($this->is_ok($response)) {
+            return true;
+        }
+
+        // Fallback: UID COPY + UID STORE \Deleted + EXPUNGE
+        $copy_resp = $this->send_command("UID COPY $uid " . $this->escape($target_folder));
+        if ($this->is_ok($copy_resp)) {
+            $this->send_command("UID STORE $uid +FLAGS (\\Deleted)");
+            $this->send_command("EXPUNGE");
+            return true;
+        }
+
+        return false;
+    }
+
+    public function remove_flags($uid, $flags) {
+        if (empty($flags)) return false;
+        $response = $this->send_command("UID STORE $uid -FLAGS ($flags)");
+        return $this->is_ok($response);
+    }
+
     public function add_flags($uid, $flags) {
         if (empty($flags)) return false;
         $response = $this->send_command("UID STORE $uid +FLAGS ($flags)");
@@ -750,6 +811,63 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                 $from = $msg['from'];
                 $subject = $msg['subject'];
                 $body = $msg['body'];
+
+                // 0. Server-Side Autonomous Spam Filter
+                $spam_enabled = $config['lifeprisma_ai_spam_filter_enabled'] ?? true;
+                if ($spam_enabled) {
+                    $spam_action = $config['lifeprisma_ai_spam_action'] ?? 'move_and_label';
+                    $junk_folder = $client->resolve_junk_folder($config['lifeprisma_ai_junk_mbox'] ?? 'Junk');
+
+                    $spam_decision = LpaiSpamFilter::check_message(
+                        $subject,
+                        $body,
+                        $msg['raw_headers'],
+                        $from,
+                        $email,
+                        $config
+                    );
+
+                    if ($spam_decision['is_spam']) {
+                        $score = $spam_decision['score'];
+                        $reasons = implode('; ', $spam_decision['reasons']);
+                        echo "[$now] [SPAM DETECTED] UID $uid '$subject' — Flagged as SPAM (Score: {$score}/100, Reasons: {$reasons})\n";
+
+                        if (!$is_dry_run) {
+                            // Tag with SPAM label flags: Junk, $Junk, and $Label1
+                            if ($spam_action === 'move_and_label' || $spam_action === 'label_only') {
+                                $client->add_flags($uid, 'Junk $Junk $Label1 \\Seen');
+                            }
+
+                            // Continuous learning: Auto-train Bayesian spam filter
+                            if (!empty($config['lifeprisma_ai_spam_auto_learn'] ?? true)) {
+                                preg_match('/^Message-ID:\s*(<[^>]+>|[^\r\n]+)/mi', $msg['raw_headers'], $m_id);
+                                $msg_id = trim($m_id[1] ?? '');
+                                LpaiSpamFilter::learn_spam($subject, $body, $msg['raw_headers'], $from, $email, $msg_id);
+                            }
+
+                            // Automatically route to Junk folder
+                            if ($spam_action === 'move_and_label' || $spam_action === 'move_only') {
+                                $moved = $client->move_message($uid, $junk_folder);
+                                if ($moved) {
+                                    echo "[$now] [SPAM-MOVED] UID $uid routed to '$junk_folder' folder\n";
+                                } else {
+                                    echo "[$now] [WARN] Failed to move UID $uid to '$junk_folder'\n";
+                                }
+                            }
+
+                            $state->mark_processed($email, 'INBOX', $uid, 'spam_filtered', [
+                                'subject' => $subject,
+                                'score' => $score,
+                                'reasons' => $reasons,
+                            ]);
+                        } else {
+                            echo "[$now] [SPAM-PLAN] UID $uid would be tagged and moved to '$junk_folder' (Dry-run)\n";
+                        }
+
+                        // Skip further processing, triage, or draft generation
+                        continue;
+                    }
+                }
 
                 // 1. Bulk / Automated Filter
                 if (preg_match('/\b(List-Unsubscribe|List-Id|Precedence:\s*(bulk|list|junk)|Auto-Submitted:\s*auto)/i', $msg['raw_headers'])) {
