@@ -2711,7 +2711,7 @@ function lpai_init_spam_toolbar() {
                 }
             } else {
                 // Non-UL toolbar (such as #messagelist-header .toolbar or .header .toolbar)
-                var refBtn = tb.querySelector('.markasjunk, .junk, .delete, .trash, .refresh') || tb.firstElementChild;
+                var refBtn = tb.querySelector('.markasjunk, .junk, .delete, .trash, #listcontrols, .refresh, .options') || tb.firstElementChild;
                 if (refBtn && refBtn.parentNode === tb) {
                     tb.insertBefore(btn, refBtn.nextSibling);
                 } else {

@@ -2112,10 +2112,38 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 
 /* Base button styling: ensure uniform circular/icon button look matching sibling buttons */
 .toolbar a.button.lpai-toolbar-spam-btn,
+.toolbar a.lpai-toolbar-spam-btn,
+#mailtoolbar a.button.lpai-toolbar-spam-btn,
+#mailtoolbar a.lpai-toolbar-spam-btn,
 #messagetoolbar a.button.lpai-toolbar-spam-btn,
+#messagetoolbar a.lpai-toolbar-spam-btn,
 #messagelist-header a.button.lpai-toolbar-spam-btn,
+#messagelist-header a.lpai-toolbar-spam-btn,
+#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn,
+#messagelist-header .toolbar a.lpai-toolbar-spam-btn,
 .header .toolbar a.button.lpai-toolbar-spam-btn,
+.header .toolbar a.lpai-toolbar-spam-btn,
 .header a.button.lpai-toolbar-spam-btn,
+.header a.lpai-toolbar-spam-btn {
+    display: block !important;
+    float: left !important;
+    height: 100% !important;
+    border: 0 !important;
+    padding: .45rem !important;
+    line-height: 1.5 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    min-width: 3.2rem;
+    max-width: 6rem;
+    width: auto;
+    position: relative !important;
+    background: transparent;
+    color: inherit;
+    text-decoration: none !important;
+    vertical-align: top !important;
+    box-sizing: border-box !important;
+}
+
 #layout-sidebar a.button.lpai-toolbar-spam-btn,
 #folderlist-footer a.button.lpai-toolbar-spam-btn,
 .sidebar a.button.lpai-toolbar-spam-btn {
@@ -2135,12 +2163,81 @@ ul.menu.toolbar > li.lpai-toolbar-spam-item {
     vertical-align: middle;
 }
 
-/* Font icon on :before pseudo-element */
+/* Tooltip representation for span.inner matching Gmail Plus */
+.toolbar a.button.lpai-toolbar-spam-btn span.inner,
+.toolbar a.lpai-toolbar-spam-btn span.inner,
+#mailtoolbar a.button.lpai-toolbar-spam-btn span.inner,
+#mailtoolbar a.lpai-toolbar-spam-btn span.inner,
+#messagelist-header a.button.lpai-toolbar-spam-btn span.inner,
+#messagelist-header a.lpai-toolbar-spam-btn span.inner,
+#messagetoolbar a.button.lpai-toolbar-spam-btn span.inner,
+#messagetoolbar a.lpai-toolbar-spam-btn span.inner {
+    position: absolute;
+    left: 50%;
+    top: 3.6rem;
+    transform: translateX(-50%);
+    background: #4b4b4b;
+    border-radius: 4px;
+    z-index: 999;
+    color: #fff;
+    padding: 3px 6px !important;
+    line-height: 1rem !important;
+    display: none !important;
+    font-size: .85rem !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    pointer-events: none;
+}
+
+.toolbar a.button.lpai-toolbar-spam-btn:hover span.inner,
+.toolbar a.lpai-toolbar-spam-btn:hover span.inner,
+#mailtoolbar a.button.lpai-toolbar-spam-btn:hover span.inner,
+#mailtoolbar a.lpai-toolbar-spam-btn:hover span.inner,
+#messagelist-header a.button.lpai-toolbar-spam-btn:hover span.inner,
+#messagelist-header a.lpai-toolbar-spam-btn:hover span.inner,
+#messagetoolbar a.button.lpai-toolbar-spam-btn:hover span.inner,
+#messagetoolbar a.lpai-toolbar-spam-btn:hover span.inner {
+    display: block !important;
+}
+
+/* Font icon on :before pseudo-element - perfectly aligned with sibling toolbar buttons */
 .toolbar a.button.lpai-toolbar-spam-btn:before,
+.toolbar a.lpai-toolbar-spam-btn:before,
+#mailtoolbar a.button.lpai-toolbar-spam-btn:before,
+#mailtoolbar a.lpai-toolbar-spam-btn:before,
 #messagetoolbar a.button.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.lpai-toolbar-spam-btn:before,
 #messagelist-header a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header a.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header .toolbar a.lpai-toolbar-spam-btn:before,
 .header .toolbar a.button.lpai-toolbar-spam-btn:before,
+.header .toolbar a.lpai-toolbar-spam-btn:before,
 .header a.button.lpai-toolbar-spam-btn:before,
+.header a.lpai-toolbar-spam-btn:before {
+    font-family: RcpIconFont, Icons, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-image: none !important;
+    text-indent: 0 !important;
+    display: block !important;
+    float: none !important;
+    margin: 0 auto !important;
+    top: 0 !important;
+    position: static !important;
+    font-size: 1.25em !important;
+    width: 1.18em !important;
+    height: 1em !important;
+    line-height: 1 !important;
+    text-align: center !important;
+    transition: color 0.2s ease, transform 0.2s ease !important;
+}
+
 #layout-sidebar a.button.lpai-toolbar-spam-btn:before,
 #folderlist-footer a.button.lpai-toolbar-spam-btn:before,
 .sidebar a.button.lpai-toolbar-spam-btn:before {
@@ -2152,13 +2249,12 @@ ul.menu.toolbar > li.lpai-toolbar-spam-item {
     speak: none;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    position: relative;
     background-image: none !important;
     text-indent: 0 !important;
+    font-size: 1.25em !important;
     line-height: 1 !important;
     display: inline-block !important;
-    font-size: 1.5em !important;
-    top: 0.6rem;
+    vertical-align: middle !important;
     transition: color 0.2s ease, transform 0.2s ease !important;
 }
 

@@ -1,0 +1,7 @@
+/**
+ * Custom Stylesheet for Roundcube Webmail
+ * Serves /static.php/skins/custom.css
+ * Add organization-specific or custom skin overrides below.
+ */
+
+/* Empty fallback stylesheet ensuring 200 OK status on asset requests */

@@ -191,9 +191,60 @@ class lifeprisma_ai extends rcube_plugin
             $rcmail->output->add_footer($this->get_ai_panel_html($gemini));
         }
 
+        // Prevent 404s for watermark.png and custom.css across frames
+        $active_skin = $rcmail->config->get('skin', 'elastic');
+        $xwatermark = $rcmail->output->get_env('xwatermark');
+        if (!empty($xwatermark) && !str_starts_with($xwatermark, 'data:') && strpos($xwatermark, 'watermark.png') !== false) {
+            $wm_file = __DIR__ . '/skins/watermark.png';
+            if (is_file($wm_file)) {
+                $rcmail->output->set_env('xwatermark', 'data:image/png;base64,' . base64_encode(file_get_contents($wm_file)));
+            }
+        }
+        $blankpage = $rcmail->output->get_env('blankpage');
+        if (!empty($blankpage) && !str_starts_with($blankpage, 'data:') && preg_match('/watermark\.png$/i', $blankpage)) {
+            $wm_html = "skins/{$active_skin}/watermark.html";
+            $rcmail->output->set_env('blankpage', $wm_html);
+        }
+
         // Replace sidebar button text with exact purple Gemini SVG icon
         $svg_sidebar = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"></path></svg>';
         if (isset($args['content'])) {
+            // Guard iframe watermark against raw png requests causing 404s
+            $args['content'] = preg_replace(
+                '/(<iframe\b[^>]*?\bsrc=["\'])[^"\']*watermark\.png[^"\']*(["\'][^>]*>)/i',
+                '${1}skins/' . $active_skin . '/watermark.html${2}',
+                $args['content']
+            );
+
+            // Guard custom.css link tags against 404s if custom.css is missing or empty
+            $args['content'] = preg_replace_callback(
+                '/<link\b[^>]*?\bhref=["\']([^"\']*custom\.css[^"\']*)["\'][^>]*>/i',
+                function ($m) {
+                    $candidates = [
+                        __DIR__ . '/skins/custom.css',
+                        __DIR__ . '/skins/elastic/custom.css',
+                        __DIR__ . '/skins/gmail_plus/custom.css',
+                        __DIR__ . '/../skins/custom.css',
+                    ];
+                    $css_content = '';
+                    foreach ($candidates as $c) {
+                        if (is_file($c) && filesize($c) > 0) {
+                            $raw = trim((string)@file_get_contents($c));
+                            $stripped = preg_replace('!/\*.*?\*/!s', '', $raw);
+                            if (trim($stripped) !== '') {
+                                $css_content = $raw;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empty($css_content)) {
+                        return '<style type="text/css">/* inlined custom.css */' . "\n" . $css_content . "\n</style>";
+                    }
+                    return ''; // Strip tag to prevent 404
+                },
+                $args['content']
+            );
+
             $args['content'] = preg_replace(
                 '#<a([^>]*class="[^"]*button-gemini-ai[^"]*"[^>]*)>.*?<span class="inner">.*?</span>.*?</a>#is',
                 '<a$1>' . $svg_sidebar . '</a>',

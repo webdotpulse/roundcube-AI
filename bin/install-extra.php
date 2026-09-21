@@ -131,6 +131,14 @@ class RoundcubeExtraContentInstaller
                     continue;
                 }
                 $src = $skinsSrcDir . DIRECTORY_SEPARATOR . $skinName;
+                if (is_file($src)) {
+                    $destFile = $skinsTarget . DIRECTORY_SEPARATOR . $skinName;
+                    if (!$this->dryRun) {
+                        @copy($src, $destFile);
+                    }
+                    $this->info("Installed skin asset: skins/{$skinName}");
+                    continue;
+                }
                 if (!is_dir($src)) {
                     continue;
                 }
@@ -140,6 +148,15 @@ class RoundcubeExtraContentInstaller
                 }
                 $dest = $skinsTarget . DIRECTORY_SEPARATOR . $skinName;
                 $this->installComponent('skin', $skinName, $src, $dest);
+                // Ensure skin-level custom.css and watermark.png exist in the target skin directory
+                if (!$this->dryRun) {
+                    if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css')) {
+                        @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css', $dest . DIRECTORY_SEPARATOR . 'custom.css');
+                    }
+                    if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png')) {
+                        @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png', $dest . DIRECTORY_SEPARATOR . 'watermark.png');
+                    }
+                }
                 $installedCount++;
             }
         }

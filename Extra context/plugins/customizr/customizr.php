@@ -102,6 +102,31 @@ class customizr extends rcube_plugin
             }
         }
 
+        // Check if pointing to a local skin or image asset (e.g. ./skins/watermark.png or skins/watermark.png)
+        if (strpos($url, 'watermark.png') !== false || str_starts_with($url, './skins/') || str_starts_with($url, 'skins/')) {
+            $rel = ltrim(preg_replace('#^\./#', '', $url), '/');
+            $candidates = [
+                $url,
+                (defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH . '/' . $rel : ''),
+                dirname(__DIR__, 2) . '/' . $rel,
+                dirname(__DIR__, 3) . '/' . $rel,
+                dirname(__DIR__, 4) . '/' . $rel,
+                __DIR__ . '/../../skins/' . basename($url),
+                __DIR__ . '/../xframework/assets/images/' . basename($url),
+                __DIR__ . '/../xskin/assets/images/' . basename($url),
+            ];
+            foreach ($candidates as $cand) {
+                if (!empty($cand) && is_file($cand) && filesize($cand) > 0) {
+                    $ext = strtolower(pathinfo($cand, PATHINFO_EXTENSION));
+                    $data = @file_get_contents($cand);
+                    if ($data !== false) {
+                        $mime = 'image/' . ($ext === 'svg' ? 'svg+xml' : ($ext === 'ico' ? 'x-icon' : ($ext === 'jpg' ? 'jpeg' : ($ext ?: 'png'))));
+                        return 'data:' . $mime . ';base64,' . base64_encode($data);
+                    }
+                }
+            }
+        }
+
         return $url;
     }
 
@@ -207,9 +232,9 @@ class customizr extends rcube_plugin
      */
     private function render_image_field($field_name, $field_id, $value, $title_label, $desc_text, $accept = 'image/*,.ico,.svg')
     {
-        $value = self::resolve_image_url($value);
+        $preview_src = self::resolve_image_url($value);
         $has_value = !empty($value);
-        $escaped_val = htmlspecialchars((string) $value, ENT_QUOTES);
+        $escaped_preview = htmlspecialchars((string) $preview_src, ENT_QUOTES);
 
         $input = new html_inputfield([
             'name' => '_' . $field_name,
@@ -247,7 +272,7 @@ class customizr extends rcube_plugin
 
         $preview_img = html::tag('img', [
             'id' => $field_id . '_preview',
-            'src' => $has_value ? $escaped_val : '',
+            'src' => $has_value ? $escaped_preview : '',
             'alt' => rcube::Q($title_label),
             'style' => 'max-width: 220px; max-height: 70px; object-fit: contain;' . ($has_value ? '' : ' display:none;'),
         ]);
@@ -828,8 +853,20 @@ JS;
         $active_watermark = self::resolve_image_url($this->watermark_image);
         // replace static links to <skin>/watermark.html and set blankpage / xwatermark env
         if (!empty($this->watermark_uri) || !empty($active_watermark)) {
-            $url = $this->watermark_uri ?: ($active_watermark ?: $this->rcmail->url('plugin.watermark'));
-            if (strpos($args['content'], 'watermark.html') !== false) {
+            $skin = $this->rcmail->config->get('skin', 'gmail_plus');
+            $watermark_html = "skins/{$skin}/watermark.html";
+            $has_watermark_html = (defined('RCUBE_INSTALL_PATH') && is_file(RCUBE_INSTALL_PATH . '/' . $watermark_html))
+                || is_file(__DIR__ . "/../../{$watermark_html}");
+
+            if (!empty($this->watermark_uri)) {
+                $url = $this->watermark_uri;
+            } elseif ($has_watermark_html) {
+                $url = $watermark_html;
+            } else {
+                $url = $this->rcmail->url('plugin.watermark');
+            }
+
+            if (strpos($args['content'], 'watermark.html') !== false && !empty($this->watermark_uri)) {
                 $args['content'] = preg_replace('!(src)="([^"]+/watermark.html)"!', '\\1="' . $url . '"', $args['content']);
             }
             $this->rcmail->output->set_env('blankpage', $url);
@@ -901,7 +938,35 @@ JS;
 
         // append custom stylesheet file
         if (!empty($this->custom_css)) {
-            $this->rcmail->output->include_css($this->custom_css);
+            $css_url = $this->custom_css;
+            $is_remote = str_starts_with($css_url, 'http://') || str_starts_with($css_url, 'https://') || str_starts_with($css_url, '//');
+            $should_include = true;
+            if (!$is_remote) {
+                // If it's a relative path on disk (e.g. ./skins/custom.css or skins/custom.css), check if file exists on disk
+                if (str_starts_with($css_url, './') || str_starts_with($css_url, 'skins/') || !str_starts_with($css_url, '/')) {
+                    $rel = ltrim(preg_replace('#^\./#', '', $css_url), '/');
+                    $candidates = [
+                        $css_url,
+                        (defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH . '/' . $rel : ''),
+                        dirname(__DIR__, 2) . '/' . $rel,
+                        dirname(__DIR__, 3) . '/' . $rel,
+                        dirname(__DIR__, 4) . '/' . $rel,
+                        __DIR__ . '/../../skins/' . basename($css_url),
+                        __DIR__ . '/../xskin/assets/css/' . basename($css_url),
+                    ];
+                    $found = false;
+                    foreach ($candidates as $c) {
+                        if (!empty($c) && is_file($c) && filesize($c) > 0) {
+                            $found = true;
+                            break;
+                        }
+                    }
+                    $should_include = $found;
+                }
+            }
+            if ($should_include) {
+                $this->rcmail->output->include_css($this->custom_css);
+            }
         }
 
         // inject custom inline CSS rules before </head>
