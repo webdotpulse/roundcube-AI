@@ -361,6 +361,7 @@ assert_true(strpos($js_src, "rcmail.addEventListener('insertrow'") !== false, "s
 assert_true(strpos($js_src, "rcmail.addEventListener('responseafterlist'") !== false, "src/lifeprisma_ai.js attaches to responseafterlist for list updates");
 assert_true(strpos($js_src, "rcmail.addEventListener('responseafterrefresh'") !== false, "src/lifeprisma_ai.js attaches to responseafterrefresh for refresh updates");
 assert_true(strpos($js_src, "row.classList.contains('spam')") !== false || strpos($js_src, "isJunkFolder") !== false, "lpai_sync_all_spam_badges inspects table rows for spam class and junk folder");
+assert_true(strpos($js_src, "lpai_has_class") !== false, "src/lifeprisma_ai.js defines lpai_has_class helper for safe class checking on row elements/objects");
 
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));

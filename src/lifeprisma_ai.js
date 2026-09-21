@@ -96,14 +96,31 @@ if (window.rcmail) {
         }
     });
 
+function lpai_has_class(elem, className) {
+    if (!elem) return false;
+    if (elem.classList && typeof elem.classList.contains === 'function') {
+        return elem.classList.contains(className);
+    }
+    if (typeof elem.className === 'string') {
+        return (' ' + elem.className + ' ').indexOf(' ' + className + ' ') !== -1;
+    }
+    if (elem.obj && typeof elem.obj === 'object') {
+        return lpai_has_class(elem.obj, className);
+    }
+    return false;
+}
+
     // Synchronously badge row on row insertion
     rcmail.addEventListener('insertrow', function(props) {
         if (!props) return;
-        var row = props.row;
-        var uid = props.uid || (row && row.uid);
-        if (!uid && row && row.id) {
-            var m = row.id.match(/^rcmrow(\d+)/);
-            if (m) uid = m[1];
+        var rowObj = props.row;
+        var uid = props.uid || (rowObj && rowObj.uid);
+        if (!uid && rowObj) {
+            var rowEl = rowObj.obj || rowObj;
+            if (rowEl && rowEl.id) {
+                var m = String(rowEl.id).match(/^rcmrow(\d+)/);
+                if (m) uid = m[1];
+            }
         }
         if (!uid) return;
 
@@ -111,12 +128,17 @@ if (window.rcmail) {
         var isJunkFolder = (rcmail.env.mailbox && rcmail.env.mailbox.toLowerCase() === junkMbox);
         var spams = rcmail.env.lpai_row_spams || {};
 
-        if (isJunkFolder || (row && (row.classList.contains('spam') || row.classList.contains('junk'))) || spams[uid]) {
+        var isSpamRow = isJunkFolder || !!spams[uid] ||
+            lpai_has_class(rowObj, 'spam') ||
+            lpai_has_class(rowObj, 'junk') ||
+            (rowObj && rowObj.obj && (lpai_has_class(rowObj.obj, 'spam') || lpai_has_class(rowObj.obj, 'junk')));
+
+        if (isSpamRow) {
             lpai_sync_message_row_spam(uid);
         }
 
         var labels = rcmail.env.lpai_row_labels || {};
-        if (labels[uid] && !isJunkFolder && !spams[uid]) {
+        if (labels[uid] && !isSpamRow) {
             lpai_sync_message_row_label(uid, labels[uid]);
         }
     });
@@ -2884,7 +2906,7 @@ function lpai_sync_all_spam_badges(rowSpams) {
             var m = row.id.match(/^rcmrow(\d+)/);
             if (!m) return;
             var uid = m[1];
-            if (isJunkFolder || row.classList.contains('spam') || row.classList.contains('junk') || spams[uid]) {
+            if (isJunkFolder || !!spams[uid] || lpai_has_class(row, 'spam') || lpai_has_class(row, 'junk')) {
                 lpai_sync_message_row_spam(uid);
             }
         });
