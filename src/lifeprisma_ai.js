@@ -2627,38 +2627,61 @@ function lpai_init_spam_toolbar() {
     var isJunk = (currMbox.toLowerCase() === junkMbox.toLowerCase()) || 
                  (rcmail.env.lpai_msg_context && rcmail.env.lpai_msg_context.is_spam);
 
-    docs.forEach(function(doc) {
-        var toolbars = doc.querySelectorAll('#messagetoolbar, .messagetoolbar, #mailtoolbar, .toolbar');
-        toolbars.forEach(function(tb) {
-            var existingSpamBtn = tb.querySelector('.lpai-toolbar-spam-btn');
-            if (existingSpamBtn) existingSpamBtn.remove();
+    var spamText = rcmail.gettext('lifeprisma_ai.report_spam') || 'Report Spam';
+    var hamText = rcmail.gettext('lifeprisma_ai.not_spam') || 'Not Spam';
+    var labelText = isJunk ? hamText : spamText;
 
-            var inSidebar = !!(tb.closest && tb.closest('#layout-sidebar, .sidebar, #folderlist-footer'));
+    docs.forEach(function(doc) {
+        // Remove previously inserted items or buttons across all scopes
+        var existingItems = doc.querySelectorAll('.lpai-toolbar-spam-item, .lpai-toolbar-spam-btn');
+        existingItems.forEach(function(el) {
+            el.remove();
+        });
+
+        var toolbars = doc.querySelectorAll('#messagetoolbar, .messagetoolbar, #mailtoolbar, #messagelist-header .toolbar, .header .toolbar, .toolbar');
+        var seenToolbars = [];
+
+        toolbars.forEach(function(tb) {
+            if (seenToolbars.indexOf(tb) !== -1) return;
+            seenToolbars.push(tb);
+
+            // Avoid inserting inside popup menus or sub-toolbars that aren't action toolbars
+            if (tb.closest && tb.closest('.popupmenu, .popover, #searchmenu, #listoptions-menu')) {
+                return;
+            }
+
+            // If tb is a container header that has a child toolbar, let the child toolbar handle it
+            if (tb.querySelector && tb.querySelector('.toolbar') && !tb.classList.contains('toolbar')) {
+                return;
+            }
+
+            // Avoid duplicate button in same toolbar
+            if (tb.querySelector('.lpai-toolbar-spam-btn')) {
+                return;
+            }
+
+            var isUl = (tb.tagName.toUpperCase() === 'UL');
             var btn = doc.createElement('a');
             btn.href = '#';
             btn.setAttribute('role', 'button');
             btn.setAttribute('tabindex', '0');
-            btn.className = 'button lpai-toolbar-spam-btn ' + 
-                            (inSidebar ? 'lpai-sidebar-spam-btn ' : 'lpai-topbar-spam-btn ') + 
-                            (isJunk ? 'lpai-btn-ham' : 'lpai-btn-spam');
+            btn.className = 'button icon ' + 
+                            (isJunk ? 'notjunk markasnotjunk2 lpai-btn-ham' : 'junk markasjunk2 lpai-btn-spam') + 
+                            ' lpai-toolbar-spam-btn ' + 
+                            (isUl ? 'lpai-topbar-spam-btn' : 'lpai-sidebar-spam-btn');
 
-            if (isJunk) {
-                btn.title = 'Not Spam: Move back to Inbox and update filter learning';
-                btn.innerHTML = '<span class="inner button-inner"><span class="lpai-btn-icon">' + lpai_icon('shield_check') + '</span> <span class="lpai-btn-text">Not Spam</span></span>';
-                btn.onclick = function(e) {
-                    e.preventDefault();
+            btn.title = labelText;
+            btn.innerHTML = '<span class="inner button-inner">' + labelText + '</span>';
+
+            btn.onclick = function(e) {
+                e.preventDefault();
+                if (isJunk) {
                     lpai_mark_ham();
-                    return false;
-                };
-            } else {
-                btn.title = 'Report Spam: Add SPAM label, move to Junk folder, and train filter';
-                btn.innerHTML = '<span class="inner button-inner"><span class="lpai-btn-icon">' + lpai_icon('shield_alert') + '</span> <span class="lpai-btn-text">Report Spam</span></span>';
-                btn.onclick = function(e) {
-                    e.preventDefault();
+                } else {
                     lpai_mark_spam();
-                    return false;
-                };
-            }
+                }
+                return false;
+            };
 
             btn.onkeydown = function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -2668,12 +2691,32 @@ function lpai_init_spam_toolbar() {
                 }
             };
 
-            // Insert near junk or delete button if possible
-            var refBtn = tb.querySelector('.markasjunk, .junk, .delete, .trash') || tb.firstChild;
-            if (refBtn && refBtn.parentNode === tb) {
-                tb.insertBefore(btn, refBtn.nextSibling);
+            if (isUl) {
+                var item = doc.createElement('li');
+                item.className = 'lpai-toolbar-spam-item';
+                item.setAttribute('role', 'menuitem');
+                item.appendChild(btn);
+
+                // Find reference button in UL: delete, junk, markasjunk, or markmessage
+                var ref = tb.querySelector('.markasjunk, .junk, .delete, .trash, .markmessage');
+                var refItem = null;
+                if (ref) {
+                    refItem = ref.closest ? ref.closest('li') : ref.parentNode;
+                    if (refItem && refItem.parentNode !== tb) refItem = null;
+                }
+                if (refItem) {
+                    tb.insertBefore(item, refItem.nextSibling);
+                } else {
+                    tb.appendChild(item);
+                }
             } else {
-                tb.appendChild(btn);
+                // Non-UL toolbar (such as #messagelist-header .toolbar or .header .toolbar)
+                var refBtn = tb.querySelector('.markasjunk, .junk, .delete, .trash, .refresh') || tb.firstElementChild;
+                if (refBtn && refBtn.parentNode === tb) {
+                    tb.insertBefore(btn, refBtn.nextSibling);
+                } else {
+                    tb.appendChild(btn);
+                }
             }
         });
     });

@@ -2095,157 +2095,193 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 }
 
 /* ============================================================
-   Toolbar & Sidebar Spam Button Uniformity (GMail+ Skin)
+   Toolbar & Header Spam Font Icon Button Uniformity (GMail+ Skin)
    ============================================================ */
+@font-face {
+    font-family: 'RcpIconFont';
+    src: url('../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff2') format('woff2'),
+         url('../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff') format('woff'),
+         url('../../../plugins/xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.ttf') format('truetype'),
+         url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff2') format('woff2'),
+         url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.woff') format('woff'),
+         url('../xframework/assets/fonts/roundcube_plus_icons/roundcube_plus_icons.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Base button styling: ensure uniform circular/icon button look matching sibling buttons */
 .toolbar a.button.lpai-toolbar-spam-btn,
 #messagetoolbar a.button.lpai-toolbar-spam-btn,
+#messagelist-header a.button.lpai-toolbar-spam-btn,
 .header .toolbar a.button.lpai-toolbar-spam-btn,
+.header a.button.lpai-toolbar-spam-btn,
 #layout-sidebar a.button.lpai-toolbar-spam-btn,
 #folderlist-footer a.button.lpai-toolbar-spam-btn,
 .sidebar a.button.lpai-toolbar-spam-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-family: Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    line-height: 1.4 !important;
-    color: #3c4043 !important;
-    text-decoration: none !important;
     cursor: pointer !important;
-    border-radius: 18px !important;
-    padding: 6px 14px !important;
-    margin: 0 3px !important;
-    background: transparent !important;
-    border: 1px solid transparent !important;
-    box-sizing: border-box !important;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    text-decoration: none !important;
     vertical-align: middle !important;
+    text-align: center !important;
+    position: relative;
+    border: none;
+    background: transparent;
+    color: inherit;
 }
 
-.toolbar a.button.lpai-toolbar-spam-btn .inner,
-.toolbar a.button.lpai-toolbar-spam-btn .button-inner,
-#messagetoolbar a.button.lpai-toolbar-spam-btn .inner,
-#messagetoolbar a.button.lpai-toolbar-spam-btn .button-inner {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 7px !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: none !important;
-    border: none !important;
-    font-size: inherit !important;
-    color: inherit !important;
+/* Topbar (#messagetoolbar): Ensure item in <ul> toolbar behaves seamlessly as a native menuitem */
+ul.menu.toolbar > li.lpai-toolbar-spam-item {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Font icon on :before pseudo-element */
+.toolbar a.button.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn:before,
+.header .toolbar a.button.lpai-toolbar-spam-btn:before,
+.header a.button.lpai-toolbar-spam-btn:before,
+#layout-sidebar a.button.lpai-toolbar-spam-btn:before,
+#folderlist-footer a.button.lpai-toolbar-spam-btn:before,
+.sidebar a.button.lpai-toolbar-spam-btn:before {
+    font-family: RcpIconFont, Icons, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-variant: normal !important;
+    text-transform: none !important;
+    speak: none;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    position: relative;
+    background-image: none !important;
     text-indent: 0 !important;
     line-height: 1 !important;
-}
-
-.toolbar a.button.lpai-toolbar-spam-btn .lpai-btn-icon,
-.toolbar a.button.lpai-toolbar-spam-btn svg,
-#messagetoolbar a.button.lpai-toolbar-spam-btn svg {
-    width: 17px !important;
-    height: 17px !important;
     display: inline-block !important;
-    flex-shrink: 0 !important;
-    vertical-align: middle !important;
+    font-size: 1.5em !important;
+    top: 0.6rem;
+    transition: color 0.2s ease, transform 0.2s ease !important;
 }
 
-.toolbar a.button.lpai-toolbar-spam-btn:hover,
-#messagetoolbar a.button.lpai-toolbar-spam-btn:hover {
-    background-color: #f1f3f4 !important;
-    color: #202124 !important;
+/* Junk / Spam Icon Glyphs */
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+.toolbar a.button.junk.lpai-toolbar-spam-btn:before,
+.toolbar a.button.markasjunk2.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+.header .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+.header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+#layout-sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+#folderlist-footer a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+.sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before {
+    content: "\ead3" !important;
 }
 
-.toolbar a.button.lpai-toolbar-spam-btn:active,
-#messagetoolbar a.button.lpai-toolbar-spam-btn:active {
-    background-color: #e8eaed !important;
-    transform: translateY(1px) !important;
+html.xicons-traditional .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-traditional #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-traditional #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-traditional .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before {
+    content: "\eb9b" !important;
 }
 
-/* Specific Spam vs Ham accents (Gmail style) */
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam .lpai-btn-icon,
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam svg {
+html.xicons-outlined .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-outlined #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-outlined #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-outlined .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before {
+    content: "\ec63" !important;
+}
+
+html.xicons-material .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-material #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-material #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-material .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before {
+    content: "\ed2b" !important;
+}
+
+html.xicons-cartoon .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-cartoon #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-cartoon #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before,
+html.xicons-cartoon .header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:before {
+    content: "\edf3" !important;
+}
+
+/* Ham / Not Junk Icon Glyphs */
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+.toolbar a.button.notjunk.lpai-toolbar-spam-btn:before,
+.toolbar a.button.markasnotjunk2.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+.header .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+.header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+#layout-sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+#folderlist-footer a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+.sidebar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before {
+    content: "\ead4" !important;
+}
+
+html.xicons-traditional .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-traditional #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-traditional #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-traditional .header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before {
+    content: "\eb9c" !important;
+}
+
+html.xicons-outlined .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-outlined #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-outlined #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-outlined .header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before {
+    content: "\ec64" !important;
+}
+
+html.xicons-material .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-material #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-material #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-material .header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before {
+    content: "\ed2c" !important;
+}
+
+html.xicons-cartoon .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-cartoon #messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-cartoon #messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before,
+html.xicons-cartoon .header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:before {
+    content: "\edf4" !important;
+}
+
+/* Subtle theme-uniform icon hover tint (Google Red for Spam, Google Green for Ham) */
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before,
+.header a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before {
     color: #d93025 !important;
 }
 
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover {
-    background-color: #fce8e6 !important;
-    color: #c5221f !important;
-    border-color: #fad2cf !important;
-}
-
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham .lpai-btn-icon,
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham svg {
+.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before,
+#messagelist-header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before,
+.header a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before {
     color: #1e8e3e !important;
 }
 
-.toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover {
-    background-color: #e6f4ea !important;
-    color: #137333 !important;
-    border-color: #ceead6 !important;
+/* Dark mode subtle hover tint */
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover:before {
+    color: #f28b82 !important;
 }
 
-/* Sidebar specific adaptation */
+html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before,
+body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before,
+[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover:before {
+    color: #81c995 !important;
+}
+
+/* Sidebar & Footer button adaptations */
 #layout-sidebar a.button.lpai-toolbar-spam-btn,
 #folderlist-footer a.button.lpai-toolbar-spam-btn,
 .sidebar a.button.lpai-toolbar-spam-btn {
+    border-radius: 18px !important;
     padding: 4px 10px !important;
-    font-size: 12px !important;
-    border-radius: 14px !important;
-    margin: 2px !important;
 }
 
-#layout-sidebar a.button.lpai-toolbar-spam-btn svg,
-#folderlist-footer a.button.lpai-toolbar-spam-btn svg,
-.sidebar a.button.lpai-toolbar-spam-btn svg {
-    width: 15px !important;
-    height: 15px !important;
-}
-
-/* Responsive collapse on smaller viewports */
-@media screen and (max-width: 768px) {
-    .toolbar a.button.lpai-toolbar-spam-btn .lpai-btn-text,
-    #messagetoolbar a.button.lpai-toolbar-spam-btn .lpai-btn-text {
-        display: none !important;
-    }
-    .toolbar a.button.lpai-toolbar-spam-btn,
-    #messagetoolbar a.button.lpai-toolbar-spam-btn {
-        padding: 6px 8px !important;
-        border-radius: 50% !important;
-        width: 34px !important;
-        height: 34px !important;
-    }
-}
-
-/* Dark mode support (Gmail Dark Theme) */
-html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn,
-body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn,
-[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn {
-    color: #e8eaed !important;
-}
-
-html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn:hover,
-body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn:hover,
-[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn:hover {
-    background-color: rgba(255, 255, 255, 0.08) !important;
-    color: #ffffff !important;
-}
-
-html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover,
-body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover,
-[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-spam:hover {
-    background-color: rgba(217, 48, 37, 0.2) !important;
-    color: #f28b82 !important;
-    border-color: rgba(217, 48, 37, 0.4) !important;
-}
-
-html.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover,
-body.dark-mode .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover,
-[data-theme="dark"] .toolbar a.button.lpai-toolbar-spam-btn.lpai-btn-ham:hover {
-    background-color: rgba(30, 142, 62, 0.2) !important;
-    color: #81c995 !important;
-    border-color: rgba(30, 142, 62, 0.4) !important;
-}
 
 .lpai-qa-btn.lpai-qa-spam {
     color: #e11d48;

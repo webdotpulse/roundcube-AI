@@ -284,16 +284,23 @@ echo "\n--- Group 12: Theme-Uniform Spam Button in Sidebar & Topbar --- \n";
 
 assert_true(strpos($js_src, "lpai-topbar-spam-btn") !== false, "lifeprisma_ai.js identifies topbar spam button");
 assert_true(strpos($js_src, "lpai-sidebar-spam-btn") !== false, "lifeprisma_ai.js identifies sidebar spam button");
+assert_true(strpos($js_src, "lpai-toolbar-spam-item") !== false, "lifeprisma_ai.js wraps topbar menuitem in li.lpai-toolbar-spam-item");
 assert_true(strpos($js_src, "inner button-inner") !== false, "lifeprisma_ai.js creates standard inner button-inner markup");
 assert_true(strpos($js_src, "btn.setAttribute('role', 'button')") !== false, "lifeprisma_ai.js sets role=button for accessibility");
 assert_true(strpos($js_src, "btn.setAttribute('tabindex', '0')") !== false, "lifeprisma_ai.js sets tabindex=0 for accessibility");
 
 assert_true(strpos($el_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($el_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($el_css, "RcpIconFont") !== false, "elastic style.css declares RcpIconFont for spam button font icons");
+assert_true(strpos($el_css, "\\ead3") !== false, "elastic style.css defines standard font icon glyph for spam");
 assert_true(strpos($el_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "elastic style.css adapts button for sidebar");
 
 assert_true(strpos($gp_css, ".toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css styles .toolbar a.button.lpai-toolbar-spam-btn");
 assert_true(strpos($gp_min, "toolbar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.min.css contains .toolbar a.button.lpai-toolbar-spam-btn");
+assert_true(strpos($gp_css, "RcpIconFont") !== false, "gmail_plus style.css declares RcpIconFont font family");
+assert_true(strpos($gp_css, "\\ed2b") !== false, "gmail_plus style.css maps material icon glyph for spam (\\ed2b)");
+assert_true(strpos($gp_css, "\\ed2c") !== false, "gmail_plus style.css maps material icon glyph for ham (\\ed2c)");
+assert_true(strpos($gp_min, "\\ed2b") !== false, "gmail_plus style.min.css contains material spam glyph");
 assert_true(strpos($gp_css, "#layout-sidebar a.button.lpai-toolbar-spam-btn") !== false, "gmail_plus style.css adapts button for sidebar");
 assert_true(strpos($gp_css, "border-radius: 18px") !== false || strpos($gp_css, "border-radius:18px") !== false, "gmail_plus uses theme-uniform pill button shape");
 
