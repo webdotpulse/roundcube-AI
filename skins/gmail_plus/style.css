@@ -2852,7 +2852,6 @@ a.button.tb-label:before,
 a.tb-label:before,
 a#tb_label_popuplink:before,
 a#tb-label-menulink:before,
-.tb-label-icon:before,
 a.tb-label.xi-label-dots:before,
 .xi-label-dots:before,
 #sections-table tbody #rcmrowthunderbird_labels td.section:before,
@@ -2971,6 +2970,14 @@ html.xicons-cartoon div.contextmenu a.rcm-uidropdown::before {
 ul.menu.toolbar a.tb-label svg,
 a.tb-label.xi-label-dots svg,
 .xi-label-dots svg {
+    display: none !important;
+}
+
+/* Ensure sidebar label items do not display pseudo-element icon glyphs */
+.tb-label-icon:before,
+.tb-labels-sidebar .tb-label-icon:before,
+ul.tb-labels-list .tb-label-icon:before {
+    content: none !important;
     display: none !important;
 }
 

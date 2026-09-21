@@ -506,6 +506,12 @@ assert_true(strpos($el_css, "top: 0.9rem !important;") !== false, "elastic style
 assert_true(strpos($gp_min, "top:.9rem!important") !== false, "gmail_plus style.min.css contains top: .9rem for label button icon");
 assert_true(strpos($el_min, "top:.9rem!important") !== false, "elastic style.min.css contains top: .9rem for label button icon");
 
+// Assert tb-label-icon:before is removed from glyph mapping and suppressed for sidebar labels
+assert_true(strpos($gp_css, ".tb-label-icon:before,\n.tb-labels-sidebar") !== false, "gmail_plus style.css suppresses .tb-label-icon:before on sidebar labels");
+assert_true(strpos($el_css, ".tb-label-icon:before,\n.tb-labels-sidebar") !== false, "elastic style.css suppresses .tb-label-icon:before on sidebar labels");
+assert_true(strpos($gp_min, ".tb-label-icon:before,.tb-labels-sidebar .tb-label-icon:before") !== false, "gmail_plus style.min.css suppresses .tb-label-icon:before on sidebar labels");
+assert_true(strpos($el_min, ".tb-label-icon:before,.tb-labels-sidebar .tb-label-icon:before") !== false, "elastic style.min.css suppresses .tb-label-icon:before on sidebar labels");
+
 // Toolbar template structure assertions (single button without split dropdown button)
 $toolbar_tpl = file_get_contents($plugin_dir . '/skins/elastic/includes/toolbar.html');
 assert_true(strpos($toolbar_tpl, 'id="tb-label-menulink"') !== false, "elastic toolbar.html contains tb-label-menulink");
