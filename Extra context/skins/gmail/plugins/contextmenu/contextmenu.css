@@ -1,0 +1,107 @@
+/* ContextMenu plugin — roundcube-gmail look (same recipe as the skin's popup menus). Loaded
+   unlayered after the skin stylesheet, so values are stated in full here. */
+div.contextmenu {
+  position: absolute;
+  z-index: 950;
+  min-width: 220px;
+  max-width: min(420px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: 6px 0;
+  border-radius: 4px;
+  background: var(--color-surface-container-lowest);
+  color: var(--color-on-surface);
+  box-shadow: var(--shadow-menu);
+}
+html.dark-mode div.contextmenu {
+  background: var(--color-surface-container-high);
+}
+div.contextmenu > .popover-header {
+  display: none;
+}
+div.contextmenu .popover-body {
+  padding: 0;
+}
+div.contextmenu ul.menu.listing {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+div.contextmenu ul.menu.listing > li > a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 32px;
+  padding: 0 24px 0 16px;
+  color: var(--color-on-surface);
+  font: 400 var(--text-base) / 20px var(--font-sans);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+div.contextmenu ul.menu.listing > li > a:hover,
+div.contextmenu ul.menu.listing > li > a:focus {
+  background: var(--color-state-hover);
+  outline: none;
+}
+div.contextmenu ul.menu.listing > li > a.disabled {
+  opacity: 0.38;
+  pointer-events: none;
+}
+div.contextmenu ul.menu.listing > li > a > span {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+div.contextmenu ul.menu.listing > li > a[aria-haspopup='true']::after {
+  content: var(--ico-chevron-right);
+  font-family: var(--font-icons);
+  font-size: 20px;
+  margin-left: auto;
+  color: var(--color-on-surface-variant);
+}
+div.contextmenu ul.menu.listing > li.separator,
+div.contextmenu ul.menu.listing > li > hr {
+  height: 1px;
+  margin: 6px 0;
+  background: var(--color-outline-variant);
+  border: 0;
+}
+.popover-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 940;
+}
+/* the row the menu was opened on */
+tr.context-source,
+li.context-source > a {
+  background: var(--color-state-hover);
+}
+@media (width <= 768px) {
+  div.contextmenu {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    max-width: none;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 12px;
+  }
+  div.contextmenu > .popover-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 8px 0;
+    margin: 0;
+  }
+  div.contextmenu > .popover-header .button.icon.cancel {
+    font-size: 0;
+  }
+  div.contextmenu > .popover-header .button.icon.cancel::before {
+    content: var(--ico-close);
+    font-family: var(--font-icons);
+    font-size: 24px;
+  }
+  div.contextmenu ul.menu.listing > li > a {
+    height: 48px;
+  }
+}

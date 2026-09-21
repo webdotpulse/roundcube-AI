@@ -75,6 +75,7 @@ assert_true(!is_dir($tempDir . '/plugins/xmultibox'), "Dry-run does NOT create x
 assert_true(!is_dir($tempDir . '/plugins/xsignature'), "Dry-run does NOT create xsignature in plugins");
 assert_true(!is_dir($tempDir . '/data/xsignature'), "Dry-run does NOT create data/xsignature directory");
 assert_true(!is_dir($tempDir . '/skins/gmail_plus'), "Dry-run does NOT create gmail_plus in skins");
+assert_true(!is_dir($tempDir . '/skins/gmail'), "Dry-run does NOT create gmail in skins");
 
 // Test 2: Full Installation with --activate
 echo "\n--- Test 2: Full Installation with --activate ---\n";
@@ -87,6 +88,11 @@ assert_true($retFull === 0, "Installer returns exit code 0 on full install");
 assert_true(is_dir($tempDir . '/skins/gmail_plus'), "Skin 'gmail_plus' installed in skins/");
 assert_true(file_exists($tempDir . '/skins/gmail_plus/meta.json'), "gmail_plus skin meta.json exists");
 assert_true(file_exists($tempDir . '/skins/gmail_plus/config.inc.php'), "gmail_plus config.inc.php initialized from sample");
+assert_true(is_dir($tempDir . '/skins/gmail'), "Skin 'gmail' installed in skins/");
+assert_true(file_exists($tempDir . '/skins/gmail/meta.json'), "gmail skin meta.json exists");
+assert_true(file_exists($tempDir . '/skins/gmail/manifest.json'), "gmail skin manifest.json exists");
+assert_true(file_exists($tempDir . '/skins/gmail/custom.css'), "gmail skin custom.css exists");
+assert_true(file_exists($tempDir . '/skins/gmail/watermark.png'), "gmail skin watermark.png exists");
 
 // Verify companion plugins installed
 assert_true(is_dir($tempDir . '/plugins/xskin'), "Plugin 'xskin' installed in plugins/");
@@ -250,6 +256,30 @@ assert_true(!empty($order8) && $order8[0] === 'xskin', "Test 8: 'xskin' moved to
 assert_true(count(array_keys($order8, 'xskin')) === 1, "Test 8: 'xskin' appears exactly once");
 assert_true(in_array('first_plugin', $order8, true) && in_array('last_plugin', $order8, true), "Test 8: other plugins preserved");
 remove_dir_recursive($test8Dir);
+
+// Test 9: Installing with --activate --skin=gmail
+echo "\n--- Test 9: Installing with --activate --skin=gmail ---\n";
+$test9Dir = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'rc_test9_' . uniqid();
+@mkdir($test9Dir . '/program/include', 0777, true);
+@mkdir($test9Dir . '/plugins', 0777, true);
+@mkdir($test9Dir . '/skins', 0777, true);
+@mkdir($test9Dir . '/config', 0777, true);
+file_put_contents($test9Dir . '/index.php', "<?php\n");
+file_put_contents($test9Dir . '/program/include/iniset.php', "<?php\n");
+file_put_contents($test9Dir . '/config/config.inc.php', "<?php\n\$config = [];\n\$config['skin'] = 'elastic';\n");
+
+$installer9 = new RoundcubeExtraContentInstaller(dirname(__DIR__), $test9Dir);
+$installer9->parseCliArgs(['--roundcube-path=' . $test9Dir, '--activate', '--skin=gmail']);
+$installer9->execute();
+
+$res9 = file_get_contents($test9Dir . '/config/config.inc.php');
+assert_true(strpos($res9, "\$config['skin'] = 'gmail'") !== false, "Test 9: 'skin' set to 'gmail' in config");
+assert_true(strpos($res9, "'skins/gmail/images/logo.svg'") !== false, "Test 9: 'skin_logo' set to skins/gmail/images/logo.svg");
+assert_true(strpos($res9, "\$config['favicon'] = 'skins/gmail/images/favicon.ico'") !== false, "Test 9: 'favicon' set to skins/gmail/images/favicon.ico");
+assert_true(is_dir($test9Dir . '/skins/gmail'), "Test 9: 'gmail' skin installed in skins/gmail");
+assert_true(file_exists($test9Dir . '/skins/gmail/meta.json'), "Test 9: skins/gmail/meta.json exists");
+assert_true(file_exists($test9Dir . '/skins/gmail/manifest.json'), "Test 9: skins/gmail/manifest.json exists");
+remove_dir_recursive($test9Dir);
 
 // Cleanup
 remove_dir_recursive($tempDir);

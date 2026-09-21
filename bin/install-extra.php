@@ -2,7 +2,7 @@
 /**
  * Roundcube AI Extra Content Installer
  *
- * Automatically installs and synchronizes bundled skins (gmail_plus)
+ * Automatically installs and synchronizes bundled skins (gmail_plus, gmail)
  * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
@@ -122,7 +122,8 @@ class RoundcubeExtraContentInstaller
 
         $installedCount = 0;
 
-        // 3. Install all skins from Extra context/skins/ into <roundcube>/skins/
+        // 3. Install all skins from Extra context/skins/ and repository skins/ into <roundcube>/skins/
+        $discoveredSkins = [];
         $skinsSrcDir = $sourceDir . DIRECTORY_SEPARATOR . 'skins';
         if (is_dir($skinsSrcDir)) {
             $skinItems = scandir($skinsSrcDir) ?: [];
@@ -139,26 +140,49 @@ class RoundcubeExtraContentInstaller
                     $this->info("Installed skin asset: skins/{$skinName}");
                     continue;
                 }
-                if (!is_dir($src)) {
+                if (is_dir($src)) {
+                    $discoveredSkins[$skinName] = $src;
+                }
+            }
+        }
+
+        $repoSkinsDir = $this->pluginDir . DIRECTORY_SEPARATOR . 'skins';
+        if (is_dir($repoSkinsDir)) {
+            $repoSkinItems = scandir($repoSkinsDir) ?: [];
+            foreach ($repoSkinItems as $skinName) {
+                if ($skinName === '.' || $skinName === '..' || $skinName === '.git' || $skinName === 'elastic') {
                     continue;
                 }
-                // Handle legacy nested structure if Extra context/skins/gmail_plus/skins/gmail_plus exists
-                if (is_dir($src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName)) {
-                    $src = $src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName;
-                }
-                $dest = $skinsTarget . DIRECTORY_SEPARATOR . $skinName;
-                $this->installComponent('skin', $skinName, $src, $dest);
-                // Ensure skin-level custom.css and watermark.png exist in the target skin directory
-                if (!$this->dryRun) {
-                    if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css')) {
-                        @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css', $dest . DIRECTORY_SEPARATOR . 'custom.css');
-                    }
-                    if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png')) {
-                        @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png', $dest . DIRECTORY_SEPARATOR . 'watermark.png');
+                $src = $repoSkinsDir . DIRECTORY_SEPARATOR . $skinName;
+                if (is_dir($src) && !isset($discoveredSkins[$skinName])) {
+                    if (is_file($src . DIRECTORY_SEPARATOR . 'meta.json') || is_file($src . DIRECTORY_SEPARATOR . 'manifest.json')) {
+                        $discoveredSkins[$skinName] = $src;
                     }
                 }
-                $installedCount++;
             }
+        }
+
+        foreach ($discoveredSkins as $skinName => $src) {
+            // Handle legacy nested structure if Extra context/skins/gmail_plus/skins/gmail_plus exists
+            if (is_dir($src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName)) {
+                $src = $src . DIRECTORY_SEPARATOR . 'skins' . DIRECTORY_SEPARATOR . $skinName;
+            }
+            $dest = $skinsTarget . DIRECTORY_SEPARATOR . $skinName;
+            $this->installComponent('skin', $skinName, $src, $dest);
+            // Ensure skin-level custom.css and watermark.png exist in the target skin directory
+            if (!$this->dryRun) {
+                if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css')) {
+                    @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'custom.css', $dest . DIRECTORY_SEPARATOR . 'custom.css');
+                } elseif (is_file($repoSkinsDir . DIRECTORY_SEPARATOR . 'custom.css')) {
+                    @copy($repoSkinsDir . DIRECTORY_SEPARATOR . 'custom.css', $dest . DIRECTORY_SEPARATOR . 'custom.css');
+                }
+                if (is_file($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png')) {
+                    @copy($skinsSrcDir . DIRECTORY_SEPARATOR . 'watermark.png', $dest . DIRECTORY_SEPARATOR . 'watermark.png');
+                } elseif (is_file($repoSkinsDir . DIRECTORY_SEPARATOR . 'watermark.png')) {
+                    @copy($repoSkinsDir . DIRECTORY_SEPARATOR . 'watermark.png', $dest . DIRECTORY_SEPARATOR . 'watermark.png');
+                }
+            }
+            $installedCount++;
         }
 
         // 4. Install all plugins from Extra context/plugins/ into <roundcube>/plugins/
@@ -585,7 +609,7 @@ class RoundcubeExtraContentInstaller
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
             $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'");
-            $this->info("And set the active skin: \$config['skin'] = 'gmail_plus';");
+            $this->info("And set the active skin: \$config['skin'] = '{$this->selectedSkin}';");
             return;
         }
 
@@ -623,7 +647,7 @@ class RoundcubeExtraContentInstaller
 
         $targetSkin = $this->selectedSkin;
         $hasTargetSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]" . preg_quote($targetSkin, '/') . "['\"]/", $configContent);
-        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus)['\"]/", $configContent);
+        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus|gmail)['\"]/", $configContent);
         $skinNeedsUpdate = $this->skinExplicitlySet ? !$hasTargetSkin : !$hasAnyBundledSkin;
 
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
@@ -807,17 +831,29 @@ class RoundcubeExtraContentInstaller
             $this->success("  -> Added \$config['remove_vendor_branding'] = true to config.inc.php");
         }
 
-        // Standard Mailbox Logo, Login Page Logo, and Favicon branding (Grid Mail)
+        // Standard Mailbox Logo, Login Page Logo, and Favicon branding (Grid Mail or Gmail)
         if (!preg_match("/\\\$config\\[['\"]skin_logo['\"]\\]/", $content)) {
-            $content .= "\n// Standard Logo & Favicon branding (Grid Mail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail_plus/assets/images/logo_header.svg',\n    'login' => 'skins/gmail_plus/assets/images/logo_login.svg',\n    '[favicon]' => 'skins/gmail_plus/assets/images/favicon.png',\n];\n";
-            $modified = true;
-            $this->success("  -> Configured standard Grid Mail logo & favicon in \$config['skin_logo']");
+            if ($this->selectedSkin === 'gmail') {
+                $content .= "\n// Standard Logo & Favicon branding (Gmail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail/images/logo.svg',\n    'login' => 'skins/gmail/images/logo.svg',\n    '[favicon]' => 'skins/gmail/images/favicon.ico',\n];\n";
+                $modified = true;
+                $this->success("  -> Configured standard Gmail logo & favicon in \$config['skin_logo']");
+            } else {
+                $content .= "\n// Standard Logo & Favicon branding (Grid Mail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail_plus/assets/images/logo_header.svg',\n    'login' => 'skins/gmail_plus/assets/images/logo_login.svg',\n    '[favicon]' => 'skins/gmail_plus/assets/images/favicon.png',\n];\n";
+                $modified = true;
+                $this->success("  -> Configured standard Grid Mail logo & favicon in \$config['skin_logo']");
+            }
         }
 
         if (!preg_match("/\\\$config\\[['\"]favicon['\"]\\]/", $content)) {
-            $content .= "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png';\n";
-            $modified = true;
-            $this->success("  -> Configured standard favicon in \$config['favicon']");
+            if ($this->selectedSkin === 'gmail') {
+                $content .= "\$config['favicon'] = 'skins/gmail/images/favicon.ico';\n";
+                $modified = true;
+                $this->success("  -> Configured standard favicon in \$config['favicon']");
+            } else {
+                $content .= "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png';\n";
+                $modified = true;
+                $this->success("  -> Configured standard favicon in \$config['favicon']");
+            }
         }
 
         if (!preg_match("/\\\$config\\[['\"]autoexpand_threads['\"]\\]/", $content)) {
@@ -1012,7 +1048,7 @@ Usage:
 Options:
   --roundcube-path=DIR   Specify target Roundcube root directory
   --target=DIR           Alias for --roundcube-path
-  --skin=SKIN            Skin to activate with --activate (default: 'gmail_plus')
+  --skin=SKIN            Skin to activate with --activate (e.g. 'gmail', 'gmail_plus'; default: 'gmail_plus')
   --activate             Automatically enable plugins, skin, license_key and branding removal in config/config.inc.php
   --dry-run              Simulate installation without making filesystem changes
   --verbose, -v          Verbose output
