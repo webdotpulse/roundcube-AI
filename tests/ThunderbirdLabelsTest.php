@@ -501,6 +501,17 @@ assert_true(strpos($gp_css, "\\ec7d") !== false, "gmail_plus style.css maps labe
 assert_true(strpos($gp_min, "\\ec7d") !== false, "gmail_plus style.min.css contains label-dots icon glyph (\\ec7d)");
 assert_true(strpos($el_css, "\\ec7d") !== false, "elastic style.css maps label-dots icon glyph (\\ec7d)");
 assert_true(strpos($el_min, "\\ec7d") !== false, "elastic style.min.css contains label-dots icon glyph (\\ec7d)");
+assert_true(strpos($gp_css, "top: 0.9rem !important;") !== false, "gmail_plus style.css offsets label button icon with top: 0.9rem");
+assert_true(strpos($el_css, "top: 0.9rem !important;") !== false, "elastic style.css offsets label button icon with top: 0.9rem");
+assert_true(strpos($gp_min, "top:.9rem!important") !== false, "gmail_plus style.min.css contains top: .9rem for label button icon");
+assert_true(strpos($el_min, "top:.9rem!important") !== false, "elastic style.min.css contains top: .9rem for label button icon");
+
+// Toolbar template structure assertions (single button without split dropdown button)
+$toolbar_tpl = file_get_contents($plugin_dir . '/skins/elastic/includes/toolbar.html');
+assert_true(strpos($toolbar_tpl, 'id="tb-label-menulink"') !== false, "elastic toolbar.html contains tb-label-menulink");
+assert_true(strpos($toolbar_tpl, 'class="button"') !== false, "elastic toolbar.html assigns class='button' to tb-label-menulink");
+assert_true(strpos($toolbar_tpl, 'rcm_tb_label_submenu') === false, "elastic toolbar.html does not contain separate split rcm_tb_label_submenu button");
+assert_true(strpos($toolbar_tpl, 'class="button dropdown"') === false, "elastic toolbar.html does not assign button dropdown class");
 
 // Test session cache invalidation on delete
 $_SESSION['tb_label_counts_test'] = ['data' => [1]];
