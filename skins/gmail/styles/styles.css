@@ -7058,9 +7058,112 @@ ul.tb-labels-list .tb-label-icon:before {
 #mailtoolbar a.junk:before {
   content: "\ec63" !important;
   font-family: RcpIconFont, Icons, var(--font-icons), sans-serif !important;
-  top: 0.9rem !important;
-  font-size: 1.5em !important;
   position: relative !important;
+}
+
+/* Gmail Skin: compact toolbar spam and junk button icon alignment */
+#mailtoolbar a.button.lpai-toolbar-spam-btn:before,
+#mailtoolbar a.junk:before,
+#mailtoolbar a.lpai-toolbar-spam-btn:before,
+#mailtoolbar a.notjunk:before,
+#messagetoolbar a.button.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.junk:before,
+#messagetoolbar a.lpai-toolbar-spam-btn:before,
+#messagetoolbar a.notjunk:before,
+.header .toolbar a.button.lpai-toolbar-spam-btn:before,
+.header .toolbar a.junk:before,
+.header .toolbar a.lpai-toolbar-spam-btn:before,
+.header .toolbar a.notjunk:before,
+.header a.button.lpai-toolbar-spam-btn:before,
+.header a.junk:before,
+.header a.lpai-toolbar-spam-btn:before,
+.header a.notjunk:before,
+.lpai-topbar-spam-btn:before,
+.toolbar a.button.lpai-toolbar-spam-btn:before,
+.toolbar a.junk:before,
+.toolbar a.lpai-toolbar-spam-btn:before,
+.toolbar a.notjunk:before,
+.xi-junk:before,
+.xi-not-junk:before,
+a.junk.xi-junk:before,
+a.notjunk.xi-not-junk:before,
+ul.menu.toolbar a.junk:before,
+ul.menu.toolbar a.notjunk:before,
+body #mailtoolbar a.button.lpai-toolbar-spam-btn:before,
+body #mailtoolbar a.junk:before,
+body #mailtoolbar a.lpai-toolbar-spam-btn:before,
+body #mailtoolbar a.notjunk:before,
+body #messagetoolbar a.button.lpai-toolbar-spam-btn:before,
+body #messagetoolbar a.junk:before,
+body #messagetoolbar a.lpai-toolbar-spam-btn:before,
+body #messagetoolbar a.notjunk:before,
+body .header .toolbar a.button.lpai-toolbar-spam-btn:before,
+body .header .toolbar a.junk:before,
+body .header .toolbar a.lpai-toolbar-spam-btn:before,
+body .header .toolbar a.notjunk:before,
+body .header a.button.lpai-toolbar-spam-btn:before,
+body .header a.junk:before,
+body .header a.lpai-toolbar-spam-btn:before,
+body .header a.notjunk:before,
+body .lpai-topbar-spam-btn:before,
+body .toolbar a.button.lpai-toolbar-spam-btn:before,
+body .toolbar a.junk:before,
+body .toolbar a.lpai-toolbar-spam-btn:before,
+body .toolbar a.notjunk:before,
+body .xi-junk:before,
+body .xi-not-junk:before,
+body a.junk.xi-junk:before,
+body a.notjunk.xi-not-junk:before,
+body ul.menu.toolbar a.junk:before,
+body ul.menu.toolbar a.notjunk:before,
+body.skin-gmail #mailtoolbar a.button.lpai-toolbar-spam-btn:before,
+body.skin-gmail #mailtoolbar a.junk:before,
+body.skin-gmail #mailtoolbar a.lpai-toolbar-spam-btn:before,
+body.skin-gmail #mailtoolbar a.notjunk:before,
+body.skin-gmail #messagetoolbar a.button.lpai-toolbar-spam-btn:before,
+body.skin-gmail #messagetoolbar a.junk:before,
+body.skin-gmail #messagetoolbar a.lpai-toolbar-spam-btn:before,
+body.skin-gmail #messagetoolbar a.notjunk:before,
+body.skin-gmail .header .toolbar a.button.lpai-toolbar-spam-btn:before,
+body.skin-gmail .header .toolbar a.junk:before,
+body.skin-gmail .header .toolbar a.lpai-toolbar-spam-btn:before,
+body.skin-gmail .header .toolbar a.notjunk:before,
+body.skin-gmail .header a.button.lpai-toolbar-spam-btn:before,
+body.skin-gmail .header a.junk:before,
+body.skin-gmail .header a.lpai-toolbar-spam-btn:before,
+body.skin-gmail .header a.notjunk:before,
+body.skin-gmail .lpai-topbar-spam-btn:before,
+body.skin-gmail .toolbar a.button.lpai-toolbar-spam-btn:before,
+body.skin-gmail .toolbar a.junk:before,
+body.skin-gmail .toolbar a.lpai-toolbar-spam-btn:before,
+body.skin-gmail .toolbar a.notjunk:before,
+body.skin-gmail .xi-junk:before,
+body.skin-gmail .xi-not-junk:before,
+body.skin-gmail a.junk.xi-junk:before,
+body.skin-gmail a.notjunk.xi-not-junk:before,
+body.skin-gmail ul.menu.toolbar a.junk:before,
+body.skin-gmail ul.menu.toolbar a.notjunk:before {
+  font-family: RcpIconFont, Icons, sans-serif !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+  text-transform: none !important;
+  speak: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-image: none !important;
+  text-indent: 0 !important;
+  display: block !important;
+  float: none !important;
+  margin: 0 auto !important;
+  position: relative !important;
+  top: .1rem !important;
+  font-size: 1.0em !important;
+  width: auto !important;
+  height: 1.35rem !important;
+  line-height: 1.35rem !important;
+  text-align: center !important;
+  transition: color .2s ease, transform .2s ease !important;
 }
 html.xicons-material #mailtoolbar a.junk:before,
 html.xicons-material .toolbar a.button.lpai-toolbar-spam-btn:before {
