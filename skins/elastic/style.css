@@ -3234,7 +3234,19 @@ body.dark-mode .lpai-spam-banner .lpai-btn-ham,
 .header .toolbar a.button.lpai-toolbar-spam-btn,
 .header .toolbar a.lpai-toolbar-spam-btn,
 .header a.button.lpai-toolbar-spam-btn,
-.header a.lpai-toolbar-spam-btn {
+.header a.lpai-toolbar-spam-btn,
+#mailtoolbar a.junk,
+#mailtoolbar a.notjunk,
+#messagetoolbar a.junk,
+#messagetoolbar a.notjunk,
+.toolbar a.junk,
+.toolbar a.notjunk,
+#messagelist-header a.junk,
+#messagelist-header a.notjunk,
+#messagelist-header .toolbar a.junk,
+#messagelist-header .toolbar a.notjunk,
+ul.menu.toolbar a.junk,
+ul.menu.toolbar a.notjunk {
     display: block !important;
     float: left !important;
     height: 100% !important;
@@ -3285,6 +3297,24 @@ ul.menu.toolbar > li.lpai-toolbar-spam-item {
     display: none;
 }
 
+#mailtoolbar a.junk:hover,
+#mailtoolbar a.notjunk:hover,
+#messagetoolbar a.junk:hover,
+#messagetoolbar a.notjunk:hover,
+.toolbar a.junk:hover,
+.toolbar a.notjunk:hover {
+    background-color: rgba(0, 0, 0, 0.07) !important;
+}
+
+html.dark-mode #mailtoolbar a.junk:hover,
+html.dark-mode #mailtoolbar a.notjunk:hover,
+html.dark-mode #messagetoolbar a.junk:hover,
+html.dark-mode #messagetoolbar a.notjunk:hover,
+html.dark-mode .toolbar a.junk:hover,
+html.dark-mode .toolbar a.notjunk:hover {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+}
+
 /* Font icon on :before pseudo-element - perfectly aligned with sibling toolbar buttons */
 #messagetoolbar a.junk:before,
 #mailtoolbar a.junk:before,
@@ -3333,11 +3363,11 @@ ul.menu.toolbar a.notjunk:before,
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0.6rem !important;
-    font-size: 1.5em !important;
-    width: 1.18em !important;
-    height: 1em !important;
-    line-height: 1 !important;
+    top: 0 !important;
+    font-size: 1.25em !important;
+    width: auto !important;
+    height: 1.75rem !important;
+    line-height: 1.5 !important;
     text-align: center !important;
     transition: color 0.15s ease, transform 0.15s ease !important;
 }
@@ -3646,7 +3676,7 @@ body.dark-mode .lpai-topbar-spam-btn:hover,
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0.6rem !important;
+    top: 0 !important;
     font-size: 1.5em !important;
     width: 1.18em !important;
     height: 1em !important;
