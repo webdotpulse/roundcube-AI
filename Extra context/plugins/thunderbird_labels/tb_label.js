@@ -565,21 +565,41 @@ rcm_tb_label_render_filter_bar = function (labelKey) {
 };
 
 rcm_tb_label_clear_filter_ui = function () {
-  rcmail.env.tb_label_active_filter = null;
+  if (window.rcmail && rcmail.env) {
+    rcmail.env.tb_label_active_filter = null;
+  }
   $("#tb-labels-list li").removeClass("selected active");
   $("#tb-labels-list li a").removeClass("active");
   $("#tb-label-filter-bar").remove();
   $("#messagelist tbody tr").show();
 
-  // Restore active mailbox folder highlighting
-  if (rcmail.env.mailbox) {
-    var folder_li = $("#mailboxlist li.mailbox." + rcmail.env.mailbox.toLowerCase());
-    if (!folder_li.length) {
-      folder_li = $("#mailboxlist a[rel='" + rcmail.env.mailbox + "']").closest("li");
+  // Restore active mailbox folder highlighting safely without CSS selector errors
+  if (window.rcmail && rcmail.env && rcmail.env.mailbox) {
+    var curMbox = rcmail.env.mailbox;
+    var folder_li = null;
+
+    if (typeof rcmail.get_folder_li === "function") {
+      var el = rcmail.get_folder_li(curMbox, "", true) || rcmail.get_folder_li(curMbox, "", false);
+      if (el) {
+        folder_li = $(el);
+      }
     }
-    if (folder_li.length) {
+    if (!folder_li || !folder_li.length) {
+      folder_li = $("#mailboxlist a, .mailboxlist a, [role='navigation'] .treelist a").filter(function () {
+        return $(this).attr("rel") === curMbox || $(this).data("mailbox") === curMbox;
+      }).closest("li");
+    }
+    var mboxLower = (curMbox || "").toLowerCase();
+    var standardFolders = ["inbox", "drafts", "sent", "trash", "junk", "archive"];
+    if ((!folder_li || !folder_li.length) && standardFolders.indexOf(mboxLower) !== -1) {
+      folder_li = $("#mailboxlist li.mailbox." + mboxLower);
+    }
+    if (folder_li && folder_li.length) {
       folder_li.addClass("selected");
       folder_li.find("> a").addClass("active");
+    }
+    if (rcmail.treelist && typeof rcmail.treelist.select === "function") {
+      rcmail.treelist.select(curMbox);
     }
   }
 };

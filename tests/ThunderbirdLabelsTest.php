@@ -486,6 +486,8 @@ assert_true(strpos($js_content, 'display_count') !== false || strpos($js_content
 assert_true(strpos($js_content, 'target_mbox = "INBOX"') !== false, "tb_label.js routes sidebar label click to INBOX");
 assert_true(strpos($js_content, 'tb-label-delete-btn') !== false, "tb_label.js renders tb-label-delete-btn for deleting labels");
 assert_true(strpos($js_content, 'rcm_tb_label_count_local_messages') !== false, "tb_label.js defines rcm_tb_label_count_local_messages helper");
+assert_true(strpos($js_content, '"#mailboxlist li.mailbox." + rcmail.env.mailbox') === false, "tb_label.js avoids unsafe CSS selector concatenation on mailbox name");
+assert_true(strpos($js_content, 'rcmail.get_folder_li') !== false, "tb_label.js safely resolves folder list element via rcmail.get_folder_li");
 
 assert_true(strpos($css_content, '.tb-label-delete-btn') !== false, "elastic tb_label.css styles .tb-label-delete-btn");
 assert_true(strpos($css_larry, '.tb-label-delete-btn') !== false, "larry tb_label.css styles .tb-label-delete-btn");
