@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="xicons-material">
+<html class="xicons-outlined">
 <head>
     <meta charset="utf-8">
     <title>Gmail Plus Skin Stars Test</title>
@@ -51,14 +51,14 @@
         </a>
     </div>
 
-    <!-- Message List Table simulation -->
+    <!-- Message List Table simulation (widescreen structure with nested flag and attachment spans) -->
     <table id="messagelist" class="messagelist listing">
         <tbody>
-            <!-- Row 1: Flagged message -->
+            <!-- Row 1: Flagged message WITH attachment -->
             <tr id="rcmrow1" class="message flagged">
                 <td class="threads"></td>
-                <td class="flags">
-                    <span id="test-star-flagged" class="flagged" title="Flagged"></span>
+                <td class="flags" id="test-row1-flags">
+                    <span class="flag" id="test-flag-wrap-1"><span id="test-star-flagged" class="flagged" title="Flagged"></span></span><span class="attachment" id="test-att-wrap-1"><span id="test-att-inner-1" class="attachment"></span></span>
                 </td>
                 <td id="test-subject-flagged" class="subject">
                     <a href="#">Urgent: Budget approval needed</a>
@@ -67,11 +67,24 @@
                 <td id="test-date-flagged" class="date">10:45 AM</td>
             </tr>
 
-            <!-- Row 2: Unflagged normal message -->
-            <tr id="rcmrow2" class="message">
+            <!-- Row 2: Flagged message WITHOUT attachment -->
+            <tr id="rcmrow2" class="message flagged">
                 <td class="threads"></td>
-                <td class="flags">
-                    <span id="test-star-unflagged" class="unflagged" title="Unflagged"></span>
+                <td class="flags" id="test-row2-flags">
+                    <span class="flag" id="test-flag-wrap-2"><span id="test-star-flagged-2" class="flagged" title="Flagged"></span></span><span class="attachment" id="test-att-wrap-2">&nbsp;</span>
+                </td>
+                <td id="test-subject-flagged-2" class="subject">
+                    <a href="#">Second Urgent Notice</a>
+                </td>
+                <td class="fromto">Charlie Brown</td>
+                <td class="date">10:50 AM</td>
+            </tr>
+
+            <!-- Row 3: Unflagged normal message WITH attachment -->
+            <tr id="rcmrow3" class="message">
+                <td class="threads"></td>
+                <td class="flags" id="test-row3-flags">
+                    <span class="flag" id="test-flag-wrap-3"><span id="test-star-unflagged" class="unflagged" title="Unflagged"></span></span><span class="attachment" id="test-att-wrap-3"><span id="test-att-inner-3" class="attachment"></span></span>
                 </td>
                 <td id="test-subject-unflagged" class="subject">
                     <a href="#">Team Lunch next Tuesday</a>
@@ -85,8 +98,19 @@
     <script src="file:///home/koen/Git/roundcube-AI/Extra context/skins/gmail_plus/assets/scripts/scripts.min.js"></script>
     <script>
     $(document).ready(function() {
+        var flagWrap = document.getElementById('test-flag-wrap-1');
+        var flagWrapBefore = window.getComputedStyle(flagWrap, '::before');
         var star = document.getElementById('test-star-flagged');
         var starBefore = window.getComputedStyle(star, '::before');
+
+        var attWrap = document.getElementById('test-att-wrap-1');
+        var attWrapBefore = window.getComputedStyle(attWrap, '::before');
+        var attInner = document.getElementById('test-att-inner-1');
+        var attInnerBefore = window.getComputedStyle(attInner, '::before');
+
+        var attWrapNoAtt = document.getElementById('test-att-wrap-2');
+        var attWrapNoAttBefore = window.getComputedStyle(attWrapNoAtt, '::before');
+
         var subject = document.getElementById('test-subject-flagged');
         var subjectLink = subject.querySelector('a');
         var subjectColor = window.getComputedStyle(subjectLink).color;
@@ -98,9 +122,14 @@
         var menuSelect = document.getElementById('test-menu-select');
 
         var results = {
+            flagWrapBeforeContent: flagWrapBefore.content,
             starColor: starBefore.color,
             starFont: starBefore.fontFamily,
             starContent: starBefore.content,
+            attWrapBeforeContent: attWrapBefore.content,
+            attInnerBeforeContent: attInnerBefore.content,
+            attInnerBeforeColor: attInnerBefore.color,
+            attWrapNoAttBeforeContent: attWrapNoAttBefore.content,
             subjectColor: subjectColor,
             fromColor: fromColor,
             dateColor: dateColor,

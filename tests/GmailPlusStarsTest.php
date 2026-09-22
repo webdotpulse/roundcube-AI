@@ -131,7 +131,7 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
 
     $html = <<<HTML
 <!DOCTYPE html>
-<html class="xicons-material">
+<html class="xicons-outlined">
 <head>
     <meta charset="utf-8">
     <title>Gmail Plus Skin Stars Test</title>
@@ -183,14 +183,14 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
         </a>
     </div>
 
-    <!-- Message List Table simulation -->
+    <!-- Message List Table simulation (widescreen structure with nested flag and attachment spans) -->
     <table id="messagelist" class="messagelist listing">
         <tbody>
-            <!-- Row 1: Flagged message -->
+            <!-- Row 1: Flagged message WITH attachment -->
             <tr id="rcmrow1" class="message flagged">
                 <td class="threads"></td>
-                <td class="flags">
-                    <span id="test-star-flagged" class="flagged" title="Flagged"></span>
+                <td class="flags" id="test-row1-flags">
+                    <span class="flag" id="test-flag-wrap-1"><span id="test-star-flagged" class="flagged" title="Flagged"></span></span><span class="attachment" id="test-att-wrap-1"><span id="test-att-inner-1" class="attachment"></span></span>
                 </td>
                 <td id="test-subject-flagged" class="subject">
                     <a href="#">Urgent: Budget approval needed</a>
@@ -199,11 +199,24 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
                 <td id="test-date-flagged" class="date">10:45 AM</td>
             </tr>
 
-            <!-- Row 2: Unflagged normal message -->
-            <tr id="rcmrow2" class="message">
+            <!-- Row 2: Flagged message WITHOUT attachment -->
+            <tr id="rcmrow2" class="message flagged">
                 <td class="threads"></td>
-                <td class="flags">
-                    <span id="test-star-unflagged" class="unflagged" title="Unflagged"></span>
+                <td class="flags" id="test-row2-flags">
+                    <span class="flag" id="test-flag-wrap-2"><span id="test-star-flagged-2" class="flagged" title="Flagged"></span></span><span class="attachment" id="test-att-wrap-2">&nbsp;</span>
+                </td>
+                <td id="test-subject-flagged-2" class="subject">
+                    <a href="#">Second Urgent Notice</a>
+                </td>
+                <td class="fromto">Charlie Brown</td>
+                <td class="date">10:50 AM</td>
+            </tr>
+
+            <!-- Row 3: Unflagged normal message WITH attachment -->
+            <tr id="rcmrow3" class="message">
+                <td class="threads"></td>
+                <td class="flags" id="test-row3-flags">
+                    <span class="flag" id="test-flag-wrap-3"><span id="test-star-unflagged" class="unflagged" title="Unflagged"></span></span><span class="attachment" id="test-att-wrap-3"><span id="test-att-inner-3" class="attachment"></span></span>
                 </td>
                 <td id="test-subject-unflagged" class="subject">
                     <a href="#">Team Lunch next Tuesday</a>
@@ -217,8 +230,19 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
     <script src="file://{$gmailPlusJsPath}"></script>
     <script>
     $(document).ready(function() {
+        var flagWrap = document.getElementById('test-flag-wrap-1');
+        var flagWrapBefore = window.getComputedStyle(flagWrap, '::before');
         var star = document.getElementById('test-star-flagged');
         var starBefore = window.getComputedStyle(star, '::before');
+
+        var attWrap = document.getElementById('test-att-wrap-1');
+        var attWrapBefore = window.getComputedStyle(attWrap, '::before');
+        var attInner = document.getElementById('test-att-inner-1');
+        var attInnerBefore = window.getComputedStyle(attInner, '::before');
+
+        var attWrapNoAtt = document.getElementById('test-att-wrap-2');
+        var attWrapNoAttBefore = window.getComputedStyle(attWrapNoAtt, '::before');
+
         var subject = document.getElementById('test-subject-flagged');
         var subjectLink = subject.querySelector('a');
         var subjectColor = window.getComputedStyle(subjectLink).color;
@@ -230,9 +254,14 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
         var menuSelect = document.getElementById('test-menu-select');
 
         var results = {
+            flagWrapBeforeContent: flagWrapBefore.content,
             starColor: starBefore.color,
             starFont: starBefore.fontFamily,
             starContent: starBefore.content,
+            attWrapBeforeContent: attWrapBefore.content,
+            attInnerBeforeContent: attInnerBefore.content,
+            attInnerBeforeColor: attInnerBefore.color,
+            attWrapNoAttBeforeContent: attWrapNoAttBefore.content,
             subjectColor: subjectColor,
             fromColor: fromColor,
             dateColor: dateColor,
@@ -273,9 +302,28 @@ HTML;
 
     // 1. Star icon color must be yellow/orange (#f4b400 -> rgb(244, 180, 0))
     echo "Computed star color: {$data['starColor']}\n";
+    echo "Computed star content: {$data['starContent']}\n";
     assert_true($data['starColor'] === 'rgb(244, 180, 0)', "Computed star color is exactly yellow/orange rgb(244, 180, 0)");
+    // Star must be filled star glyph (\ed02) even under html.xicons-outlined
+    assert_true(strpos($data['starContent'], '\ed02') !== false || strpos(json_encode($data['starContent']), 'ed02') !== false || $data['starContent'] !== '"none"', "Computed flagged star content is non-empty star");
 
-    // 2. Message row text colors must NOT turn red (#c30606 -> rgb(195, 6, 6))
+    // 2. Wrapper spans MUST NOT render pseudo-elements (fixes the 3 stars bug)
+    echo "Computed flag wrapper before content: {$data['flagWrapBeforeContent']}\n";
+    echo "Computed attachment wrapper before content: {$data['attWrapBeforeContent']}\n";
+    echo "Computed attachment wrapper (no attachment) before content: {$data['attWrapNoAttBeforeContent']}\n";
+    assert_true($data['flagWrapBeforeContent'] === 'none' || $data['flagWrapBeforeContent'] === '""', "Flag wrapper span has NO star pseudo-element");
+    assert_true($data['attWrapBeforeContent'] === 'none' || $data['attWrapBeforeContent'] === '""', "Attachment wrapper span has NO star pseudo-element");
+    assert_true($data['attWrapNoAttBeforeContent'] === 'none' || $data['attWrapNoAttBeforeContent'] === '""', "Attachment wrapper when no attachment has NO star pseudo-element");
+
+    // 3. Attachment icon must be preserved (paperclip, NOT star, NOT yellow)
+    echo "Computed attachment inner before content: {$data['attInnerBeforeContent']}\n";
+    echo "Computed attachment inner before color: {$data['attInnerBeforeColor']}\n";
+    assert_true($data['attInnerBeforeColor'] !== 'rgb(244, 180, 0)', "Attachment icon color is NOT yellow/orange star color");
+    assert_true($data['attInnerBeforeColor'] === 'rgb(119, 119, 119)', "Attachment icon color is paperclip grey rgb(119, 119, 119)");
+    assert_true($data['attInnerBeforeContent'] !== 'none', "Attachment inner icon has non-empty content");
+    assert_true(strpos($data['attInnerBeforeContent'], 'ed02') === false && strpos($data['attInnerBeforeContent'], 'eaae') === false, "Attachment icon is NOT replaced with a star");
+
+    // 4. Message row text colors must NOT turn red (#c30606 -> rgb(195, 6, 6))
     echo "Computed flagged subject text color: {$data['subjectColor']}\n";
     echo "Computed flagged from text color: {$data['fromColor']}\n";
     echo "Computed flagged date text color: {$data['dateColor']}\n";
@@ -283,7 +331,7 @@ HTML;
     assert_true($data['fromColor'] !== 'rgb(195, 6, 6)', "Flagged sender text does NOT turn red rgb(195, 6, 6)");
     assert_true($data['dateColor'] !== 'rgb(195, 6, 6)', "Flagged date text does NOT turn red rgb(195, 6, 6)");
 
-    // 3. Menu action labels
+    // 5. Menu action labels
     echo "Menu flag text: {$data['menuFlagText']}, title: {$data['menuFlagTitle']}\n";
     echo "Menu unflag text: {$data['menuUnflagText']}, title: {$data['menuUnflagTitle']}\n";
     assert_true($data['menuFlagText'] === 'Mark as starred', "Menu action text normalized to 'Mark as starred'");
@@ -292,13 +340,13 @@ HTML;
     assert_true($data['menuUnflagTitle'] === 'Mark as unstarred', "Menu unflag title normalized to 'Mark as unstarred'");
     assert_true($data['menuSelectText'] === 'Starred', "Menu selection text normalized to 'Starred'");
 
-    // 4. Message list star tooltips
+    // 6. Message list star tooltips
     echo "Flagged star title: {$data['starTitle']}\n";
     echo "Unflagged star title: {$data['unflagStarTitle']}\n";
     assert_true($data['starTitle'] === 'Starred', "Flagged star tooltip is 'Starred'");
     assert_true($data['unflagStarTitle'] === 'Mark as starred', "Unflagged star tooltip is 'Mark as starred'");
 
-    // 5. rcmail dictionary labels
+    // 7. rcmail dictionary labels
     assert_true($data['rcmailFlaggedLabel'] === 'Mark as starred', "rcmail.labels.markflagged is 'Mark as starred'");
     assert_true($data['rcmailUnflaggedLabel'] === 'Mark as unstarred', "rcmail.labels.markunflagged is 'Mark as unstarred'");
 }

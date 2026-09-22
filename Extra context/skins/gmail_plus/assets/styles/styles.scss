@@ -515,20 +515,29 @@ ul.tb-labels-list li a:after {
 
 // *********************** Stars instead of flags (gmail_plus theme) ***********************
 
-// 1. Star icons and interactive styling in message list
+// 1. Star icons and interactive styling in message list (ONLY on the star element itself)
+#messagelist td.flags span.flagged,
+#messagelist td.flags span.unflagged,
+.messagelist td.flags span.flagged,
+.messagelist td.flags span.unflagged,
+table.messagelist td.flags span.flagged,
+table.messagelist td.flags span.unflagged,
+#messagelist td.flag span.flagged,
+#messagelist td.flag span.unflagged,
+.messagelist td.flag span.flagged,
+.messagelist td.flag span.unflagged,
+table.messagelist td.flag span.flagged,
+table.messagelist td.flag span.unflagged,
+#messagelist span.flag > span.flagged,
+#messagelist span.flag > span.unflagged,
+.messagelist span.flag > span.flagged,
+.messagelist span.flag > span.unflagged,
 #messagelist span.flagged,
 #messagelist span.unflagged,
 .messagelist span.flagged,
 .messagelist span.unflagged,
 table.messagelist span.flagged,
-table.messagelist span.unflagged,
-.messagelist span.flag,
-#messagelist span.flag,
-table.messagelist span.flag,
-.messagelist td.flags span.flagged,
-.messagelist td.flags span.unflagged,
-#messagelist td.flags span.flagged,
-#messagelist td.flags span.unflagged {
+table.messagelist span.unflagged {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
@@ -542,44 +551,86 @@ table.messagelist span.flag,
     transition: transform 0.15s ease, color 0.15s ease;
 }
 
-// Filled Star (Yellow/Orange #f4b400) when flagged in mailbox overview
-#messagelist span.flagged:before,
-.messagelist span.flagged:before,
-table.messagelist span.flagged:before,
-#messagelist span.flag.flagged:before,
-.messagelist span.flag.flagged:before,
-table.messagelist span.flag.flagged:before,
+// Ensure wrappers NEVER produce extra star pseudo-elements
+#messagelist span.flag:before,
+.messagelist span.flag:before,
+table.messagelist span.flag:before,
+#messagelist td.flags > span.flag:before,
+.messagelist td.flags > span.flag:before,
+table.messagelist td.flags > span.flag:before,
 #messagelist tr.flagged span.flag:before,
 .messagelist tr.flagged span.flag:before,
 table.messagelist tr.flagged span.flag:before,
-#messagelist tr.flagged td.flags span:before,
-.messagelist tr.flagged td.flags span:before,
-table.messagelist tr.flagged td.flags span:before {
+#messagelist tr.flagged td.flags > span.flag:before,
+.messagelist tr.flagged td.flags > span.flag:before,
+table.messagelist tr.flagged td.flags > span.flag:before,
+#messagelist span.attachment:before,
+.messagelist span.attachment:before,
+table.messagelist span.attachment:before,
+#messagelist td.flags > span.attachment:before,
+.messagelist td.flags > span.attachment:before,
+table.messagelist td.flags > span.attachment:before,
+#messagelist tr.flagged span.attachment:before,
+.messagelist tr.flagged span.attachment:before,
+table.messagelist tr.flagged span.attachment:before,
+#messagelist tr.flagged td.flags > span.attachment:before,
+.messagelist tr.flagged td.flags > span.attachment:before,
+table.messagelist tr.flagged td.flags > span.attachment:before {
+    content: none !important;
+    display: none !important;
+}
+
+// Filled Star (Yellow/Orange #f4b400) when flagged in mailbox overview - EXACTLY ONE STAR
+#messagelist span.flagged:before,
+.messagelist span.flagged:before,
+table.messagelist span.flagged:before,
+#messagelist tr.flagged span.flagged:before,
+.messagelist tr.flagged span.flagged:before,
+table.messagelist tr.flagged span.flagged:before,
+#messagelist td.flags span.flagged:before,
+.messagelist td.flags span.flagged:before,
+table.messagelist td.flags span.flagged:before,
+#messagelist td.flag span.flagged:before,
+.messagelist td.flag span.flagged:before,
+table.messagelist td.flag span.flagged:before {
     @include icons.icon(icons_map.$star, true);
     color: #f4b400 !important;
     font-style: normal !important;
     text-decoration: none !important;
 }
 
-// Star hover & transition
+// Ensure filled star glyph even when outlined icon theme is active
+html.xicons-outlined {
+    #messagelist span.flagged:before,
+    .messagelist span.flagged:before,
+    table.messagelist span.flagged:before,
+    #messagelist tr.flagged span.flagged:before,
+    .messagelist tr.flagged span.flagged:before,
+    table.messagelist tr.flagged span.flagged:before,
+    #messagelist td.flags span.flagged:before,
+    .messagelist td.flags span.flagged:before,
+    table.messagelist td.flags span.flagged:before,
+    #messagelist td.flag span.flagged:before,
+    .messagelist td.flag span.flagged:before,
+    table.messagelist td.flag span.flagged:before {
+        content: "\ed02" !important;
+    }
+}
+
+// Star hover & transition (only the star itself)
 #messagelist span.flagged:hover,
 .messagelist span.flagged:hover,
 table.messagelist span.flagged:hover,
 #messagelist span.unflagged:hover,
 .messagelist span.unflagged:hover,
-table.messagelist span.unflagged:hover,
-#messagelist span.flag:hover,
-.messagelist span.flag:hover {
+table.messagelist span.unflagged:hover {
     transform: scale(1.18);
 }
 
-// Outline / Empty Star when unflagged on row hover
+// Outline / Empty Star when unflagged on row hover or idle
 #messagelist tr:hover span.unflagged:before,
 .messagelist tr:hover span.unflagged:before,
 table.messagelist tr:hover span.unflagged:before,
-#messagelist span.flag.unflagged:before,
-.messagelist span.flag.unflagged:before,
-table.messagelist span.flag.unflagged:before,
 #messagelist span.unflagged:before,
 .messagelist span.unflagged:before,
 table.messagelist span.unflagged:before {
@@ -594,7 +645,8 @@ html.dark-mode {
     .messagelist tr:hover span.unflagged:before,
     table.messagelist tr:hover span.unflagged:before,
     #messagelist span.unflagged:before,
-    .messagelist span.unflagged:before {
+    .messagelist span.unflagged:before,
+    table.messagelist span.unflagged:before {
         color: #5f6368 !important;
     }
 }
@@ -603,12 +655,67 @@ html.dark-mode {
 #messagelist tr:hover span.unflagged:hover:before,
 .messagelist tr:hover span.unflagged:hover:before,
 table.messagelist tr:hover span.unflagged:hover:before,
-#messagelist span.flag.unflagged:hover:before,
-.messagelist span.flag.unflagged:hover:before,
-table.messagelist span.flag.unflagged:hover:before,
 #messagelist span.unflagged:hover:before,
-.messagelist span.unflagged:hover:before {
+.messagelist span.unflagged:hover:before,
+table.messagelist span.unflagged:hover:before {
     color: #f4b400 !important;
+}
+
+// Preserve attachment icon in message list under all conditions (never replace with star)
+#messagelist span.attachment span:before,
+.messagelist span.attachment span:before,
+table.messagelist span.attachment span:before,
+#messagelist tr.flagged span.attachment span:before,
+.messagelist tr.flagged span.attachment span:before,
+table.messagelist tr.flagged span.attachment span:before,
+#messagelist tr.flagged td.flags span.attachment span:before,
+.messagelist tr.flagged td.flags span.attachment span:before,
+table.messagelist tr.flagged td.flags span.attachment span:before {
+    @include icons.icon(icons_map.$attachment, true);
+    color: #777 !important;
+    font-style: normal !important;
+    text-decoration: none !important;
+}
+
+#messagelist span.attachment span.report:before,
+.messagelist span.attachment span.report:before,
+table.messagelist span.attachment span.report:before,
+#messagelist tr.flagged span.attachment span.report:before,
+.messagelist tr.flagged span.attachment span.report:before,
+table.messagelist tr.flagged span.attachment span.report:before {
+    @include icons.icon(icons_map.$text-file, true);
+}
+
+#messagelist span.attachment span.encrypted:before,
+.messagelist span.attachment span.encrypted:before,
+table.messagelist span.attachment span.encrypted:before,
+#messagelist tr.flagged span.attachment span.encrypted:before,
+.messagelist tr.flagged span.attachment span.encrypted:before,
+table.messagelist tr.flagged span.attachment span.encrypted:before {
+    @include icons.icon(icons_map.$lock, true);
+}
+
+#messagelist span.attachment span.vcard:before,
+.messagelist span.attachment span.vcard:before,
+table.messagelist span.attachment span.vcard:before,
+#messagelist tr.flagged span.attachment span.vcard:before,
+.messagelist tr.flagged span.attachment span.vcard:before,
+table.messagelist tr.flagged span.attachment span.vcard:before {
+    @include icons.icon(icons_map.$user, true);
+}
+
+html.dark-mode {
+    #messagelist span.attachment span:before,
+    .messagelist span.attachment span:before,
+    table.messagelist span.attachment span:before,
+    #messagelist tr.flagged span.attachment span:before,
+    .messagelist tr.flagged span.attachment span:before,
+    table.messagelist tr.flagged span.attachment span:before,
+    #messagelist tr.flagged td.flags span.attachment span:before,
+    .messagelist tr.flagged td.flags span.attachment span:before,
+    table.messagelist tr.flagged td.flags span.attachment span:before {
+        color: #8ba3a7 !important;
+    }
 }
 
 // 2. Star icons in Action Menus, Toolbar, and Previews
