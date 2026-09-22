@@ -1,0 +1,34 @@
+{
+    "name": "roundcube/persistent_login",
+    "type": "roundcube-plugin",
+    "description": "Enterprise-grade Persistent Login ('Remember Me') plugin for Roundcube Webmail with OWASP split-tokens, automatic rotation, theft detection, and trusted device management.",
+    "keywords": [
+        "roundcube",
+        "plugin",
+        "persistent_login",
+        "remember_me",
+        "autologon",
+        "trusted-devices",
+        "authentication"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webdotpulse & Contributors",
+            "email": "support@webdotpulse.com",
+            "homepage": "https://github.com/webdotpulse/roundcube-AI"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0",
+            "persistent-files": [
+                "config.inc.php"
+            ]
+        }
+    }
+}

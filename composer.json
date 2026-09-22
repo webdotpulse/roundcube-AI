@@ -32,7 +32,9 @@
         "roundcube_attachments",
         "vacation_forward",
         "merge_and_fix",
-        "merge-contacts"
+        "merge-contacts",
+        "persistent_login",
+        "remember_me"
     ],
     "authors": [
         {
@@ -50,6 +52,7 @@
         "lifeprisma/roundcube-ai": "self.version",
         "lifeprisma/roundcube-genia": "self.version",
         "roundcubeplus/email_scheduler": "self.version",
+        "roundcubeplus/persistent_login": "self.version",
         "roundcubeplus/roundcube_attachments": "self.version",
         "roundcubeplus/twofactor_auth": "self.version",
         "roundcubeplus/vacation_forward": "self.version",
@@ -58,6 +61,7 @@
         "roundcubeplus/xsignature": "self.version",
         "webdotpulse/lifeprisma-ai": "self.version",
         "webdotpulse/newsletter": "self.version",
+        "webdotpulse/persistent-login": "self.version",
         "webdotpulse/roundcube-loader": "self.version",
         "webdotpulse/merge-and-fix": "self.version"
     },

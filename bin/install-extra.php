@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus, gmail)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward, persistent_login)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -292,6 +292,11 @@ class RoundcubeExtraContentInstaller
             $this->postInstallTwofactorAuth($destination, $this->roundcubeDir);
         }
 
+        // Special post-install routine for persistent_login
+        if ($type === 'plugin' && $name === 'persistent_login') {
+            $this->postInstallPersistentLogin($destination, $this->roundcubeDir);
+        }
+
         // Special post-install routine for email_scheduler
         if ($type === 'plugin' && $name === 'email_scheduler') {
             $this->postInstallEmailScheduler($destination, $this->roundcubeDir);
@@ -462,6 +467,15 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup for persistent_login.
+     */
+    private function postInstallPersistentLogin(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring persistent_login plugin ---");
+        $this->success("  [✓] Persistent Login ('Remember Me') plugin configured with OWASP split-tokens and trusted devices.");
+    }
+
+    /**
      * Special post-installation setup for email_scheduler.
      */
     private function postInstallEmailScheduler(string $destination, ?string $roundcubeDir): void
@@ -608,7 +622,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = '{$this->selectedSkin}';");
             return;
         }
@@ -618,7 +632,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

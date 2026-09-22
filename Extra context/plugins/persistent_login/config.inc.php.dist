@@ -1,0 +1,70 @@
+<?php
+
+/**
+ * Persistent Login ("Remember Me") Configuration
+ *
+ * Provides persistent authentication sessions across browser restarts using
+ * the OWASP/Paragonie split-token architecture, automatic verifier rotation,
+ * token theft detection, and encrypted credential storage.
+ */
+
+// Number of days to keep the login session active.
+// Default: 30 days
+$config['persistent_login_lifetime'] = 30;
+
+// Name of the persistent login cookie stored in the user's browser.
+// Default: '_rc_persistent_login'
+$config['persistent_login_cookie_name'] = '_rc_persistent_login';
+
+// Enforce Secure flag on the persistent cookie.
+// null  => Auto-detect based on whether the current connection is HTTPS (Recommended)
+// true  => Always set Secure (requires HTTPS)
+// false => Do not set Secure (for local HTTP development only)
+$config['persistent_login_cookie_secure'] = null;
+
+// SameSite policy for the persistent login cookie ('Lax', 'Strict', or 'None').
+// Default: 'Lax'
+$config['persistent_login_cookie_samesite'] = 'Lax';
+
+// Automatically rotate the token verifier on every automatic login.
+// When enabled, the verifier is regenerated each time the user returns,
+// rendering previous tokens invalid and extending the rolling session.
+// Default: true
+$config['persistent_login_rotate_token'] = true;
+
+// Verify client IP address against the initial login IP address.
+// When set to false, users remain logged in across network transitions (e.g. Wi-Fi to cellular).
+// If set to true, any change in IP address invalidates the persistent session.
+// Default: false
+$config['persistent_login_check_ip'] = false;
+
+// Verify browser User-Agent string against the session record.
+// Provides additional defense against stolen cookies used in different browsers.
+// Default: true
+$config['persistent_login_check_user_agent'] = true;
+
+// Maximum number of concurrent remembered devices allowed per user.
+// When exceeded, the oldest active session is automatically revoked.
+// Default: 10
+$config['persistent_login_max_tokens_per_user'] = 10;
+
+// Interoperability with Two-Factor Authentication (twofactor_auth):
+// If true, devices authenticated with persistent login are treated as trusted devices,
+// allowing automatic logins without repeated 2FA challenges. New devices still require 2FA.
+// Default: true
+$config['persistent_login_trust_2fa'] = true;
+
+// Default state of the "Keep me logged in" checkbox on the login page.
+// Default: false (user must explicitly opt-in)
+$config['persistent_login_default_checked'] = false;
+
+// Optional custom secret key (pepper) used for cryptographic operations.
+// If left empty, Roundcube's core 'des_key' from config.inc.php is used.
+$config['persistent_login_secret_key'] = '';
+
+// Allow users to choose their preferred session duration under Settings -> Preferences.
+// Default: true
+$config['persistent_login_user_can_choose_duration'] = true;
+
+// Available duration choices (in days) displayed in the user preferences dropdown.
+$config['persistent_login_allowed_durations'] = [7, 14, 30, 60, 90];
