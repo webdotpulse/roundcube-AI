@@ -196,6 +196,12 @@ class xmultibox extends XFramework\Plugin
                 $_SESSION['xmultibox']['enabled'] = true;
                 $this->setConfigData($data);
                 $this->setSessionData($data);
+                $this->resetSession();
+                $storage = $this->rcmail->get_storage();
+                if (method_exists($storage, 'close')) {
+                    $storage->close();
+                }
+                $storage->clear_cache('mailboxes', true);
             }
         }
 
