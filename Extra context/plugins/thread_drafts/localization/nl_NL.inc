@@ -11,4 +11,5 @@ $labels['thread_drafts'] = 'Concepten en antwoorden in discussies';
 $labels['thread_drafts_option'] = 'Actieve concepten opnemen in discussielijnen';
 $labels['thread_replies_option'] = 'Verzonden antwoorden opnemen in discussielijnen';
 $labels['thread_drafts_banner_option'] = 'Toon conceptmelding bij het bekijken van berichten met conceptantwoorden';
+$labels['thread_drafts_auto_collapse_inbox_option'] = 'Conversatiediscussies standaard inklappen bij het openen van Postvak In';
 $labels['to'] = 'Aan';

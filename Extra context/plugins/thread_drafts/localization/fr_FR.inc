@@ -11,4 +11,5 @@ $labels['thread_drafts'] = 'Brouillons et réponses dans les fils';
 $labels['thread_drafts_option'] = 'Inclure les brouillons actifs dans les fils de discussion';
 $labels['thread_replies_option'] = 'Inclure les réponses envoyées dans les fils de discussion';
 $labels['thread_drafts_banner_option'] = 'Afficher une notification lors de la lecture d\'un message avec réponse en brouillon';
+$labels['thread_drafts_auto_collapse_inbox_option'] = 'Réduire par défaut les fils de discussion à l\'ouverture de la boîte de réception';
 $labels['to'] = 'À';

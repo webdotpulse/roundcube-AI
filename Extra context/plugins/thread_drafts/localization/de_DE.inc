@@ -11,4 +11,5 @@ $labels['thread_drafts'] = 'Entwürfe & Antworten in Themen';
 $labels['thread_drafts_option'] = 'Aktive Entwürfe in Konversationsthemen einbinden';
 $labels['thread_replies_option'] = 'Gesendete Antworten in Konversationen anzeigen';
 $labels['thread_drafts_banner_option'] = 'Entwurfshinweis beim Anzeigen von Nachrichten mit Entwurfsantworten einblenden';
+$labels['thread_drafts_auto_collapse_inbox_option'] = 'Konversationsthemen beim Öffnen des Posteingangs standardmäßig einklappen';
 $labels['to'] = 'An';

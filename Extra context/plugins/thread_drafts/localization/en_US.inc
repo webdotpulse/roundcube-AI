@@ -11,4 +11,5 @@ $labels['thread_drafts'] = 'Thread Drafts & Replies';
 $labels['thread_drafts_option'] = 'Include active drafts in conversation threads';
 $labels['thread_replies_option'] = 'Include sent replies in conversation threads';
 $labels['thread_drafts_banner_option'] = 'Show draft notice when viewing messages with draft replies';
+$labels['thread_drafts_auto_collapse_inbox_option'] = 'Standard collapse conversation threads when opening the Inbox';
 $labels['to'] = 'To';

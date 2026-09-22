@@ -612,7 +612,11 @@ class ThreadDraftsTestRunner
         $this->assert(isset($config['thread_drafts_auto_collapse_inbox']), 'thread_drafts_auto_collapse_inbox is configured in config.inc.php.dist');
         $this->assertEquals(true, $config['thread_drafts_auto_collapse_inbox'], 'thread_drafts_auto_collapse_inbox defaults to true');
 
-        // Check client script thread_drafts.js has inbox auto collapse logic
+        // Check plugin method
+        $plugin = new TestableThreadDrafts();
+        $this->assertEquals(true, $plugin->is_auto_collapse_inbox_enabled(), 'is_auto_collapse_inbox_enabled returns true by default');
+
+        // Check client script thread_drafts.js has comprehensive inbox auto collapse logic
         $jsFile = dirname(__DIR__) . '/thread_drafts.js';
         $this->assert(file_exists($jsFile), 'thread_drafts.js exists');
         $jsContent = file_get_contents($jsFile);
@@ -620,6 +624,11 @@ class ThreadDraftsTestRunner
         $this->assert(strpos($jsContent, 'is_inbox_folder') !== false, 'thread_drafts.js contains is_inbox_folder detection');
         $this->assert(strpos($jsContent, 'autoexpand_threads = 0') !== false, 'thread_drafts.js enforces autoexpand_threads = 0 for Inbox');
         $this->assert(strpos($jsContent, 'collapse_all') !== false, 'thread_drafts.js calls collapse_all');
+        $this->assert(strpos($jsContent, 'expand_threads') !== false, 'thread_drafts.js intercepts expand_threads');
+        $this->assert(strpos($jsContent, 'add_message_row') !== false, 'thread_drafts.js intercepts add_message_row');
+        $this->assert(strpos($jsContent, 'select_folder') !== false, 'thread_drafts.js intercepts select_folder');
+        $this->assert(strpos($jsContent, 'list_mailbox') !== false, 'thread_drafts.js intercepts list_mailbox');
+        $this->assert(strpos($jsContent, 'padding-left') !== false, 'thread_drafts.js inspects padding-left for direct DOM child collapse');
     }
 }
 

@@ -47,6 +47,20 @@ class thread_drafts extends rcube_plugin
                 return;
             }
 
+            if ($this->is_auto_collapse_inbox_enabled()) {
+                $mbox = rcube_utils::get_input_string('_mbox', rcube_utils::INPUT_GPC, true);
+                if (!strlen((string)$mbox)) {
+                    $mbox = isset($_SESSION['mbox']) && strlen((string)$_SESSION['mbox']) ? $_SESSION['mbox'] : 'INBOX';
+                }
+                $is_inbox = empty($mbox) || strtoupper((string)$mbox) === 'INBOX';
+                if ($is_inbox) {
+                    $this->rc->config->set('autoexpand_threads', 0);
+                    if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
+                        $this->rc->output->set_env('autoexpand_threads', 0);
+                    }
+                }
+            }
+
             // Hook into message list construction
             $this->add_hook('messages_list', [$this, 'messages_list']);
 
@@ -69,7 +83,7 @@ class thread_drafts extends rcube_plugin
             if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
                 $this->rc->output->set_env('thread_drafts_show_root_badge', (bool) $this->get_config('thread_drafts_show_root_badge', true));
                 $this->rc->output->set_env('thread_drafts_show_reply_badge', (bool) $this->get_config('thread_drafts_show_reply_badge', true));
-                $this->rc->output->set_env('thread_drafts_auto_collapse_inbox', (bool) $this->get_config('thread_drafts_auto_collapse_inbox', true));
+                $this->rc->output->set_env('thread_drafts_auto_collapse_inbox', (bool) $this->is_auto_collapse_inbox_enabled());
                 if ($drafts_mbox = $this->rc->config->get('drafts_mbox')) {
                     $this->rc->output->set_env('drafts_mailbox', $drafts_mbox);
                 }
@@ -91,12 +105,15 @@ class thread_drafts extends rcube_plugin
      */
     public function is_enabled()
     {
-        $dont_override = (array) $this->rc->config->get('dont_override', []);
-        if (in_array('thread_drafts_enabled', $dont_override)) {
+        if ($this->rc && $this->rc->config) {
+            $dont_override = (array) $this->rc->config->get('dont_override', []);
+            if (in_array('thread_drafts_enabled', $dont_override)) {
+                return (bool) $this->rc->config->get('thread_drafts_enabled', true);
+            }
             return (bool) $this->rc->config->get('thread_drafts_enabled', true);
         }
 
-        return (bool) $this->rc->config->get('thread_drafts_enabled', true);
+        return true;
     }
 
     /**
@@ -106,12 +123,15 @@ class thread_drafts extends rcube_plugin
      */
     public function is_drafts_enabled()
     {
-        $dont_override = (array) $this->rc->config->get('dont_override', []);
-        if (in_array('thread_drafts_include_drafts', $dont_override)) {
+        if ($this->rc && $this->rc->config) {
+            $dont_override = (array) $this->rc->config->get('dont_override', []);
+            if (in_array('thread_drafts_include_drafts', $dont_override)) {
+                return (bool) $this->rc->config->get('thread_drafts_include_drafts', true);
+            }
             return (bool) $this->rc->config->get('thread_drafts_include_drafts', true);
         }
 
-        return (bool) $this->rc->config->get('thread_drafts_include_drafts', true);
+        return true;
     }
 
     /**
@@ -121,12 +141,33 @@ class thread_drafts extends rcube_plugin
      */
     public function is_replies_enabled()
     {
-        $dont_override = (array) $this->rc->config->get('dont_override', []);
-        if (in_array('thread_drafts_include_replies', $dont_override)) {
+        if ($this->rc && $this->rc->config) {
+            $dont_override = (array) $this->rc->config->get('dont_override', []);
+            if (in_array('thread_drafts_include_replies', $dont_override)) {
+                return (bool) $this->rc->config->get('thread_drafts_include_replies', true);
+            }
             return (bool) $this->rc->config->get('thread_drafts_include_replies', true);
         }
 
-        return (bool) $this->rc->config->get('thread_drafts_include_replies', true);
+        return true;
+    }
+
+    /**
+     * Check if inbox threads should automatically collapse on opening
+     *
+     * @return bool
+     */
+    public function is_auto_collapse_inbox_enabled()
+    {
+        if ($this->rc && $this->rc->config) {
+            $dont_override = (array) $this->rc->config->get('dont_override', []);
+            if (in_array('thread_drafts_auto_collapse_inbox', $dont_override)) {
+                return (bool) $this->rc->config->get('thread_drafts_auto_collapse_inbox', true);
+            }
+            return (bool) $this->rc->config->get('thread_drafts_auto_collapse_inbox', true);
+        }
+
+        return true;
     }
 
     /**
@@ -139,7 +180,11 @@ class thread_drafts extends rcube_plugin
      */
     public function get_config($name, $default = null)
     {
-        return $this->rc->config->get($name, $default);
+        if ($this->rc && $this->rc->config) {
+            return $this->rc->config->get($name, $default);
+        }
+
+        return $default;
     }
 
     /**
@@ -200,11 +245,15 @@ class thread_drafts extends rcube_plugin
                 return $args;
             }
 
-            $current_folder = $this->rc->storage->get_folder();
-            $is_inbox = empty($current_folder) || strtoupper($current_folder) === 'INBOX';
+            $current_folder = $this->rc->storage ? $this->rc->storage->get_folder() : '';
+            if (empty($current_folder)) {
+                $current_folder = rcube_utils::get_input_string('_mbox', rcube_utils::INPUT_GPC, true) ?: ($_SESSION['mbox'] ?? 'INBOX');
+            }
+            $is_inbox = empty($current_folder) || strtoupper((string)$current_folder) === 'INBOX';
 
-            // When opening the Inbox, standard the Threads should be collapsed and not expanded
-            if ($is_inbox && $this->get_config('thread_drafts_auto_collapse_inbox', true)) {
+            // When opening the Inbox, standard the conversation threads should be collapsed and not expanded
+            if ($is_inbox && $this->is_auto_collapse_inbox_enabled()) {
+                $this->rc->config->set('autoexpand_threads', 0);
                 if (!empty($this->rc->output) && method_exists($this->rc->output, 'set_env')) {
                     $this->rc->output->set_env('autoexpand_threads', 0);
                 }
@@ -1195,6 +1244,16 @@ class thread_drafts extends rcube_plugin
                     'content' => $checkbox->show($this->get_config('thread_drafts_show_message_banner', true) ? 1 : 0),
                 ];
             }
+
+            if (!in_array('thread_drafts_auto_collapse_inbox', $dont_override)) {
+                $field_id = 'rcmfd_thread_drafts_auto_collapse_inbox';
+                $checkbox = new html_checkbox(['name' => '_thread_drafts_auto_collapse_inbox', 'id' => $field_id, 'value' => 1]);
+
+                $args['blocks']['main']['options']['thread_drafts_auto_collapse_inbox'] = [
+                    'title'   => html::label($field_id, rcube::Q($this->gettext('thread_drafts_auto_collapse_inbox_option'))),
+                    'content' => $checkbox->show($this->is_auto_collapse_inbox_enabled() ? 1 : 0),
+                ];
+            }
         }
 
         return $args;
@@ -1222,6 +1281,10 @@ class thread_drafts extends rcube_plugin
 
             if (!in_array('thread_drafts_show_message_banner', $dont_override)) {
                 $args['prefs']['thread_drafts_show_message_banner'] = !empty($_POST['_thread_drafts_banner']);
+            }
+
+            if (!in_array('thread_drafts_auto_collapse_inbox', $dont_override)) {
+                $args['prefs']['thread_drafts_auto_collapse_inbox'] = !empty($_POST['_thread_drafts_auto_collapse_inbox']);
             }
         }
 
