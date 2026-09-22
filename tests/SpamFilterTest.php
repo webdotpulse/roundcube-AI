@@ -369,6 +369,10 @@ assert_true(strpos($gp_css, "\\ec2e") !== false, "gmail_plus style.css maps outl
 assert_true(strpos($gp_min, "\\ec2e") !== false, "gmail_plus style.min.css contains outline save glyph (\\ec2e)");
 assert_true(strpos($el_css, "\\ec2e") !== false, "elastic style.css maps outline save icon glyph (\\ec2e)");
 assert_true(strpos($el_min, "\\ec2e") !== false, "elastic style.min.css contains outline save glyph (\\ec2e)");
+assert_true(strpos($gp_css, "top: 0.9rem !important;") !== false, "gmail_plus style.css offsets save draft icon with top: 0.9rem");
+assert_true(strpos($el_css, "top: 0.9rem !important;") !== false, "elastic style.css offsets save draft icon with top: 0.9rem");
+assert_true(strpos($gp_min, "top:.9rem!important") !== false, "gmail_plus style.min.css contains top: .9rem for save draft icon");
+assert_true(strpos($el_min, "top:.9rem!important") !== false, "elastic style.min.css contains top: .9rem for save draft icon");
 assert_true(strpos($js_src, "lpai_setup_save_draft_button") !== false, "src/lifeprisma_ai.js defines lpai_setup_save_draft_button");
 assert_true(strpos($js_src, "xi-save") !== false, "src/lifeprisma_ai.js adds xi-save class to save draft button");
 

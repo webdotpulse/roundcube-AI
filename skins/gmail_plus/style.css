@@ -2741,7 +2741,7 @@ a.draft.xi-save:before,
     float: none !important;
     margin: 0 auto !important;
     position: relative !important;
-    top: 0 !important;
+    top: 0.9rem !important;
     font-size: 1.5em !important;
     width: auto !important;
     height: auto !important;
