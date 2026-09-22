@@ -46,6 +46,9 @@ assert_true(strpos($scss, 'color: inherit !important') !== false, "styles.scss n
 assert_true(strpos($scss, '.menu a.flag:before') !== false, "styles.scss styles menu flag action as star");
 assert_true(strpos($scss, '.menu a.unflag:before') !== false, "styles.scss styles menu unflag action as empty star");
 assert_true(strpos($scss, '.menu a.select.flagged:before') !== false, "styles.scss styles select flagged menu item as star");
+assert_true(strpos($scss, 'table.messagelist td.flags') !== false, "styles.scss styles table.messagelist td.flags");
+assert_true(strpos($scss, 'white-space: normal !important') !== false, "styles.scss sets white-space: normal !important on td.flags for vertical stacking");
+assert_true(strpos($scss, 'td.flags > span.attachment:empty') !== false, "styles.scss hides empty attachment in td.flags");
 
 // --- Test 2: Compiled styles.css Asset Verification ---
 echo "\n--- Test 2: Compiled styles.css Asset Verification ---\n";
@@ -287,6 +290,15 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
             }
         });
 
+        var starRect = star.getBoundingClientRect();
+        var attInnerRect = attInner.getBoundingClientRect();
+        var attWrapNoAttDisplay = window.getComputedStyle(attWrapNoAtt).display;
+
+        var star3 = document.getElementById('test-star-unflagged');
+        var attInner3 = document.getElementById('test-att-inner-3');
+        var star3Rect = star3.getBoundingClientRect();
+        var attInner3Rect = attInner3.getBoundingClientRect();
+
         var results = {
             flagWrapBeforeContent: flagWrapBefore.content,
             starColor: starBefore.color,
@@ -297,10 +309,15 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
             attInnerBeforeColor: attInnerBefore.color,
             attInnerBeforeDisplay: attInnerBefore.display,
             attWrapNoAttBeforeContent: attWrapNoAttBefore.content,
+            attWrapNoAttDisplay: attWrapNoAttDisplay,
             attDesktopBeforeContent: attDesktopBefore.content,
             attDesktopBeforeDisplay: attDesktopBefore.display,
             attSubjectBeforeContent: attSubjectBefore.content,
             attSubjectBeforeDisplay: attSubjectBefore.display,
+            starRect: { top: starRect.top, bottom: starRect.bottom, left: starRect.left, right: starRect.right },
+            attInnerRect: { top: attInnerRect.top, bottom: attInnerRect.bottom, left: attInnerRect.left, right: attInnerRect.right },
+            star3Rect: { top: star3Rect.top, bottom: star3Rect.bottom, left: star3Rect.left, right: star3Rect.right },
+            attInner3Rect: { top: attInner3Rect.top, bottom: attInner3Rect.bottom, left: attInner3Rect.left, right: attInner3Rect.right },
             row1StarsCount: row1Stars,
             subjectColor: subjectColor,
             fromColor: fromColor,
@@ -374,6 +391,19 @@ HTML;
     assert_true($data['attDesktopBeforeContent'] !== 'none', "Desktop attachment icon has non-empty content");
     assert_true($data['attSubjectBeforeDisplay'] !== 'none', "Subject attachment icon is visible (display !== 'none')");
     assert_true($data['attSubjectBeforeContent'] !== 'none', "Subject attachment icon has non-empty content");
+
+    // 3b. Vertical Stacking & Attachment Alignment Verification (Star on top, Attachment directly below)
+    echo "Star rect (Row 1): top={$data['starRect']['top']}, bottom={$data['starRect']['bottom']}, left={$data['starRect']['left']}\n";
+    echo "Attachment rect (Row 1): top={$data['attInnerRect']['top']}, bottom={$data['attInnerRect']['bottom']}, left={$data['attInnerRect']['left']}\n";
+    echo "Empty attachment display (Row 2): {$data['attWrapNoAttDisplay']}\n";
+    echo "Star rect (Row 3): top={$data['star3Rect']['top']}, bottom={$data['star3Rect']['bottom']}, left={$data['star3Rect']['left']}\n";
+    echo "Attachment rect (Row 3): top={$data['attInner3Rect']['top']}, bottom={$data['attInner3Rect']['bottom']}, left={$data['attInner3Rect']['left']}\n";
+
+    assert_true($data['attInnerRect']['top'] >= $data['starRect']['bottom'] - 2, "Row 1 attachment is stacked vertically UNDER the star (att.top >= star.bottom - 2)");
+    assert_true(abs($data['attInnerRect']['left'] - $data['starRect']['left']) < 6, "Row 1 attachment is column-aligned with the star (not pushed right)");
+    assert_true($data['attWrapNoAttDisplay'] === 'none', "Row 2 empty attachment container is hidden (display: none)");
+    assert_true($data['attInner3Rect']['top'] >= $data['star3Rect']['bottom'] - 2, "Row 3 attachment is stacked vertically UNDER the unflagged star");
+    assert_true(abs($data['attInner3Rect']['left'] - $data['star3Rect']['left']) < 6, "Row 3 attachment is column-aligned with unflagged star");
 
     // 4. Message row text colors must NOT turn red (#c30606 -> rgb(195, 6, 6))
     echo "Computed flagged subject text color: {$data['subjectColor']}\n";

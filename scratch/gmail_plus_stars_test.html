@@ -155,6 +155,15 @@
             }
         });
 
+        var starRect = star.getBoundingClientRect();
+        var attInnerRect = attInner.getBoundingClientRect();
+        var attWrapNoAttDisplay = window.getComputedStyle(attWrapNoAtt).display;
+
+        var star3 = document.getElementById('test-star-unflagged');
+        var attInner3 = document.getElementById('test-att-inner-3');
+        var star3Rect = star3.getBoundingClientRect();
+        var attInner3Rect = attInner3.getBoundingClientRect();
+
         var results = {
             flagWrapBeforeContent: flagWrapBefore.content,
             starColor: starBefore.color,
@@ -165,10 +174,15 @@
             attInnerBeforeColor: attInnerBefore.color,
             attInnerBeforeDisplay: attInnerBefore.display,
             attWrapNoAttBeforeContent: attWrapNoAttBefore.content,
+            attWrapNoAttDisplay: attWrapNoAttDisplay,
             attDesktopBeforeContent: attDesktopBefore.content,
             attDesktopBeforeDisplay: attDesktopBefore.display,
             attSubjectBeforeContent: attSubjectBefore.content,
             attSubjectBeforeDisplay: attSubjectBefore.display,
+            starRect: { top: starRect.top, bottom: starRect.bottom, left: starRect.left, right: starRect.right },
+            attInnerRect: { top: attInnerRect.top, bottom: attInnerRect.bottom, left: attInnerRect.left, right: attInnerRect.right },
+            star3Rect: { top: star3Rect.top, bottom: star3Rect.bottom, left: star3Rect.left, right: star3Rect.right },
+            attInner3Rect: { top: attInner3Rect.top, bottom: attInner3Rect.bottom, left: attInner3Rect.left, right: attInner3Rect.right },
             row1StarsCount: row1Stars,
             subjectColor: subjectColor,
             fromColor: fromColor,
