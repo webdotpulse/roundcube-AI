@@ -39,7 +39,7 @@ table.messagelist td.flag span.unflagged,
     transition: transform 0.15s ease, color 0.15s ease;
 }
 
-/* Ensure wrappers NEVER produce extra star pseudo-elements */
+/* Ensure flag wrapper NEVER produces extra star pseudo-elements */
 #messagelist span.flag:before,
 .messagelist span.flag:before,
 table.messagelist span.flag:before,
@@ -51,19 +51,7 @@ table.messagelist td.flags > span.flag:before,
 table.messagelist tr.flagged span.flag:before,
 #messagelist tr.flagged td.flags > span.flag:before,
 .messagelist tr.flagged td.flags > span.flag:before,
-table.messagelist tr.flagged td.flags > span.flag:before,
-#messagelist span.attachment:before,
-.messagelist span.attachment:before,
-table.messagelist span.attachment:before,
-#messagelist td.flags > span.attachment:before,
-.messagelist td.flags > span.attachment:before,
-table.messagelist td.flags > span.attachment:before,
-#messagelist tr.flagged span.attachment:before,
-.messagelist tr.flagged span.attachment:before,
-table.messagelist tr.flagged span.attachment:before,
-#messagelist tr.flagged td.flags > span.attachment:before,
-.messagelist tr.flagged td.flags > span.attachment:before,
-table.messagelist tr.flagged td.flags > span.attachment:before {
+table.messagelist tr.flagged td.flags > span.flag:before {
     content: none !important;
     display: none !important;
 }
@@ -168,19 +156,54 @@ table.messagelist span.unflagged:hover:before {
     color: #f4b400 !important;
 }
 
-/* Preserve attachment icon in message list under all conditions (never replace with star) */
+/* Attachment icon alignment */
+#messagelist span.attachment,
+.messagelist span.attachment,
+table.messagelist span.attachment,
+#messagelist span.attachment span,
+.messagelist span.attachment span,
+table.messagelist span.attachment span {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* Preserve attachment font icon in message list under all conditions (never replace with star) */
 #messagelist span.attachment span:before,
 .messagelist span.attachment span:before,
 table.messagelist span.attachment span:before,
+#messagelist td.attachment span.attachment:before,
+.messagelist td.attachment span.attachment:before,
+table.messagelist td.attachment span.attachment:before,
+#messagelist td.subject span.attachment:before,
+.messagelist td.subject span.attachment:before,
+table.messagelist td.subject span.attachment:before,
+#messagelist td.flags span.attachment > span:before,
+.messagelist td.flags span.attachment > span:before,
+table.messagelist td.flags span.attachment > span:before,
+#messagelist td.flags > span.attachment:empty:before,
+.messagelist td.flags > span.attachment:empty:before,
+table.messagelist td.flags > span.attachment:empty:before,
 #messagelist tr.flagged span.attachment span:before,
 .messagelist tr.flagged span.attachment span:before,
 table.messagelist tr.flagged span.attachment span:before,
-#messagelist tr.flagged td.flags span.attachment span:before,
-.messagelist tr.flagged td.flags span.attachment span:before,
-table.messagelist tr.flagged td.flags span.attachment span:before {
+#messagelist tr.flagged td.attachment span.attachment:before,
+.messagelist tr.flagged td.attachment span.attachment:before,
+table.messagelist tr.flagged td.attachment span.attachment:before,
+#messagelist tr.flagged td.subject span.attachment:before,
+.messagelist tr.flagged td.subject span.attachment:before,
+table.messagelist tr.flagged td.subject span.attachment:before,
+#messagelist tr.flagged td.flags span.attachment > span:before,
+.messagelist tr.flagged td.flags span.attachment > span:before,
+table.messagelist tr.flagged td.flags span.attachment > span:before,
+#messagelist tr.flagged td.flags > span.attachment:empty:before,
+.messagelist tr.flagged td.flags > span.attachment:empty:before,
+table.messagelist tr.flagged td.flags > span.attachment:empty:before {
     font-family: RcpIconFont, sans-serif !important;
     font-weight: normal !important;
     content: "\eab4" !important;
+    display: inline-block !important;
     color: #777 !important;
     font-style: normal !important;
     text-decoration: none !important;
@@ -188,23 +211,65 @@ table.messagelist tr.flagged td.flags span.attachment span:before {
 html.xicons-material #messagelist span.attachment span:before,
 html.xicons-material .messagelist span.attachment span:before,
 html.xicons-material table.messagelist span.attachment span:before,
+html.xicons-material #messagelist td.attachment span.attachment:before,
+html.xicons-material .messagelist td.attachment span.attachment:before,
+html.xicons-material table.messagelist td.attachment span.attachment:before,
+html.xicons-material #messagelist td.subject span.attachment:before,
+html.xicons-material .messagelist td.subject span.attachment:before,
+html.xicons-material table.messagelist td.subject span.attachment:before,
+html.xicons-material #messagelist td.flags span.attachment > span:before,
+html.xicons-material .messagelist td.flags span.attachment > span:before,
+html.xicons-material table.messagelist td.flags span.attachment > span:before,
+html.xicons-material #messagelist td.flags > span.attachment:empty:before,
+html.xicons-material .messagelist td.flags > span.attachment:empty:before,
+html.xicons-material table.messagelist td.flags > span.attachment:empty:before,
 html.xicons-material #messagelist tr.flagged span.attachment span:before,
 html.xicons-material .messagelist tr.flagged span.attachment span:before,
 html.xicons-material table.messagelist tr.flagged span.attachment span:before,
-html.xicons-material #messagelist tr.flagged td.flags span.attachment span:before,
-html.xicons-material .messagelist tr.flagged td.flags span.attachment span:before,
-html.xicons-material table.messagelist tr.flagged td.flags span.attachment span:before {
+html.xicons-material #messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-material .messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-material table.messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-material #messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-material .messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-material table.messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-material #messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-material .messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-material table.messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-material #messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.xicons-material .messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.xicons-material table.messagelist tr.flagged td.flags > span.attachment:empty:before {
     content: "\ed24" !important;
 }
 html.xicons-outlined #messagelist span.attachment span:before,
 html.xicons-outlined .messagelist span.attachment span:before,
 html.xicons-outlined table.messagelist span.attachment span:before,
+html.xicons-outlined #messagelist td.attachment span.attachment:before,
+html.xicons-outlined .messagelist td.attachment span.attachment:before,
+html.xicons-outlined table.messagelist td.attachment span.attachment:before,
+html.xicons-outlined #messagelist td.subject span.attachment:before,
+html.xicons-outlined .messagelist td.subject span.attachment:before,
+html.xicons-outlined table.messagelist td.subject span.attachment:before,
+html.xicons-outlined #messagelist td.flags span.attachment > span:before,
+html.xicons-outlined .messagelist td.flags span.attachment > span:before,
+html.xicons-outlined table.messagelist td.flags span.attachment > span:before,
+html.xicons-outlined #messagelist td.flags > span.attachment:empty:before,
+html.xicons-outlined .messagelist td.flags > span.attachment:empty:before,
+html.xicons-outlined table.messagelist td.flags > span.attachment:empty:before,
 html.xicons-outlined #messagelist tr.flagged span.attachment span:before,
 html.xicons-outlined .messagelist tr.flagged span.attachment span:before,
 html.xicons-outlined table.messagelist tr.flagged span.attachment span:before,
-html.xicons-outlined #messagelist tr.flagged td.flags span.attachment span:before,
-html.xicons-outlined .messagelist tr.flagged td.flags span.attachment span:before,
-html.xicons-outlined table.messagelist tr.flagged td.flags span.attachment span:before {
+html.xicons-outlined #messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-outlined .messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-outlined table.messagelist tr.flagged td.attachment span.attachment:before,
+html.xicons-outlined #messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-outlined .messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-outlined table.messagelist tr.flagged td.subject span.attachment:before,
+html.xicons-outlined #messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-outlined .messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-outlined table.messagelist tr.flagged td.flags span.attachment > span:before,
+html.xicons-outlined #messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.xicons-outlined .messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.xicons-outlined table.messagelist tr.flagged td.flags > span.attachment:empty:before {
     content: "\ec30" !important;
 }
 
@@ -286,12 +351,33 @@ html.xicons-outlined table.messagelist tr.flagged span.attachment span.vcard:bef
 html.dark-mode #messagelist span.attachment span:before,
 html.dark-mode .messagelist span.attachment span:before,
 html.dark-mode table.messagelist span.attachment span:before,
+html.dark-mode #messagelist td.attachment span.attachment:before,
+html.dark-mode .messagelist td.attachment span.attachment:before,
+html.dark-mode table.messagelist td.attachment span.attachment:before,
+html.dark-mode #messagelist td.subject span.attachment:before,
+html.dark-mode .messagelist td.subject span.attachment:before,
+html.dark-mode table.messagelist td.subject span.attachment:before,
+html.dark-mode #messagelist td.flags span.attachment > span:before,
+html.dark-mode .messagelist td.flags span.attachment > span:before,
+html.dark-mode table.messagelist td.flags span.attachment > span:before,
+html.dark-mode #messagelist td.flags > span.attachment:empty:before,
+html.dark-mode .messagelist td.flags > span.attachment:empty:before,
+html.dark-mode table.messagelist td.flags > span.attachment:empty:before,
 html.dark-mode #messagelist tr.flagged span.attachment span:before,
 html.dark-mode .messagelist tr.flagged span.attachment span:before,
 html.dark-mode table.messagelist tr.flagged span.attachment span:before,
-html.dark-mode #messagelist tr.flagged td.flags span.attachment span:before,
-html.dark-mode .messagelist tr.flagged td.flags span.attachment span:before,
-html.dark-mode table.messagelist tr.flagged td.flags span.attachment span:before {
+html.dark-mode #messagelist tr.flagged td.attachment span.attachment:before,
+html.dark-mode .messagelist tr.flagged td.attachment span.attachment:before,
+html.dark-mode table.messagelist tr.flagged td.attachment span.attachment:before,
+html.dark-mode #messagelist tr.flagged td.subject span.attachment:before,
+html.dark-mode .messagelist tr.flagged td.subject span.attachment:before,
+html.dark-mode table.messagelist tr.flagged td.subject span.attachment:before,
+html.dark-mode #messagelist tr.flagged td.flags span.attachment > span:before,
+html.dark-mode .messagelist tr.flagged td.flags span.attachment > span:before,
+html.dark-mode table.messagelist tr.flagged td.flags span.attachment > span:before,
+html.dark-mode #messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.dark-mode .messagelist tr.flagged td.flags > span.attachment:empty:before,
+html.dark-mode table.messagelist tr.flagged td.flags > span.attachment:empty:before {
     color: #8ba3a7 !important;
 }
 

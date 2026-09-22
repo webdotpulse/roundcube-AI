@@ -224,6 +224,25 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
                 <td id="test-from-unflagged" class="fromto">Bob Smith</td>
                 <td id="test-date-unflagged" class="date">09:15 AM</td>
             </tr>
+
+            <!-- Row 4: Desktop layout WITH attachment -->
+            <tr id="rcmrow4" class="message">
+                <td class="threads"></td>
+                <td class="attachment" id="test-td-att-desktop"><span id="test-att-desktop" class="attachment" title="Attachment"></span></td>
+                <td class="flags"><span class="flag"><span class="unflagged"></span></span></td>
+                <td class="subject">Desktop message with attachment</td>
+                <td class="fromto">Dev Team</td>
+                <td class="date">08:00 AM</td>
+            </tr>
+
+            <!-- Row 5: Gmail layout attachment in td.subject -->
+            <tr id="rcmrow5" class="message">
+                <td class="threads"></td>
+                <td class="flags"><span class="flag"><span class="unflagged"></span></span></td>
+                <td class="subject" id="test-td-att-subject">Invoice details <span id="test-att-subject" class="attachment" title="Attachment"></span></td>
+                <td class="fromto">Billing</td>
+                <td class="date">Yesterday</td>
+            </tr>
         </tbody>
     </table>
 
@@ -243,6 +262,11 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
         var attWrapNoAtt = document.getElementById('test-att-wrap-2');
         var attWrapNoAttBefore = window.getComputedStyle(attWrapNoAtt, '::before');
 
+        var attDesktop = document.getElementById('test-att-desktop');
+        var attDesktopBefore = window.getComputedStyle(attDesktop, '::before');
+        var attSubject = document.getElementById('test-att-subject');
+        var attSubjectBefore = window.getComputedStyle(attSubject, '::before');
+
         var subject = document.getElementById('test-subject-flagged');
         var subjectLink = subject.querySelector('a');
         var subjectColor = window.getComputedStyle(subjectLink).color;
@@ -253,6 +277,16 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
         var menuUnflag = document.getElementById('test-menu-unflag');
         var menuSelect = document.getElementById('test-menu-select');
 
+        // Count how many yellow/orange star pseudo-elements exist in Row 1
+        var row1Stars = 0;
+        var r1Elements = document.querySelectorAll('#rcmrow1, #rcmrow1 *');
+        r1Elements.forEach(function(el) {
+            var b = window.getComputedStyle(el, '::before');
+            if (b.color === 'rgb(244, 180, 0)' && b.content && b.content !== 'none' && b.content !== '""') {
+                row1Stars++;
+            }
+        });
+
         var results = {
             flagWrapBeforeContent: flagWrapBefore.content,
             starColor: starBefore.color,
@@ -261,7 +295,13 @@ if (empty($chromeBin) || !is_executable($chromeBin)) {
             attWrapBeforeContent: attWrapBefore.content,
             attInnerBeforeContent: attInnerBefore.content,
             attInnerBeforeColor: attInnerBefore.color,
+            attInnerBeforeDisplay: attInnerBefore.display,
             attWrapNoAttBeforeContent: attWrapNoAttBefore.content,
+            attDesktopBeforeContent: attDesktopBefore.content,
+            attDesktopBeforeDisplay: attDesktopBefore.display,
+            attSubjectBeforeContent: attSubjectBefore.content,
+            attSubjectBeforeDisplay: attSubjectBefore.display,
+            row1StarsCount: row1Stars,
             subjectColor: subjectColor,
             fromColor: fromColor,
             dateColor: dateColor,
@@ -314,14 +354,26 @@ HTML;
     assert_true($data['flagWrapBeforeContent'] === 'none' || $data['flagWrapBeforeContent'] === '""', "Flag wrapper span has NO star pseudo-element");
     assert_true($data['attWrapBeforeContent'] === 'none' || $data['attWrapBeforeContent'] === '""', "Attachment wrapper span has NO star pseudo-element");
     assert_true($data['attWrapNoAttBeforeContent'] === 'none' || $data['attWrapNoAttBeforeContent'] === '""', "Attachment wrapper when no attachment has NO star pseudo-element");
+    echo "Computed Row 1 yellow star count: {$data['row1StarsCount']}\n";
+    assert_true($data['row1StarsCount'] === 1, "Exactly ONE yellow/orange star is rendered in flagged message row");
 
-    // 3. Attachment icon must be preserved (paperclip, NOT star, NOT yellow)
+    // 3. Attachment icon must be preserved (paperclip, NOT star, NOT yellow, and VISIBLE)
     echo "Computed attachment inner before content: {$data['attInnerBeforeContent']}\n";
     echo "Computed attachment inner before color: {$data['attInnerBeforeColor']}\n";
+    echo "Computed attachment inner before display: {$data['attInnerBeforeDisplay']}\n";
     assert_true($data['attInnerBeforeColor'] !== 'rgb(244, 180, 0)', "Attachment icon color is NOT yellow/orange star color");
     assert_true($data['attInnerBeforeColor'] === 'rgb(119, 119, 119)', "Attachment icon color is paperclip grey rgb(119, 119, 119)");
     assert_true($data['attInnerBeforeContent'] !== 'none', "Attachment inner icon has non-empty content");
+    assert_true($data['attInnerBeforeDisplay'] !== 'none', "Attachment inner icon is visible (display !== 'none')");
     assert_true(strpos($data['attInnerBeforeContent'], 'ed02') === false && strpos($data['attInnerBeforeContent'], 'eaae') === false, "Attachment icon is NOT replaced with a star");
+
+    // Check desktop layout & Gmail subject attachment icons
+    echo "Computed desktop attachment before display: {$data['attDesktopBeforeDisplay']}\n";
+    echo "Computed subject attachment before display: {$data['attSubjectBeforeDisplay']}\n";
+    assert_true($data['attDesktopBeforeDisplay'] !== 'none', "Desktop attachment icon is visible (display !== 'none')");
+    assert_true($data['attDesktopBeforeContent'] !== 'none', "Desktop attachment icon has non-empty content");
+    assert_true($data['attSubjectBeforeDisplay'] !== 'none', "Subject attachment icon is visible (display !== 'none')");
+    assert_true($data['attSubjectBeforeContent'] !== 'none', "Subject attachment icon has non-empty content");
 
     // 4. Message row text colors must NOT turn red (#c30606 -> rgb(195, 6, 6))
     echo "Computed flagged subject text color: {$data['subjectColor']}\n";

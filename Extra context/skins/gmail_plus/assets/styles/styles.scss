@@ -551,7 +551,7 @@ table.messagelist span.unflagged {
     transition: transform 0.15s ease, color 0.15s ease;
 }
 
-// Ensure wrappers NEVER produce extra star pseudo-elements
+// Ensure flag wrapper NEVER produces an extra star pseudo-element
 #messagelist span.flag:before,
 .messagelist span.flag:before,
 table.messagelist span.flag:before,
@@ -563,19 +563,7 @@ table.messagelist td.flags > span.flag:before,
 table.messagelist tr.flagged span.flag:before,
 #messagelist tr.flagged td.flags > span.flag:before,
 .messagelist tr.flagged td.flags > span.flag:before,
-table.messagelist tr.flagged td.flags > span.flag:before,
-#messagelist span.attachment:before,
-.messagelist span.attachment:before,
-table.messagelist span.attachment:before,
-#messagelist td.flags > span.attachment:before,
-.messagelist td.flags > span.attachment:before,
-table.messagelist td.flags > span.attachment:before,
-#messagelist tr.flagged span.attachment:before,
-.messagelist tr.flagged span.attachment:before,
-table.messagelist tr.flagged span.attachment:before,
-#messagelist tr.flagged td.flags > span.attachment:before,
-.messagelist tr.flagged td.flags > span.attachment:before,
-table.messagelist tr.flagged td.flags > span.attachment:before {
+table.messagelist tr.flagged td.flags > span.flag:before {
     content: none !important;
     display: none !important;
 }
@@ -661,17 +649,52 @@ table.messagelist span.unflagged:hover:before {
     color: #f4b400 !important;
 }
 
-// Preserve attachment icon in message list under all conditions (never replace with star)
+// Attachment icon alignment
+#messagelist span.attachment,
+.messagelist span.attachment,
+table.messagelist span.attachment,
+#messagelist span.attachment span,
+.messagelist span.attachment span,
+table.messagelist span.attachment span {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+// Preserve attachment font icon in message list under all conditions (never replace with star)
 #messagelist span.attachment span:before,
 .messagelist span.attachment span:before,
 table.messagelist span.attachment span:before,
+#messagelist td.attachment span.attachment:before,
+.messagelist td.attachment span.attachment:before,
+table.messagelist td.attachment span.attachment:before,
+#messagelist td.subject span.attachment:before,
+.messagelist td.subject span.attachment:before,
+table.messagelist td.subject span.attachment:before,
+#messagelist td.flags span.attachment > span:before,
+.messagelist td.flags span.attachment > span:before,
+table.messagelist td.flags span.attachment > span:before,
+#messagelist td.flags > span.attachment:empty:before,
+.messagelist td.flags > span.attachment:empty:before,
+table.messagelist td.flags > span.attachment:empty:before,
 #messagelist tr.flagged span.attachment span:before,
 .messagelist tr.flagged span.attachment span:before,
 table.messagelist tr.flagged span.attachment span:before,
-#messagelist tr.flagged td.flags span.attachment span:before,
-.messagelist tr.flagged td.flags span.attachment span:before,
-table.messagelist tr.flagged td.flags span.attachment span:before {
+#messagelist tr.flagged td.attachment span.attachment:before,
+.messagelist tr.flagged td.attachment span.attachment:before,
+table.messagelist tr.flagged td.attachment span.attachment:before,
+#messagelist tr.flagged td.subject span.attachment:before,
+.messagelist tr.flagged td.subject span.attachment:before,
+table.messagelist tr.flagged td.subject span.attachment:before,
+#messagelist tr.flagged td.flags span.attachment > span:before,
+.messagelist tr.flagged td.flags span.attachment > span:before,
+table.messagelist tr.flagged td.flags span.attachment > span:before,
+#messagelist tr.flagged td.flags > span.attachment:empty:before,
+.messagelist tr.flagged td.flags > span.attachment:empty:before,
+table.messagelist tr.flagged td.flags > span.attachment:empty:before {
     @include icons.icon(icons_map.$attachment, true);
+    display: inline-block !important;
     color: #777 !important;
     font-style: normal !important;
     text-decoration: none !important;
@@ -708,12 +731,33 @@ html.dark-mode {
     #messagelist span.attachment span:before,
     .messagelist span.attachment span:before,
     table.messagelist span.attachment span:before,
+    #messagelist td.attachment span.attachment:before,
+    .messagelist td.attachment span.attachment:before,
+    table.messagelist td.attachment span.attachment:before,
+    #messagelist td.subject span.attachment:before,
+    .messagelist td.subject span.attachment:before,
+    table.messagelist td.subject span.attachment:before,
+    #messagelist td.flags span.attachment > span:before,
+    .messagelist td.flags span.attachment > span:before,
+    table.messagelist td.flags span.attachment > span:before,
+    #messagelist td.flags > span.attachment:empty:before,
+    .messagelist td.flags > span.attachment:empty:before,
+    table.messagelist td.flags > span.attachment:empty:before,
     #messagelist tr.flagged span.attachment span:before,
     .messagelist tr.flagged span.attachment span:before,
     table.messagelist tr.flagged span.attachment span:before,
-    #messagelist tr.flagged td.flags span.attachment span:before,
-    .messagelist tr.flagged td.flags span.attachment span:before,
-    table.messagelist tr.flagged td.flags span.attachment span:before {
+    #messagelist tr.flagged td.attachment span.attachment:before,
+    .messagelist tr.flagged td.attachment span.attachment:before,
+    table.messagelist tr.flagged td.attachment span.attachment:before,
+    #messagelist tr.flagged td.subject span.attachment:before,
+    .messagelist tr.flagged td.subject span.attachment:before,
+    table.messagelist tr.flagged td.subject span.attachment:before,
+    #messagelist tr.flagged td.flags span.attachment > span:before,
+    .messagelist tr.flagged td.flags span.attachment > span:before,
+    table.messagelist tr.flagged td.flags span.attachment > span:before,
+    #messagelist tr.flagged td.flags > span.attachment:empty:before,
+    .messagelist tr.flagged td.flags > span.attachment:empty:before,
+    table.messagelist tr.flagged td.flags > span.attachment:empty:before {
         color: #8ba3a7 !important;
     }
 }
