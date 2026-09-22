@@ -95,6 +95,20 @@ if (!class_exists('rcube_plugin')) {
     }
 }
 
+if (!class_exists('rcube_utils')) {
+    class rcube_utils
+    {
+        public const INPUT_POST = 1;
+        public const INPUT_GET = 2;
+        public static array $mockPost = [];
+
+        public static function get_input_value(string $key, int $mode)
+        {
+            return self::$mockPost[$key] ?? $_POST[$key] ?? null;
+        }
+    }
+}
+
 if (!class_exists('rcmail_output_mock')) {
     class rcmail_output_mock
     {
@@ -543,6 +557,46 @@ echo "\n--- Test Suite 9: AJAX Endpoints & UI Render ---\n";
 $plugin->action_scan();
 assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_scan returns valid JSON response");
 
+// Test action_merge with missing parameters
+rcube_utils::$mockPost = [];
+$plugin->action_merge();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === false, "action_merge fails cleanly on missing parameters");
+
+// Test action_merge with valid contacts
+$rcmail->abook->contacts['501'] = ['ID' => '501', 'id' => '501', 'name' => 'Dr. Bruce Banner', 'email' => 'hulk@avengers.org'];
+$rcmail->abook->contacts['502'] = ['ID' => '502', 'id' => '502', 'name' => 'Bruce Banner', 'email' => 'bruce@banner-labs.com', 'phone' => '+1555999000'];
+rcube_utils::$mockPost = ['_target_id' => '501', '_source_id' => '502', '_source' => '0'];
+$plugin->action_merge();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_merge successfully merges contact pair via AJAX endpoint");
+assert_test(!isset($rcmail->abook->contacts['502']), "action_merge removed source contact 502");
+assert_test(isset($rcmail->abook->contacts['501']), "action_merge preserved target contact 501");
+
+// Test action_add_suggested
+rcube_utils::$mockPost = ['_name' => 'Tony Stark', '_email' => 'tony@starkindustries.com', '_organization' => 'Stark Industries'];
+$plugin->action_add_suggested();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_add_suggested adds suggested contact via AJAX endpoint");
+
+// Test action_add_all_suggested
+rcube_utils::$mockPost = [
+    '_contacts' => json_encode([
+        ['name' => 'Steve Rogers', 'email' => 'steve@shield.gov', 'organization' => 'SHIELD'],
+        ['name' => 'Natasha Romanoff', 'email' => 'natasha@shield.gov', 'organization' => 'SHIELD'],
+    ])
+];
+$plugin->action_add_all_suggested();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_add_all_suggested adds batch contacts via AJAX endpoint");
+assert_test($rcmail->output->jsonOutput['added_count'] === 2, "action_add_all_suggested added 2 contacts");
+
+// Test action_dismiss
+rcube_utils::$mockPost = ['_type' => 'duplicate', '_id1' => '601', '_id2' => '602'];
+$plugin->action_dismiss();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_dismiss records dismissal via AJAX endpoint");
+
+// Test action_reset_dismissed
+rcube_utils::$mockPost = [];
+$plugin->action_reset_dismissed();
+assert_test($rcmail->output->jsonOutput !== null && $rcmail->output->jsonOutput['success'] === true, "action_reset_dismissed resets dismissals via AJAX endpoint");
+
 // Test render_ui
 $uiHtml = $plugin->render_ui();
 assert_test(str_contains($uiHtml, 'id="merge-and-fix-studio"'), "render_ui outputs #merge-and-fix-studio container");
@@ -551,4 +605,4 @@ assert_test(str_contains($uiHtml, 'data-tab="frequent"'), "render_ui outputs fre
 assert_test(str_contains($uiHtml, 'id="mf-btn-merge-all"'), "render_ui outputs merge all button");
 assert_test(str_contains($uiHtml, 'id="mf-btn-add-all-suggested"'), "render_ui outputs add all suggested button");
 
-echo "\n*** ALL MERGE & FIX TESTS PASSED SUCCESSFULLY (32/32) ***\n";
+echo "\n*** ALL MERGE & FIX TESTS PASSED SUCCESSFULLY ***\n";

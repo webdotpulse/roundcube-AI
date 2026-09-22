@@ -204,16 +204,23 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_scan(): void
     {
-        $duplicates = $this->findDuplicates();
-        $frequent = $this->findFrequentContacts();
+        try {
+            $duplicates = $this->findDuplicates();
+            $frequent = $this->findFrequentContacts();
 
-        $this->jsonResponse([
-            'success' => true,
-            'duplicates' => $duplicates,
-            'duplicates_count' => count($duplicates),
-            'frequent' => $frequent,
-            'frequent_count' => count($frequent),
-        ]);
+            $this->jsonResponse([
+                'success' => true,
+                'duplicates' => $duplicates,
+                'duplicates_count' => count($duplicates),
+                'frequent' => $frequent,
+                'frequent_count' => count($frequent),
+            ]);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Scan failed: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -221,17 +228,24 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_merge(): void
     {
-        $targetId = trim((string)($this->rcmail->plugins->get_input_value('_target_id', rcube_plugin::INPUT_POST) ?? ''));
-        $sourceId = trim((string)($this->rcmail->plugins->get_input_value('_source_id', rcube_plugin::INPUT_POST) ?? ''));
-        $abookId  = trim((string)($this->rcmail->plugins->get_input_value('_source', rcube_plugin::INPUT_POST) ?? ''));
+        try {
+            $targetId = trim((string)($this->getInputValue('_target_id') ?? ''));
+            $sourceId = trim((string)($this->getInputValue('_source_id') ?? ''));
+            $abookId  = trim((string)($this->getInputValue('_source') ?? ''));
 
-        if ($targetId === '' || $sourceId === '') {
-            $this->jsonResponse(['success' => false, 'message' => $this->gettext('invalid_contact_ids')]);
-            return;
+            if ($targetId === '' || $sourceId === '') {
+                $this->jsonResponse(['success' => false, 'message' => $this->gettext('invalid_contact_ids')]);
+                return;
+            }
+
+            $result = $this->mergeContacts($targetId, $sourceId, $abookId !== '' ? $abookId : null);
+            $this->jsonResponse($result);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Merge failed: ' . $e->getMessage(),
+            ]);
         }
-
-        $result = $this->mergeContacts($targetId, $sourceId, $abookId !== '' ? $abookId : null);
-        $this->jsonResponse($result);
     }
 
     /**
@@ -239,8 +253,16 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_merge_all(): void
     {
-        $result = $this->mergeAllDuplicates();
-        $this->jsonResponse($result);
+        try {
+            $abookId = trim((string)($this->getInputValue('_source') ?? ''));
+            $result = $this->mergeAllDuplicates($abookId !== '' ? $abookId : null);
+            $this->jsonResponse($result);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Merge all failed: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -248,26 +270,33 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_dismiss(): void
     {
-        $type = (string)($this->rcmail->plugins->get_input_value('_type', rcube_plugin::INPUT_POST) ?? 'duplicate');
+        try {
+            $type = (string)($this->getInputValue('_type') ?? 'duplicate');
 
-        if ($type === 'duplicate') {
-            $id1 = trim((string)($this->rcmail->plugins->get_input_value('_id1', rcube_plugin::INPUT_POST) ?? ''));
-            $id2 = trim((string)($this->rcmail->plugins->get_input_value('_id2', rcube_plugin::INPUT_POST) ?? ''));
-            if ($id1 !== '' && $id2 !== '') {
-                $this->dismissDuplicate($id1, $id2);
-                $this->jsonResponse(['success' => true, 'message' => $this->gettext('dismissed')]);
-                return;
+            if ($type === 'duplicate') {
+                $id1 = trim((string)($this->getInputValue('_id1') ?? ''));
+                $id2 = trim((string)($this->getInputValue('_id2') ?? ''));
+                if ($id1 !== '' && $id2 !== '') {
+                    $this->dismissDuplicate($id1, $id2);
+                    $this->jsonResponse(['success' => true, 'message' => $this->gettext('dismissed')]);
+                    return;
+                }
+            } elseif ($type === 'frequent') {
+                $email = trim((string)($this->getInputValue('_email') ?? ''));
+                if ($email !== '') {
+                    $this->dismissSuggested($email);
+                    $this->jsonResponse(['success' => true, 'message' => $this->gettext('dismissed')]);
+                    return;
+                }
             }
-        } elseif ($type === 'frequent') {
-            $email = trim((string)($this->rcmail->plugins->get_input_value('_email', rcube_plugin::INPUT_POST) ?? ''));
-            if ($email !== '') {
-                $this->dismissSuggested($email);
-                $this->jsonResponse(['success' => true, 'message' => $this->gettext('dismissed')]);
-                return;
-            }
+
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid dismiss parameters.']);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Dismiss failed: ' . $e->getMessage(),
+            ]);
         }
-
-        $this->jsonResponse(['success' => false, 'message' => 'Invalid dismiss parameters.']);
     }
 
     /**
@@ -275,11 +304,18 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_reset_dismissed(): void
     {
-        $this->resetDismissed();
-        $this->jsonResponse([
-            'success' => true,
-            'message' => $this->gettext('dismissed_reset_success'),
-        ]);
+        try {
+            $this->resetDismissed();
+            $this->jsonResponse([
+                'success' => true,
+                'message' => $this->gettext('dismissed_reset_success'),
+            ]);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Reset dismissed failed: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -287,18 +323,25 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_add_suggested(): void
     {
-        $name = trim((string)($this->rcmail->plugins->get_input_value('_name', rcube_plugin::INPUT_POST) ?? ''));
-        $email = trim((string)($this->rcmail->plugins->get_input_value('_email', rcube_plugin::INPUT_POST) ?? ''));
-        $org = trim((string)($this->rcmail->plugins->get_input_value('_organization', rcube_plugin::INPUT_POST) ?? ''));
-        $abookId = trim((string)($this->rcmail->plugins->get_input_value('_source', rcube_plugin::INPUT_POST) ?? ''));
+        try {
+            $name = trim((string)($this->getInputValue('_name') ?? ''));
+            $email = trim((string)($this->getInputValue('_email') ?? ''));
+            $org = trim((string)($this->getInputValue('_organization') ?? ''));
+            $abookId = trim((string)($this->getInputValue('_source') ?? ''));
 
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            $this->jsonResponse(['success' => false, 'message' => $this->gettext('invalid_email')]);
-            return;
+            if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $this->jsonResponse(['success' => false, 'message' => $this->gettext('invalid_email')]);
+                return;
+            }
+
+            $result = $this->addSuggestedContact($name, $email, $org !== '' ? $org : null, $abookId !== '' ? $abookId : null);
+            $this->jsonResponse($result);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Add contact failed: ' . $e->getMessage(),
+            ]);
         }
-
-        $result = $this->addSuggestedContact($name, $email, $org !== '' ? $org : null, $abookId !== '' ? $abookId : null);
-        $this->jsonResponse($result);
     }
 
     /**
@@ -306,26 +349,36 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_add_all_suggested(): void
     {
-        $rawList = $this->rcmail->plugins->get_input_value('_contacts', rcube_plugin::INPUT_POST);
-        $abookId = trim((string)($this->rcmail->plugins->get_input_value('_source', rcube_plugin::INPUT_POST) ?? ''));
+        try {
+            $rawList = $this->getInputValue('_contacts');
+            $abookId = trim((string)($this->getInputValue('_source') ?? ''));
 
-        $contacts = [];
-        if (is_string($rawList)) {
-            $decoded = json_decode($rawList, true);
-            if (is_array($decoded)) {
-                $contacts = $decoded;
+            $contacts = [];
+            if (is_string($rawList)) {
+                $decoded = json_decode($rawList, true);
+                if (!is_array($decoded)) {
+                    $decoded = json_decode(stripslashes($rawList), true);
+                }
+                if (is_array($decoded)) {
+                    $contacts = $decoded;
+                }
+            } elseif (is_array($rawList)) {
+                $contacts = $rawList;
             }
-        } elseif (is_array($rawList)) {
-            $contacts = $rawList;
-        }
 
-        if (empty($contacts)) {
-            // If no explicit contact list posted, re-scan and add all current recommendations
-            $contacts = $this->findFrequentContacts();
-        }
+            if (empty($contacts)) {
+                // If no explicit contact list posted, re-scan and add all current recommendations
+                $contacts = $this->findFrequentContacts();
+            }
 
-        $result = $this->addAllSuggestedContacts($contacts, $abookId !== '' ? $abookId : null);
-        $this->jsonResponse($result);
+            $result = $this->addAllSuggestedContacts($contacts, $abookId !== '' ? $abookId : null);
+            $this->jsonResponse($result);
+        } catch (\Throwable $e) {
+            $this->jsonResponse([
+                'success' => false,
+                'message' => 'Add all failed: ' . $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -539,15 +592,16 @@ class merge_and_fix extends rcube_plugin
             return ['success' => false, 'message' => 'Cannot merge a contact with itself.'];
         }
 
-        $defaultId = defined('rcube_addressbook::TYPE_CONTACT') ? (string)rcube_addressbook::TYPE_CONTACT : '0';
-        $abookId = $sourceAbookId ?? $defaultId;
-
         $targetRecord = null;
         $sourceRecord = null;
         $abook = null;
 
         try {
-            $abook = $this->rcmail->get_address_book($abookId, true);
+            $bookParam = ($sourceAbookId !== null && $sourceAbookId !== '') ? $sourceAbookId : null;
+            $abook = $this->rcmail->get_address_book($bookParam, true);
+            if (!$abook && $bookParam !== null) {
+                $abook = $this->rcmail->get_address_book(null, true);
+            }
             if ($abook) {
                 $targetRecord = $abook->get_record($targetId, true);
                 $sourceRecord = $abook->get_record($sourceId, true);
@@ -792,9 +846,6 @@ class merge_and_fix extends rcube_plugin
      */
     public function addSuggestedContact(string $name, string $email, ?string $org = null, ?string $sourceAbookId = null): array
     {
-        $defaultId = defined('rcube_addressbook::TYPE_CONTACT') ? (string)rcube_addressbook::TYPE_CONTACT : '0';
-        $abookId = $sourceAbookId ?? $defaultId;
-
         $email = strtolower(trim($email));
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             return ['success' => false, 'message' => $this->gettext('invalid_email')];
@@ -814,7 +865,11 @@ class merge_and_fix extends rcube_plugin
 
         // Try via Addressbook driver
         try {
-            $abook = $this->rcmail->get_address_book($abookId, true);
+            $bookParam = ($sourceAbookId !== null && $sourceAbookId !== '') ? $sourceAbookId : null;
+            $abook = $this->rcmail->get_address_book($bookParam, true);
+            if (!$abook && $bookParam !== null) {
+                $abook = $this->rcmail->get_address_book(null, true);
+            }
             if ($abook && method_exists($abook, 'insert')) {
                 $newContactId = $abook->insert($contactData);
                 $insertSuccess = ($newContactId !== false && $newContactId !== null);
@@ -1612,12 +1667,33 @@ class merge_and_fix extends rcube_plugin
     }
 
     /**
+     * Safely retrieve request input values from POST/GET
+     */
+    protected function getInputValue(string $key, string $method = 'post'): mixed
+    {
+        if (class_exists('rcube_utils') && method_exists('rcube_utils', 'get_input_value')) {
+            $source = ($method === 'get')
+                ? (defined('rcube_utils::INPUT_GET') ? rcube_utils::INPUT_GET : 1)
+                : (defined('rcube_utils::INPUT_POST') ? rcube_utils::INPUT_POST : 2);
+            return rcube_utils::get_input_value($key, $source);
+        }
+
+        return ($method === 'get')
+            ? ($_GET[$key] ?? null)
+            : ($_POST[$key] ?? $_GET[$key] ?? null);
+    }
+
+    /**
      * Save a user preference
      */
     protected function saveUserPref(string $key, mixed $value): void
     {
-        if (is_object($this->rcmail->user) && method_exists($this->rcmail->user, 'save_prefs')) {
-            $this->rcmail->user->save_prefs([$key => $value]);
+        try {
+            if (is_object($this->rcmail->user) && method_exists($this->rcmail->user, 'save_prefs')) {
+                $this->rcmail->user->save_prefs([$key => $value]);
+            }
+        } catch (\Throwable $e) {
+            // Defensive suppression
         }
     }
 
@@ -1653,6 +1729,10 @@ class merge_and_fix extends rcube_plugin
         if (is_object($this->rcmail->output) && method_exists($this->rcmail->output, 'json_response')) {
             $this->rcmail->output->json_response($data);
             return;
+        }
+
+        while (ob_get_level() > 0) {
+            ob_end_clean();
         }
 
         if (!headers_sent()) {
