@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * Merge & Fix Contacts Plugin Configuration
+ */
+
+// Enable matching duplicate contacts by identical or normalized email addresses
+$config['merge_and_fix_match_email'] = true;
+
+// Enable matching duplicate contacts by normalized telephone numbers
+$config['merge_and_fix_match_phone'] = true;
+
+// Enable matching duplicate contacts by matching full names or inverted names
+$config['merge_and_fix_match_name'] = true;
+
+// Maximum message headers to inspect in Sent and INBOX folders when discovering frequent contacts
+$config['merge_and_fix_frequent_scan_depth'] = 100;
+
+// Maximum number of unsaved frequent contacts to recommend
+$config['merge_and_fix_frequent_limit'] = 50;

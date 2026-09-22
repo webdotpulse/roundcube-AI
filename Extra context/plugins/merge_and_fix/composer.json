@@ -1,0 +1,21 @@
+{
+    "name": "webdotpulse/merge-and-fix",
+    "type": "roundcube-plugin",
+    "description": "Google Contacts-style Merge & Fix plugin for Roundcube: find and combine duplicate contact cards, and discover unsaved frequent email contacts.",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Webdotpulse & Contributors",
+            "email": "support@webdotpulse.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.0.0",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.4.0"
+        }
+    }
+}

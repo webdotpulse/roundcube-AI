@@ -30,7 +30,9 @@
         "email_scheduler",
         "twofactor_auth",
         "roundcube_attachments",
-        "vacation_forward"
+        "vacation_forward",
+        "merge_and_fix",
+        "merge-contacts"
     ],
     "authors": [
         {
@@ -38,25 +40,26 @@
             "homepage": "https://github.com/webdotpulse"
         },
         {
-            "name": "Eduardo Stern",
             "email": "eduardostern@icloud.com",
-            "homepage": "https://lifeprisma.com"
+            "homepage": "https://lifeprisma.com",
+            "name": "Eduardo Stern"
         }
     ],
     "homepage": "https://github.com/webdotpulse/roundcube-AI",
     "replace": {
-        "lifeprisma/roundcube-genia": "self.version",
         "lifeprisma/roundcube-ai": "self.version",
-        "webdotpulse/lifeprisma-ai": "self.version",
+        "lifeprisma/roundcube-genia": "self.version",
+        "roundcubeplus/email_scheduler": "self.version",
+        "roundcubeplus/roundcube_attachments": "self.version",
+        "roundcubeplus/twofactor_auth": "self.version",
+        "roundcubeplus/vacation_forward": "self.version",
         "roundcubeplus/xcalendar": "self.version",
-        "webdotpulse/roundcube-loader": "self.version",
         "roundcubeplus/xmultibox": "self.version",
         "roundcubeplus/xsignature": "self.version",
+        "webdotpulse/lifeprisma-ai": "self.version",
         "webdotpulse/newsletter": "self.version",
-        "roundcubeplus/email_scheduler": "self.version",
-        "roundcubeplus/twofactor_auth": "self.version",
-        "roundcubeplus/roundcube_attachments": "self.version",
-        "roundcubeplus/vacation_forward": "self.version"
+        "webdotpulse/roundcube-loader": "self.version",
+        "webdotpulse/merge-and-fix": "self.version"
     },
     "suggest": {
         "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars",
