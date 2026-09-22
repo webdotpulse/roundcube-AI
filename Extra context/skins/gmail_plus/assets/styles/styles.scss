@@ -1,5 +1,7 @@
 @use "colors" as skin_colors;
 @use "../../../../plugins/xframework/assets/styles/colors";
+@use "../../../../plugins/xframework/assets/styles/icons";
+@use "../../../../plugins/xframework/assets/styles/icons_map";
 @use "../../../../plugins/xskin/assets/styles/elastic_skins_commons";
 
 @include elastic_skins_commons.basic-styles;
@@ -509,4 +511,187 @@ ul.tb-labels-list li a:before,
 ul.tb-labels-list li a:after {
     content: none !important;
     display: none !important;
+}
+
+// *********************** Stars instead of flags (gmail_plus theme) ***********************
+
+// 1. Star icons and interactive styling in message list
+#messagelist span.flagged,
+#messagelist span.unflagged,
+.messagelist span.flagged,
+.messagelist span.unflagged,
+table.messagelist span.flagged,
+table.messagelist span.unflagged,
+.messagelist span.flag,
+#messagelist span.flag,
+table.messagelist span.flag,
+.messagelist td.flags span.flagged,
+.messagelist td.flags span.unflagged,
+#messagelist td.flags span.flagged,
+#messagelist td.flags span.unflagged {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+    vertical-align: middle;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+// Filled Star (Yellow/Orange #f4b400) when flagged in mailbox overview
+#messagelist span.flagged:before,
+.messagelist span.flagged:before,
+table.messagelist span.flagged:before,
+#messagelist span.flag.flagged:before,
+.messagelist span.flag.flagged:before,
+table.messagelist span.flag.flagged:before,
+#messagelist tr.flagged span.flag:before,
+.messagelist tr.flagged span.flag:before,
+table.messagelist tr.flagged span.flag:before,
+#messagelist tr.flagged td.flags span:before,
+.messagelist tr.flagged td.flags span:before,
+table.messagelist tr.flagged td.flags span:before {
+    @include icons.icon(icons_map.$star, true);
+    color: #f4b400 !important;
+    font-style: normal !important;
+    text-decoration: none !important;
+}
+
+// Star hover & transition
+#messagelist span.flagged:hover,
+.messagelist span.flagged:hover,
+table.messagelist span.flagged:hover,
+#messagelist span.unflagged:hover,
+.messagelist span.unflagged:hover,
+table.messagelist span.unflagged:hover,
+#messagelist span.flag:hover,
+.messagelist span.flag:hover {
+    transform: scale(1.18);
+}
+
+// Outline / Empty Star when unflagged on row hover
+#messagelist tr:hover span.unflagged:before,
+.messagelist tr:hover span.unflagged:before,
+table.messagelist tr:hover span.unflagged:before,
+#messagelist span.flag.unflagged:before,
+.messagelist span.flag.unflagged:before,
+table.messagelist span.flag.unflagged:before,
+#messagelist span.unflagged:before,
+.messagelist span.unflagged:before,
+table.messagelist span.unflagged:before {
+    @include icons.icon(icons_map.$star-empty, true);
+    color: #dadce0 !important;
+    font-style: normal !important;
+    text-decoration: none !important;
+}
+
+html.dark-mode {
+    #messagelist tr:hover span.unflagged:before,
+    .messagelist tr:hover span.unflagged:before,
+    table.messagelist tr:hover span.unflagged:before,
+    #messagelist span.unflagged:before,
+    .messagelist span.unflagged:before {
+        color: #5f6368 !important;
+    }
+}
+
+// Unflagged star hover turns yellow/orange
+#messagelist tr:hover span.unflagged:hover:before,
+.messagelist tr:hover span.unflagged:hover:before,
+table.messagelist tr:hover span.unflagged:hover:before,
+#messagelist span.flag.unflagged:hover:before,
+.messagelist span.flag.unflagged:hover:before,
+table.messagelist span.flag.unflagged:hover:before,
+#messagelist span.unflagged:hover:before,
+.messagelist span.unflagged:hover:before {
+    color: #f4b400 !important;
+}
+
+// 2. Star icons in Action Menus, Toolbar, and Previews
+.menu a.flag:before,
+.toolbar a.flag:before,
+.popupmenu a.flag:before,
+a.button-flag:before,
+#messagemenu a.flag:before,
+#mailmenu a.flag:before {
+    @include icons.icon(icons_map.$star, true);
+    color: #f4b400 !important;
+}
+
+.menu a.unflag:before,
+.toolbar a.unflag:before,
+.popupmenu a.unflag:before,
+a.button-unflag:before,
+#messagemenu a.unflag:before,
+#mailmenu a.unflag:before {
+    @include icons.icon(icons_map.$star-empty, true);
+}
+
+.menu a.select.flagged:before,
+.popupmenu a.select.flagged:before,
+.toolbar a.select.flagged:before,
+#listselect-menu a.select.flagged:before {
+    @include icons.icon(icons_map.$star, true);
+    color: #f4b400 !important;
+}
+
+// Message preview / view header star
+body.status-flagged #message-header > .subject:before,
+#message-header .subject span.flagged:before,
+#messageheader .subject span.flagged:before {
+    @include icons.icon(icons_map.$star, true);
+    color: #f4b400 !important;
+}
+
+// Starred / Flagged mailbox folder in sidebar
+.listing.folderlist li.flagged > a:before,
+.listing.folderlist li.starred > a:before,
+.folderlist li.flagged > a:before,
+.folderlist li.starred > a:before {
+    @include icons.icon(icons_map.$star, true);
+    color: #f4b400 !important;
+}
+
+// 3. Preserve natural row text color: DO NOT turn text red when message is flagged
+#messagelist tr.flagged,
+#messagelist tr.flagged > td,
+#messagelist tr.flagged td a,
+#messagelist tr.flagged td span:not(.flagged):not(.flag),
+#messagelist tr.flagged td.subject,
+#messagelist tr.flagged td.subject a,
+#messagelist tr.flagged td.fromto,
+#messagelist tr.flagged td.fromto a,
+#messagelist tr.flagged td.date,
+#messagelist tr.flagged td.size,
+#messagelist tr.flagged td.threads,
+.messagelist tr.flagged,
+.messagelist tr.flagged > td,
+.messagelist tr.flagged td a,
+.messagelist tr.flagged td span:not(.flagged):not(.flag),
+.messagelist tr.flagged td.subject,
+.messagelist tr.flagged td.subject a,
+.messagelist tr.flagged td.fromto,
+.messagelist tr.flagged td.fromto a,
+.messagelist tr.flagged td.date,
+.messagelist tr.flagged td.size,
+.messagelist tr.flagged td.threads,
+table.messagelist tr.flagged,
+table.messagelist tr.flagged > td,
+table.messagelist tr.flagged td a,
+table.messagelist tr.flagged td span:not(.flagged):not(.flag),
+table.messagelist:not(.records-table) tr.flagged,
+table.messagelist:not(.records-table) tr.flagged > td,
+table.messagelist:not(.records-table) tr.flagged td a,
+table.messagelist:not(.records-table) tr.flagged td span:not(.flagged):not(.flag),
+.listing tbody tr.flagged td,
+.listing tbody tr.flagged td a,
+.listing tbody tr.flagged td span:not(.flagged):not(.flag),
+ul.messagelist li.flagged,
+ul.messagelist li.flagged a,
+ul.messagelist li.flagged span:not(.flagged):not(.flag) {
+    color: inherit !important;
 }

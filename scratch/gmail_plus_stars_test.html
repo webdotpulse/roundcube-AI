@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html class="xicons-material">
+<head>
+    <meta charset="utf-8">
+    <title>Gmail Plus Skin Stars Test</title>
+    <!-- Base styling simulating Roundcube message list baseline with red flagged color -->
+    <style>
+        body { font-family: Roboto, sans-serif; color: #202124; background: #fff; margin: 0; padding: 20px; }
+        .messagelist tr td { color: #202124; }
+        /* Simulation of Roundcube core red text for flagged messages before override */
+        .messagelist tr.flagged td,
+        .messagelist tr.flagged td a,
+        .messagelist tr.flagged td span {
+            color: #c30606;
+        }
+        .messagelist tr.flagged span.flagged:before {
+            color: #c30606;
+        }
+    </style>
+    <!-- GMail+ Theme Stylesheet -->
+    <link rel="stylesheet" href="file:///home/koen/Git/roundcube-AI/Extra context/skins/gmail_plus/assets/styles/styles.css">
+    <!-- Mock jQuery and rcmail for scripts.min.js testing -->
+    <script>
+        window.rcmail = {
+            labels: {
+                markflagged: "Mark as flagged",
+                markunflagged: "Mark as unflagged",
+                flagged: "Flagged",
+                unflagged: "Unflagged",
+                selectflagged: "Flagged"
+            },
+            add_label: function(map) {
+                for (var k in map) { window.rcmail.labels[k] = map[k]; }
+            },
+            addEventListener: function(event, cb) {}
+        };
+    </script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+</head>
+<body class="xelastic skin-gmail_plus">
+    <!-- Toolbar & Menu simulation -->
+    <div class="menu">
+        <a id="test-menu-flag" class="flag" title="Mark as flagged" data-command="mark" data-prop="flagged">
+            <span class="inner">Mark as flagged</span>
+        </a>
+        <a id="test-menu-unflag" class="unflag" title="Mark as unflagged" data-command="mark" data-prop="unflagged">
+            <span class="inner">Mark as unflagged</span>
+        </a>
+        <a id="test-menu-select" class="select flagged">
+            <span class="inner">Flagged</span>
+        </a>
+    </div>
+
+    <!-- Message List Table simulation -->
+    <table id="messagelist" class="messagelist listing">
+        <tbody>
+            <!-- Row 1: Flagged message -->
+            <tr id="rcmrow1" class="message flagged">
+                <td class="threads"></td>
+                <td class="flags">
+                    <span id="test-star-flagged" class="flagged" title="Flagged"></span>
+                </td>
+                <td id="test-subject-flagged" class="subject">
+                    <a href="#">Urgent: Budget approval needed</a>
+                </td>
+                <td id="test-from-flagged" class="fromto">Alice Walker</td>
+                <td id="test-date-flagged" class="date">10:45 AM</td>
+            </tr>
+
+            <!-- Row 2: Unflagged normal message -->
+            <tr id="rcmrow2" class="message">
+                <td class="threads"></td>
+                <td class="flags">
+                    <span id="test-star-unflagged" class="unflagged" title="Unflagged"></span>
+                </td>
+                <td id="test-subject-unflagged" class="subject">
+                    <a href="#">Team Lunch next Tuesday</a>
+                </td>
+                <td id="test-from-unflagged" class="fromto">Bob Smith</td>
+                <td id="test-date-unflagged" class="date">09:15 AM</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script src="file:///home/koen/Git/roundcube-AI/Extra context/skins/gmail_plus/assets/scripts/scripts.min.js"></script>
+    <script>
+    $(document).ready(function() {
+        var star = document.getElementById('test-star-flagged');
+        var starBefore = window.getComputedStyle(star, '::before');
+        var subject = document.getElementById('test-subject-flagged');
+        var subjectLink = subject.querySelector('a');
+        var subjectColor = window.getComputedStyle(subjectLink).color;
+        var fromColor = window.getComputedStyle(document.getElementById('test-from-flagged')).color;
+        var dateColor = window.getComputedStyle(document.getElementById('test-date-flagged')).color;
+
+        var menuFlag = document.getElementById('test-menu-flag');
+        var menuUnflag = document.getElementById('test-menu-unflag');
+        var menuSelect = document.getElementById('test-menu-select');
+
+        var results = {
+            starColor: starBefore.color,
+            starFont: starBefore.fontFamily,
+            starContent: starBefore.content,
+            subjectColor: subjectColor,
+            fromColor: fromColor,
+            dateColor: dateColor,
+            menuFlagTitle: menuFlag.getAttribute('title'),
+            menuFlagText: menuFlag.textContent.trim(),
+            menuUnflagTitle: menuUnflag.getAttribute('title'),
+            menuUnflagText: menuUnflag.textContent.trim(),
+            menuSelectText: menuSelect.textContent.trim(),
+            starTitle: star.getAttribute('title'),
+            unflagStarTitle: document.getElementById('test-star-unflagged').getAttribute('title'),
+            rcmailFlaggedLabel: window.rcmail.labels.markflagged,
+            rcmailUnflaggedLabel: window.rcmail.labels.markunflagged
+        };
+
+        var out = document.createElement('div');
+        out.id = 'test-computed-results';
+        out.textContent = JSON.stringify(results);
+        document.body.appendChild(out);
+    });
+    </script>
+</body>
+</html>

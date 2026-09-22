@@ -288,7 +288,51 @@ class xskin extends XFramework\Plugin
     {
         $this->addLoginRcpBranding($arg);
         $this->injectCustomColors($arg);
+        if ($this->skin == 'gmail_plus' || $this->rcmail->config->get('skin') == 'gmail_plus') {
+            $this->normalizeGmailPlusStarLabels($arg);
+        }
         return $arg;
+    }
+
+    /**
+     * Normalizes flag labels to star labels specifically for the gmail_plus theme.
+     */
+    public function normalizeGmailPlusStarLabels(array &$arg): void
+    {
+        if (empty($arg['content'])) {
+            return;
+        }
+
+        $search = [
+            'Mark as flagged',
+            'Mark as unflagged',
+            'mark as flagged',
+            'mark as unflagged',
+            '>As flagged<',
+            '>As unflagged<',
+            'title="Mark as flagged"',
+            'title="Mark as unflagged"',
+            'title="Flagged"',
+            'title="Unflagged"',
+            'aria-label="Mark as flagged"',
+            'aria-label="Mark as unflagged"',
+        ];
+        $replace = [
+            'Mark as starred',
+            'Mark as unstarred',
+            'mark as starred',
+            'mark as unstarred',
+            '>As starred<',
+            '>As unstarred<',
+            'title="Mark as starred"',
+            'title="Mark as unstarred"',
+            'title="Starred"',
+            'title="Not starred"',
+            'aria-label="Mark as starred"',
+            'aria-label="Mark as unstarred"',
+        ];
+
+        $arg['content'] = str_replace($search, $replace, $arg['content']);
     }
 
     /**
