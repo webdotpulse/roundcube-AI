@@ -24,6 +24,7 @@
   <img src="https://img.shields.io/badge/Skins-GMail%2B%20%7C%20GMail%20%7C%20Elastic%20%7C%20Larry-f59e0b?style=flat-square" alt="Supported Skins">
   <img src="https://img.shields.io/badge/PHPUnit%20Tests-24%2F24%20Passing%20(100%25)-success?style=flat-square" alt="PHP Tests Passing">
   <img src="https://img.shields.io/badge/Playwright%20E2E-8%2F8%20Matrix%20Cells%20(0%20Errors)-blue?style=flat-square" alt="Playwright E2E Verified">
+  <img src="https://img.shields.io/badge/Composer-webdotpulse%2Froundcube--ai-885630?style=flat-square&logo=composer" alt="Composer Package">
   <img src="https://img.shields.io/badge/Roundcube-1.5%2B%20%2F%201.6%2B-blue?style=flat-square" alt="Roundcube">
   <img src="https://img.shields.io/badge/PHP-8.0%2B-777BB4?style=flat-square" alt="PHP">
   <img src="https://img.shields.io/badge/License-MIT-22c55e?style=flat-square" alt="License">
@@ -105,18 +106,72 @@ This repository includes 17 interoperable, hardened plugins:
 
 ## Installation & Setup
 
-### 1. Automated Installation (Recommended)
+### 1. Installation via Composer (Recommended)
 
-Run the bundled installation script from your Roundcube root directory to symlink/copy all skins and plugins, generate default configs, and register all components in `config/config.inc.php`:
+This suite is packaged as a standard `roundcube-plugin` (`webdotpulse/roundcube-ai`) fully integrated with Composer and the official `roundcube/plugin-installer`.
+
+#### Step 1: Ensure Composer & Plugin Installer are configured
+In your Roundcube root directory, ensure you have a `composer.json` file. If Composer is not yet initialized in your Roundcube installation, copy Roundcube's distributed template:
 
 ```bash
 cd /path/to/roundcube/
+[ ! -f composer.json ] && cp composer.json-dist composer.json
+```
+
+For Composer 2.2+, allow `roundcube/plugin-installer` to execute plugin installation hooks:
+```bash
+composer config allow-plugins.roundcube/plugin-installer true
+```
+
+#### Step 2: Add Repository (if installing directly from GitHub)
+If installing directly from the GitHub repository prior to or alongside Packagist indexing:
+```bash
+composer config repositories.roundcube-ai vcs https://github.com/webdotpulse/roundcube-AI
+```
+
+#### Step 3: Require the Package
+Require the plugin using Composer:
+```bash
+composer require webdotpulse/roundcube-ai
+# Or require a specific branch or release:
+composer require webdotpulse/roundcube-ai:dev-main
+```
+
+> [!TIP]
+> **What Composer & the Plugin Installer do automatically:**
+> - Downloads `webdotpulse/roundcube-ai` into `plugins/roundcube_ai` (with `lifeprisma_ai` alias compatibility).
+> - Automatically runs the post-install script (`bin/install-extra.php`) via `roundcube/plugin-installer` hooks.
+> - Deploys all bundled skins (`gmail_plus`, `gmail`) into Roundcube's `skins/` directory.
+> - Synchronizes all 17 enterprise companion plugins (`xframework`, `xskin`, `customizr`, `xcalendar`, `thunderbird_labels`, `xsignature`, `xmultibox`, `email_scheduler`, `newsletter`, `persistent_login`, `twofactor_auth`, `vacation_forward`, `roundcube_loader`, `roundcube_attachments`, `thread_drafts`, `merge_and_fix`) into Roundcube's `plugins/` directory.
+> - Bootstraps default plugin configuration files (`config.inc.php`) from `.dist`/`.sample` templates.
+
+#### Step 4: Activate Plugins & Skins
+Run the automated activation flag to enable all 17 plugins in the correct dependency order and set `gmail_plus` as the active skin in `config/config.inc.php`:
+```bash
+php plugins/roundcube_ai/bin/install-extra.php --activate
+# Or if installed as lifeprisma_ai:
+php plugins/lifeprisma_ai/bin/install-extra.php --activate
+```
+*(Alternatively, you can manually configure `config/config.inc.php` as shown in [Section 3](#3-manual-configuration-configconfigincphp) below).*
+
+---
+
+### 2. Standalone / Git Clone Installation (Without Composer)
+
+If you are not managing Roundcube with Composer, clone or extract the repository directly into your Roundcube `plugins/` directory:
+
+```bash
+cd /path/to/roundcube/plugins
+git clone https://github.com/webdotpulse/roundcube-AI.git lifeprisma_ai
+cd /path/to/roundcube
 php plugins/lifeprisma_ai/bin/install-extra.php --activate
 ```
 
-### 2. Manual Configuration (`config/config.inc.php`)
+---
 
-Ensure all 17 plugins are registered in `config/config.inc.php` in the correct dependency order:
+### 3. Manual Configuration (`config/config.inc.php`)
+
+If you prefer to configure Roundcube manually or want to verify your setup, ensure all 17 plugins are registered in `config/config.inc.php` in the correct dependency order:
 
 ```php
 // Active Skin: 'gmail_plus', 'gmail', 'elastic', or 'larry'
@@ -148,7 +203,9 @@ $config['license_key'] = 'RCPLUSFREE20266u';
 $config['remove_vendor_branding'] = true;
 ```
 
-### 3. AI Plugin Configuration (`plugins/lifeprisma_ai/config.inc.php`)
+### 4. AI Plugin Configuration (`plugins/lifeprisma_ai/config.inc.php`)
+
+Configure your Google Gemini API key and default preferences in `plugins/lifeprisma_ai/config.inc.php` (or `plugins/roundcube_ai/config.inc.php`):
 
 ```php
 // 1. Google Gemini API Key (https://aistudio.google.com/apikey)
