@@ -337,18 +337,33 @@ class xcalendar extends XFramework\Plugin
 
             switch ($this->rcmail->action) {
                 case 'xcalendar.processItipResponse':
+                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                    }
                     $this->itip->processResponse();
                     break;
                 case 'xcalendar.processItipUpdateReply':
+                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                    }
                     $this->itip->processUpdateReply();
                     break;
                 case 'xcalendar.processItipUpdateEvent':
+                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                    }
                     $this->itip->processUpdateEvent();
                     break;
                 case 'xcalendar.processItipDelete':
+                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                    }
                     $this->itip->processDelete();
                     break;
                 case 'xcalendar.addMessageEventsToCalendar':
+                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                    }
                     $this->addMessageEventsToCalendar();
                     break;
                 case 'xcalendar.getTodaysAgenda':
@@ -376,6 +391,9 @@ class xcalendar extends XFramework\Plugin
                 $this->getPopupAlarms();
                 break;
             case 'xcalendarSnooze':
+                if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+                    $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+                }
                 $this->snooze();
                 break;
         }

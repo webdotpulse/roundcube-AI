@@ -637,35 +637,58 @@ function lpai_worker_call_gemini($system_prompt, $user_prompt, $config, $verbose
         'temperature' => 0.4,
     ];
 
-    $ch = curl_init($api_url);
-    curl_setopt_array($ch, [
-        CURLOPT_POST => true,
-        CURLOPT_POSTFIELDS => json_encode($payload),
-        CURLOPT_HTTPHEADER => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $api_key,
-        ],
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 45,
-    ]);
+    $max_retries = 3;
+    $retry_delay = 1;
 
-    $response = curl_exec($ch);
-    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curl_err = curl_error($ch);
-    curl_close($ch);
+    for ($attempt = 1; $attempt <= $max_retries; $attempt++) {
+        $ch = curl_init($api_url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $api_key,
+            ],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 45,
+        ]);
 
-    if ($curl_err) {
-        echo "[ERROR] Gemini cURL failure: $curl_err\n";
-        return false;
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curl_err = curl_error($ch);
+        curl_close($ch);
+
+        if ($curl_err) {
+            echo "[ERROR] Gemini cURL failure (attempt $attempt/$max_retries): $curl_err\n";
+            if ($attempt < $max_retries) {
+                sleep($retry_delay);
+                $retry_delay *= 2;
+                continue;
+            }
+            return false;
+        }
+
+        if ($http_code === 429 || ($http_code >= 500 && $http_code <= 504)) {
+            echo "[WARNING] Gemini returned HTTP $http_code (attempt $attempt/$max_retries). Retrying in {$retry_delay}s...\n";
+            if ($attempt < $max_retries) {
+                sleep($retry_delay);
+                $retry_delay *= 2;
+                continue;
+            }
+            echo "[ERROR] Gemini returned HTTP $http_code: $response\n";
+            return false;
+        }
+
+        if ($http_code !== 200) {
+            echo "[ERROR] Gemini returned HTTP $http_code: $response\n";
+            return false;
+        }
+
+        $data = json_decode($response, true);
+        return trim($data['choices'][0]['message']['content'] ?? '');
     }
 
-    if ($http_code !== 200) {
-        echo "[ERROR] Gemini returned HTTP $http_code: $response\n";
-        return false;
-    }
-
-    $data = json_decode($response, true);
-    return trim($data['choices'][0]['message']['content'] ?? '');
+    return false;
 }
 
 // ============================================================
@@ -972,8 +995,8 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                         if (!empty($mem['question']) && !empty($mem['answer'])) {
                             $count++;
                             $memory_prompt .= "--- [Memory Item #{$count}] ---\n";
-                            $memory_prompt .= "Client Question: " . substr($mem['question'], 0, 350) . "\n";
-                            $memory_prompt .= "Verified Answer: " . substr($mem['answer'], 0, 900) . "\n";
+                            $memory_prompt .= "Client Question: " . (function_exists('mb_substr') ? mb_substr($mem['question'], 0, 350, 'UTF-8') : substr($mem['question'], 0, 350)) . "\n";
+                            $memory_prompt .= "Verified Answer: " . (function_exists('mb_substr') ? mb_substr($mem['answer'], 0, 900, 'UTF-8') : substr($mem['answer'], 0, 900)) . "\n";
                             if ($count >= 25) break;
                         }
                     }
@@ -987,9 +1010,10 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                     "Directly address all questions and action items. Do not include placeholders like [Your Name]." .
                     $memory_prompt;
 
+                $clean_body_snippet = function_exists('mb_substr') ? mb_substr($body, 0, 3500, 'UTF-8') : substr($body, 0, 3500);
                 $user_prompt = "Original Email Subject: $subject\n" .
                     "From: $from\n\n" .
-                    "Original Email Body:\n" . substr($body, 0, 3500) . "\n\n" .
+                    "Original Email Body:\n" . $clean_body_snippet . "\n\n" .
                     "Draft an executive response ready to send.";
 
                 $draft_reply = lpai_worker_call_gemini($system_prompt, $user_prompt, $config, $is_verbose);

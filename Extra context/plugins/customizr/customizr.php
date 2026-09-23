@@ -704,8 +704,9 @@ JS;
         $random_bytes = function_exists('random_bytes') ? bin2hex(random_bytes(4)) : substr(md5((string) mt_rand()), 0, 8);
         $filename = 'custom_' . time() . '_' . $random_bytes . '.' . $ext;
         if (is_writable($upload_dir)) {
-            if (!@move_uploaded_file($file['tmp_name'], $upload_dir . '/' . $filename)) {
-                @file_put_contents($upload_dir . '/' . $filename, $data);
+            @file_put_contents($upload_dir . '/' . $filename, $data);
+            if (!empty($file['tmp_name']) && file_exists($file['tmp_name'])) {
+                @unlink($file['tmp_name']);
             }
         }
 

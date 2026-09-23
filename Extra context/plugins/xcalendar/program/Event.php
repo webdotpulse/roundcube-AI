@@ -374,17 +374,32 @@ class Event extends Entity
 
             if ($startDate <= $rangeStartDate) {
                 $iterator->fastForward($rangeStartDate);
-            } else {
-                $iterator->next();
             }
 
             $current = $iterator->current();
 
+            // Prepare lookup table for excluded dates (EXDATE)
+            $excludedMap = [];
+            if (!empty($event['excluded']) && is_array($event['excluded'])) {
+                foreach ($event['excluded'] as $ex) {
+                    $excludedMap[substr($ex, 0, 10)] = true;
+                    $excludedMap[$ex] = true;
+                }
+            }
+
             while ($current && $current <= $endDate) {
-                $event['start'] = $current->format("Y-m-d H:i:s");
-                $event['day'] = $current->format("Y-m-d");
-                $event['end'] = date("Y-m-d H:i:s", strtotime($event['start']) + $interval);
-                $result[] = $event;
+                $dayStr = $current->format("Y-m-d");
+                $startStr = $current->format("Y-m-d H:i:s");
+
+                // Skip instances that fall on an excluded date/time
+                if (empty($excludedMap[$dayStr]) && empty($excludedMap[$startStr])) {
+                    $instance = $event;
+                    $instance['start'] = $startStr;
+                    $instance['day'] = $dayStr;
+                    $instance['end'] = date("Y-m-d H:i:s", strtotime($startStr) + $interval);
+                    $result[] = $instance;
+                }
+
                 $iterator->next();
                 $current = $iterator->current();
             }
@@ -1489,10 +1504,18 @@ class Event extends Entity
                         }
                         break;
                     case "EXDATE":
-                        $excluded[] = $property->getDateTime()->setTimeZone($this->timezone)->format("Y-m-d 00:00:00");
+                        if (method_exists($property, 'hasTime') && $property->hasTime()) {
+                            $excluded[] = $property->getDateTime($this->timezone)->format("Y-m-d H:i:s");
+                        } else {
+                            $excluded[] = $property->getDateTime()->setTimeZone($this->timezone)->format("Y-m-d 00:00:00");
+                        }
                         break;
                     case "RECURRENCE-ID":
-                        $data["recurrence_id"] = $property->getDateTime($this->timezone)->format("Y-m-d 00:00:00");
+                        if (method_exists($property, 'hasTime') && $property->hasTime()) {
+                            $data["recurrence_id"] = $property->getDateTime($this->timezone)->format("Y-m-d H:i:s");
+                        } else {
+                            $data["recurrence_id"] = $property->getDateTime($this->timezone)->format("Y-m-d 00:00:00");
+                        }
                         break;
                     case "VALARM":
                         if ($alarm = $this->vAlarmObjectToAlarm($property)) {

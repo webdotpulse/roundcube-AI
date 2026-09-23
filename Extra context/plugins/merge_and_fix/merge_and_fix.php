@@ -228,6 +228,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_merge(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $targetId = trim((string)($this->getInputValue('_target_id') ?? ''));
             $sourceId = trim((string)($this->getInputValue('_source_id') ?? ''));
@@ -253,6 +257,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_merge_all(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $abookId = trim((string)($this->getInputValue('_source') ?? ''));
             $result = $this->mergeAllDuplicates($abookId !== '' ? $abookId : null);
@@ -270,6 +278,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_dismiss(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $type = (string)($this->getInputValue('_type') ?? 'duplicate');
 
@@ -304,6 +316,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_reset_dismissed(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $this->resetDismissed();
             $this->jsonResponse([
@@ -323,6 +339,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_add_suggested(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $name = trim((string)($this->getInputValue('_name') ?? ''));
             $email = trim((string)($this->getInputValue('_email') ?? ''));
@@ -349,6 +369,10 @@ class merge_and_fix extends rcube_plugin
      */
     public function action_add_all_suggested(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         try {
             $rawList = $this->getInputValue('_contacts');
             $abookId = trim((string)($this->getInputValue('_source') ?? ''));

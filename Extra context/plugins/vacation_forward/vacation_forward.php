@@ -255,6 +255,10 @@ class vacation_forward extends rcube_plugin
      */
     public function action_save(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         $newPrefs = $this->collectPostPrefs();
         $currentPrefs = $this->getUserPrefs();
         $merged = array_merge($currentPrefs, $newPrefs);
@@ -272,6 +276,10 @@ class vacation_forward extends rcube_plugin
      */
     public function action_template_save(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         $tplId = trim((string)rcube_utils::get_input_value('_tpl_id', rcube_utils::INPUT_POST));
         $tplName = trim((string)rcube_utils::get_input_value('_tpl_name', rcube_utils::INPUT_POST));
         $tplLang = trim((string)rcube_utils::get_input_value('_tpl_lang', rcube_utils::INPUT_POST));
@@ -342,6 +350,10 @@ class vacation_forward extends rcube_plugin
      */
     public function action_template_delete(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         $tplId = trim((string)rcube_utils::get_input_value('_tpl_id', rcube_utils::INPUT_POST));
         $prefs = $this->getUserPrefs();
         $templates = $prefs['vacation_templates'] ?? VacationForwardTemplateManager::getDefaultTemplates();
@@ -421,6 +433,10 @@ class vacation_forward extends rcube_plugin
      */
     public function action_clear_logs(): void
     {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+
         $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : 0;
         if ($userId > 0) {
             $db = $this->rcmail->get_dbh();

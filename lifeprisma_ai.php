@@ -910,7 +910,7 @@ Body:
         if ($curl_err && !$stream_error) {
             echo "data: " . json_encode(['type' => 'error', 'message' => 'Connection error: ' . $curl_err]) . "\n\n";
             flush();
-        } else {
+        } elseif (!$stream_error) {
             echo "data: " . json_encode(['type' => 'done', 'model' => $model, 'usage' => $stream_tokens]) . "\n\n";
             flush();
         }

@@ -1570,13 +1570,37 @@ abstract class Plugin extends \rcube_plugin
     }
 
     /**
-     * Verify the token.
+     * Verify the CSRF token on modifying POST requests.
      *
      * @return bool
      */
     public function checkCsrfToken(): bool
     {
-        return true;
+        if (php_sapi_name() === 'cli' || empty($_SERVER['REQUEST_METHOD'])) {
+            return true;
+        }
+
+        $method = strtoupper($_SERVER['REQUEST_METHOD']);
+        if ($method !== 'POST') {
+            return true;
+        }
+
+        // Exempt login action from CSRF check during startup/init
+        if (isset($this->rcmail->task) && $this->rcmail->task === 'login') {
+            return true;
+        }
+
+        $sessionToken = $this->rcmail ? $this->rcmail->get_request_token() : '';
+        if (empty($sessionToken)) {
+            return true;
+        }
+
+        $token = rcube_utils::get_input_value('_token', rcube_utils::INPUT_POST)
+            ?? ($_SERVER['HTTP_X_ROUNDCUBE_REQUEST_TOKEN'] ?? null)
+            ?? ($_SERVER['HTTP_X_SESSION_TOKEN'] ?? null)
+            ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
+
+        return !empty($token) && hash_equals($sessionToken, (string)$token);
     }
 
     /**

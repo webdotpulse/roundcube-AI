@@ -191,6 +191,8 @@ class xsignature extends XFramework\Plugin
                             $html
                         );
                     }
+                    // Sanitize HTML signature to neutralize XSS vectors
+                    $html = self::sanitizeHtmlSignature($html);
                     $signatures[$identity['id']] = [
                         "html" => "-- <br />" . $html,
                         "text" => "-- \n" . $identity['plain'],
@@ -201,6 +203,37 @@ class xsignature extends XFramework\Plugin
         }
 
         return $arg;
+    }
+
+    /**
+     * Sanitizes HTML signature markup to eliminate stored XSS while preserving legitimate styles and formatting.
+     *
+     * @param string $html
+     * @return string
+     */
+    public static function sanitizeHtmlSignature(string $html): string
+    {
+        if (trim($html) === '') {
+            return '';
+        }
+
+        if (class_exists('rcube_washtml')) {
+            $washtml = new \rcube_washtml([
+                'allow_remote' => true,
+                'show_washed' => false,
+            ]);
+            $html = $washtml->wash($html);
+        } elseif (class_exists('rcmail') && method_exists('rcmail', 'get_instance') && method_exists(\rcmail::get_instance(), 'clean_html')) {
+            $html = \rcmail::get_instance()->clean_html($html);
+        } else {
+            // Defensive sanitizer: strip active scripts, styles, iframes, embeds, and event handlers
+            $html = preg_replace('/<\s*(script|style|iframe|object|embed|applet|meta|link|base|form|input|button)\b[^>]*>.*?<\/\s*\1\s*>/is', '', $html);
+            $html = preg_replace('/<\s*(script|style|iframe|object|embed|applet|meta|link|base|form|input|button)\b[^>]*\/?>/is', '', $html);
+            $html = preg_replace('/\son[a-z]+\s*=\s*(["\'][^"\']*["\']|[^\s>]+)/i', '', $html);
+            $html = preg_replace('/\s(href|src)\s*=\s*["\']\s*(javascript|vbscript|data):[^"\']*["\']/i', '', $html);
+        }
+
+        return $html;
     }
 
     /**
@@ -322,9 +355,14 @@ class xsignature extends XFramework\Plugin
             $arg['record']['xsignature_enabled'] = 0;
         }
 
+        // Sanitize HTML signature before saving to prevent Stored XSS
+        if (is_string($html) && trim($html) !== '') {
+            $html = self::sanitizeHtmlSignature($html);
+        }
+
         // collect and save the data
-        $signatureId = $data->id;
-        if ($signatureId !== null) {
+        $signatureId = isset($data->id) && is_numeric($data->id) ? (int)$data->id : null;
+        if ($signatureId !== null && $signatureId > 0) {
 
             // validate and fix data
             $this->fixSignatureData($data);
@@ -381,7 +419,9 @@ class xsignature extends XFramework\Plugin
                 throw new Exception("Invalid token.");
             }
 
-            if (!($signatureId = rcube_utils::get_input_value("xsignature_id", rcube_utils::INPUT_POST))) {
+            $sigIdInput = rcube_utils::get_input_value("xsignature_id", rcube_utils::INPUT_POST);
+            $signatureId = is_numeric($sigIdInput) ? (int)$sigIdInput : 0;
+            if ($signatureId <= 0) {
                 throw new Exception("Invalid signature id");
             }
 

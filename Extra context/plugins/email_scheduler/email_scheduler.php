@@ -233,12 +233,15 @@ class email_scheduler extends rcube_plugin
         $row = $db->fetch_assoc($res);
 
         if ($row) {
-            $sent = $this->deliverQueuedMessage($row);
-            $this->jsonResponse([
-                'success' => $sent,
-                'message' => $sent ? $this->gettext('msg_sent_now') : 'Delivery error occurred.',
-            ]);
-            return;
+            $db->query("UPDATE {$this->table} SET status = 'processing' WHERE id = ? AND user_id = ? AND status IN ('scheduled', 'delayed')", $queueId, $userId);
+            if ($db->affected_rows() > 0) {
+                $sent = $this->deliverQueuedMessage($row);
+                $this->jsonResponse([
+                    'success' => $sent,
+                    'message' => $sent ? $this->gettext('msg_sent_now') : 'Delivery error occurred.',
+                ]);
+                return;
+            }
         }
 
         $this->jsonResponse(['success' => false, 'message' => 'Message not found.']);
@@ -302,6 +305,16 @@ class email_scheduler extends rcube_plugin
         $count = 0;
 
         while ($row = $db->fetch_assoc($res)) {
+            // Atomically claim the row to prevent concurrent workers from double-sending
+            $db->query(
+                "UPDATE {$this->table} SET status = 'processing' WHERE id = ? AND status IN ('scheduled', 'delayed')",
+                $row['id']
+            );
+            if ($db->affected_rows() <= 0) {
+                // Another worker already claimed this message
+                continue;
+            }
+
             if ($this->deliverQueuedMessage($row)) {
                 $count++;
             }
@@ -331,10 +344,13 @@ class email_scheduler extends rcube_plugin
             $cleanRecipients = preg_replace('/[\r\n]+/', '', trim((string)$recipients));
             $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($cleanSubject, 'UTF-8') : $cleanSubject;
 
+            $contentType = $headers['Content-Type'] ?? 'text/plain; charset=UTF-8';
+            $contentType = preg_replace('/[\r\n]+/', ' ', trim((string)$contentType));
+
             $mailHeaders = "From: {$cleanFrom}\r\n" .
                            "Subject: {$encodedSubject}\r\n" .
                            "MIME-Version: 1.0\r\n" .
-                           "Content-Type: text/plain; charset=UTF-8\r\n";
+                           "Content-Type: {$contentType}\r\n";
 
             $delivered = @mail($cleanRecipients, $encodedSubject, $body, $mailHeaders);
 
