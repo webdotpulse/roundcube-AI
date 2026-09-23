@@ -55,6 +55,9 @@ if (window.rcmail) {
         if (task === 'mail') {
             lpai_init_spam_toolbar();
             lpai_check_message_spam_banner();
+            if (rcmail.env.lpai_pending_triage && Array.isArray(rcmail.env.lpai_pending_triage)) {
+                lpai_queue_pending_triage(rcmail.env.lpai_pending_triage);
+            }
         }
     });
 
@@ -94,6 +97,13 @@ if (window.rcmail) {
     rcmail.addEventListener('plugin.lifeprisma_ai_sync_spams', function(rowSpams) {
         if (rowSpams && typeof rowSpams === 'object') {
             lpai_sync_all_spam_badges(rowSpams);
+        }
+    });
+
+    // Autonomous background triage queue for untriaged incoming messages in INBOX
+    rcmail.addEventListener('plugin.lifeprisma_ai_pending_triage', function(uids) {
+        if (Array.isArray(uids) && uids.length > 0) {
+            lpai_queue_pending_triage(uids);
         }
     });
 
@@ -608,6 +618,69 @@ function lpai_setup_save_draft_button() {
 }
 
 // ========================================
+// AUTONOMOUS BACKGROUND TRIAGE QUEUE ('receive' mode)
+// ========================================
+var lpai_triage_queue = [];
+var lpai_triage_queue_running = false;
+
+function lpai_queue_pending_triage(uids) {
+    if (!Array.isArray(uids) || !uids.length) return;
+    var prefs = rcmail.env.lpai_user_prefs || {};
+    var mode = prefs.auto_draft_mode || 'open';
+    if (mode !== 'receive' && mode !== 'all') return;
+
+    var gemini = rcmail.env.lpai_gemini || {};
+    if (!gemini.has_key) return;
+
+    uids.forEach(function(uid) {
+        var strUid = String(uid);
+        if (lpai_triage_queue.indexOf(strUid) === -1) {
+            lpai_triage_queue.push(strUid);
+        }
+    });
+
+    if (!lpai_triage_queue_running) {
+        lpai_process_next_triage_queue_item();
+    }
+}
+
+function lpai_process_next_triage_queue_item() {
+    if (!lpai_triage_queue.length) {
+        lpai_triage_queue_running = false;
+        return;
+    }
+
+    lpai_triage_queue_running = true;
+    var uid = lpai_triage_queue.shift();
+    var mbox = rcmail.env.mailbox || 'INBOX';
+
+    var postData = 'msg_uid=' + encodeURIComponent(uid) +
+        '&mbox=' + encodeURIComponent(mbox) +
+        '&_token=' + encodeURIComponent(rcmail.env.request_token);
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_triage'));
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState !== 4) return;
+        try {
+            var data = JSON.parse(xhr.responseText);
+            if (data && data.status === 'success' && data.analysis) {
+                if (data.analysis.assigned_label) {
+                    lpai_sync_message_row_label(uid, [data.analysis.assigned_label]);
+                }
+            }
+        } catch (e) {}
+
+        // Small throttle delay between background requests to avoid burst rate limiting
+        setTimeout(function() {
+            lpai_process_next_triage_queue_item();
+        }, 1200);
+    };
+    xhr.send(postData);
+}
+
+// ========================================
 // AUTONOMOUS EXECUTIVE ASSISTANT
 // ========================================
 function lpai_init_executive_triage(force) {
@@ -624,6 +697,12 @@ function lpai_init_executive_triage(force) {
     var uid = rcmail.env.uid;
     var mbox = rcmail.env.mailbox || 'INBOX';
     if (!uid) return;
+
+    // Prioritize active message if it is waiting in background queue
+    var qIdx = lpai_triage_queue.indexOf(String(uid));
+    if (qIdx !== -1) {
+        lpai_triage_queue.splice(qIdx, 1);
+    }
 
     var cacheKey = 'lpai_triage_' + mbox + '_' + uid;
 

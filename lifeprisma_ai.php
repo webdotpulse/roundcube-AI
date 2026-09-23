@@ -77,6 +77,59 @@ class lifeprisma_ai extends rcube_plugin
         ], 'taskbar');
     }
 
+    /**
+     * Resolve active auto-draft & triage mode:
+     * 1. User preferences (genia_auto_draft_mode)
+     * 2. Admin settings (auto_draft_mode)
+     * 3. Config.inc.php fallback (lifeprisma_ai_auto_draft_mode)
+     *
+     * @param array|null $prefs
+     * @return string 'open' | 'receive' | 'all' | 'disabled'
+     */
+    public function get_auto_draft_mode($prefs = null)
+    {
+        $rcmail = rcmail::get_instance();
+        if ($prefs === null) {
+            $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
+            if (!is_array($prefs)) $prefs = [];
+        }
+        if (!empty($prefs['genia_auto_draft_mode'])) {
+            return $prefs['genia_auto_draft_mode'];
+        }
+        $admin = $this->get_admin_config();
+        if (!empty($admin['auto_draft_mode'])) {
+            return $admin['auto_draft_mode'];
+        }
+        return $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open');
+    }
+
+    /**
+     * Checks if a message has already been triaged or processed
+     *
+     * @param int|string $uid
+     * @param string $mbox
+     * @param array|null $prefs
+     * @return bool
+     */
+    public function is_message_triaged($uid, $mbox = 'INBOX', $prefs = null)
+    {
+        $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
+        if ($this->cache_get($cache_key) !== null) {
+            return true;
+        }
+
+        $done_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+        if ($this->cache_get($done_key) !== null) {
+            return true;
+        }
+
+        if ($prefs !== null && is_array($prefs) && isset($prefs['genia_triage_log']["{$mbox}:{$uid}"])) {
+            return true;
+        }
+
+        return false;
+    }
+
     public function render_page($args)
     {
         $rcmail = rcmail::get_instance();
@@ -118,7 +171,7 @@ class lifeprisma_ai extends rcube_plugin
 
             // Pass user preferences
             $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
-            $auto_draft_mode = $prefs['genia_auto_draft_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open');
+            $auto_draft_mode = $this->get_auto_draft_mode($prefs);
             $rcmail->output->set_env('lpai_user_prefs', [
                 'language' => $prefs['genia_language'] ?? $rcmail->config->get('lifeprisma_ai_default_language', 'English'),
                 'tone' => $prefs['genia_tone'] ?? $rcmail->config->get('lifeprisma_ai_default_tone', 'professional'),
@@ -394,196 +447,9 @@ class lifeprisma_ai extends rcube_plugin
                 exit;
             }
 
-            $gemini = $this->get_gemini_config();
-            if (empty($gemini['api_key'])) {
-                echo json_encode([
-                    'status' => 'error',
-                    'code' => 'no_api_key',
-                    'message' => 'Google Gemini API key not configured. Please add your key in Settings -> Gemini Assistant Admin or config.inc.php.'
-                ]);
-                exit;
-            }
-
-            $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
-            if (!$force) {
-                $cached = $this->cache_get($cache_key);
-                if ($cached !== null) {
-                    $cached['cached'] = 'server';
-                    echo json_encode($cached);
-                    exit;
-                }
-
-                // Check user preferences log
-                if ($rcmail->user) {
-                    try {
-                        $prefs = $rcmail->user->get_prefs();
-                        $triage_log = $prefs['genia_triage_log'] ?? [];
-                        $item_key = "{$mbox}:{$uid}";
-                        if (isset($triage_log[$item_key]) && (time() - ($triage_log[$item_key]['time'] ?? 0) < 86400 * 7)) {
-                            $item = $triage_log[$item_key];
-                            $item['status'] = 'success';
-                            $item['cached'] = 'local';
-                            echo json_encode($item);
-                            exit;
-                        }
-                    } catch (\Throwable $e) {
-                        $this->ai_log("[TRIAGE PREFS CHECK ERROR] " . $e->getMessage());
-                    }
-                }
-            }
-
-            $ctx = $this->fetch_message_context($uid, $mbox);
-            if (empty($ctx) || empty($ctx['body'])) {
-                echo json_encode(['status' => 'error', 'message' => 'Empty or unreadable message body']);
-                exit;
-            }
-
-            $raw_headers = $this->fetch_raw_headers($uid, $mbox);
-            $is_bulk = false;
-            if (!empty($raw_headers)) {
-                if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers) ||
-                    preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers) ||
-                    preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
-                    $is_bulk = true;
-                }
-            }
-
-            // Check if sent by user themselves
-            $user_emails = [];
-            $identities = $rcmail->user ? $rcmail->user->list_identities() : [];
-            if (is_array($identities)) {
-                foreach ($identities as $ident) {
-                    if (!empty($ident['email'])) $user_emails[] = strtolower(trim($ident['email']));
-                }
-            }
-            $is_self = false;
-            $from_email = strtolower($ctx['from'] ?? '');
-            foreach ($user_emails as $ue) {
-                if ($ue && strpos($from_email, $ue) !== false) {
-                    $is_self = true;
-                    break;
-                }
-            }
-
-            $identity = $rcmail->user ? $rcmail->user->get_identity() : [];
-            if (!is_array($identity)) $identity = [];
-            $user_name = trim(($identity['name'] ?? '') . ' <' . ($identity['email'] ?? '') . '>');
-            $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
-            if (!is_array($prefs)) $prefs = [];
-            $language = $prefs['genia_language'] ?? 'English';
-            $tone = $prefs['genia_tone'] ?? 'professional';
-
-            // Close session early to prevent webmail lockup during external AI generation
-            session_write_close();
-
-            // Single-shot executive triage via Google Gemini
-            $result = $this->call_gemini_triage($ctx, $raw_headers, $user_name, $language, $tone, $gemini, $is_bulk, $is_self);
-
-            if (!$result || empty($result['analysis'])) {
-                echo json_encode(['status' => 'error', 'message' => 'Failed to generate executive analysis from Gemini']);
-                exit;
-            }
-
-            $analysis = $result['analysis'];
-            $model = $result['model'];
-            $tokens = $result['tokens'];
-
-            // Assign IMAP label flag if triage labels are enabled (roundcube-labels integration)
-            if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
-                try {
-                    $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
-                        'to_respond'            => '$Label1',
-                        'fyi'                   => '$Label2',
-                        'important'             => '$Label3',
-                        'marketing_newsletters' => '$Label4',
-                        'todo'                  => '$Label5',
-                        'action_required'       => '$Label1',
-                        'action_required_high'  => '$Label3',
-                        'meeting'               => '$Label1',
-                        'follow_up'             => '$Label1',
-                        'newsletter'            => '$Label4',
-                        'scam'                  => '$Label3',
-                    ]);
-                    $cat = $analysis['category'] ?? 'fyi';
-                    $urgency = $analysis['urgency'] ?? 'low';
-                    $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
-                    $flag = $label_map[$cat] ?? ($label_map[$mapKey] ?? ($label_map['fyi'] ?? '$Label2'));
-                    if ($flag) {
-                        $storage = $rcmail->get_storage();
-                        if ($storage) {
-                            $storage->set_flag($uid, $flag, $mbox);
-                        }
-                        $analysis['assigned_label'] = $flag;
-                    }
-                } catch (\Throwable $e) {
-                    $this->ai_log("[TRIAGE LABEL ERROR] " . $e->getMessage());
-                }
-            }
-
-            // Save to cache (multi-tier resilient cache)
-            $cache_payload = [
-                'status' => 'success',
-                'analysis' => $analysis,
-                'model' => $model,
-                'tokens' => $tokens,
-                'time' => time(),
-            ];
-            $this->cache_set($cache_key, $cache_payload, 86400 * 7);
-
-            // Save in user preferences log (FIFO capped at 200 items, using no_session = true post session_write_close)
-            if ($rcmail->user) {
-                try {
-                    $tlog = $prefs['genia_triage_log'] ?? [];
-                    if (!is_array($tlog)) $tlog = [];
-                    $item_key = "{$mbox}:{$uid}";
-                    $tlog[$item_key] = $cache_payload;
-                    if (count($tlog) > 200) {
-                        $cutoff = time() - (86400 * 7);
-                        $tlog = array_filter($tlog, function ($e) use ($cutoff) { return ($e['time'] ?? 0) > $cutoff; });
-                        if (count($tlog) > 150) $tlog = array_slice($tlog, -150, null, true);
-                    }
-                    $rcmail->user->save_prefs(['genia_triage_log' => $tlog], true);
-                } catch (\Throwable $e) {
-                    $this->ai_log("[TRIAGE SAVE PREFS ERROR] " . $e->getMessage());
-                }
-            }
-
-            // Auto-save draft to IMAP Drafts if user preference enables background creation
-            try {
-                $auto_draft_mode = $prefs['genia_auto_draft_mode'] ?? 'open';
-                $auto_draft_enabled = isset($prefs['genia_auto_draft']) ? (bool) $prefs['genia_auto_draft'] : (bool) $rcmail->config->get('lifeprisma_ai_auto_draft', true);
-                if (($auto_draft_mode === 'open' || $auto_draft_mode === 'receive') && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && $auto_draft_enabled) {
-                    $cache_done_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
-                    if ($this->cache_get($cache_done_key) === null) {
-                        $orig_msg_id = '';
-                        if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
-                            $orig_msg_id = trim($m[1]);
-                        }
-                        $saved = $this->create_imap_draft(
-                            $ctx['from'],
-                            $ctx['subject'],
-                            $analysis['draft_reply'],
-                            $orig_msg_id,
-                            $ctx['date'],
-                            $ctx['from'],
-                            $ctx['body']
-                        );
-                        if ($saved) {
-                            $this->mark_autodraft_done($uid, $mbox, 'draft_created', ['subject' => $ctx['subject'] ?? '']);
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                $this->ai_log("[TRIAGE AUTODRAFT ERROR] " . $e->getMessage());
-            }
-
-            echo json_encode([
-                'status' => 'success',
-                'analysis' => $analysis,
-                'model' => $model,
-                'tokens' => $tokens,
-                'cached' => false,
-            ]);
+            $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
+            $result = $this->process_message_triage($uid, $mbox, $prefs, $force);
+            echo json_encode($result);
             exit;
         } catch (\Throwable $e) {
             $this->ai_log("[TRIAGE FATAL ERROR] " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine());
@@ -593,6 +459,216 @@ class lifeprisma_ai extends rcube_plugin
             ]);
             exit;
         }
+    }
+
+    /**
+     * Reusable Autonomous Executive Triage & Background Auto-Draft Engine.
+     * Evaluates email with Gemini: classification, summary briefing, action items, deadlines,
+     * assigns IMAP label flag, caches briefing, and creates pre-crafted IMAP draft reply.
+     *
+     * @param int|string $uid Message UID
+     * @param string $mbox Mailbox name (default: 'INBOX')
+     * @param array|null $prefs User preferences (optional)
+     * @param bool $force Force re-triage bypassing cache
+     * @return array Result array with status, analysis, model, tokens, etc.
+     */
+    public function process_message_triage($uid, $mbox = 'INBOX', $prefs = null, $force = false)
+    {
+        $rcmail = rcmail::get_instance();
+        if ($prefs === null) {
+            $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
+            if (!is_array($prefs)) $prefs = [];
+        }
+
+        if (empty($uid)) {
+            return ['status' => 'error', 'message' => 'Missing msg_uid'];
+        }
+
+        $gemini = $this->get_gemini_config();
+        if (empty($gemini['api_key'])) {
+            return [
+                'status' => 'error',
+                'code' => 'no_api_key',
+                'message' => 'Google Gemini API key not configured. Please add your key in Settings -> Gemini Assistant Admin or config.inc.php.'
+            ];
+        }
+
+        $cache_key = $this->cache_user_prefix() . "triage:{$mbox}:{$uid}";
+        if (!$force) {
+            $cached = $this->cache_get($cache_key);
+            if ($cached !== null) {
+                $cached['cached'] = 'server';
+                return $cached;
+            }
+
+            // Check user preferences log
+            if ($rcmail->user) {
+                try {
+                    $triage_log = $prefs['genia_triage_log'] ?? [];
+                    $item_key = "{$mbox}:{$uid}";
+                    if (isset($triage_log[$item_key]) && (time() - ($triage_log[$item_key]['time'] ?? 0) < 86400 * 7)) {
+                        $item = $triage_log[$item_key];
+                        $item['status'] = 'success';
+                        $item['cached'] = 'local';
+                        return $item;
+                    }
+                } catch (\Throwable $e) {
+                    $this->ai_log("[TRIAGE PREFS CHECK ERROR] " . $e->getMessage());
+                }
+            }
+        }
+
+        $ctx = $this->fetch_message_context($uid, $mbox);
+        if (empty($ctx) || empty($ctx['body'])) {
+            return ['status' => 'error', 'message' => 'Empty or unreadable message body'];
+        }
+
+        $raw_headers = $this->fetch_raw_headers($uid, $mbox);
+        $is_bulk = false;
+        if (!empty($raw_headers)) {
+            if (preg_match('/\b(List-Unsubscribe|List-Id|List-Post):/i', $raw_headers) ||
+                preg_match('/\bPrecedence:\s*(bulk|list|junk)/i', $raw_headers) ||
+                preg_match('/\bAuto-Submitted:\s*(auto-generated|auto-replied)/i', $raw_headers)) {
+                $is_bulk = true;
+            }
+        }
+
+        // Check if sent by user themselves
+        $user_emails = [];
+        $identities = $rcmail->user ? $rcmail->user->list_identities() : [];
+        if (is_array($identities)) {
+            foreach ($identities as $ident) {
+                if (!empty($ident['email'])) $user_emails[] = strtolower(trim($ident['email']));
+            }
+        }
+        $is_self = false;
+        $from_email = strtolower($ctx['from'] ?? '');
+        foreach ($user_emails as $ue) {
+            if ($ue && strpos($from_email, $ue) !== false) {
+                $is_self = true;
+                break;
+            }
+        }
+
+        $identity = $rcmail->user ? $rcmail->user->get_identity() : [];
+        if (!is_array($identity)) $identity = [];
+        $user_name = trim(($identity['name'] ?? '') . ' <' . ($identity['email'] ?? '') . '>');
+        $language = $prefs['genia_language'] ?? 'English';
+        $tone = $prefs['genia_tone'] ?? 'professional';
+
+        // Close session early to prevent webmail lockup during external AI generation if active
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_write_close();
+        }
+
+        // Single-shot executive triage via Google Gemini
+        $result = $this->call_gemini_triage($ctx, $raw_headers, $user_name, $language, $tone, $gemini, $is_bulk, $is_self);
+
+        if (!$result || empty($result['analysis'])) {
+            return ['status' => 'error', 'message' => 'Failed to generate executive analysis from Gemini'];
+        }
+
+        $analysis = $result['analysis'];
+        $model = $result['model'];
+        $tokens = $result['tokens'];
+
+        // Assign IMAP label flag if triage labels are enabled (roundcube-labels integration)
+        if ($rcmail->config->get('lifeprisma_ai_triage_labels_enabled', true)) {
+            try {
+                $label_map = $rcmail->config->get('lifeprisma_ai_triage_label_map', [
+                    'to_respond'            => '$Label1',
+                    'fyi'                   => '$Label2',
+                    'important'             => '$Label3',
+                    'marketing_newsletters' => '$Label4',
+                    'todo'                  => '$Label5',
+                    'action_required'       => '$Label1',
+                    'action_required_high'  => '$Label3',
+                    'meeting'               => '$Label1',
+                    'follow_up'             => '$Label1',
+                    'newsletter'            => '$Label4',
+                    'scam'                  => '$Label3',
+                ]);
+                $cat = $analysis['category'] ?? 'fyi';
+                $urgency = $analysis['urgency'] ?? 'low';
+                $mapKey = ($cat === 'action_required' && $urgency === 'high') ? 'action_required_high' : $cat;
+                $flag = $label_map[$cat] ?? ($label_map[$mapKey] ?? ($label_map['fyi'] ?? '$Label2'));
+                if ($flag) {
+                    $storage = $rcmail->get_storage();
+                    if ($storage) {
+                        $storage->set_flag($uid, $flag, $mbox);
+                    }
+                    $analysis['assigned_label'] = $flag;
+                }
+            } catch (\Throwable $e) {
+                $this->ai_log("[TRIAGE LABEL ERROR] " . $e->getMessage());
+            }
+        }
+
+        // Save to cache (multi-tier resilient cache)
+        $cache_payload = [
+            'status' => 'success',
+            'analysis' => $analysis,
+            'model' => $model,
+            'tokens' => $tokens,
+            'time' => time(),
+        ];
+        $this->cache_set($cache_key, $cache_payload, 86400 * 7);
+
+        // Save in user preferences log (FIFO capped at 200 items, using no_session = true post session_write_close)
+        if ($rcmail->user) {
+            try {
+                $tlog = $prefs['genia_triage_log'] ?? [];
+                if (!is_array($tlog)) $tlog = [];
+                $item_key = "{$mbox}:{$uid}";
+                $tlog[$item_key] = $cache_payload;
+                if (count($tlog) > 200) {
+                    $cutoff = time() - (86400 * 7);
+                    $tlog = array_filter($tlog, function ($e) use ($cutoff) { return ($e['time'] ?? 0) > $cutoff; });
+                    if (count($tlog) > 150) $tlog = array_slice($tlog, -150, null, true);
+                }
+                $rcmail->user->save_prefs(['genia_triage_log' => $tlog], true);
+            } catch (\Throwable $e) {
+                $this->ai_log("[TRIAGE SAVE PREFS ERROR] " . $e->getMessage());
+            }
+        }
+
+        // Auto-save draft to IMAP Drafts if user preference enables background creation
+        try {
+            $auto_draft_mode = $this->get_auto_draft_mode($prefs);
+            $auto_draft_enabled = isset($prefs['genia_auto_draft']) ? (bool) $prefs['genia_auto_draft'] : (bool) $rcmail->config->get('lifeprisma_ai_auto_draft', true);
+            if (($auto_draft_mode === 'open' || $auto_draft_mode === 'receive' || $auto_draft_mode === 'all') && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && $auto_draft_enabled) {
+                $cache_done_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+                if ($this->cache_get($cache_done_key) === null) {
+                    $orig_msg_id = '';
+                    if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
+                        $orig_msg_id = trim($m[1]);
+                    }
+                    $saved = $this->create_imap_draft(
+                        $ctx['from'],
+                        $ctx['subject'],
+                        $analysis['draft_reply'],
+                        $orig_msg_id,
+                        $ctx['date'],
+                        $ctx['from'],
+                        $ctx['body']
+                    );
+                    if ($saved) {
+                        $this->mark_autodraft_done($uid, $mbox, 'draft_created', ['subject' => $ctx['subject'] ?? '']);
+                        $analysis['draft_created'] = true;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->ai_log("[TRIAGE AUTODRAFT ERROR] " . $e->getMessage());
+        }
+
+        return [
+            'status' => 'success',
+            'analysis' => $analysis,
+            'model' => $model,
+            'tokens' => $tokens,
+            'cached' => false,
+        ];
     }
 
     /**
@@ -1043,7 +1119,7 @@ Body:
         }
 
         $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
-        $mode = $prefs['genia_auto_draft_mode'] ?? 'open';
+        $mode = $this->get_auto_draft_mode($prefs);
         if ($mode === 'disabled') {
             echo json_encode(['status' => 'skipped', 'message' => 'Auto-draft disabled']);
             exit;
@@ -1051,9 +1127,9 @@ Body:
 
         session_write_close();
 
-        $subj = $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
-        if ($subj) {
-            echo json_encode(['status' => 'success', 'created' => true, 'subject' => $subj]);
+        $triage_res = $this->process_message_triage((int) $uid, $mbox, $prefs);
+        if (!empty($triage_res['analysis']['draft_created'])) {
+            echo json_encode(['status' => 'success', 'created' => true, 'subject' => $triage_res['analysis']['subject'] ?? '']);
         } else {
             echo json_encode(['status' => 'skipped', 'created' => false]);
         }
@@ -1175,8 +1251,8 @@ Body:
             }
         }
 
-        // 2. Background Auto-Draft Generation (Non-spam only)
-        $mode = $prefs['genia_auto_draft_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open');
+        // 2. Background Autonomous Executive Triage, Labeling & Auto-Drafting (Non-spam only)
+        $mode = $this->get_auto_draft_mode($prefs);
         if ($mode !== 'receive' && $mode !== 'all') {
             return;
         }
@@ -1187,8 +1263,12 @@ Body:
             return;
         }
 
+        // Cap batch size to avoid PHP timeouts during background check
+        $target_uids = array_slice($target_uids, 0, 10);
         foreach ($target_uids as $uid) {
-            $this->generate_autodraft_for_message((int) $uid, $mbox, $prefs);
+            if (!$this->is_message_triaged($uid, $mbox, $prefs)) {
+                $this->process_message_triage((int) $uid, $mbox, $prefs);
+            }
         }
     }
 
@@ -1223,6 +1303,8 @@ Body:
         $user_id = $this->get_user_identifier();
 
         $messages_to_remove = [];
+        $immediate_triage_count = 0;
+        $pending_triage_uids = [];
 
         foreach ($args['messages'] as $idx_key => $header) {
             if (empty($header) || empty($header->uid)) continue;
@@ -1336,6 +1418,37 @@ Body:
                 }
             }
 
+            // Real-time automatic triage & label evaluation for incoming unseen messages in INBOX
+            $auto_draft_mode = $this->get_auto_draft_mode($prefs);
+            if ($is_inbox && !$has_junk_flag && $is_unseen && ($auto_draft_mode === 'receive' || $auto_draft_mode === 'all')) {
+                $has_label = !empty($row_labels[$uid_str]);
+                $is_triaged = $has_label || $this->is_message_triaged($header->uid, $curr_mbox, $prefs);
+                if (!$is_triaged) {
+                    if ($immediate_triage_count < 2) {
+                        $immediate_triage_count++;
+                        $triage_res = $this->process_message_triage($header->uid, $curr_mbox, $prefs);
+                        if (!empty($triage_res['analysis']['assigned_label'])) {
+                            $assigned_flag = $triage_res['analysis']['assigned_label'];
+                            if (preg_match('/^\$label([0-9]+)$/i', $assigned_flag, $lm)) {
+                                $lidx = $lm[1];
+                                if (!isset($row_labels[$uid_str])) {
+                                    $row_labels[$uid_str] = [];
+                                }
+                                if (!in_array($assigned_flag, $row_labels[$uid_str], true)) {
+                                    $row_labels[$uid_str][] = $assigned_flag;
+                                }
+                                if (!is_array($header->list_flags)) {
+                                    $header->list_flags = [];
+                                }
+                                $header->list_flags['label-' . $lidx] = 1;
+                            }
+                        }
+                    } else {
+                        $pending_triage_uids[] = (string) $header->uid;
+                    }
+                }
+            }
+
             if ($is_junk_folder || $has_junk_flag) {
                 if (!is_array($header->list_flags)) {
                     $header->list_flags = [];
@@ -1363,6 +1476,11 @@ Body:
         if (!empty($row_labels)) {
             $rcmail->output->set_env('lpai_row_labels', $row_labels);
             $rcmail->output->command('plugin.lifeprisma_ai_sync_labels', $row_labels);
+        }
+
+        if (!empty($pending_triage_uids)) {
+            $rcmail->output->set_env('lpai_pending_triage', $pending_triage_uids);
+            $rcmail->output->command('plugin.lifeprisma_ai_pending_triage', $pending_triage_uids);
         }
 
         if (!empty($row_spams)) {
@@ -1840,7 +1958,7 @@ Body:
             'options' => [
                 'genia_auto_draft_mode' => [
                     'title' => 'Autonomous Assistant Mode',
-                    'content' => $auto_draft_mode_select->show($prefs['genia_auto_draft_mode'] ?? 'open'),
+                    'content' => $auto_draft_mode_select->show($prefs['genia_auto_draft_mode'] ?? $this->get_auto_draft_mode($prefs)),
                 ],
                 'genia_language' => [
                     'title' => 'Default language for briefings & replies',
@@ -1876,9 +1994,12 @@ Body:
         }
         if ($args['section'] !== 'genia') return $args;
 
+        $rcmail = rcmail::get_instance();
+        $prefs = ($rcmail->user && method_exists($rcmail->user, 'get_prefs')) ? $rcmail->user->get_prefs() : [];
+
         $args['prefs']['genia_language'] = rcube_utils::get_input_string('_genia_language', rcube_utils::INPUT_POST);
         $args['prefs']['genia_tone'] = rcube_utils::get_input_string('_genia_tone', rcube_utils::INPUT_POST);
-        $args['prefs']['genia_auto_draft_mode'] = rcube_utils::get_input_string('_genia_auto_draft_mode', rcube_utils::INPUT_POST) ?: 'open';
+        $args['prefs']['genia_auto_draft_mode'] = rcube_utils::get_input_string('_genia_auto_draft_mode', rcube_utils::INPUT_POST) ?: $this->get_auto_draft_mode($prefs);
         $args['prefs']['genia_auto_draft_filter'] = rcube_utils::get_input_string('_genia_auto_draft_filter', rcube_utils::INPUT_POST) ? 1 : 0;
         $args['prefs']['genia_auto_draft'] = rcube_utils::get_input_string('_genia_auto_draft', rcube_utils::INPUT_POST) ? 1 : 0;
         $args['prefs']['genia_smart_compose'] = rcube_utils::get_input_string('_genia_smart_compose', rcube_utils::INPUT_POST) ? 1 : 0;
@@ -1941,7 +2062,7 @@ Body:
                     'rate_limit' => $admin['rate_limit'] ?? $rcmail->config->get('lifeprisma_ai_rate_limit', 2),
                     'default_language' => $admin['default_language'] ?? $rcmail->config->get('lifeprisma_ai_default_language', 'English'),
                     'default_tone' => $admin['default_tone'] ?? $rcmail->config->get('lifeprisma_ai_default_tone', 'professional'),
-                    'auto_draft_mode' => $admin['auto_draft_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open'),
+                    'auto_draft_mode' => $this->get_auto_draft_mode(),
                 ],
                 'usage' => $this->get_usage_stats(),
             ]);
