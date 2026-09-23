@@ -65,7 +65,11 @@ if (!class_exists('rcube_plugin')) {
         public $home = '';
         public function __construct($api = null) { $this->api = $api; }
         public function add_hook(string $hook, $callback): void {}
-        public function register_action(string $action, $callback): void {}
+        public function register_action(string $action, $callback): void {
+            if ($this->api && method_exists($this->api, 'register_action')) {
+                $this->api->register_action($action, $this->ID, $callback);
+            }
+        }
         public function gettext($name): string { return is_array($name) ? ($name['name'] ?? '') : (string)$name; }
     }
 }
@@ -90,6 +94,10 @@ if (!class_exists('rcube_utils')) {
         public const INPUT_GET = 2;
         public static function get_input_value($name, $mode, $allow_html = false) {
             return $_POST[$name] ?? $_GET[$name] ?? null;
+        }
+        public static function request_header($name) {
+            $key = 'HTTP_' . strtoupper(strtr($name, '-', '_'));
+            return $_SERVER[$key] ?? null;
         }
     }
 }
@@ -207,6 +215,58 @@ $testCheck = function($token) use ($mockRcmail) {
 test_assert($testCheck('valid_secret_token_12345') === true, "Valid CSRF token passes verification");
 test_assert($testCheck('invalid_attack_token') === false, "Invalid CSRF token fails verification");
 test_assert($testCheck('') === false, "Empty CSRF token fails verification");
+
+// Simulate Web POST request header verification via checkCsrfToken()
+$_SERVER['REQUEST_METHOD'] = 'POST';
+$_SERVER['HTTP_X_ROUNDCUBE_REQUEST'] = $mockRcmail->get_request_token();
+test_assert($pluginCsrf->checkCsrfToken() === true, "X-Roundcube-Request header passes CSRF verification");
+
+$_SERVER['HTTP_X_ROUNDCUBE_REQUEST'] = 'invalid_attacker_token';
+test_assert($pluginCsrf->checkCsrfToken() === false, "Invalid X-Roundcube-Request header fails CSRF verification");
+
+unset($_SERVER['HTTP_X_ROUNDCUBE_REQUEST']);
+$_SERVER['HTTP_X_CSRF_TOKEN'] = $mockRcmail->get_request_token();
+test_assert($pluginCsrf->checkCsrfToken() === true, "X-CSRF-Token header passes CSRF verification");
+
+unset($_SERVER['HTTP_X_CSRF_TOKEN']);
+$_POST['_token'] = $mockRcmail->get_request_token();
+test_assert($pluginCsrf->checkCsrfToken() === true, "POST _token parameter passes CSRF verification");
+
+unset($_POST['_token']);
+test_assert($pluginCsrf->checkCsrfToken() === false, "Missing token on POST fails CSRF verification");
+
+// Restore CLI mode
+unset($_SERVER['REQUEST_METHOD']);
+
+// Verify xmultibox action registration
+require_once __DIR__ . '/../Extra context/plugins/xmultibox/xmultibox.php';
+$dummyApi = new class {
+    public array $actions = [];
+    public function register_action($action, $owner, $cb, $task = null) {
+        if ($task) {
+            $action = $task . '.' . $action;
+        } elseif (!str_starts_with($action, 'plugin.')) {
+            $action = 'plugin.' . $action;
+        }
+        $this->actions[$action] = $cb;
+    }
+};
+$mockMultibox = new class($dummyApi) extends xmultibox {
+    public function __construct($api) {
+        $this->api = $api;
+        $this->rcmail = new rcube();
+        $this->rcmail->action = '';
+        $this->rcmail->task = 'mail';
+        $this->menuList = [];
+    }
+    public function add_hook(string $hook, $callback): void {}
+    public function includeAsset(string $asset, string $forceExtension = ''): void {}
+    public function setJsVar(string $key, $value): void {}
+    protected function createMenuList(): array { return []; }
+};
+$mockMultibox->initialize();
+test_assert(isset($dummyApi->actions['plugin.xmultibox-change-identity']), "Action plugin.xmultibox-change-identity is registered");
+test_assert(is_callable($dummyApi->actions['plugin.xmultibox-change-identity']), "Handler for plugin.xmultibox-change-identity is callable");
 
 // ------------------------------------------------------------
 // Test 4: customizr SVG Sanitization Disk Persistence

@@ -17,7 +17,7 @@ class xmultibox extends XFramework\Plugin
     const PASSWORD_PLACEHOLDER = '************';
     protected bool $hasConfig = false;
     protected string $databaseVersion = "20240911";
-    private array $menuList = [];
+    protected array $menuList = [];
     private array $identityErrorData = [];
     protected string $appUrl = "?_task=settings&_action=identities&edit_first_identity=";
 
@@ -62,8 +62,15 @@ class xmultibox extends XFramework\Plugin
         // must be before the switch clause below since some of the functions depend on the modified config values
         $this->add_hook("config_get", [$this, "configGet"]);
         $this->register_action('xmultibox-change-identity', [$this, 'changeIdentityAction']);
+        $this->register_action('plugin.xmultibox-change-identity', [$this, 'changeIdentityAction']);
 
         switch ($this->rcmail->action) {
+            // handle identity change
+            case "xmultibox-change-identity":
+            case "plugin.xmultibox-change-identity":
+                $this->changeIdentityAction();
+                break;
+
             // handle imap test button click on the identity edit page
             case "xmultibox-test-imap-connection":
                 $this->testImapConnection();
@@ -1074,8 +1081,12 @@ class xmultibox extends XFramework\Plugin
      *
      * @return array
      */
-    private function createMenuList(): array
+    protected function createMenuList(): array
     {
+        if (empty($this->rcmail->user) || !method_exists($this->rcmail->user, 'list_identities')) {
+            return [];
+        }
+
         $list = [];
         $enabled = false;
 

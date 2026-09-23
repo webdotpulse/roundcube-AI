@@ -1576,7 +1576,7 @@ abstract class Plugin extends \rcube_plugin
      */
     public function checkCsrfToken(): bool
     {
-        if (php_sapi_name() === 'cli' || empty($_SERVER['REQUEST_METHOD'])) {
+        if (empty($_SERVER['REQUEST_METHOD'])) {
             return true;
         }
 
@@ -1595,7 +1595,21 @@ abstract class Plugin extends \rcube_plugin
             return true;
         }
 
-        $token = \rcube_utils::get_input_value('_token', \rcube_utils::INPUT_POST)
+        if ($this->rcmail && method_exists($this->rcmail, 'check_request') && $this->rcmail->check_request(\rcube_utils::INPUT_POST)) {
+            return true;
+        }
+
+        $token = null;
+        if (class_exists('rcube_utils')) {
+            $token = \rcube_utils::get_input_value('_token', \rcube_utils::INPUT_POST);
+            if (!$token && method_exists('rcube_utils', 'request_header')) {
+                $token = \rcube_utils::request_header('X-Roundcube-Request');
+            }
+        }
+
+        $token = $token
+            ?? ($_POST['_token'] ?? null)
+            ?? ($_SERVER['HTTP_X_ROUNDCUBE_REQUEST'] ?? null)
             ?? ($_SERVER['HTTP_X_ROUNDCUBE_REQUEST_TOKEN'] ?? null)
             ?? ($_SERVER['HTTP_X_SESSION_TOKEN'] ?? null)
             ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);
