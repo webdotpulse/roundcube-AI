@@ -296,6 +296,9 @@ class email_scheduler extends rcube_plugin
      */
     public function processDueMessages(): int
     {
+        if (!isset($this->rcmail)) {
+            $this->rcmail = rcmail::get_instance();
+        }
         $db = $this->rcmail->get_dbh();
         $this->ensureTableExists($db);
 

@@ -375,9 +375,9 @@ class VacationForwardVacationEngine
             return;
         }
 
-        $dbType = method_exists($db, 'get_type') ? $db->get_type() : 'mysql';
+        $dbType = $db->db_provider ?? (method_exists($db, 'get_type') ? $db->get_type() : 'mysql');
         $sqlFile = match ($dbType) {
-            'sqlite' => dirname(__DIR__) . '/SQL/sqlite.sql',
+            'sqlite', 'sqlite3' => dirname(__DIR__) . '/SQL/sqlite.sql',
             'postgres', 'pgsql' => dirname(__DIR__) . '/SQL/postgres.sql',
             default => dirname(__DIR__) . '/SQL/mysql.sql',
         };

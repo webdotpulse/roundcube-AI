@@ -1595,7 +1595,7 @@ abstract class Plugin extends \rcube_plugin
             return true;
         }
 
-        $token = rcube_utils::get_input_value('_token', rcube_utils::INPUT_POST)
+        $token = \rcube_utils::get_input_value('_token', \rcube_utils::INPUT_POST)
             ?? ($_SERVER['HTTP_X_ROUNDCUBE_REQUEST_TOKEN'] ?? null)
             ?? ($_SERVER['HTTP_X_SESSION_TOKEN'] ?? null)
             ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? null);

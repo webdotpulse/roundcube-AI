@@ -488,6 +488,13 @@ class vacation_forward extends rcube_plugin
      */
     public function runBatchCron(): int
     {
+        if (!isset($this->rcmail)) {
+            $this->rcmail = rcmail::get_instance();
+        }
+        if (!isset($this->vacationEngine)) {
+            $this->vacationEngine = new VacationForwardVacationEngine($this->rcmail);
+        }
+
         // Standalone offline processor invoked by CLI / web cron
         $db = $this->rcmail->get_dbh();
         $this->vacationEngine->ensureLogsTable($db);

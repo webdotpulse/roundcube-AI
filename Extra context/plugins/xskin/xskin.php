@@ -119,6 +119,7 @@ class xskin extends XFramework\Plugin
         $this->includeAsset('assets/styles/styles.css');
         $this->includeSkinConfig();
 
+        $basePath = defined('RCUBE_INSTALL_PATH') ? RCUBE_INSTALL_PATH : '';
         if ($this->skinBase == 'larry') {
             $this->larrySetSkin();
             $this->addDisableMobileInterfaceMenuItem();
@@ -128,15 +129,23 @@ class xskin extends XFramework\Plugin
                 $this->includeAsset('assets/scripts/jquery.hammer.js');
                 $this->includeAsset('assets/scripts/larry_mobile.min.js');
                 $this->includeAsset('assets/styles/larry_mobile.css');
-                $this->includeAsset("../../skins/$this->skin/assets/styles/mobile.css");
+                if (is_file($basePath . "skins/$this->skin/assets/styles/mobile.css")) {
+                    $this->includeAsset("../../skins/$this->skin/assets/styles/mobile.css");
+                }
             } else {
                 $this->includeAsset('assets/scripts/larry_desktop.min.js');
                 $this->includeAsset('assets/styles/larry_desktop.css');
-                $this->includeAsset("../../skins/$this->skin/assets/styles/desktop.css");
+                if (is_file($basePath . "skins/$this->skin/assets/styles/desktop.css")) {
+                    $this->includeAsset("../../skins/$this->skin/assets/styles/desktop.css");
+                }
             }
         } else {
-            $this->includeAsset("../../skins/$this->skin/assets/styles/styles.css");
-            $this->includeAsset("../../skins/$this->skin/assets/scripts/scripts.min.js");
+            if (is_file($basePath . "skins/$this->skin/assets/styles/styles.css")) {
+                $this->includeAsset("../../skins/$this->skin/assets/styles/styles.css");
+            }
+            if (is_file($basePath . "skins/$this->skin/assets/scripts/scripts.min.js")) {
+                $this->includeAsset("../../skins/$this->skin/assets/scripts/scripts.min.js");
+            }
         }
 
         // removed the cairo font (included with previous versions) because of line spacing issues - fix any old font settings

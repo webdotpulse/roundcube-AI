@@ -23,6 +23,7 @@ if (file_exists($rcDir . '/program/include/iniset.php')) {
 
 $rcmail = rcmail::get_instance();
 $plugin = new email_scheduler($rcmail->plugins);
+$plugin->init();
 $processed = $plugin->processDueMessages();
 
 if (php_sapi_name() === 'cli') {

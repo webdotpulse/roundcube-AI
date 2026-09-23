@@ -2014,19 +2014,30 @@ function lpai_init_custom_selects() {
     var selects = doc.querySelectorAll('.lpai-select');
     selects.forEach(function(sel) {
         if (!sel.id) return;
+        sel.classList.add('gm-native');
+        sel.dataset.gm = '1';
+
+        // If wrapped by an external decorator (such as gm-select in Gmail skin), unwrap it
+        var gmWrap = sel.closest ? sel.closest('.gm-select') : null;
+        if (gmWrap && gmWrap.parentNode) {
+            gmWrap.parentNode.insertBefore(sel, gmWrap);
+            gmWrap.remove();
+        }
+
         var parent = sel.closest('.lpai-custom-select');
         if (!parent) {
             if (sel.parentElement && sel.parentElement.classList.contains('lpai-custom-select')) {
                 parent = sel.parentElement;
             } else {
                 var wrapper = doc.createElement('div');
-                wrapper.className = 'lpai-custom-select';
+                wrapper.className = 'lpai-custom-select gm-native';
                 wrapper.dataset.selectId = sel.id;
                 sel.parentNode.insertBefore(wrapper, sel);
                 wrapper.appendChild(sel);
                 parent = wrapper;
             }
         }
+        parent.classList.add('gm-native');
 
         var trigger = parent.querySelector('.lpai-custom-select-trigger');
         var dropdown = parent.querySelector('.lpai-custom-dropdown');
@@ -2046,7 +2057,11 @@ function lpai_init_custom_selects() {
             var arrowSvg = '<svg class="lpai-custom-select-arrow" viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8l4 4 4-4"/></svg>';
             trigger.appendChild(labelSpan);
             trigger.insertAdjacentHTML('beforeend', arrowSvg);
-            parent.insertBefore(trigger, sel);
+            if (sel.parentNode) {
+                sel.parentNode.insertBefore(trigger, sel);
+            } else {
+                parent.appendChild(trigger);
+            }
         }
 
         if (!dropdown) {
@@ -2054,7 +2069,11 @@ function lpai_init_custom_selects() {
             dropdown.className = 'lpai-custom-dropdown';
             dropdown.setAttribute('role', 'listbox');
             dropdown.style.display = 'none';
-            parent.insertBefore(dropdown, sel);
+            if (sel.parentNode) {
+                sel.parentNode.insertBefore(dropdown, sel);
+            } else {
+                parent.appendChild(dropdown);
+            }
         }
 
         dropdown.innerHTML = '';

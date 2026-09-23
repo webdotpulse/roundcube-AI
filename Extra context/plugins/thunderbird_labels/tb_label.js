@@ -1591,7 +1591,7 @@ $(function () {
   }
 
   // Single message view
-  var labels_for_message = tb_labels_for_message;
+  var labels_for_message = typeof tb_labels_for_message !== "undefined" ? tb_labels_for_message : null;
   if (labels_for_message && labels_for_message.length) {
     var labelbox_parent = $("div.message-headers, #message-header");
     if (!labelbox_parent.length) {

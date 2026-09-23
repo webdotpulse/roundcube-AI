@@ -26,6 +26,7 @@ require_once __DIR__ . '/vacation_forward.php';
 
 $rcmail = rcmail::get_instance();
 $plugin = new vacation_forward($rcmail->plugins);
+$plugin->init();
 $processed = $plugin->runBatchCron();
 
 if (php_sapi_name() === 'cli') {

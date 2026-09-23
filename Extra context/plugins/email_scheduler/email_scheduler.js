@@ -327,7 +327,7 @@
         if (modal) modal.remove();
 
         // Trigger compose send
-        rcmail.command('send');
+        rcmail.command('send', {});
     };
 
     window.email_scheduler_choose_custom = function() {
