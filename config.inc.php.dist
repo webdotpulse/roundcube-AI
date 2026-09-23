@@ -102,6 +102,9 @@ $config['lifeprisma_ai_template_attachments_dir'] = __DIR__ . '/attachments/temp
 // Skips newsletters, marketing, bulk notifications, and auto-generated alerts
 $config['lifeprisma_ai_auto_draft_filter'] = true;
 
+// Automatically save prepared reply to IMAP Drafts folder (zero-click draft creation)
+$config['lifeprisma_ai_auto_draft'] = true;
+
 // Default language for summaries and generated drafts
 // Supported: 'English', 'Portuguese', 'Spanish', 'French', 'German', 'Italian', 'Dutch'
 $config['lifeprisma_ai_default_language'] = 'English';

@@ -2376,7 +2376,7 @@ html.dark-mode .lpai-autodraft-info,
    Gemini Executive Assistant Hub
    ============================================================ */
 .lpai-executive-hub {
-    margin: 10px 14px;
+    margin: 8px 0 12px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-left: 4px solid #2563eb;
@@ -3163,6 +3163,27 @@ body.dark-mode .lpai-row-spam td,
     color: #e11d48;
     display: flex;
     align-items: center;
+}
+
+.lpai-spam-reasons {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.4;
+    opacity: 0.95;
+}
+
+.lpai-spam-reasons-title {
+    font-weight: 600;
+}
+
+.lpai-spam-reasons-list {
+    margin: 3px 0 0 16px;
+    padding: 0;
+    list-style-type: disc;
+}
+
+.lpai-spam-reasons-list li {
+    margin-bottom: 2px;
 }
 
 .lpai-spam-banner .lpai-btn-ham {

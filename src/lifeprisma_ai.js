@@ -263,13 +263,45 @@ function lpai_check_pending_reply() {
         // Prefilled reply from draft "Review & Send in Composer"
         var prefilled = localStorage.getItem('lpai_prefilled_reply');
         if (prefilled) {
-            localStorage.removeItem('lpai_prefilled_reply');
-            setTimeout(function() {
-                lpai_apply_with_preserve(prefilled);
-                if (rcmail.display_message) {
-                    rcmail.display_message('Gemini draft loaded into editor. Review and send!', 'confirmation');
+            var attempts = 0;
+            var maxAttempts = 15;
+            var applied = false;
+
+            var tryApply = function() {
+                if (applied) return;
+                attempts++;
+                var ed = (window.tinymce && tinymce.get('_message')) ? tinymce.get('_message') : (window.tinymce ? tinymce.activeEditor : null);
+                var isHtmlMode = window.rcmail && rcmail.editor && typeof rcmail.editor.is_html === 'function' ? rcmail.editor.is_html() : false;
+                var ta = document.getElementById('_message');
+
+                // If in HTML mode, wait until TinyMCE editor is initialized and ready
+                if (isHtmlMode && (!ed || !ed.initialized)) {
+                    if (attempts < maxAttempts) {
+                        setTimeout(tryApply, 150);
+                    }
+                    return;
                 }
-            }, 600);
+
+                if (ed || ta) {
+                    applied = true;
+                    localStorage.removeItem('lpai_prefilled_reply');
+                    lpai_apply_with_preserve(prefilled);
+                    if (rcmail.display_message && !window._lpai_draft_notified) {
+                        window._lpai_draft_notified = true;
+                        rcmail.display_message('Gemini draft loaded into editor. Review and send!', 'confirmation');
+                    }
+                } else if (attempts < maxAttempts) {
+                    setTimeout(tryApply, 150);
+                }
+            };
+
+            if (window.rcmail && typeof rcmail.addEventListener === 'function') {
+                rcmail.addEventListener('editor-init', function() {
+                    setTimeout(tryApply, 50);
+                });
+            }
+
+            setTimeout(tryApply, 100);
             return;
         }
 
@@ -848,24 +880,20 @@ function lpai_send_to_composer() {
         } catch (e) {}
     });
 
-    if (selectedAtts.length > 0) {
-        var postData = 'reply=' + encodeURIComponent(text) +
-            '&subject=' + encodeURIComponent(rcmail.env.subject ? ('Re: ' + rcmail.env.subject.replace(/^(Re:\s*)+/i, '')) : '') +
-            '&attachments=' + encodeURIComponent(JSON.stringify(selectedAtts)) +
-            '&_token=' + encodeURIComponent(rcmail.env.request_token);
+    var postData = 'reply=' + encodeURIComponent(text) +
+        '&subject=' + encodeURIComponent(rcmail.env.subject ? ('Re: ' + rcmail.env.subject.replace(/^(Re:\s*)+/i, '')) : '') +
+        '&attachments=' + encodeURIComponent(JSON.stringify(selectedAtts)) +
+        '&_token=' + encodeURIComponent(rcmail.env.request_token);
 
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_prepare_compose'));
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState === 4) {
-                rcmail.command('reply');
-            }
-        };
-        xhr.send(postData);
-    } else {
-        rcmail.command('reply');
-    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', rcmail.url('plugin.lifeprisma_ai_prepare_compose'));
+    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            rcmail.command('reply');
+        }
+    };
+    xhr.send(postData);
 }
 
 function lpai_copy_draft(btn) {
@@ -1830,31 +1858,43 @@ function lpai_apply_with_preserve(newContent) {
     } catch (e) {}
 
     // 3. Compose email body editor (_message)
-    if (window.tinymce && tinymce.activeEditor) {
-        var ed = tinymce.activeEditor;
-        var existingHtml = ed.getContent();
+    var ed = (window.tinymce && tinymce.get('_message')) ? tinymce.get('_message') : (window.tinymce ? tinymce.activeEditor : null);
+    if (ed && typeof ed.getContent === 'function') {
+        var existingHtml = ed.getContent() || '';
         var htmlContent = lpai_md_to_html(newContent);
 
-        // Check if there is quoted content or signature
-        var quoteIdx = existingHtml.indexOf('<blockquote');
-        if (quoteIdx < 0) quoteIdx = existingHtml.indexOf('class="gmail_quote"');
+        // Check if newContent is already present at the top to avoid duplicate insertions
+        var plainSnippet = newContent.replace(/[#*_`\n\r]/g, '').trim().substring(0, 30);
+        if (plainSnippet && existingHtml.indexOf(plainSnippet) !== -1) {
+            return;
+        }
 
-        if (quoteIdx > 0) {
-            var quotePart = existingHtml.substring(quoteIdx);
-            ed.setContent(htmlContent + '<br><br>' + quotePart);
+        // Clean only leading empty paragraphs, breaks, or spaces placed for cursor
+        var cleanedHtml = existingHtml.replace(/^(?:\s*<p>(?:<br\s*\/?>|&nbsp;|\s)*<\/p>|\s*<div>(?:<br\s*\/?>|&nbsp;|\s)*<\/div>|\s*<br\s*\/?>|\s)+/i, '');
+
+        if (cleanedHtml) {
+            // Prepend reply above existing content (which includes signature and/or quotes)
+            ed.setContent(htmlContent + '<br><br>' + cleanedHtml);
         } else {
             ed.setContent(htmlContent);
         }
+        if (ed.fire) ed.fire('change');
     } else {
         var ta = document.getElementById('_message');
         if (ta) {
-            var val = ta.value;
-            var qIdx = val.indexOf('\n> ');
-            if (qIdx > 0) {
-                ta.value = newContent + '\n\n' + val.substring(qIdx);
+            var val = ta.value || '';
+            var plainSnippet = newContent.trim().substring(0, 30);
+            if (plainSnippet && val.indexOf(plainSnippet) !== -1) {
+                return;
+            }
+            var cleanedVal = val.replace(/^[\r\n\s]+/, '');
+            if (cleanedVal) {
+                ta.value = newContent + '\n\n' + cleanedVal;
             } else {
                 ta.value = newContent;
             }
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            ta.dispatchEvent(new Event('change', { bubbles: true }));
         }
     }
 }
@@ -2900,6 +2940,10 @@ function lpai_sync_message_row_spam(uid) {
         var badge = doc.createElement('span');
         badge.className = 'lpai-spam-badge';
         badge.innerText = 'SPAM';
+        var spams = (window.rcmail && rcmail.env.lpai_row_spams) || {};
+        if (spams[uid] && typeof spams[uid] === 'object' && spams[uid].summary) {
+            badge.title = 'Spam: ' + spams[uid].summary;
+        }
 
         if (insertTarget && insertTarget.parentNode) {
             insertTarget.parentNode.insertBefore(badge, insertTarget);
@@ -2960,10 +3004,19 @@ function lpai_check_message_spam_banner() {
     var target = document.getElementById('messagecontent') || document.getElementById('messagepreview') || document.getElementById('messagebody') || document.getElementById('messageheader');
     if (!target) return;
 
+    var reasonsHtml = '';
+    if (ctx && ctx.spam_reasons && ctx.spam_reasons.length) {
+        reasonsHtml = '<div class="lpai-spam-reasons"><div class="lpai-spam-reasons-title"><strong>Reasoning:</strong></div><ul class="lpai-spam-reasons-list">';
+        ctx.spam_reasons.forEach(function(r) {
+            reasonsHtml += '<li>' + lpai_escape_html(r) + '</li>';
+        });
+        reasonsHtml += '</ul></div>';
+    }
+
     var banner = document.createElement('div');
     banner.id = 'lpai-spam-banner';
     banner.className = 'lpai-spam-banner';
-    banner.innerHTML = '<div class="lpai-spam-banner-content"><span class="lpai-spam-banner-icon">' + lpai_icon('shield_alert') + '</span><div><strong>Spam Detected:</strong> This email was identified as spam and moved to the ' + lpai_escape_html(junkMbox) + ' folder.</div></div><button type="button" class="lpai-btn-ham" onclick="lpai_mark_ham()">' + lpai_icon('shield_check') + ' <span>Not Spam (Move to Inbox)</span></button>';
+    banner.innerHTML = '<div class="lpai-spam-banner-content"><span class="lpai-spam-banner-icon">' + lpai_icon('shield_alert') + '</span><div><div><strong>Spam Detected:</strong> This email was identified as spam and moved to the ' + lpai_escape_html(junkMbox) + ' folder.</div>' + reasonsHtml + '</div></div><button type="button" class="lpai-btn-ham" onclick="lpai_mark_ham()">' + lpai_icon('shield_check') + ' <span>Not Spam (Move to Inbox)</span></button>';
 
     target.parentNode.insertBefore(banner, target);
 
@@ -2973,6 +3026,9 @@ function lpai_check_message_spam_banner() {
         var badge = document.createElement('span');
         badge.className = 'lpai-spam-badge';
         badge.innerText = 'SPAM';
+        if (ctx && ctx.spam_reasons && ctx.spam_reasons.length) {
+            badge.title = 'Spam: ' + ctx.spam_reasons.join('; ');
+        }
         subjElem.insertBefore(badge, subjElem.firstChild);
     }
 }

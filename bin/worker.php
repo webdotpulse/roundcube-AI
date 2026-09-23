@@ -982,7 +982,8 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 
                 $system_prompt = "You are an elite, discreet Executive AI Assistant. " .
                     "Your role is to draft an exceptional, highly contextual executive email response. " .
-                    "Maintain the user's authentic tone ($tone) in $language. " .
+                    "Auto-detect the language of the incoming email and write the draft response in that exact same language (fallback language: $language). " .
+                    "Maintain the user's authentic tone ($tone). " .
                     "Directly address all questions and action items. Do not include placeholders like [Your Name]." .
                     $memory_prompt;
 

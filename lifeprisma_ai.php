@@ -122,7 +122,7 @@ class lifeprisma_ai extends rcube_plugin
             $rcmail->output->set_env('lpai_user_prefs', [
                 'language' => $prefs['genia_language'] ?? $rcmail->config->get('lifeprisma_ai_default_language', 'English'),
                 'tone' => $prefs['genia_tone'] ?? $rcmail->config->get('lifeprisma_ai_default_tone', 'professional'),
-                'auto_draft' => $prefs['genia_auto_draft'] ?? 0,
+                'auto_draft' => $prefs['genia_auto_draft'] ?? (int) $rcmail->config->get('lifeprisma_ai_auto_draft', 1),
                 'auto_draft_mode' => $auto_draft_mode,
                 'auto_draft_filter' => $prefs['genia_auto_draft_filter'] ?? 1,
                 'followup_check' => $prefs['genia_followup_check'] ?? 1,
@@ -172,12 +172,41 @@ class lifeprisma_ai extends rcube_plugin
                             if (!$is_msg_spam && !empty($ctx['flags'])) {
                                 $is_msg_spam = !empty($ctx['flags']['junk']) || !empty($ctx['flags']['$junk']) || !empty($ctx['flags']['spam']);
                             }
+                            $spam_reasons = [];
+                            $spam_score = $ctx['spam_score'] ?? null;
+                            if ($is_msg_spam) {
+                                $cached_spam = $this->cache_get($this->cache_user_prefix() . "spam:reason:{$mbox}:{$uid}");
+                                if (!empty($cached_spam['reasons'])) {
+                                    $spam_reasons = $cached_spam['reasons'];
+                                    if (empty($spam_score) && !empty($cached_spam['score'])) {
+                                        $spam_score = $cached_spam['score'];
+                                    }
+                                } else {
+                                    $raw_hdrs = $this->fetch_raw_headers((int) $uid, $mbox);
+                                    $decision = LpaiSpamFilter::check_message(
+                                        $ctx['subject'] ?? '',
+                                        $ctx['body'] ?? '',
+                                        $raw_hdrs,
+                                        $ctx['from'] ?? '',
+                                        $this->get_user_identifier(),
+                                        $prefs
+                                    );
+                                    $spam_reasons = $decision['reasons'] ?? [];
+                                    if (empty($spam_reasons)) {
+                                        $spam_reasons = ['Identified as spam in ' . $junk_folder . ' folder'];
+                                    }
+                                    if (empty($spam_score)) {
+                                        $spam_score = $decision['score'] ?? null;
+                                    }
+                                }
+                            }
                             $rcmail->output->set_env('lpai_msg_context', [
                                 'from' => $ctx['from'] ?? '',
                                 'date' => $ctx['date'] ?? '',
                                 'subject' => $ctx['subject'] ?? '',
-                                'spam_score' => $ctx['spam_score'] ?? null,
+                                'spam_score' => $spam_score,
                                 'is_spam' => $is_msg_spam,
+                                'spam_reasons' => $spam_reasons,
                             ]);
                         }
                     }
@@ -522,20 +551,27 @@ class lifeprisma_ai extends rcube_plugin
             // Auto-save draft to IMAP Drafts if user preference enables background creation
             try {
                 $auto_draft_mode = $prefs['genia_auto_draft_mode'] ?? 'open';
-                if ($auto_draft_mode === 'open' && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && !empty($prefs['genia_auto_draft'])) {
-                    $orig_msg_id = '';
-                    if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
-                        $orig_msg_id = trim($m[1]);
+                $auto_draft_enabled = isset($prefs['genia_auto_draft']) ? (bool) $prefs['genia_auto_draft'] : (bool) $rcmail->config->get('lifeprisma_ai_auto_draft', true);
+                if (($auto_draft_mode === 'open' || $auto_draft_mode === 'receive') && !empty($analysis['needs_reply']) && !empty($analysis['draft_reply']) && $auto_draft_enabled) {
+                    $cache_done_key = $this->cache_user_prefix() . "autodraft:done:{$mbox}:{$uid}";
+                    if ($this->cache_get($cache_done_key) === null) {
+                        $orig_msg_id = '';
+                        if (preg_match('/^Message-ID:\s*(<[^>]+>)/im', $raw_headers, $m)) {
+                            $orig_msg_id = trim($m[1]);
+                        }
+                        $saved = $this->create_imap_draft(
+                            $ctx['from'],
+                            $ctx['subject'],
+                            $analysis['draft_reply'],
+                            $orig_msg_id,
+                            $ctx['date'],
+                            $ctx['from'],
+                            $ctx['body']
+                        );
+                        if ($saved) {
+                            $this->mark_autodraft_done($uid, $mbox, 'draft_created', ['subject' => $ctx['subject'] ?? '']);
+                        }
                     }
-                    $this->create_imap_draft(
-                        $ctx['from'],
-                        $ctx['subject'],
-                        $analysis['draft_reply'],
-                        $orig_msg_id,
-                        $ctx['date'],
-                        $ctx['from'],
-                        $ctx['body']
-                    );
                 }
             } catch (\Throwable $e) {
                 $this->ai_log("[TRIAGE AUTODRAFT ERROR] " . $e->getMessage());
@@ -600,7 +636,7 @@ Rules:
 6. If the email is a suspicious phishing/scam, set category to \"important\", is_scam to true, and explain in scam_reason.
 7. Keep summary under 50 words. Be objective and direct.
 8. Action items should be clear and actionable. If no action items, return an empty array [].
-9. Draft reply must be contextually appropriate in {$language} with a {$tone} tone. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
+9. Draft reply must automatically match the language of the incoming email (auto-detected from the email subject and body). If the incoming email language is ambiguous or unidentifiable, fall back to {$language}. The tone must be {$tone}. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
 10. If needs_reply is false, set draft_reply to null.";
 
         // Inject learned AI memory if enabled (answer replication)
@@ -627,7 +663,7 @@ From: {$from}
 Date: {$date}
 Subject: {$subject}
 User (Recipient): {$user_name}
-Language requested: {$language}
+Language requested: {$language} (Always match incoming email language for draft_reply)
 Tone requested: {$tone}
 Bulk/Newsletter indicator: " . ($is_bulk ? 'YES' : 'NO') . "
 Self-sent indicator: " . ($is_self ? 'YES' : 'NO') . "
@@ -1104,8 +1140,16 @@ Body:
                         $storage->unset_flag($uid, '$NotJunk', $mbox);
                     }
 
-                    // Auto-train Bayesian learning model on arrival
-                    if ($auto_learn) {
+                    // Cache diagnostic reasoning
+                    if (!empty($decision['reasons'])) {
+                        $this->cache_set($this->cache_user_prefix() . "spam:reason:{$mbox}:{$uid}", [
+                            'reasons' => $decision['reasons'],
+                            'score'   => $decision['score'] ?? 100,
+                        ], 86400 * 7);
+                    }
+
+                    // Auto-train Bayesian learning model on arrival only for high-confidence spam
+                    if ($auto_learn && !empty($decision['score']) && $decision['score'] >= 95) {
                         $msg_id = $this->extract_message_id($raw_headers);
                         LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
                     }
@@ -1132,8 +1176,8 @@ Body:
         }
 
         // 2. Background Auto-Draft Generation (Non-spam only)
-        $mode = $prefs['genia_auto_draft_mode'] ?? 'open';
-        if ($mode !== 'all') {
+        $mode = $prefs['genia_auto_draft_mode'] ?? $rcmail->config->get('lifeprisma_ai_auto_draft_mode', 'open');
+        if ($mode !== 'receive' && $mode !== 'all') {
             return;
         }
 
@@ -1264,7 +1308,15 @@ Body:
                             }
                         }
 
-                        if ($auto_learn) {
+                        // Cache diagnostic reasoning
+                        if (!empty($decision['reasons'])) {
+                            $this->cache_set($this->cache_user_prefix() . "spam:reason:{$curr_mbox}:{$header->uid}", [
+                                'reasons' => $decision['reasons'],
+                                'score'   => $decision['score'] ?? 100,
+                            ], 86400 * 7);
+                        }
+
+                        if ($auto_learn && !empty($decision['score']) && $decision['score'] >= 95) {
                             $msg_id = $this->extract_message_id($raw_headers);
                             LpaiSpamFilter::learn_spam($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id);
                         }
@@ -1289,7 +1341,12 @@ Body:
                     $header->list_flags = [];
                 }
                 $header->list_flags['spam'] = 1;
-                $row_spams[$uid_str] = true;
+                $cached_reason = $this->cache_get($this->cache_user_prefix() . "spam:reason:{$curr_mbox}:{$header->uid}");
+                $reasons_summary = !empty($cached_reason['reasons']) ? implode('; ', $cached_reason['reasons']) : 'Identified as spam';
+                $row_spams[$uid_str] = [
+                    'reasons' => $cached_reason['reasons'] ?? [$reasons_summary],
+                    'summary' => $reasons_summary,
+                ];
                 // Suppress regular label badges on spam so it doesn't display "To Respond"
                 unset($row_labels[$uid_str]);
             }
@@ -1380,7 +1437,7 @@ Body:
         $language = $prefs['genia_language'] ?? 'English';
         $tone = $prefs['genia_tone'] ?? 'professional';
 
-        $instruction = "Draft a polite and helpful executive response addressing all points in this email.";
+        $instruction = "Draft a polite and helpful executive response addressing all points in this email. Auto-detect the language of the incoming email and write the reply in that exact same language.";
         $reply_result = $this->call_gemini_direct('reply', $instruction, '', $body, $subject, $language, $tone, $sender_name, $from, $gemini);
 
         if (empty($reply_result)) return false;
@@ -1481,7 +1538,13 @@ Body:
                 return false;
             }
 
-            $drafts_mbox = $rcmail->config->get('drafts_mbox', 'Drafts');
+            $drafts_mbox = null;
+            if (method_exists($storage, 'get_special_folder')) {
+                $drafts_mbox = $storage->get_special_folder('drafts');
+            }
+            if (empty($drafts_mbox)) {
+                $drafts_mbox = $rcmail->config->get('drafts_mbox', 'Drafts');
+            }
 
             if (!$storage->folder_exists($drafts_mbox)) {
                 $storage->folder_create($drafts_mbox, true);
@@ -1491,6 +1554,12 @@ Body:
             if (!is_array($identity)) $identity = [];
             $from_name = $identity['name'] ?? '';
             $from_email = $identity['email'] ?? '';
+            if (empty($from_email) && $rcmail->user) {
+                $from_email = $rcmail->user->get_username();
+                if (strpos($from_email, '@') === false) {
+                    $from_email .= '@' . ($rcmail->config->mail_domain() ?: 'localhost');
+                }
+            }
             $from_str = $from_name ? "\"$from_name\" <$from_email>" : $from_email;
 
             $re_subject = (stripos($subject, 'Re:') === 0) ? $subject : 'Re: ' . $subject;
@@ -1748,7 +1817,7 @@ Body:
         $rcmail = rcmail::get_instance();
         $prefs = $rcmail->user ? $rcmail->user->get_prefs() : [];
 
-        $languages = ['English' => 'English', 'Portuguese' => 'Portuguese', 'Spanish' => 'Spanish', 'French' => 'French', 'German' => 'German', 'Italian' => 'Italian', 'Dutch' => 'Dutch'];
+        $languages = ['auto' => 'Auto-detect (match incoming email)', 'English' => 'English', 'Portuguese' => 'Portuguese', 'Spanish' => 'Spanish', 'French' => 'French', 'German' => 'German', 'Italian' => 'Italian', 'Dutch' => 'Dutch'];
         $tones = ['professional' => 'Professional', 'concise' => 'Concise', 'friendly' => 'Friendly', 'formal' => 'Formal', 'direct' => 'Direct'];
 
         $lang_select = new html_select(['name' => '_genia_language', 'id' => 'genia_language']);
@@ -1787,7 +1856,7 @@ Body:
                 ],
                 'genia_auto_draft' => [
                     'title' => 'Automatically save prepared reply to Drafts folder',
-                    'content' => $auto_draft_checkbox->show($prefs['genia_auto_draft'] ?? 0),
+                    'content' => $auto_draft_checkbox->show($prefs['genia_auto_draft'] ?? 1),
                 ],
                 'genia_smart_compose' => [
                     'title' => 'Smart Compose (inline AI autocomplete while typing)',
@@ -2545,6 +2614,15 @@ Rewrite the content to maximize deliverability, readability, and inbox placement
 Return ONLY the deliverability-optimized newsletter HTML.";
         }
 
+        if ($action === 'reply') {
+            return "You are Google Gemini, an elite executive email assistant embedded in Roundcube webmail. Rules:
+1. Return ONLY the final email reply text. No meta-commentary, no conversational filler.
+2. Auto-detect the language of the incoming email being replied to and write the reply in that exact same language (unless explicitly requested otherwise).
+3. Match the requested tone precisely.
+4. Natural, crisp, professional prose.
+5. NEVER include email signatures or sign-off blocks (e.g. '--', 'Sincerely', name/title). The webmail client inserts user signatures automatically.";
+        }
+
         return "You are Google Gemini, an elite executive email assistant embedded in Roundcube webmail. Rules:
 1. Return ONLY the final email text. No meta-commentary, no conversational filler.
 2. Match requested tone and language precisely.
@@ -2554,7 +2632,10 @@ Return ONLY the deliverability-optimized newsletter HTML.";
 
     private function build_user_prompt($action, $instruction, $email_body, $reply_text, $subject, $language, $tone, $sender_name)
     {
-        $prompt = "Task: {$action}\nLanguage: {$language}\nTone: {$tone}\n";
+        $lang_desc = ($language === 'auto' || $language === 'Auto' || $action === 'reply')
+            ? "{$language} (Auto-match incoming email language)"
+            : $language;
+        $prompt = "Task: {$action}\nLanguage: {$lang_desc}\nTone: {$tone}\n";
         if (!empty($subject)) $prompt .= "Subject/Title: {$subject}\n";
         if (!empty($sender_name)) $prompt .= "User: {$sender_name}\n";
         if (!empty($instruction)) $prompt .= "Instruction: {$instruction}\n";
@@ -2948,8 +3029,12 @@ Return ONLY the deliverability-optimized newsletter HTML.";
             $data = $_SESSION['lpai_pending_compose'];
             unset($_SESSION['lpai_pending_compose']);
 
-            if (!empty($data['reply']) && empty($args['param']['body'])) {
-                $args['param']['body'] = $data['reply'];
+            if (!empty($data['reply'])) {
+                if (empty($args['param']['body'])) {
+                    $args['param']['body'] = $data['reply'];
+                } elseif (strpos($args['param']['body'], $data['reply']) === false) {
+                    $args['param']['body'] = $data['reply'] . "\r\n\r\n" . ltrim((string) $args['param']['body']);
+                }
             }
             if (!empty($data['subject']) && empty($args['param']['subject'])) {
                 $args['param']['subject'] = $data['subject'];
@@ -3087,6 +3172,18 @@ Return ONLY the deliverability-optimized newsletter HTML.";
                     $user_id,
                     $msg_id
                 );
+            }
+
+            // Record manual reporting reason
+            $this->cache_set($this->cache_user_prefix() . "spam:reason:{$mbox}:{$uid}", [
+                'reasons' => ['Manually reported as spam by user'],
+                'score'   => 100,
+            ], 86400 * 7);
+            if (strcasecmp($mbox, $junk_mbox) !== 0) {
+                $this->cache_set($this->cache_user_prefix() . "spam:reason:{$junk_mbox}:{$uid}", [
+                    'reasons' => ['Manually reported as spam by user'],
+                    'score'   => 100,
+                ], 86400 * 7);
             }
 
             // 3. Move message to Junk folder

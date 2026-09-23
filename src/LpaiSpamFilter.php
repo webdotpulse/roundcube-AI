@@ -196,6 +196,29 @@ class LpaiSpamFilter
         'pay_in_crypto'         => ['s' => 45, 'h' => 0],
         'debt_relief'           => ['s' => 40, 'h' => 0],
         'make_money_fast'       => ['s' => 50, 'h' => 0],
+        // Baseline HAM seed tokens to prevent false positives on legitimate emails
+        'regards'               => ['s' => 0, 'h' => 50],
+        'thanks'                => ['s' => 1, 'h' => 45],
+        'thank_you'             => ['s' => 1, 'h' => 45],
+        'meeting'               => ['s' => 1, 'h' => 40],
+        'schedule'              => ['s' => 2, 'h' => 35],
+        'attached'              => ['s' => 3, 'h' => 35],
+        'project'               => ['s' => 1, 'h' => 40],
+        'update'                => ['s' => 2, 'h' => 30],
+        'invoice'               => ['s' => 5, 'h' => 35],
+        'colleague'             => ['s' => 0, 'h' => 30],
+        'team'                  => ['s' => 2, 'h' => 30],
+        'review'                => ['s' => 2, 'h' => 30],
+        'discussion'            => ['s' => 0, 'h' => 25],
+        'contract'              => ['s' => 2, 'h' => 25],
+        'report'                => ['s' => 2, 'h' => 25],
+        'sincerely'             => ['s' => 1, 'h' => 30],
+        'bedankt'               => ['s' => 0, 'h' => 40],
+        'groeten'               => ['s' => 0, 'h' => 40],
+        'afspraak'              => ['s' => 0, 'h' => 30],
+        'vergadering'           => ['s' => 0, 'h' => 30],
+        'factuur'               => ['s' => 2, 'h' => 30],
+        'bijlage'               => ['s' => 1, 'h' => 30],
     ];
 
     /**
@@ -871,7 +894,17 @@ class LpaiSpamFilter
         $whitelist = $config['lifeprisma_ai_spam_whitelist'] ?? [];
         $blacklist = $config['lifeprisma_ai_spam_blacklist'] ?? [];
         $keywords = $config['lifeprisma_ai_spam_keywords'] ?? [];
-        $threshold = (int) ($config['lifeprisma_ai_spam_threshold'] ?? 75);
+        
+        // Normalize threshold: float <= 1.0 (e.g. 0.85 from config.inc.php) is converted to percentage (85)
+        $raw_threshold = $config['lifeprisma_ai_spam_threshold'] ?? 75;
+        if (is_numeric($raw_threshold) && (float)$raw_threshold > 0 && (float)$raw_threshold <= 1.0) {
+            $threshold = (int) round(((float)$raw_threshold) * 100);
+        } else {
+            $threshold = (int) ($raw_threshold ?: 75);
+        }
+        if ($threshold < 50) {
+            $threshold = 75; // Sane fallback to prevent false positives
+        }
 
         // 1. Whitelist Check (Instant HAM, bypasses all filters)
         $list_status = self::check_lists($sender, $whitelist, $blacklist);
@@ -923,20 +956,25 @@ class LpaiSpamFilter
         }
 
         // 6. Calculate Weighted Combined Spam Score (0 to 100)
-        // Bayesian weight: 55%, Heuristics weight: 35%, Sender Reputation: 10%
-        $bayes_points = $bayes_prob * 100;
+        // Neutral bayesian (0.5) must NOT contribute to spam score.
+        // Scores > 0.5 contribute linearly (0.5..1.0 -> 0..100 points).
+        // Scores < 0.5 provide a ham discount (-50..0 points).
+        if ($bayes_prob > 0.5) {
+            $bayes_points = ($bayes_prob - 0.5) * 200;
+        } else {
+            $bayes_points = ($bayes_prob - 0.5) * 100;
+        }
+
         $heuristic_points = $heuristics['penalty'];
         $rep_penalty = (-$sender_rep); // Negative reputation increases spam score
 
-        $combined_score = round(
-            ($bayes_points * 0.65) +
-            ($heuristic_points * 0.25) +
-            (max(0, $rep_penalty) * 0.10)
-        );
+        $combined_score = ($bayes_points * 0.60) +
+            ($heuristic_points * 0.30) +
+            (max(0, $rep_penalty) * 0.10);
 
-        // If either Bayesian or Heuristics alone is overwhelmingly confident, reflect that in score
-        if ($bayes_prob >= 0.90) {
-            $combined_score = max($combined_score, round($bayes_points * 0.85));
+        // If high-confidence Bayesian spam
+        if ($bayes_prob >= 0.85) {
+            $combined_score = max($combined_score, round(($bayes_prob - 0.5) * 200 * 0.85));
         }
         if ($heuristic_points >= 80) {
             $combined_score = max($combined_score, $heuristic_points);
@@ -947,15 +985,22 @@ class LpaiSpamFilter
             $combined_score = max(0, $combined_score - round($sender_rep * 0.25));
         }
 
-        $combined_score = max(0, min(100, (int) $combined_score));
+        $combined_score = max(0, min(100, (int) round($combined_score)));
 
         // Add explanation reasons if Bayesian score is high
-        if ($bayes_prob >= 0.80) {
+        if ($bayes_prob >= 0.75) {
             $sig_tokens = array_slice(array_column($bayes_result['top_tokens'], 'token'), 0, 4);
-            $reasons[] = 'Bayesian learning engine detected spam patterns in tokens: ' . implode(', ', $sig_tokens);
+            if (!empty($sig_tokens)) {
+                $reasons[] = 'Bayesian learning engine detected spam patterns in tokens: ' . implode(', ', $sig_tokens);
+            }
         }
 
         $is_spam = ($combined_score >= $threshold);
+
+        // Ensure there is always a clear reason when an email is marked as spam
+        if ($is_spam && empty($reasons)) {
+            $reasons[] = "Combined anti-spam score exceeded threshold ({$combined_score}% >= {$threshold}%)";
+        }
 
         return [
             'is_spam'           => $is_spam,
