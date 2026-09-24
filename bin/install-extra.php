@@ -3,7 +3,7 @@
  * Roundcube AI Extra Content Installer
  *
  * Automatically installs and synchronizes bundled skins (gmail_plus, gmail)
- * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward, persistent_login)
+ * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward, persistent_login, easy_unsubscribe)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
  * Can be run via:
@@ -314,6 +314,11 @@ class RoundcubeExtraContentInstaller
         if ($type === 'plugin' && $name === 'vacation_forward') {
             $this->postInstallVacationForward($destination, $this->roundcubeDir);
         }
+
+        // Special post-install routine for easy_unsubscribe
+        if ($type === 'plugin' && $name === 'easy_unsubscribe') {
+            $this->postInstallEasyUnsubscribe($destination, $this->roundcubeDir);
+        }
     }
 
     /**
@@ -528,6 +533,20 @@ class RoundcubeExtraContentInstaller
     }
 
     /**
+     * Special post-installation setup for easy_unsubscribe plugin.
+     */
+    private function postInstallEasyUnsubscribe(string $destination, ?string $roundcubeDir): void
+    {
+        $this->info("--- Configuring easy_unsubscribe plugin ---");
+        if (extension_loaded('curl')) {
+            $this->success("  [✓] PHP cURL extension is loaded (recommended for RFC 8058 One-Click POST requests).");
+        } else {
+            $this->warning("  [!] PHP cURL extension is not loaded. RFC 8058 One-Click POST requests will fall back to stream contexts.");
+        }
+        $this->success("  [✓] Easy Unsubscribe plugin configured for RFC 8058 & RFC 2369 one-click unsubscribe.");
+    }
+
+    /**
      * Special post-installation setup, requirements verification, and guidance for xcalendar.
      */
     private function postInstallXcalendar(string $destination, ?string $roundcubeDir): void
@@ -687,7 +706,7 @@ class RoundcubeExtraContentInstaller
         if (!file_exists($configFile)) {
             $this->info("Note: Roundcube config not yet initialized ({$configFile}).");
             $this->info("When configuring Roundcube, activate these plugins in \$config['plugins']:");
-            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'");
+            $this->info("  'xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'easy_unsubscribe', 'lifeprisma_ai'");
             $this->info("And set the active skin: \$config['skin'] = '{$this->selectedSkin}';");
             return;
         }
@@ -697,7 +716,7 @@ class RoundcubeExtraContentInstaller
             return;
         }
 
-        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'lifeprisma_ai'];
+        $recommendedPlugins = ['xskin', 'customizr', 'thread_drafts', 'thunderbird_labels', 'xcalendar', 'roundcube_loader', 'xmultibox', 'xsignature', 'roundcube_attachments', 'twofactor_auth', 'persistent_login', 'email_scheduler', 'newsletter', 'vacation_forward', 'easy_unsubscribe', 'lifeprisma_ai'];
         $missingPlugins = [];
 
         foreach ($recommendedPlugins as $p) {

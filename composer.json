@@ -34,7 +34,10 @@
         "merge_and_fix",
         "merge-contacts",
         "persistent_login",
-        "remember_me"
+        "remember_me",
+        "easy_unsubscribe",
+        "easy-unsubscribe",
+        "unsubscribe"
     ],
     "authors": [
         {
@@ -63,7 +66,9 @@
         "webdotpulse/newsletter": "self.version",
         "webdotpulse/persistent-login": "self.version",
         "webdotpulse/roundcube-loader": "self.version",
-        "webdotpulse/merge-and-fix": "self.version"
+        "webdotpulse/merge-and-fix": "self.version",
+        "webdotpulse/easy_unsubscribe": "self.version",
+        "roundcubeplus/easy_unsubscribe": "self.version"
     },
     "suggest": {
         "ext-curl": "Required by xcalendar for CalDAV synchronization and remote calendars",

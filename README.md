@@ -101,6 +101,7 @@ This repository includes 17 interoperable, hardened plugins:
 | **`roundcube_loader`** | Asynchronous asset preloader for ultra-fast initial page rendering. | Session cache |
 | **`roundcube_attachments`** | Multi-file actions, bulk downloads, and inline attachment previews (PDF, CSV, Images). | Temp storage |
 | **`thread_drafts`** | Conversation thread collapsing/expanding with draft state indicators. | IMAP thread metadata |
+| **`easy_unsubscribe`** | Gmail-like native RFC 8058 One-Click POST and RFC 2369 mailto unsubscribe action buttons next to sender. | Preferences / Session cache |
 
 ---
 
@@ -142,11 +143,11 @@ composer require webdotpulse/roundcube-ai:dev-main
 > - Downloads `webdotpulse/roundcube-ai` into `plugins/roundcube_ai` (with `lifeprisma_ai` alias compatibility).
 > - Automatically runs the post-install script (`bin/install-extra.php`) via `roundcube/plugin-installer` hooks.
 > - Deploys all bundled skins (`gmail_plus`, `gmail`) into Roundcube's `skins/` directory.
-> - Synchronizes all 17 enterprise companion plugins (`xframework`, `xskin`, `customizr`, `xcalendar`, `thunderbird_labels`, `xsignature`, `xmultibox`, `email_scheduler`, `newsletter`, `persistent_login`, `twofactor_auth`, `vacation_forward`, `roundcube_loader`, `roundcube_attachments`, `thread_drafts`, `merge_and_fix`) into Roundcube's `plugins/` directory.
+> - Synchronizes all 18 enterprise companion plugins (`xframework`, `xskin`, `customizr`, `xcalendar`, `thunderbird_labels`, `xsignature`, `xmultibox`, `email_scheduler`, `newsletter`, `persistent_login`, `twofactor_auth`, `vacation_forward`, `roundcube_loader`, `roundcube_attachments`, `thread_drafts`, `merge_and_fix`, `easy_unsubscribe`) into Roundcube's `plugins/` directory.
 > - Bootstraps default plugin configuration files (`config.inc.php`) from `.dist`/`.sample` templates.
 
 #### Step 4: Activate Plugins & Skins
-Run the automated activation flag to enable all 17 plugins in the correct dependency order and set `gmail_plus` as the active skin in `config/config.inc.php`:
+Run the automated activation flag to enable all 18 plugins in the correct dependency order and set `gmail_plus` as the active skin in `config/config.inc.php`:
 ```bash
 php plugins/roundcube_ai/bin/install-extra.php --activate
 # Or if installed as lifeprisma_ai:
@@ -171,7 +172,7 @@ php plugins/lifeprisma_ai/bin/install-extra.php --activate
 
 ### 3. Manual Configuration (`config/config.inc.php`)
 
-If you prefer to configure Roundcube manually or want to verify your setup, ensure all 17 plugins are registered in `config/config.inc.php` in the correct dependency order:
+If you prefer to configure Roundcube manually or want to verify your setup, ensure all 18 plugins are registered in `config/config.inc.php` in the correct dependency order:
 
 ```php
 // Active Skin: 'gmail_plus', 'gmail', 'elastic', or 'larry'
@@ -195,6 +196,7 @@ $config['plugins'] = [
     'merge_and_fix',
     'newsletter',
     'vacation_forward',
+    'easy_unsubscribe',
     'lifeprisma_ai', // or 'roundcube_ai'
 ];
 

@@ -146,7 +146,9 @@ if (!class_exists('rcube')) {
 
         public function __construct($api = null) {
             $this->api = $api;
-            $this->home = dirname(__DIR__) . '/easy_unsubscribe';
+            $this->home = is_dir(dirname(__DIR__) . '/Extra context/plugins/easy_unsubscribe')
+                ? dirname(__DIR__) . '/Extra context/plugins/easy_unsubscribe'
+                : dirname(__DIR__) . '/easy_unsubscribe';
         }
 
         public function load_config($fname = 'config.inc.php') {}
@@ -191,11 +193,15 @@ if (!class_exists('rcube')) {
     }
 }
 
+$plugin_dir = is_dir(__DIR__ . '/../Extra context/plugins/easy_unsubscribe')
+    ? __DIR__ . '/../Extra context/plugins/easy_unsubscribe'
+    : __DIR__ . '/../easy_unsubscribe';
+
 // Load localization labels
-require_once __DIR__ . '/../easy_unsubscribe/localization/en_US.inc';
+require_once $plugin_dir . '/localization/en_US.inc';
 
 // Load main plugin class
-require_once __DIR__ . '/../easy_unsubscribe/easy_unsubscribe.php';
+require_once $plugin_dir . '/easy_unsubscribe.php';
 
 $plugin = new easy_unsubscribe();
 $rcmail = rcmail::get_instance();
@@ -361,7 +367,7 @@ assert_true(strpos($sent_record['raw'], 'Please remove me from this list') !== f
 echo "\n--- Test Suite 7: Assets & Delivery Files Integrity ---\n";
 
 // 7.1 composer.json validation
-$composer_file = __DIR__ . '/../easy_unsubscribe/composer.json';
+$composer_file = $plugin_dir . '/composer.json';
 assert_true(file_exists($composer_file), "easy_unsubscribe/composer.json exists");
 $composer_json = json_decode(file_get_contents($composer_file), true);
 assert_true(json_last_error() === JSON_ERROR_NONE, "composer.json is valid JSON");
@@ -369,7 +375,7 @@ assert_equals('webdotpulse/easy_unsubscribe', $composer_json['name'], "composer.
 assert_equals('roundcube-plugin', $composer_json['type'], "composer.json specifies roundcube-plugin type");
 
 // 7.2 localization/en_US.inc validation
-$loc_file = __DIR__ . '/../easy_unsubscribe/localization/en_US.inc';
+$loc_file = $plugin_dir . '/localization/en_US.inc';
 assert_true(file_exists($loc_file), "easy_unsubscribe/localization/en_US.inc exists");
 $required_keys = ['unsubscribe', 'unsubscribing', 'unsubscribed', 'modal_title', 'btn_unsubscribe', 'btn_visit_website', 'success_oneclick', 'error_failed'];
 foreach ($required_keys as $k) {
@@ -377,7 +383,7 @@ foreach ($required_keys as $k) {
 }
 
 // 7.3 easy_unsubscribe.js validation
-$js_file = __DIR__ . '/../easy_unsubscribe/easy_unsubscribe.js';
+$js_file = $plugin_dir . '/easy_unsubscribe.js';
 assert_true(file_exists($js_file), "easy_unsubscribe/easy_unsubscribe.js exists");
 $js_content = file_get_contents($js_file);
 assert_true(strpos($js_content, 'rcmail.addEventListener(\'plugin.easy_unsubscribe_result\'') !== false, "easy_unsubscribe.js listens to plugin.easy_unsubscribe_result");
@@ -388,7 +394,7 @@ assert_true(strpos($js_content, 'openConfirmModal') !== false, "easy_unsubscribe
 assert_true(strpos($js_content, 'transformButtonToBadge') !== false, "easy_unsubscribe.js implements transformButtonToBadge");
 
 // 7.4 skins/elastic/easy_unsubscribe.css validation
-$elastic_css = __DIR__ . '/../easy_unsubscribe/skins/elastic/easy_unsubscribe.css';
+$elastic_css = $plugin_dir . '/skins/elastic/easy_unsubscribe.css';
 assert_true(file_exists($elastic_css), "easy_unsubscribe/skins/elastic/easy_unsubscribe.css exists");
 $elastic_css_content = file_get_contents($elastic_css);
 assert_true(strpos($elastic_css_content, '.easy-unsubscribe-btn') !== false, "Elastic CSS defines .easy-unsubscribe-btn");
@@ -398,17 +404,17 @@ assert_true(strpos($elastic_css_content, 'prefers-color-scheme: dark') !== false
 assert_true(strpos($elastic_css_content, 'html.dark-mode') !== false, "Elastic CSS includes html.dark-mode rules");
 
 // 7.5 skins/larry/easy_unsubscribe.css validation
-$larry_css = __DIR__ . '/../easy_unsubscribe/skins/larry/easy_unsubscribe.css';
+$larry_css = $plugin_dir . '/skins/larry/easy_unsubscribe.css';
 assert_true(file_exists($larry_css), "easy_unsubscribe/skins/larry/easy_unsubscribe.css exists");
 $larry_css_content = file_get_contents($larry_css);
 assert_true(strpos($larry_css_content, '.easy-unsubscribe-btn') !== false, "Larry CSS defines .easy-unsubscribe-btn");
 
 // 7.6 config.inc.php.dist validation
-$config_dist = __DIR__ . '/../easy_unsubscribe/config.inc.php.dist';
+$config_dist = $plugin_dir . '/config.inc.php.dist';
 assert_true(file_exists($config_dist), "easy_unsubscribe/config.inc.php.dist exists");
 
 // 7.7 README.md validation
-$readme = __DIR__ . '/../easy_unsubscribe/README.md';
+$readme = $plugin_dir . '/README.md';
 assert_true(file_exists($readme), "easy_unsubscribe/README.md exists");
 
 
