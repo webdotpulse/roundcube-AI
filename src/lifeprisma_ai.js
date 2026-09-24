@@ -766,7 +766,7 @@ function lpai_render_executive_hub_loading() {
 
     var hub = document.createElement('div');
     hub.id = 'lpai-executive-hub';
-    hub.className = 'lpai-executive-hub lpai-hub-loading';
+    hub.className = 'lpai-executive-hub lpai-hub-loading lpai-hub-collapsed';
 
     hub.innerHTML =
         '<div class="lpai-hub-header">' +
@@ -788,6 +788,8 @@ function lpai_render_executive_hub_loading() {
 
 function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
     var existing = document.getElementById('lpai-executive-hub');
+    // Only preserve open state if user explicitly toggled it open in the active message view before refreshing
+    var wasManuallyOpened = existing && !existing.classList.contains('lpai-hub-collapsed') && existing.querySelector('#lpai-hub-body') && existing.querySelector('#lpai-hub-body').style.display !== 'none';
     if (existing) existing.remove();
 
     if (!analysis) return;
@@ -804,9 +806,12 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
     var scamReason = analysis.scam_reason || '';
     var assignedLabel = analysis.assigned_label;
 
+    // Keep closed by default until user manually toggles it open
+    var isOpen = !!wasManuallyOpened;
+
     var hub = document.createElement('div');
     hub.id = 'lpai-executive-hub';
-    hub.className = 'lpai-executive-hub lpai-cat-' + category + ' lpai-urgency-' + urgency;
+    hub.className = 'lpai-executive-hub' + (isOpen ? '' : ' lpai-hub-collapsed') + ' lpai-cat-' + category + ' lpai-urgency-' + urgency;
 
     var badgeClass = 'lpai-badge-' + category;
     var urgencyIcon = urgency === 'high' ? '&#9888;' : '&#9889;';
@@ -819,7 +824,7 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
         lpai_sync_message_row_label(rcmail.env.uid, assignedLabel);
     }
 
-    var html = '<div class="lpai-hub-header">';
+    var html = '<div class="lpai-hub-header" onclick="lpai_handle_hub_header_click(event)" style="cursor: pointer;" title="' + (isOpen ? 'Click to collapse briefing' : 'Click to expand briefing') + '">';
     html += '<div class="lpai-hub-brand">';
     html += lpai_icon('sparkles');
     html += '<span class="lpai-hub-title">Gemini Assistant</span>';
@@ -828,12 +833,12 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
     html += '</div>';
 
     html += '<div class="lpai-hub-actions">';
-    html += '<button type="button" class="lpai-hub-btn-icon" title="Refresh Analysis" onclick="lpai_init_executive_triage(true)">' + lpai_icon('refresh') + '</button>';
-    html += '<button type="button" class="lpai-hub-btn-icon lpai-hub-toggle" title="Toggle Briefing" onclick="lpai_toggle_hub_body()"><span id="lpai-hub-toggle-arrow">&#9650;</span></button>';
+    html += '<button type="button" class="lpai-hub-btn-icon" title="Refresh Analysis" onclick="event.stopPropagation(); lpai_init_executive_triage(true);">' + lpai_icon('refresh') + '</button>';
+    html += '<button type="button" class="lpai-hub-btn-icon lpai-hub-toggle" title="' + (isOpen ? 'Collapse Briefing' : 'Expand Briefing') + '" onclick="event.stopPropagation(); lpai_toggle_hub_body();"><span id="lpai-hub-toggle-arrow">' + (isOpen ? '&#9650;' : '&#9660;') + '</span></button>';
     html += '</div>';
     html += '</div>'; // header
 
-    html += '<div id="lpai-hub-body" class="lpai-hub-body">';
+    html += '<div id="lpai-hub-body" class="lpai-hub-body" style="display: ' + (isOpen ? 'block' : 'none') + ';">';
 
     // Security warning if scam
     if (isScam) {
@@ -930,16 +935,34 @@ function lpai_render_executive_hub(analysis, model, tokens, fromCache) {
 }
 
 function lpai_toggle_hub_body() {
+    var hub = document.getElementById('lpai-executive-hub');
     var body = document.getElementById('lpai-hub-body');
     var arrow = document.getElementById('lpai-hub-toggle-arrow');
+    var header = hub ? hub.querySelector('.lpai-hub-header') : null;
+    var toggleBtn = hub ? hub.querySelector('.lpai-hub-toggle') : null;
     if (!body) return;
     if (body.style.display === 'none') {
         body.style.display = 'block';
         if (arrow) arrow.innerHTML = '&#9650;';
+        if (toggleBtn) toggleBtn.setAttribute('title', 'Collapse Briefing');
+        if (header) header.setAttribute('title', 'Click to collapse briefing');
+        if (hub) hub.classList.remove('lpai-hub-collapsed');
     } else {
         body.style.display = 'none';
         if (arrow) arrow.innerHTML = '&#9660;';
+        if (toggleBtn) toggleBtn.setAttribute('title', 'Expand Briefing');
+        if (header) header.setAttribute('title', 'Click to expand briefing');
+        if (hub) hub.classList.add('lpai-hub-collapsed');
     }
+}
+
+function lpai_handle_hub_header_click(event) {
+    if (!event) return;
+    var btn = event.target.closest('button, a, input, select');
+    if (btn && !btn.classList.contains('lpai-hub-toggle')) {
+        return;
+    }
+    lpai_toggle_hub_body();
 }
 
 function lpai_send_to_composer() {
@@ -1048,11 +1071,11 @@ function lpai_retune_draft(tone) {
     var postData = {
         _action: 'plugin.lifeprisma_ai_request',
         ai_action: 'rewrite',
-        instruction: 'Rewrite this email draft to be distinctly ' + tone + ' while retaining key facts.',
+        instruction: 'Rewrite this email draft to be distinctly ' + tone + ' while retaining key facts. Preserve the exact same language of the draft text without translating to any other language.',
         email_body: origText,
         reply_text: '',
         subject: '',
-        language: lpai_options.language,
+        language: 'auto',
         tone: tone,
         sender_name: '',
         model: lpai_options.model,

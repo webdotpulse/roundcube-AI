@@ -672,6 +672,90 @@ class lifeprisma_ai extends rcube_plugin
     }
 
     /**
+     * Fast, lightweight language detector based on distinctive stopwords.
+     * Accurately identifies English, Dutch, German, French, Spanish, Italian, Portuguese.
+     */
+    public function detect_email_language($text)
+    {
+        if (empty($text) || !is_string($text)) {
+            return null;
+        }
+
+        $clean = preg_replace('/https?:\/\/\S+/i', ' ', $text);
+        $clean = preg_replace('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', ' ', $clean);
+        $words = preg_split('/[^\p{L}]+/u', mb_strtolower($clean), -1, PREG_SPLIT_NO_EMPTY);
+        if (empty($words)) {
+            return null;
+        }
+
+        $stopwords = [
+            'English' => [
+                'the', 'and', 'is', 'for', 'you', 'that', 'with', 'have', 'this', 'from',
+                'they', 'will', 'would', 'there', 'their', 'what', 'about', 'which', 'when',
+                'make', 'can', 'like', 'time', 'just', 'know', 'take', 'people', 'into',
+                'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than',
+                'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also',
+                'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well',
+                'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day',
+                'most', 'us', 'please', 'thanks', 'regards', 'regard', 'meeting', 'project'
+            ],
+            'Dutch' => [
+                'de', 'het', 'een', 'van', 'en', 'in', 'op', 'te', 'met', 'voor',
+                'zijn', 'niet', 'er', 'aan', 'maar', 'om', 'ook', 'als', 'over',
+                'nog', 'uit', 'door', 'bij', 'naar', 'wel', 'ze', 'zou', 'wat',
+                'wie', 'dan', 'haar', 'zich', 'zo', 'hem', 'wij', 'hadden', 'hun',
+                'kunnen', 'werd', 'geen', 'moeten', 'deze', 'dit', 'hebben', 'geweest',
+                'dank', 'beste', 'hallo', 'groet', 'groeten', 'alvast', 'graag', 'vriendelijke'
+            ],
+            'German' => [
+                'der', 'die', 'das', 'und', 'den', 'von', 'mit', 'ist', 'des',
+                'nicht', 'ein', 'eine', 'einen', 'einer', 'eines', 'dem', 'sich', 'sie',
+                'auf', 'für', 'aber', 'wie', 'aus', 'bei', 'nach', 'wird', 'war',
+                'vor', 'auch', 'hier', 'sehr', 'danke', 'bitte', 'grüße', 'guten'
+            ],
+            'French' => [
+                'le', 'la', 'les', 'des', 'du', 'est', 'dans', 'pour', 'qui',
+                'sur', 'ce', 'pas', 'plus', 'avec', 'tout', 'faire', 'son', 'vous',
+                'nous', 'merci', 'bonjour', 'cordialement', 'salutations', 'bien'
+            ],
+            'Spanish' => [
+                'el', 'los', 'las', 'del', 'por', 'para', 'con', 'como', 'pero',
+                'sus', 'este', 'gracias', 'hola', 'saludos', 'estimado', 'atentamente'
+            ],
+            'Italian' => [
+                'il', 'gli', 'per', 'tra', 'fra', 'uno', 'sono', 'grazie', 'ciao',
+                'cordiali', 'saluti', 'buongiorno', 'questo', 'questa', 'anche'
+            ],
+            'Portuguese' => [
+                'os', 'as', 'da', 'do', 'das', 'dos', 'em', 'na', 'no', 'nas',
+                'nos', 'não', 'obrigado', 'obrigada', 'olá', 'atenciosamente'
+            ],
+        ];
+
+        $counts = array_count_values($words);
+        $scores = [];
+        foreach ($stopwords as $lang => $list) {
+            $score = 0;
+            foreach ($list as $sw) {
+                if (isset($counts[$sw])) {
+                    $score += $counts[$sw];
+                }
+            }
+            $scores[$lang] = $score;
+        }
+
+        arsort($scores);
+        $top_lang = key($scores);
+        $top_score = current($scores);
+
+        if ($top_score >= 2) {
+            return $top_lang;
+        }
+
+        return null;
+    }
+
+    /**
      * Execute Gemini Executive Triage Prompt
      */
     private function call_gemini_triage($ctx, $raw_headers, $user_name, $language, $tone, $gemini, $is_bulk = false, $is_self = false)
@@ -680,6 +764,7 @@ class lifeprisma_ai extends rcube_plugin
         $from = $ctx['from'] ?? '';
         $date = $ctx['date'] ?? '';
         $body = mb_substr($ctx['body'] ?? '', 0, 4000);
+        $detected_lang = $this->detect_email_language($subject . ' ' . $body);
 
         $system_prompt = "You are an executive Chief of Staff and AI email assistant.
 Your goal is to provide an instant, high-level briefing of incoming emails, classify them strictly according to the defined 5-label taxonomy, extract concrete action items, and prepare a polished, contextual draft reply when appropriate.
@@ -710,9 +795,13 @@ Rules:
 4. If the email is \"fyi\", needs_reply should be false and draft_reply should be null.
 5. If the email is \"to_respond\", needs_reply should be true and a draft_reply should be prepared.
 6. If the email is a suspicious phishing/scam, set category to \"important\", is_scam to true, and explain in scam_reason.
-7. Keep summary under 50 words. Be objective and direct.
+7. Keep summary under 50 words. Be objective and direct. The executive briefing summary and action items may use the user's preferred briefing language ({$language}).
 8. Action items should be clear and actionable. If no action items, return an empty array [].
-9. Draft reply must automatically match the language of the incoming email (auto-detected from the email subject and body). If the incoming email language is ambiguous or unidentifiable, fall back to {$language}. The tone must be {$tone}. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
+9. CRITICAL DRAFT REPLY LANGUAGE RULE:
+   The 'draft_reply' field MUST ALWAYS be written in the exact same language as the incoming email itself (e.g., if the incoming email is in English, write 'draft_reply' in English; if in French, in French; if in German, in German; if in Dutch, in Dutch).
+   Even if the user's default briefing language preference is {$language}, you must NEVER write 'draft_reply' in {$language} unless the incoming email itself is written in {$language}.
+   'draft_reply' is an outbound reply to the sender and must always preserve the incoming email's language.
+   The tone must be {$tone}. Do NOT include sign-offs like '--' or 'Best regards, [Name]' (Roundcube handles signatures).
 10. If needs_reply is false, set draft_reply to null.";
 
         // Inject learned AI memory if enabled (answer replication)
@@ -734,12 +823,18 @@ Rules:
             }
         }
 
+        $draft_lang_directive = $detected_lang
+            ? "MUST BE {$detected_lang} (Always match incoming email language; NEVER use {$language} when incoming email is in {$detected_lang})"
+            : "MUST MATCH INCOMING EMAIL LANGUAGE (Auto-detect from email text; only fall back to {$language} if email text is completely unidentifiable)";
+
         $user_prompt = "Email to analyze:
 From: {$from}
 Date: {$date}
 Subject: {$subject}
 User (Recipient): {$user_name}
-Language requested: {$language} (Always match incoming email language for draft_reply)
+Incoming Email Language: " . ($detected_lang ? $detected_lang : "Auto-detect from incoming text") . "
+Default Briefing Language (for summary & action items): {$language}
+Draft Reply Target Language: {$draft_lang_directive}
 Tone requested: {$tone}
 Bulk/Newsletter indicator: " . ($is_bulk ? 'YES' : 'NO') . "
 Self-sent indicator: " . ($is_self ? 'YES' : 'NO') . "
@@ -1555,7 +1650,7 @@ Body:
         $language = $prefs['genia_language'] ?? 'English';
         $tone = $prefs['genia_tone'] ?? 'professional';
 
-        $instruction = "Draft a polite and helpful executive response addressing all points in this email. Auto-detect the language of the incoming email and write the reply in that exact same language.";
+        $instruction = "Draft a polite and helpful executive response addressing all points in this email. The reply MUST be written in the exact same language as the incoming email (do not translate to any other language).";
         $reply_result = $this->call_gemini_direct('reply', $instruction, '', $body, $subject, $language, $tone, $sender_name, $from, $gemini);
 
         if (empty($reply_result)) return false;
@@ -2749,7 +2844,7 @@ Return ONLY the deliverability-optimized newsletter HTML.";
         if ($action === 'reply') {
             return "You are Google Gemini, an elite executive email assistant embedded in Roundcube webmail. Rules:
 1. Return ONLY the final email reply text. No meta-commentary, no conversational filler.
-2. Auto-detect the language of the incoming email being replied to and write the reply in that exact same language (unless explicitly requested otherwise).
+2. CRITICAL LANGUAGE RULE: Auto-detect the language of the incoming email being replied to and write the reply in that exact same language (e.g. if the incoming email is in English, write the reply in English). Even if the user's interface language is configured differently, the reply MUST ALWAYS be in the language of the incoming email being replied to.
 3. Match the requested tone precisely.
 4. Natural, crisp, professional prose.
 5. NEVER include email signatures or sign-off blocks (e.g. '--', 'Sincerely', name/title). The webmail client inserts user signatures automatically.";
@@ -2764,9 +2859,17 @@ Return ONLY the deliverability-optimized newsletter HTML.";
 
     private function build_user_prompt($action, $instruction, $email_body, $reply_text, $subject, $language, $tone, $sender_name)
     {
-        $lang_desc = ($language === 'auto' || $language === 'Auto' || $action === 'reply')
-            ? "{$language} (Auto-match incoming email language)"
-            : $language;
+        if ($action === 'reply') {
+            $detected = $this->detect_email_language($reply_text . ' ' . $subject);
+            $lang_desc = $detected
+                ? "{$detected} (MUST match incoming email language. Do NOT use {$language})"
+                : "Auto-detect (MUST match incoming email language. Fall back to {$language} only if unidentifiable)";
+        } elseif ($language === 'auto' || $language === 'Auto') {
+            $lang_desc = "Auto-detect (match incoming email language)";
+        } else {
+            $lang_desc = $language;
+        }
+
         $prompt = "Task: {$action}\nLanguage: {$lang_desc}\nTone: {$tone}\n";
         if (!empty($subject)) $prompt .= "Subject/Title: {$subject}\n";
         if (!empty($sender_name)) $prompt .= "User: {$sender_name}\n";

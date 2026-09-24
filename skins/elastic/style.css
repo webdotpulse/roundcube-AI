@@ -2412,6 +2412,10 @@ html.dark-mode .lpai-autodraft-info,
     border-bottom: 1px solid #e2e8f0;
 }
 
+.lpai-executive-hub.lpai-hub-collapsed .lpai-hub-header {
+    border-bottom: none;
+}
+
 .lpai-hub-brand {
     display: flex;
     align-items: center;
