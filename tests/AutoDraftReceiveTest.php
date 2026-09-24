@@ -20,13 +20,17 @@ function assert_true($cond, $desc) {
 
 echo "=== LIFEPIRISMA AI RECEIVE MODE AUTO-TRIAGE & DRAFT TEST SUITE ===\n\n";
 
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
 // --- 1. Static and Source Code Checks ---
 echo "--- Test 1: Source Code Structure Checks --- \n";
-$php_code = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
-$js_src   = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min   = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
-$js_el    = file_get_contents(__DIR__ . '/../skins/elastic/lifeprisma_ai.min.js');
-$js_gp    = file_get_contents(__DIR__ . '/../skins/gmail_plus/lifeprisma_ai.min.js');
+$php_code = file_get_contents($ai_dir . '/lifeprisma_ai.php');
+$js_src   = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
+$js_min   = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$js_el    = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$js_gp    = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
 
 assert_true(strpos($php_code, "function get_auto_draft_mode") !== false, "lifeprisma_ai.php defines get_auto_draft_mode() resolver");
 assert_true(strpos($php_code, "function is_message_triaged") !== false, "lifeprisma_ai.php defines is_message_triaged() helper");
@@ -117,7 +121,8 @@ if (!class_exists('rcube')) {
         public $api;
         public $home;
         public function __construct($api = null) {
-            $this->home = realpath(__DIR__ . '/..');
+            global $ai_dir;
+            $this->home = realpath($ai_dir);
         }
         public function load_config() {}
         public function add_texts($d) {}
@@ -130,7 +135,7 @@ if (!class_exists('rcube')) {
     }
 }
 
-require_once __DIR__ . '/../lifeprisma_ai.php';
+require_once $ai_dir . '/lifeprisma_ai.php';
 
 $plugin = new lifeprisma_ai();
 $rcmail = rcmail::get_instance();

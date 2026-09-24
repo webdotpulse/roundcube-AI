@@ -19,10 +19,14 @@ function assert_true($cond, $desc) {
 
 echo "=== AI MODAL CSS & DROPDOWN SELECTS TEST SUITE ===\n\n";
 
+$plugin_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
 // --- 1. CSS Verification in gmail_plus skin ---
 echo "--- Test 1: gmail_plus Skin CSS --- \n";
-$gp_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
-$gp_min_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.min.css');
+$gp_css = file_get_contents($plugin_dir . '/skins/gmail_plus/style.css');
+$gp_min_css = file_get_contents($plugin_dir . '/skins/gmail_plus/style.min.css');
 
 assert_true(strpos($gp_css, 'width: 800px !important;') !== false, "gmail_plus style.css defines width: 800px !important for #lpai-panel");
 assert_true(strpos($gp_min_css, 'width:800px!important') !== false || strpos($gp_min_css, 'width: 800px !important') !== false, "gmail_plus style.min.css includes width 800px for #lpai-panel");
@@ -34,8 +38,8 @@ assert_true(strpos($gp_css, 'html.dark-mode select.lpai-select option') !== fals
 
 // --- 2. CSS Verification in elastic skin ---
 echo "\n--- Test 2: elastic Skin CSS --- \n";
-$el_css = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
-$el_min_css = file_get_contents(__DIR__ . '/../skins/elastic/style.min.css');
+$el_css = file_get_contents($plugin_dir . '/skins/elastic/style.css');
+$el_min_css = file_get_contents($plugin_dir . '/skins/elastic/style.min.css');
 
 assert_true(strpos($el_css, 'width: 800px !important;') !== false, "elastic style.css defines width: 800px !important for #lpai-panel");
 assert_true(strpos($el_min_css, 'width:800px!important') !== false || strpos($el_min_css, 'width: 800px !important') !== false, "elastic style.min.css includes width 800px for #lpai-panel");
@@ -45,8 +49,8 @@ assert_true(strpos($el_css, 'html.dark-mode select.lpai-select option') !== fals
 
 // --- 3. JavaScript Modal and Selects Logic ---
 echo "\n--- Test 3: JavaScript Modal & Select Logic --- \n";
-$js_src = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
+$js_src = file_get_contents($plugin_dir . '/src/lifeprisma_ai.js');
+$js_min = file_get_contents($plugin_dir . '/lifeprisma_ai.min.js');
 
 assert_true(strpos($js_src, 'lpai_get_modal_doc') !== false, "src/lifeprisma_ai.js defines lpai_get_modal_doc");
 assert_true(strpos($js_src, 'lpai_sync_select_elements') !== false, "src/lifeprisma_ai.js defines lpai_sync_select_elements");
@@ -65,7 +69,7 @@ $test_html = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="file://' . realpath(__DIR__ . '/../skins/gmail_plus/style.css') . '">
+<link rel="stylesheet" href="file://' . realpath($plugin_dir . '/skins/gmail_plus/style.css') . '">
 <script>
 window.rcmail = {
     env: { task: "mail", action: "compose", request_token: "test_token" },
@@ -73,7 +77,7 @@ window.rcmail = {
     url: function(a) { return a; }
 };
 </script>
-<script src="file://' . realpath(__DIR__ . '/../src/lifeprisma_ai.js') . '"></script>
+<script src="file://' . realpath($plugin_dir . '/src/lifeprisma_ai.js') . '"></script>
 </head>
 <body>
 <div id="lpai-overlay" style="display:none"></div>
@@ -199,7 +203,7 @@ $test_custom_html = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="file://' . realpath(__DIR__ . '/../skins/gmail_plus/style.css') . '">
+<link rel="stylesheet" href="file://' . realpath($plugin_dir . '/skins/gmail_plus/style.css') . '">
 <script>
 window.rcmail = {
     env: { task: "mail", action: "compose", request_token: "test_token" },
@@ -207,7 +211,7 @@ window.rcmail = {
     url: function(a) { return a; }
 };
 </script>
-<script src="file://' . realpath(__DIR__ . '/../src/lifeprisma_ai.js') . '"></script>
+<script src="file://' . realpath($plugin_dir . '/src/lifeprisma_ai.js') . '"></script>
 </head>
 <body>
 <div id="lpai-overlay" style="display:none"></div>
@@ -368,7 +372,7 @@ assert_true($custom_tone_closed_on_esc === 'true', "Pressing Escape key closes o
 
 // --- 6. PHP Modal Markup Verification ---
 echo "\n--- Test 6: lifeprisma_ai.php Modal Markup Verification --- \n";
-$php_file = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
+$php_file = file_get_contents($plugin_dir . '/lifeprisma_ai.php');
 assert_true(strpos($php_file, 'class="lpai-custom-select" data-select-id="lpai-model-select"') !== false, "lifeprisma_ai.php wraps model select in .lpai-custom-select");
 assert_true(strpos($php_file, 'class="lpai-custom-select" data-select-id="lpai-tone-select"') !== false, "lifeprisma_ai.php wraps tone select in .lpai-custom-select");
 assert_true(strpos($php_file, 'class="lpai-custom-select" data-select-id="lpai-lang-select"') !== false, "lifeprisma_ai.php wraps language select in .lpai-custom-select");

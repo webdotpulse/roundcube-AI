@@ -194,7 +194,7 @@ class RoundcubeExtraContentInstaller
                     continue;
                 }
                 $src = $pluginsSrcDir . DIRECTORY_SEPARATOR . $pluginName;
-                if (!is_dir($src)) {
+                if (!is_dir($src) || is_link($src)) {
                     continue;
                 }
                 $dest = $pluginsTarget . DIRECTORY_SEPARATOR . $pluginName;
@@ -603,12 +603,12 @@ class RoundcubeExtraContentInstaller
         $lifeprismaTarget = $pluginsTarget . DIRECTORY_SEPARATOR . 'lifeprisma_ai';
         $roundcubeAiTarget = $pluginsTarget . DIRECTORY_SEPARATOR . 'roundcube_ai';
 
-        if ($this->isSamePath($this->pluginDir, $roundcubeAiTarget) && !file_exists($lifeprismaTarget)) {
+        if (file_exists($roundcubeAiTarget) && !file_exists($lifeprismaTarget)) {
             if (!$this->dryRun) {
                 @symlink('roundcube_ai', $lifeprismaTarget);
                 $this->info("Created compatibility symlink: {$lifeprismaTarget} -> roundcube_ai");
             }
-        } elseif ($this->isSamePath($this->pluginDir, $lifeprismaTarget) && !file_exists($roundcubeAiTarget)) {
+        } elseif (file_exists($lifeprismaTarget) && !file_exists($roundcubeAiTarget)) {
             if (!$this->dryRun) {
                 @symlink('lifeprisma_ai', $roundcubeAiTarget);
                 $this->info("Created compatibility symlink: {$roundcubeAiTarget} -> lifeprisma_ai");
@@ -643,34 +643,49 @@ class RoundcubeExtraContentInstaller
             }
 
             // Migrate legacy models from plugin local directory
-            $legacySpam = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'spam';
-            if (is_dir($legacySpam)) {
-                $files = glob($legacySpam . DIRECTORY_SEPARATOR . 'bayes_*.json') ?: [];
-                foreach ($files as $f) {
-                    $targetFile = $persistentSpamDir . DIRECTORY_SEPARATOR . basename($f);
-                    if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
-                        @copy($f, $targetFile);
+            $legacySpamCandidates = [
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'spam',
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'Extra context' . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . 'roundcube_ai' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'spam',
+            ];
+            foreach ($legacySpamCandidates as $legacySpam) {
+                if (is_dir($legacySpam)) {
+                    $files = glob($legacySpam . DIRECTORY_SEPARATOR . 'bayes_*.json') ?: [];
+                    foreach ($files as $f) {
+                        $targetFile = $persistentSpamDir . DIRECTORY_SEPARATOR . basename($f);
+                        if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
+                            @copy($f, $targetFile);
+                        }
                     }
                 }
             }
 
             // Migrate legacy memory from plugin local directory
-            $legacyMemory = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'memory';
-            if (is_dir($legacyMemory)) {
-                $files = glob($legacyMemory . DIRECTORY_SEPARATOR . '*.json') ?: [];
-                foreach ($files as $f) {
-                    $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . basename($f);
-                    if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
-                        @copy($f, $targetFile);
+            $legacyMemoryCandidates = [
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'memory',
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'Extra context' . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . 'roundcube_ai' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'memory',
+            ];
+            foreach ($legacyMemoryCandidates as $legacyMemory) {
+                if (is_dir($legacyMemory)) {
+                    $files = glob($legacyMemory . DIRECTORY_SEPARATOR . '*.json') ?: [];
+                    foreach ($files as $f) {
+                        $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . basename($f);
+                        if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
+                            @copy($f, $targetFile);
+                        }
                     }
                 }
             }
 
-            $legacyAiMemory = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ai_memory.json';
-            if (file_exists($legacyAiMemory)) {
-                $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . 'ai_memory.json';
-                if (!file_exists($targetFile) || filemtime($legacyAiMemory) > filemtime($targetFile)) {
-                    @copy($legacyAiMemory, $targetFile);
+            $legacyAiMemoryCandidates = [
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ai_memory.json',
+                $this->pluginDir . DIRECTORY_SEPARATOR . 'Extra context' . DIRECTORY_SEPARATOR . 'plugins' . DIRECTORY_SEPARATOR . 'roundcube_ai' . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ai_memory.json',
+            ];
+            foreach ($legacyAiMemoryCandidates as $legacyAiMemory) {
+                if (file_exists($legacyAiMemory)) {
+                    $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . 'ai_memory.json';
+                    if (!file_exists($targetFile) || filemtime($legacyAiMemory) > filemtime($targetFile)) {
+                        @copy($legacyAiMemory, $targetFile);
+                    }
                 }
             }
         }

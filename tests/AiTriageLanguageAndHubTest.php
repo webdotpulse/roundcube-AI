@@ -20,15 +20,19 @@ function assert_true($cond, $desc) {
 
 echo "=== LIFEPIRISMA AI HUB CLOSED & DRAFT LANGUAGE TEST SUITE ===\n\n";
 
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
 // --- 1. Static Source Code Checks ---
 echo "--- Test 1: Static Source Code Checks --- \n";
-$php_code   = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
-$js_src     = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min     = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
-$js_elastic = file_get_contents(__DIR__ . '/../skins/elastic/lifeprisma_ai.min.js');
-$js_gmail   = file_get_contents(__DIR__ . '/../skins/gmail_plus/lifeprisma_ai.min.js');
-$css_gp     = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
-$css_el     = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
+$php_code   = file_get_contents($ai_dir . '/lifeprisma_ai.php');
+$js_src     = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
+$js_min     = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$js_elastic = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$js_gmail   = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
+$css_gp     = file_get_contents($ai_dir . '/skins/gmail_plus/style.css');
+$css_el     = file_get_contents($ai_dir . '/skins/elastic/style.css');
 
 assert_true(strpos($php_code, "function detect_email_language") !== false, "lifeprisma_ai.php defines detect_email_language() helper");
 assert_true(strpos($php_code, "CRITICAL DRAFT REPLY LANGUAGE RULE") !== false, "lifeprisma_ai.php includes critical draft reply language rule in triage system prompt");
@@ -101,7 +105,8 @@ if (!class_exists('rcube')) {
         public $api;
         public $home;
         public function __construct($api = null) {
-            $this->home = realpath(__DIR__ . '/..');
+            global $ai_dir;
+            $this->home = realpath($ai_dir);
         }
         public function load_config() {}
         public function add_texts($d) {}
@@ -112,7 +117,7 @@ if (!class_exists('rcube')) {
     }
 }
 
-require_once __DIR__ . '/../lifeprisma_ai.php';
+require_once $ai_dir . '/lifeprisma_ai.php';
 
 $plugin = new lifeprisma_ai();
 

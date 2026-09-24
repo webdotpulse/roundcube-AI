@@ -32,11 +32,14 @@ function assert_true(bool $expr, string $desc): void
 echo "=== IMMEDIATE SPAM REMOVAL & XCALENDAR ITIP RESPONSE TEST SUITE ===\n\n";
 
 $repo_root = dirname(__DIR__);
+$ai_dir = is_dir($repo_root . '/Extra context/plugins/roundcube_ai')
+    ? $repo_root . '/Extra context/plugins/roundcube_ai'
+    : $repo_root;
 
 // --- Test Group 1: Immediate Spam Removal in src/lifeprisma_ai.js ---
 echo "--- Group 1: Immediate Spam Row Removal (UI & Multi-Frame) ---\n";
 
-$js_src = file_get_contents($repo_root . '/src/lifeprisma_ai.js');
+$js_src = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
 assert_true($js_src !== false, "src/lifeprisma_ai.js is readable");
 
 assert_true(
@@ -120,9 +123,9 @@ assert_true(
 // --- Test Group 2: Minified Bundles Parity ---
 echo "\n--- Group 2: Minified Bundles Parity ---\n";
 
-$root_min = file_get_contents($repo_root . '/lifeprisma_ai.min.js');
-$elastic_min = file_get_contents($repo_root . '/skins/elastic/lifeprisma_ai.min.js');
-$gmail_plus_min = file_get_contents($repo_root . '/skins/gmail_plus/lifeprisma_ai.min.js');
+$root_min = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$elastic_min = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$gmail_plus_min = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
 
 assert_true($root_min !== false && strlen($root_min) > 1000, "lifeprisma_ai.min.js exists and is non-empty");
 assert_true($elastic_min !== false && strlen($elastic_min) > 1000, "skins/elastic/lifeprisma_ai.min.js exists and is non-empty");
@@ -222,7 +225,7 @@ assert_true(
 // --- Test Group 5: Database Handler Safety in lifeprisma_ai.php ---
 echo "\n--- Group 5: Database Handler Safety in lifeprisma_ai.php ---\n";
 
-$lpai_php = file_get_contents($repo_root . '/lifeprisma_ai.php');
+$lpai_php = file_get_contents($ai_dir . '/lifeprisma_ai.php');
 assert_true($lpai_php !== false, "lifeprisma_ai.php is readable");
 
 assert_true(

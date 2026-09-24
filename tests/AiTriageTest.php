@@ -20,9 +20,13 @@ function assert_true($cond, $desc) {
 
 echo "=== LIFEPIRISMA AI EXECUTIVE TRIAGE TEST SUITE ===\n\n";
 
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
 // --- 1. Static and Source Code Checks ---
 echo "--- Test 1: Source Code Hardening Checks --- \n";
-$php_code = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
+$php_code = file_get_contents($ai_dir . '/lifeprisma_ai.php');
 
 assert_true(strpos($php_code, "class_exists('Redis')") !== false, "lifeprisma_ai.php guards Redis instantiation with class_exists('Redis')");
 assert_true(strpos($php_code, "get_rcube_cache") !== false, "lifeprisma_ai.php implements Roundcube core cache tier");
@@ -92,7 +96,8 @@ if (!class_exists('rcube')) {
         public $api;
         public $home;
         public function __construct($api = null) {
-            $this->home = realpath(__DIR__ . '/..');
+            global $ai_dir;
+            $this->home = realpath($ai_dir);
         }
         public function load_config() {}
         public function add_texts($d) {}
@@ -120,7 +125,7 @@ if (!class_exists('rcube')) {
     }
 }
 
-require_once __DIR__ . '/../lifeprisma_ai.php';
+require_once $ai_dir . '/lifeprisma_ai.php';
 
 $plugin = new lifeprisma_ai();
 
@@ -226,10 +231,10 @@ try {
 
 // --- 4. JavaScript and Asset Integration ---
 echo "\n--- Test 4: JavaScript Frontend Bundle Verification --- \n";
-$js_src = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
-$js_elastic = file_get_contents(__DIR__ . '/../skins/elastic/lifeprisma_ai.min.js');
-$js_gmail = file_get_contents(__DIR__ . '/../skins/gmail_plus/lifeprisma_ai.min.js');
+$js_src = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
+$js_min = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$js_elastic = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$js_gmail = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
 
 assert_true(strpos($js_src, "plugin.lifeprisma_ai_triage") !== false, "src/lifeprisma_ai.js targets plugin.lifeprisma_ai_triage");
 assert_true(strpos($js_src, "Failed to load executive triage analysis") !== false, "src/lifeprisma_ai.js includes error notification handler");

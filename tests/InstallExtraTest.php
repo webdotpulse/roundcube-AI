@@ -112,6 +112,9 @@ assert_true(is_dir($tempDir . '/plugins/email_scheduler'), "Plugin 'email_schedu
 assert_true(file_exists($tempDir . '/plugins/email_scheduler/config.inc.php'), "email_scheduler config.inc.php initialized from dist");
 assert_true(is_dir($tempDir . '/plugins/easy_unsubscribe'), "Plugin 'easy_unsubscribe' installed in plugins/");
 assert_true(file_exists($tempDir . '/plugins/easy_unsubscribe/config.inc.php'), "easy_unsubscribe config.inc.php initialized from dist");
+assert_true(is_dir($tempDir . '/plugins/roundcube_ai'), "Plugin 'roundcube_ai' installed in plugins/");
+assert_true(file_exists($tempDir . '/plugins/roundcube_ai/roundcube_ai.php'), "roundcube_ai.php exists in plugins/roundcube_ai/");
+assert_true(is_link($tempDir . '/plugins/lifeprisma_ai') || is_dir($tempDir . '/plugins/lifeprisma_ai'), "Compatibility symlink 'lifeprisma_ai' created");
 
 // Test 3: xcalendar Specific Post-Install Verifications
 echo "\n--- Test 3: xcalendar Specific Post-Install Verifications ---\n";

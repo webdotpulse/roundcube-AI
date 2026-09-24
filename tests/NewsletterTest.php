@@ -663,12 +663,15 @@ assert_test(str_contains($jsContent, '#btn-newsletter-ai-draft'), "newsletter.js
 assert_test(str_contains($jsContent, '#btn-newsletter-ai-optimize-spam'), "newsletter.js binds deliverability optimization");
 
 // 4. LifePrisma AI backend & frontend integration
-$aiPhp = file_get_contents(dirname(__DIR__) . '/lifeprisma_ai.php');
+$aiDir = is_dir(dirname(__DIR__) . '/Extra context/plugins/roundcube_ai')
+    ? dirname(__DIR__) . '/Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+$aiPhp = file_get_contents($aiDir . '/lifeprisma_ai.php');
 assert_test(str_contains($aiPhp, "'newsletter'") || str_contains($aiPhp, 'task === \'newsletter\'') || str_contains($aiPhp, "public \$task = '?(?!logout).*'"), "lifeprisma_ai.php task allows newsletter");
 assert_test(str_contains($aiPhp, '$is_newsletter ='), "lifeprisma_ai.php render_page detects newsletter task");
 assert_test(str_contains($aiPhp, 'newsletter_draft') && str_contains($aiPhp, 'newsletter_optimize_spam'), "lifeprisma_ai.php build_system_prompt defines newsletter prompt templates");
 
-$aiJs = file_get_contents(dirname(__DIR__) . '/src/lifeprisma_ai.js');
+$aiJs = file_get_contents($aiDir . '/src/lifeprisma_ai.js');
 assert_test(str_contains($aiJs, "task === 'newsletter'"), "src/lifeprisma_ai.js registers newsletter task listener");
 assert_test(str_contains($aiJs, 'lpai_init_newsletter'), "src/lifeprisma_ai.js defines lpai_init_newsletter function");
 assert_test(str_contains($aiJs, 'newsletter-body'), "src/lifeprisma_ai.js editor utilities support newsletter-body");

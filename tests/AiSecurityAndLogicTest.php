@@ -102,8 +102,12 @@ if (!class_exists('rcube')) {
     }
 }
 
-require_once __DIR__ . '/../lifeprisma_ai.php';
-require_once __DIR__ . '/../bin/worker.php';
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
+require_once $ai_dir . '/lifeprisma_ai.php';
+require_once is_file($ai_dir . '/bin/worker.php') ? $ai_dir . '/bin/worker.php' : __DIR__ . '/../bin/worker.php';
 
 $plugin = new lifeprisma_ai();
 $ref_class = new ReflectionClass($plugin);
@@ -136,7 +140,7 @@ $rcmail->user = new class {
 $get_mem_file_method = $ref_class->getMethod('get_memory_file');
 $get_mem_file_method->setAccessible(true);
 $user42_file = $get_mem_file_method->invoke($plugin);
-assert_test(strpos($user42_file, '/data/memory/user_') !== false, "User memory file is stored under data/memory/ with hashed user key");
+assert_test(strpos($user42_file, 'memory/user_') !== false, "User memory file is stored under memory/ with hashed user key");
 assert_test(strpos($user42_file, md5("lpai_user_mem_42")) !== false, "User 42 memory filename contains specific user hash");
 
 $rcmail->user->ID = 99;
@@ -215,7 +219,7 @@ assert_test(($legit_args['attachments'][0]['name'] ?? '') === 'valid_doc.txt', "
 
 // --- Test 4: Template Upload Extension Whitelist Verification ---
 echo "\n--- Test 4: Template Upload Extension Whitelist & Blacklist --- \n";
-$php_source = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
+$php_source = file_get_contents($ai_dir . '/lifeprisma_ai.php');
 assert_test(strpos($php_source, "\$disallowed_exts = ['php', 'phtml'") !== false, "lifeprisma_ai.php explicitly blacklists dangerous executable extensions");
 assert_test(strpos($php_source, "\$allowed_exts = ['pdf', 'doc', 'docx'") !== false, "lifeprisma_ai.php enforces strict whitelist of document/media extensions");
 assert_test(strpos($php_source, "md5(uniqid((string) microtime(true), true))") !== false, "lifeprisma_ai.php generates randomized file hashes to prevent path collision");
@@ -281,15 +285,16 @@ assert_test(strpos($draft_raw, "\r\nCc:") === false, "Attacker Cc header injecti
 
 // --- Test 8: Worker State Atomic File Locking & IMAP SSL Context ---
 echo "\n--- Test 8: Worker State Locking & SSL Verification Context --- \n";
-$worker_code = file_get_contents(__DIR__ . '/../bin/worker.php');
+$worker_code = is_file($ai_dir . '/bin/worker.php') ? file_get_contents($ai_dir . '/bin/worker.php') : file_get_contents(__DIR__ . '/../bin/worker.php');
 assert_test(strpos($worker_code, "file_put_contents(\$this->filepath, json_encode(\$this->state, JSON_PRETTY_PRINT), LOCK_EX)") !== false, "Worker state save uses LOCK_EX for race condition prevention");
 assert_test(strpos($worker_code, "'verify_peer' => (bool) \$ssl_verify") !== false, "Worker IMAP connect verifies SSL certificates by default");
 
 // --- Test 9: Frontend Cost Estimation Formula & Edge Cases ---
 echo "\n--- Test 9: Cost Estimation JavaScript Formula & Zero Edge Cases --- \n";
+$ai_js_file = addslashes($ai_dir . '/src/lifeprisma_ai.js');
 $node_test = <<<JS
 const fs = require('fs');
-const jsCode = fs.readFileSync(__DIR__ + '/../src/lifeprisma_ai.js', 'utf8');
+const jsCode = fs.readFileSync('{$ai_js_file}', 'utf8');
 
 // Mock browser environment
 window = {

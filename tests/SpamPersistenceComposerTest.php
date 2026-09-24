@@ -38,11 +38,14 @@ function assert_true(bool $expr, string $desc): void
 echo "=== BAYESIAN MEMORY & COMPOSER PERSISTENCE TEST SUITE ===\n\n";
 
 $repo_root = dirname(__DIR__);
+$ai_dir = is_dir($repo_root . '/Extra context/plugins/roundcube_ai')
+    ? $repo_root . '/Extra context/plugins/roundcube_ai'
+    : $repo_root;
 
 // --- Test Group 1: Persistent Directory Resolution & Canonical Paths ---
 echo "--- Group 1: Persistent Directory Resolution & Hierarchy ---\n";
 
-require_once $repo_root . '/src/LpaiSpamFilter.php';
+require_once $ai_dir . '/src/LpaiSpamFilter.php';
 
 $rc_root = LpaiSpamFilter::find_roundcube_root();
 assert_true(method_exists('LpaiSpamFilter', 'find_roundcube_root'), "LpaiSpamFilter implements find_roundcube_root()");
@@ -314,7 +317,7 @@ if (!class_exists('rcube_plugin', false)) {
     }
 }
 
-require_once $repo_root . '/lifeprisma_ai.php';
+require_once $ai_dir . '/lifeprisma_ai.php';
 
 $plugin = new lifeprisma_ai(rcmail::get_instance());
 

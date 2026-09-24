@@ -495,10 +495,13 @@ assert_true(strpos($css_classic, '.tb-label-delete-btn') !== false, "classic tb_
 
 // Etiketten label-dots xskin outline font icon (\ec7d) assertions
 assert_true(strpos($css_content, "\\ec7d") !== false, "elastic tb_label.css contains label-dots outline font icon (\\ec7d)");
-$gp_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
-$gp_min = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.min.css');
-$el_css = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
-$el_min = file_get_contents(__DIR__ . '/../skins/elastic/style.min.css');
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+$gp_css = file_get_contents($ai_dir . '/skins/gmail_plus/style.css');
+$gp_min = file_get_contents($ai_dir . '/skins/gmail_plus/style.min.css');
+$el_css = file_get_contents($ai_dir . '/skins/elastic/style.css');
+$el_min = file_get_contents($ai_dir . '/skins/elastic/style.min.css');
 assert_true(strpos($gp_css, "\\ec7d") !== false, "gmail_plus style.css maps label-dots icon glyph (\\ec7d)");
 assert_true(strpos($gp_min, "\\ec7d") !== false, "gmail_plus style.min.css contains label-dots icon glyph (\\ec7d)");
 assert_true(strpos($el_css, "\\ec7d") !== false, "elastic style.css maps label-dots icon glyph (\\ec7d)");
@@ -659,7 +662,9 @@ assert_true(in_array('LABEL1', $tb_labels) || in_array('$Label1', $tb_labels), "
 assert_true(in_array('LABEL3', $tb_labels) || in_array('$Label3', $tb_labels), "read_flags retains multiple label flags on the same message");
 
 // 2. lifeprisma_ai::handle_messages_list multi-badge assignment
-$lpai_file = dirname(__DIR__) . '/lifeprisma_ai.php';
+$lpai_file = is_file(dirname(__DIR__) . '/Extra context/plugins/roundcube_ai/lifeprisma_ai.php')
+    ? dirname(__DIR__) . '/Extra context/plugins/roundcube_ai/lifeprisma_ai.php'
+    : dirname(__DIR__) . '/lifeprisma_ai.php';
 if (file_exists($lpai_file)) {
     require_once $lpai_file;
     $lpai = new lifeprisma_ai();

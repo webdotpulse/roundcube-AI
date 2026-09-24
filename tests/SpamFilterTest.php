@@ -30,8 +30,12 @@ function assert_true($cond, $desc) {
 
 echo "=== ADVANCED SPAM FILTER & SELF-LEARNING ENGINE TEST SUITE ===\n\n";
 
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
 // Require the spam filter engine
-require_once __DIR__ . '/../src/LpaiSpamFilter.php';
+require_once $ai_dir . '/src/LpaiSpamFilter.php';
 
 // Setup isolated test directory for spam model
 $test_data_dir = __DIR__ . '/../scratch/test_spam_data';
@@ -177,7 +181,7 @@ assert_true($cleared_stats['ham_messages'] === 0, "Ham count reset to 0");
 // --- Test Group 6: lifeprisma_ai.php Integration & Hooks ---
 echo "\n--- Group 6: lifeprisma_ai.php Integration & Hooks --- \n";
 
-$php_code = file_get_contents(__DIR__ . '/../lifeprisma_ai.php');
+$php_code = file_get_contents($ai_dir . '/lifeprisma_ai.php');
 
 assert_true(strpos($php_code, "LpaiSpamFilter.php") !== false, "lifeprisma_ai.php requires LpaiSpamFilter.php");
 assert_true(strpos($php_code, "plugin.lifeprisma_ai_spam_tag") !== false, "Registers plugin.lifeprisma_ai_spam_tag action");
@@ -197,7 +201,7 @@ assert_true(strpos($php_code, "Junk") !== false && strpos($php_code, "\$Label1")
 // --- Test Group 7: Background Worker Integration ---
 echo "\n--- Group 7: Background CLI Worker Spam Integration --- \n";
 
-$worker_code = file_get_contents(__DIR__ . '/../bin/worker.php');
+$worker_code = is_file($ai_dir . '/bin/worker.php') ? file_get_contents($ai_dir . '/bin/worker.php') : file_get_contents(__DIR__ . '/../bin/worker.php');
 
 assert_true(strpos($worker_code, "LpaiSpamFilter.php") !== false, "bin/worker.php requires LpaiSpamFilter.php");
 assert_true(strpos($worker_code, "resolve_junk_folder") !== false, "LpaiImapClient implements resolve_junk_folder()");
@@ -209,10 +213,10 @@ assert_true(strpos($worker_code, "continue;") !== false, "Worker skips auto-draf
 // --- Test Group 8: JavaScript Frontend Bundle & Actions ---
 echo "\n--- Group 8: Frontend JavaScript Verification --- \n";
 
-$js_src = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
-$js_elastic = file_get_contents(__DIR__ . '/../skins/elastic/lifeprisma_ai.min.js');
-$js_gmail = file_get_contents(__DIR__ . '/../skins/gmail_plus/lifeprisma_ai.min.js');
+$js_src = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
+$js_min = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$js_elastic = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$js_gmail = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
 
 assert_true(strpos($js_src, "lpai_mark_spam") !== false, "src/lifeprisma_ai.js defines lpai_mark_spam()");
 assert_true(strpos($js_src, "lpai_mark_ham") !== false, "src/lifeprisma_ai.js defines lpai_mark_ham()");
@@ -235,20 +239,20 @@ assert_true($js_min === $js_elastic && $js_min === $js_gmail, "All 3 minified JS
 
 // Localization verification
 $labels = [];
-include __DIR__ . '/../localization/en_US.inc';
+include $ai_dir . '/localization/en_US.inc';
 assert_true(!empty($labels['confirm_spam']), "localization/en_US.inc defines confirm_spam");
 
 $labels = [];
-include __DIR__ . '/../localization/nl_NL.inc';
+include $ai_dir . '/localization/nl_NL.inc';
 assert_true(!empty($labels['confirm_spam']), "localization/nl_NL.inc defines confirm_spam");
 
 // --- Test Group 9: CSS Skin Styles Verification ---
 echo "\n--- Group 9: Skin CSS Styles Verification --- \n";
 
-$el_css = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
-$el_min = file_get_contents(__DIR__ . '/../skins/elastic/style.min.css');
-$gp_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
-$gp_min = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.min.css');
+$el_css = file_get_contents($ai_dir . '/skins/elastic/style.css');
+$el_min = file_get_contents($ai_dir . '/skins/elastic/style.min.css');
+$gp_css = file_get_contents($ai_dir . '/skins/gmail_plus/style.css');
+$gp_min = file_get_contents($ai_dir . '/skins/gmail_plus/style.min.css');
 
 assert_true(strpos($el_css, ".lpai-spam-badge") !== false, "elastic style.css defines .lpai-spam-badge");
 assert_true(strpos($el_min, ".lpai-spam-badge") !== false, "elastic style.min.css contains .lpai-spam-badge");
@@ -266,7 +270,7 @@ assert_true(strpos($gp_css, ".lpai-spam-stat-card") !== false, "gmail_plus style
 // --- Test Group 10: Configuration File Documentation ---
 echo "\n--- Group 10: Configuration Defaults in config.inc.php.dist --- \n";
 
-$config_dist = file_get_contents(__DIR__ . '/../config.inc.php.dist');
+$config_dist = file_get_contents($ai_dir . '/config.inc.php.dist');
 assert_true(strpos($config_dist, "lifeprisma_ai_spam_filter_enabled") !== false, "config.inc.php.dist documents lifeprisma_ai_spam_filter_enabled");
 assert_true(strpos($config_dist, "lifeprisma_ai_spam_action") !== false, "config.inc.php.dist documents lifeprisma_ai_spam_action");
 assert_true(strpos($config_dist, "lifeprisma_ai_spam_threshold") !== false, "config.inc.php.dist documents lifeprisma_ai_spam_threshold");
@@ -277,15 +281,15 @@ assert_true(strpos($config_dist, "lifeprisma_ai_spam_blacklist") !== false, "con
 // --- Test Group 11: 404 Asset Integrity & 500 Preview Prevention ---
 echo "\n--- Group 11: 404 Assets & 500 Error Prevention --- \n";
 
-assert_true(file_exists(__DIR__ . '/../skins/custom.css') && filesize(__DIR__ . '/../skins/custom.css') > 0, "skins/custom.css exists and is non-empty");
-assert_true(file_exists(__DIR__ . '/../skins/elastic/custom.css') && filesize(__DIR__ . '/../skins/elastic/custom.css') > 0, "skins/elastic/custom.css exists and is non-empty");
-assert_true(file_exists(__DIR__ . '/../skins/gmail_plus/custom.css') && filesize(__DIR__ . '/../skins/gmail_plus/custom.css') > 0, "skins/gmail_plus/custom.css exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/custom.css') && filesize($ai_dir . '/skins/custom.css') > 0, "skins/custom.css exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/elastic/custom.css') && filesize($ai_dir . '/skins/elastic/custom.css') > 0, "skins/elastic/custom.css exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/gmail_plus/custom.css') && filesize($ai_dir . '/skins/gmail_plus/custom.css') > 0, "skins/gmail_plus/custom.css exists and is non-empty");
 
-assert_true(file_exists(__DIR__ . '/../skins/watermark.png') && filesize(__DIR__ . '/../skins/watermark.png') > 0, "skins/watermark.png exists and is non-empty");
-assert_true(file_exists(__DIR__ . '/../skins/elastic/watermark.png') && filesize(__DIR__ . '/../skins/elastic/watermark.png') > 0, "skins/elastic/watermark.png exists and is non-empty");
-assert_true(file_exists(__DIR__ . '/../skins/gmail_plus/watermark.png') && filesize(__DIR__ . '/../skins/gmail_plus/watermark.png') > 0, "skins/gmail_plus/watermark.png exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/watermark.png') && filesize($ai_dir . '/skins/watermark.png') > 0, "skins/watermark.png exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/elastic/watermark.png') && filesize($ai_dir . '/skins/elastic/watermark.png') > 0, "skins/elastic/watermark.png exists and is non-empty");
+assert_true(file_exists($ai_dir . '/skins/gmail_plus/watermark.png') && filesize($ai_dir . '/skins/gmail_plus/watermark.png') > 0, "skins/gmail_plus/watermark.png exists and is non-empty");
 
-$watermark_bytes = file_get_contents(__DIR__ . '/../skins/watermark.png', false, null, 0, 8);
+$watermark_bytes = file_get_contents($ai_dir . '/skins/watermark.png', false, null, 0, 8);
 assert_true(substr($watermark_bytes, 1, 3) === 'PNG', "skins/watermark.png is a valid binary PNG file");
 
 assert_true(strpos($php_code, "get_message_flags(") === false, "lifeprisma_ai.php does not call undefined get_message_flags (prevents 500 on preview)");

@@ -103,7 +103,11 @@ if (!class_exists('rcube')) {
     }
 }
 
-require_once __DIR__ . '/../lifeprisma_ai.php';
+$ai_dir = is_dir(__DIR__ . '/../Extra context/plugins/roundcube_ai')
+    ? __DIR__ . '/../Extra context/plugins/roundcube_ai'
+    : dirname(__DIR__);
+
+require_once $ai_dir . '/lifeprisma_ai.php';
 
 // --- 1. Backend PHP: Template & Action Detection in render_page ---
 echo "--- Test 1: PHP render_page() Detection for Responses --- \n";
@@ -153,10 +157,10 @@ assert_true(strpos($user_prompt, 'Current Text/Template:') !== false, "build_use
 
 // --- 3. Frontend JavaScript: Source Code Verification ---
 echo "\n--- Test 3: JavaScript Frontend Source Verification --- \n";
-$js_src = file_get_contents(__DIR__ . '/../src/lifeprisma_ai.js');
-$js_min = file_get_contents(__DIR__ . '/../lifeprisma_ai.min.js');
-$js_elastic = file_get_contents(__DIR__ . '/../skins/elastic/lifeprisma_ai.min.js');
-$js_gmail = file_get_contents(__DIR__ . '/../skins/gmail_plus/lifeprisma_ai.min.js');
+$js_src = file_get_contents($ai_dir . '/src/lifeprisma_ai.js');
+$js_min = file_get_contents($ai_dir . '/lifeprisma_ai.min.js');
+$js_elastic = file_get_contents($ai_dir . '/skins/elastic/lifeprisma_ai.min.js');
+$js_gmail = file_get_contents($ai_dir . '/skins/gmail_plus/lifeprisma_ai.min.js');
 
 assert_true(strpos($js_src, 'lpai_init_responses()') !== false, "src/lifeprisma_ai.js calls lpai_init_responses in settings task");
 assert_true(strpos($js_src, 'function lpai_init_responses()') !== false, "src/lifeprisma_ai.js defines lpai_init_responses");
@@ -176,10 +180,10 @@ assert_true($js_min === $js_elastic && $js_min === $js_gmail, "Root and skin min
 
 // --- 4. CSS Verification across Skins ---
 echo "\n--- Test 4: CSS Verification in Skins --- \n";
-$el_css = file_get_contents(__DIR__ . '/../skins/elastic/style.css');
-$el_min_css = file_get_contents(__DIR__ . '/../skins/elastic/style.min.css');
-$gp_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.css');
-$gp_min_css = file_get_contents(__DIR__ . '/../skins/gmail_plus/style.min.css');
+$el_css = file_get_contents($ai_dir . '/skins/elastic/style.css');
+$el_min_css = file_get_contents($ai_dir . '/skins/elastic/style.min.css');
+$gp_css = file_get_contents($ai_dir . '/skins/gmail_plus/style.css');
+$gp_min_css = file_get_contents($ai_dir . '/skins/gmail_plus/style.min.css');
 
 assert_true(strpos($el_css, '.lpai-qa-bar-response') !== false, "elastic style.css defines .lpai-qa-bar-response");
 assert_true(strpos($el_min_css, '.lpai-qa-bar-response') !== false, "elastic style.min.css includes .lpai-qa-bar-response");
@@ -193,7 +197,7 @@ $test_html = '<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="file://' . realpath(__DIR__ . '/../skins/elastic/style.css') . '">
+<link rel="stylesheet" href="file://' . realpath($ai_dir . '/skins/elastic/style.css') . '">
 <script>
 window.rcmail = {
     env: { task: "settings", action: "response-edit", request_token: "test_token" },
@@ -206,7 +210,7 @@ window.rcmail = {
     display_message: function(m, t) { window.__last_msg = m; }
 };
 </script>
-<script src="file://' . realpath(__DIR__ . '/../src/lifeprisma_ai.js') . '"></script>
+<script src="file://' . realpath($ai_dir . '/src/lifeprisma_ai.js') . '"></script>
 </head>
 <body>
 <div id="layout-content">

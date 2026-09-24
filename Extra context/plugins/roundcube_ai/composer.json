@@ -1,0 +1,54 @@
+{
+    "name": "webdotpulse/roundcube-ai",
+    "type": "roundcube-plugin",
+    "description": "Gemini Executive Assistant for Roundcube. Autonomous email triage, executive briefings, action item checklists, and draft replies powered exclusively by Google Gemini.",
+    "license": "MIT",
+    "version": "2.1.0",
+    "keywords": [
+        "roundcube",
+        "plugin",
+        "ai",
+        "gemini",
+        "google-gemini",
+        "executive-assistant",
+        "email-triage",
+        "auto-draft",
+        "email",
+        "assistant",
+        "lifeprisma",
+        "webdotpulse"
+    ],
+    "authors": [
+        {
+            "name": "Webdotpulse",
+            "homepage": "https://github.com/webdotpulse"
+        },
+        {
+            "name": "Eduardo Stern",
+            "email": "eduardostern@icloud.com",
+            "homepage": "https://lifeprisma.com"
+        }
+    ],
+    "homepage": "https://github.com/webdotpulse/roundcube-plugin",
+    "replace": {
+        "lifeprisma/roundcube-ai": "self.version",
+        "lifeprisma/roundcube-genia": "self.version",
+        "webdotpulse/lifeprisma-ai": "self.version"
+    },
+    "require": {
+        "php": ">=8.0",
+        "roundcube/plugin-installer": ">=0.1.3"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.5.0",
+            "max-version": "1.8.99",
+            "persistent-files": [
+                "config.inc.php",
+                "data/ai_memory.json",
+                "data/memory",
+                "data/spam"
+            ]
+        }
+    }
+}

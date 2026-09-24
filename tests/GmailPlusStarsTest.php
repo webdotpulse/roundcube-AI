@@ -63,9 +63,12 @@ assert_true(strpos($css, 'color:inherit !important') !== false || strpos($css, '
 assert_true(strpos($css, 'span.flagged:before') !== false, "styles.css contains span.flagged:before rule");
 
 // Verify fallback stylesheets
-$customCss = file_get_contents($repoRoot . '/skins/gmail_plus/custom.css');
+$ai_dir = is_dir($repoRoot . '/Extra context/plugins/roundcube_ai')
+    ? $repoRoot . '/Extra context/plugins/roundcube_ai'
+    : $repoRoot;
+$customCss = file_get_contents($ai_dir . '/skins/gmail_plus/custom.css');
 assert_true($customCss !== false && strpos($customCss, '#f4b400') !== false, "skins/gmail_plus/custom.css contains star styles");
-$skinStyleCss = file_get_contents($repoRoot . '/skins/gmail_plus/style.css');
+$skinStyleCss = file_get_contents($ai_dir . '/skins/gmail_plus/style.css');
 assert_true($skinStyleCss !== false && strpos($skinStyleCss, '#f4b400') !== false, "skins/gmail_plus/style.css contains star styles");
 
 // --- Test 3: JavaScript Label Overrides & DOM Normalization ---
