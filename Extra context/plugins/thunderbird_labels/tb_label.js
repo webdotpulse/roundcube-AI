@@ -1094,11 +1094,11 @@ rcm_tb_label_render_filter_rules_table = function () {
   var labelColors = (rcmail.env && rcmail.env.tb_label_colors) || {};
 
   var table = $('<table class="tb-filter-table"><thead><tr>' +
-    '<th>Rule Name</th>' +
-    '<th>Conditions</th>' +
-    '<th>Actions</th>' +
-    '<th style="text-align:center;">Active</th>' +
-    '<th style="text-align:right;">Actions</th>' +
+    '<th style="width: 20%;">Rule Name</th>' +
+    '<th style="width: 38%;">Conditions</th>' +
+    '<th style="width: 24%;">Actions</th>' +
+    '<th style="width: 8%; text-align:center; white-space: nowrap;">Active</th>' +
+    '<th style="width: 10%; text-align:right; white-space: nowrap;">Actions</th>' +
     '</tr></thead><tbody></tbody></table>');
 
   var tbody = table.find("tbody");
@@ -1132,11 +1132,11 @@ rcm_tb_label_render_filter_rules_table = function () {
     var actDesc = actParts.join(" | ") || "(none)";
 
     var tr = $('<tr>' +
-      '<td><b>' + rcm_tb_label_escape_html(r.name) + '</b></td>' +
-      '<td style="font-size: 12px; color: #5f6368;">' + rcm_tb_label_escape_html(condDesc) + '</td>' +
-      '<td>' + actDesc + '</td>' +
+      '<td style="font-weight: 600; color: #202124;">' + rcm_tb_label_escape_html(r.name) + '</td>' +
+      '<td class="tb-filter-conditions" style="font-size: 12px; color: #5f6368; word-break: break-word;">' + rcm_tb_label_escape_html(condDesc) + '</td>' +
+      '<td style="word-break: break-word;">' + actDesc + '</td>' +
       '<td style="text-align:center;"><input type="checkbox" class="tb-rule-toggle"' + (r.enabled !== false ? ' checked="checked"' : "") + ' /></td>' +
-      '<td style="text-align:right;">' +
+      '<td style="text-align:right; white-space: nowrap;">' +
         '<button type="button" class="btn btn-sm btn-secondary tb-rule-edit" style="margin-right: 6px;">Edit</button>' +
         '<button type="button" class="btn btn-sm btn-danger tb-rule-del">&times;</button>' +
       '</td>' +
@@ -1172,7 +1172,32 @@ rcm_tb_label_render_filter_rules_table = function () {
 };
 
 rcm_tb_label_init_filters = function () {
-  if ($("#tb-label-filter-rules-list").length) {
+  var container = $("#tb-label-filter-rules-container");
+  if (container.length) {
+    // Expand enclosing bootstrap columns and form groups to full width
+    var parentCol = container.closest('[class*="col-"]');
+    if (parentCol.length) {
+      parentCol.removeClass(function (i, c) {
+        return (c.match(/(^|\s)col-(sm|md|lg|xl|xxl)?-?\d+/g) || []).join(' ');
+      }).addClass("col-12 col-sm-12").css({
+        "width": "100%",
+        "max-width": "100%",
+        "flex": "0 0 100%"
+      });
+    }
+    var formGroup = container.closest(".form-group, tr, .row");
+    if (formGroup.length) {
+      formGroup.find("> label, > td.title").hide();
+      formGroup.find("> td.content").attr("colspan", 2).css({
+        "width": "100%",
+        "max-width": "100%"
+      });
+      formGroup.css({
+        "width": "100%",
+        "max-width": "100%",
+        "display": "block"
+      });
+    }
     rcm_tb_label_render_filter_rules_table();
   }
   $("#tb-label-add-rule-btn").off("click").on("click", function (e) {
@@ -1850,6 +1875,7 @@ $(function () {
   }
 
   // Ensure sidebar and filters are initialized
+  rcm_tb_label_init_filters();
   setTimeout(rcm_tb_label_init_sidebar, 150);
   setTimeout(rcm_tb_label_init_filters, 200);
 });

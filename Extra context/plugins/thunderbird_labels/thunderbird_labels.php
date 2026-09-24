@@ -308,7 +308,6 @@ class thunderbird_labels extends rcube_plugin
 			'name' => $filter_title,
 			'options' => array(
 				'rules_table' => array(
-					'title' => $filter_title,
 					'content' => '<div id="tb-label-filter-rules-container" class="tb-label-filter-rules-container">' .
 						'<div class="tb-filter-actions-bar" style="margin-bottom:12px;">' .
 							'<button type="button" class="button btn btn-primary" id="tb-label-add-rule-btn">' .

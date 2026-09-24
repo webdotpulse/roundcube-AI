@@ -4322,5 +4322,84 @@ body.dark-mode .lpai-spam-stat-card .lpai-stat-label,
     overflow: hidden !important;
 }
 
+/* Remove AI font icons and buttons on layout-list column and xsidebar column, keep only on layout-content column */
+#layout-list .button-gemini-ai,
+#layout-list a.button-gemini-ai,
+#layout-list .xi-ai,
+#layout-list a.xi-ai,
+#layout-list a[href="#gemini"],
+#layout-list .lpai-toolbar-spam-btn,
+#layout-list .lpai-toolbar-spam-item,
+#layout-list a.junk,
+#layout-list a.notjunk,
+#xsidebar .button-gemini-ai,
+#xsidebar a.button-gemini-ai,
+#xsidebar .xi-ai,
+#xsidebar a.xi-ai,
+#xsidebar a[href="#gemini"],
+#xsidebar .lpai-toolbar-spam-btn,
+#xsidebar .lpai-toolbar-spam-item,
+#xsidebar a.junk,
+#xsidebar a.notjunk,
+#xsidebar-menu .button-gemini-ai,
+#xsidebar-menu a.button-gemini-ai,
+#xsidebar-menu .xi-ai,
+#xsidebar-menu a.xi-ai,
+#xsidebar-menu a[href="#gemini"],
+#xsidebar-menu .lpai-toolbar-spam-btn,
+#xsidebar-menu .lpai-toolbar-spam-item,
+#xsidebar-menu a.junk,
+#xsidebar-menu a.notjunk {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    height: 0 !important;
+    width: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+#layout-list .button-gemini-ai:before,
+#layout-list a.button-gemini-ai:before,
+#layout-list .xi-ai:before,
+#layout-list a.xi-ai:before,
+#layout-list a[href="#gemini"]:before,
+#layout-list .lpai-toolbar-spam-btn:before,
+#layout-list a.junk:before,
+#layout-list a.notjunk:before,
+#xsidebar .button-gemini-ai:before,
+#xsidebar a.button-gemini-ai:before,
+#xsidebar .xi-ai:before,
+#xsidebar a.xi-ai:before,
+#xsidebar a[href="#gemini"]:before,
+#xsidebar .lpai-toolbar-spam-btn:before,
+#xsidebar a.junk:before,
+#xsidebar a.notjunk:before,
+#xsidebar-menu .button-gemini-ai:before,
+#xsidebar-menu a.button-gemini-ai:before,
+#xsidebar-menu .xi-ai:before,
+#xsidebar-menu a.xi-ai:before,
+#xsidebar-menu a[href="#gemini"]:before,
+#xsidebar-menu .lpai-toolbar-spam-btn:before,
+#xsidebar-menu a.junk:before,
+#xsidebar-menu a.notjunk:before {
+    content: none !important;
+    display: none !important;
+}
+
+#layout-content .button-gemini-ai,
+#layout-content a.button-gemini-ai,
+#layout-content .xi-ai,
+#layout-content a.xi-ai,
+#layout-content .lpai-toolbar-spam-btn,
+#layout-content #mailtoolbar .lpai-toolbar-spam-btn,
+#layout-content #mailtoolbar a.junk,
+#layout-content #mailtoolbar a.notjunk,
+#layout-content #mailtoolbar a.button-gemini-ai,
+#layout-content #mailtoolbar a.xi-ai {
+    display: inline-flex !important;
+    visibility: visible !important;
+}
+
 
 

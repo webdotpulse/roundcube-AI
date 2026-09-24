@@ -523,9 +523,20 @@ function lpai_setup_sidebar_button() {
         var aboutBtns = doc.querySelectorAll('#layout-menu a.about, #layout-menu a.button-about, #taskmenu a.about, #taskmenu a.button-about, .special-buttons a.about, .special-buttons a.button-about, a.button-about, a.about[onclick*="about"], [data-target="about"]');
         aboutBtns.forEach(function(b) { b.remove(); });
 
-        // Remove any spam/junk buttons from right side menu bar / sidebar (#layout-menu, #taskmenu)
-        var sidebarSpamBtns = doc.querySelectorAll('#layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, #layout-menu .lpai-toolbar-spam-btn, #layout-menu .lpai-sidebar-spam-btn, #layout-menu .lpai-toolbar-spam-item, #taskmenu .lpai-toolbar-spam-btn, #taskmenu .lpai-sidebar-spam-btn, #taskmenu .lpai-toolbar-spam-item');
+        // Remove any spam/junk buttons from right side menu bar / sidebar (#layout-menu, #taskmenu), layout-list, and xsidebar
+        var sidebarSpamBtns = doc.querySelectorAll('#layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, #layout-menu .lpai-toolbar-spam-btn, #layout-menu .lpai-sidebar-spam-btn, #layout-menu .lpai-toolbar-spam-item, #taskmenu .lpai-toolbar-spam-btn, #taskmenu .lpai-sidebar-spam-btn, #taskmenu .lpai-toolbar-spam-item, #layout-list .lpai-toolbar-spam-btn, #layout-list .lpai-toolbar-spam-item, #xsidebar .lpai-toolbar-spam-btn, #xsidebar .lpai-toolbar-spam-item, #xsidebar-menu .lpai-toolbar-spam-btn, #xsidebar-menu .lpai-toolbar-spam-item');
         sidebarSpamBtns.forEach(function(b) {
+            var parentLi = (b.tagName && b.tagName.toUpperCase() === 'LI') ? b : (b.closest ? b.closest('li') : b.parentNode);
+            if (parentLi && parentLi.tagName && parentLi.tagName.toUpperCase() === 'LI') {
+                parentLi.remove();
+            } else {
+                b.remove();
+            }
+        });
+
+        // Remove any AI buttons from layout-list and xsidebar columns (keep only in layout-content)
+        var layoutListAiBtns = doc.querySelectorAll('#layout-list a.button-gemini-ai, #layout-list a.xi-ai, #layout-list .button-gemini-ai, #layout-list .xi-ai, #layout-list a[href="#gemini"], #xsidebar a.button-gemini-ai, #xsidebar a.xi-ai, #xsidebar .button-gemini-ai, #xsidebar .xi-ai, #xsidebar a[href="#gemini"], #xsidebar-menu a.button-gemini-ai, #xsidebar-menu a.xi-ai, #xsidebar-menu .button-gemini-ai, #xsidebar-menu .xi-ai, #xsidebar-menu a[href="#gemini"]');
+        layoutListAiBtns.forEach(function(b) {
             var parentLi = (b.tagName && b.tagName.toUpperCase() === 'LI') ? b : (b.closest ? b.closest('li') : b.parentNode);
             if (parentLi && parentLi.tagName && parentLi.tagName.toUpperCase() === 'LI') {
                 parentLi.remove();
@@ -3080,14 +3091,14 @@ function lpai_init_spam_toolbar() {
     var labelText = isJunk ? hamText : spamText;
 
     docs.forEach(function(doc) {
-        // Remove previously inserted items or buttons across all scopes, ensuring right-side menu bar / sidebar buttons are cleaned up
-        var existingItems = doc.querySelectorAll('.lpai-toolbar-spam-item, .lpai-toolbar-spam-btn, .lpai-sidebar-spam-btn, #layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, .sidebar a.junk, .sidebar a.notjunk, li[role="menuitem"] > a.junk, li[role="menuitem"] > a.notjunk');
+        // Remove previously inserted items or buttons across all scopes, ensuring right-side menu bar / sidebar, layout-list, and xsidebar buttons are cleaned up
+        var existingItems = doc.querySelectorAll('.lpai-toolbar-spam-item, .lpai-toolbar-spam-btn, .lpai-sidebar-spam-btn, #layout-menu a.junk, #layout-menu a.notjunk, #layout-menu a.markasjunk2, #layout-menu a.markasnotjunk2, #taskmenu a.junk, #taskmenu a.notjunk, #taskmenu a.markasjunk2, #taskmenu a.markasnotjunk2, .sidebar a.junk, .sidebar a.notjunk, li[role="menuitem"] > a.junk, li[role="menuitem"] > a.notjunk, #layout-list .lpai-toolbar-spam-btn, #layout-list .lpai-toolbar-spam-item, #layout-list .button-gemini-ai, #layout-list .xi-ai, #xsidebar .lpai-toolbar-spam-btn, #xsidebar .lpai-toolbar-spam-item, #xsidebar .button-gemini-ai, #xsidebar .xi-ai, #xsidebar-menu .lpai-toolbar-spam-btn, #xsidebar-menu .lpai-toolbar-spam-item, #xsidebar-menu .button-gemini-ai, #xsidebar-menu .xi-ai');
         existingItems.forEach(function(el) {
             var isLpai = el._lpai_spam || 
                          el.classList.contains('lpai-toolbar-spam-item') || 
                          el.classList.contains('lpai-toolbar-spam-btn') || 
                          el.classList.contains('lpai-sidebar-spam-btn') ||
-                         ((el.matches && el.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer')) || (el.closest && el.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer'))) ||
+                         ((el.matches && el.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer, #layout-list, #xsidebar, #xsidebar-menu')) || (el.closest && el.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer, #layout-list, #xsidebar, #xsidebar-menu'))) ||
                          el.title === spamText || 
                          el.title === hamText || 
                          el.title === 'Report Spam' || 
@@ -3114,8 +3125,8 @@ function lpai_init_spam_toolbar() {
                 return;
             }
 
-            // Exclude right side menu bar / sidebar (#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer) - spam button is topbar only
-            if ((tb.matches && tb.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer')) || (tb.closest && tb.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer'))) {
+            // Exclude right side menu bar / sidebar (#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer) as well as layout-list and xsidebar columns - button is layout-content topbar only
+            if ((tb.matches && tb.matches('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer, #layout-list, #xsidebar, #xsidebar-menu')) || (tb.closest && tb.closest('#layout-menu, #taskmenu, .sidebar, #layout-sidebar, #folderlist-footer, #layout-list, #xsidebar, #xsidebar-menu'))) {
                 return;
             }
 

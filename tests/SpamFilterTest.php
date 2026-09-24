@@ -342,6 +342,13 @@ assert_true(strpos($gp_css, "font-size: 1.5em !important;") !== false, "gmail_pl
 assert_true(strpos($el_css, "font-size: 1.5em !important;") !== false, "elastic style.css aligns spam icon font size with sibling buttons (1.5em)");
 assert_true(strpos($gp_css, "float: left !important;") !== false, "gmail_plus style.css floats toolbar spam button left to match sibling buttons");
 assert_true(strpos($el_css, "float: left !important;") !== false, "elastic style.css floats toolbar spam button left to match sibling buttons");
+assert_true(strpos($js_src, "#layout-list, #xsidebar, #xsidebar-menu") !== false, "lifeprisma_ai.js excludes layout-list and xsidebar from spam / AI button injection");
+assert_true(strpos($gp_css, "#layout-list .button-gemini-ai") !== false && strpos($gp_css, "#xsidebar .button-gemini-ai") !== false, "gmail_plus style.css suppresses AI and spam buttons on layout-list and xsidebar");
+assert_true(strpos($el_css, "#layout-list .button-gemini-ai") !== false && strpos($el_css, "#xsidebar .button-gemini-ai") !== false, "elastic style.css suppresses AI and spam buttons on layout-list and xsidebar");
+assert_true(strpos($gp_css, "#layout-content #mailtoolbar") !== false, "gmail_plus style.css preserves button visibility on layout-content column");
+assert_true(strpos($el_css, "#layout-content #mailtoolbar") !== false, "elastic style.css preserves button visibility on layout-content column");
+assert_true(strpos($gp_min, "#layout-list .button-gemini-ai") !== false && strpos($gp_min, "#xsidebar .button-gemini-ai") !== false, "gmail_plus style.min.css contains layout-list and xsidebar AI suppression");
+assert_true(strpos($el_min, "#layout-list .button-gemini-ai") !== false && strpos($el_min, "#xsidebar .button-gemini-ai") !== false, "elastic style.min.css contains layout-list and xsidebar AI suppression");
 
 // --- Test Group 13: Incoming Spam Filtering & SPAM Label Badges Verification ---
 echo "\n--- Group 13: Incoming Spam Filtering & SPAM Label Badges Verification --- \n";

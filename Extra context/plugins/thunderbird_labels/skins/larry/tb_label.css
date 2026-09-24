@@ -477,20 +477,83 @@ ul.tb-labels-list li.tb-label-item.selected a.tb-label-link {
   background: #fff;
 }
 
-.tb-filter-table {
+.tb-label-filter-rules-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  box-sizing: border-box !important;
+}
+
+.tb-filter-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   width: 100%;
+  margin-bottom: 12px;
+}
+
+#tb-label-filter-rules-list {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  overflow-x: auto;
+}
+
+.tb-filter-table {
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
   border-collapse: collapse;
   margin-top: 8px;
+  table-layout: auto;
 }
 
 .tb-filter-table th, .tb-filter-table td {
   padding: 6px 10px;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  vertical-align: middle;
 }
 
 .tb-filter-table th {
   font-weight: bold;
   background-color: #f2f2f2;
 }
+
+/* Ensure enclosing propform row/column spans full width across all skins */
+.form-group:has(#tb-label-filter-rules-container),
+.form-group.row:has(#tb-label-filter-rules-container) {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  padding: 0 !important;
+}
+
+.form-group:has(#tb-label-filter-rules-container) > label,
+.form-group.row:has(#tb-label-filter-rules-container) > label {
+  display: none !important;
+}
+
+.form-group:has(#tb-label-filter-rules-container) > div[class*="col-"],
+.form-group.row:has(#tb-label-filter-rules-container) > div[class*="col-"] {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 0 0 100% !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+table.propform tr:has(#tb-label-filter-rules-container) td.title {
+  display: none !important;
+}
+
+table.propform tr:has(#tb-label-filter-rules-container) td.content {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
 

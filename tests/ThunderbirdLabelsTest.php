@@ -272,6 +272,31 @@ if (!class_exists('rcube')) {
             return rtrim($path, '/') . '/';
         }
     }
+
+    if (!class_exists('html_checkbox')) {
+        class html_checkbox {
+            public $p;
+            public function __construct($p = []) { $this->p = $p; }
+            public function show($v = 0) { return '<input type="checkbox" />'; }
+        }
+    }
+
+    if (!class_exists('html_select')) {
+        class html_select {
+            public $p;
+            public function __construct($p = []) { $this->p = $p; }
+            public function add($names, $vals) {}
+            public function show($v = null) { return '<select></select>'; }
+        }
+    }
+
+    if (!class_exists('html_inputfield')) {
+        class html_inputfield {
+            public $p;
+            public function __construct($p = []) { $this->p = $p; }
+            public function show($v = null) { return '<input type="text" />'; }
+        }
+    }
 }
 
 $plugin_dir = file_exists(dirname(__DIR__) . '/thunderbird_labels.php')
@@ -743,6 +768,36 @@ assert_true(strpos($js_content, 'rcm_tb_label_get_mail_folders') !== false, "tb_
 assert_true(strpos($js_content, 'rcm_tb_label_build_folder_options') !== false, "tb_label.js defines rcm_tb_label_build_folder_options");
 assert_true(strpos($js_content, 'rcm_tb_label_folder_display_name') !== false, "tb_label.js defines rcm_tb_label_folder_display_name");
 assert_true(strpos($js_content, 'rcm_tb_label_refresh_modal_folders') !== false, "tb_label.js dynamically refreshes folder select");
+
+// --- Test 12: Incoming Mail Filters Table Full-Width Structure & CSS ---
+echo "\n--- Test 12: Incoming Mail Filters Table Full-Width Structure & CSS ---\n";
+$prefs_test = $plugin->prefs_list(['section' => 'thunderbird_labels', 'blocks' => []]);
+assert_true(isset($prefs_test['blocks']['tb_label_filters']), "prefs_list registers tb_label_filters block");
+assert_true(!empty($prefs_test['blocks']['tb_label_filters']['name']), "tb_label_filters block has a section name");
+assert_true(isset($prefs_test['blocks']['tb_label_filters']['options']['rules_table']), "tb_label_filters has rules_table option");
+assert_true(empty($prefs_test['blocks']['tb_label_filters']['options']['rules_table']['title']), "rules_table omits redundant option title to avoid 2-column splitting in Roundcube");
+$rules_content = $prefs_test['blocks']['tb_label_filters']['options']['rules_table']['content'];
+assert_true(strpos($rules_content, 'id="tb-label-filter-rules-container"') !== false, "rules_table content contains filter rules container ID");
+assert_true(strpos($rules_content, 'id="tb-label-filter-rules-list"') !== false, "rules_table content contains filter rules list ID");
+
+// Verify Elastic CSS full-width rules
+$css_el = file_get_contents($plugin_dir . '/skins/elastic/tb_label.css');
+assert_true(strpos($css_el, '.tb-label-filter-rules-container') !== false, "elastic tb_label.css styles .tb-label-filter-rules-container");
+assert_true(strpos($css_el, 'width: 100% !important;') !== false, "elastic tb_label.css sets 100% width on filter container");
+assert_true(strpos($css_el, '.form-group:has(#tb-label-filter-rules-container)') !== false, "elastic tb_label.css ensures form-group expands full width");
+
+// Verify Larry CSS full-width rules
+$css_la = file_get_contents($plugin_dir . '/skins/larry/tb_label.css');
+assert_true(strpos($css_la, '.tb-label-filter-rules-container') !== false, "larry tb_label.css styles .tb-label-filter-rules-container");
+assert_true(strpos($css_la, 'width: 100% !important;') !== false, "larry tb_label.css sets 100% width on filter container");
+
+// Verify Classic CSS full-width rules
+$css_cl = file_get_contents($plugin_dir . '/skins/classic/tb_label.css');
+assert_true(strpos($css_cl, '.tb-label-filter-rules-container') !== false, "classic tb_label.css styles .tb-label-filter-rules-container");
+assert_true(strpos($css_cl, 'width: 100% !important;') !== false, "classic tb_label.css sets 100% width on filter container");
+
+// Verify JS full-width container expansion
+assert_true(strpos($js_content, 'col-12 col-sm-12') !== false, "tb_label.js dynamically expands parent column to 12 cols");
 
 echo "\n*** ALL THUNDERBIRD LABELS TESTS PASSED (100%) ***\n";
 
