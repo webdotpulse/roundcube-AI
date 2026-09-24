@@ -143,17 +143,130 @@ class email_scheduler extends rcube_plugin
         $this->ensureTableExists($db);
 
         $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : 0;
-        $messageId = $args['headers']['Message-ID'] ?? sprintf('<%s@%s>', md5(uniqid((string)mt_rand(), true)), $_SERVER['SERVER_NAME'] ?? 'localhost');
-        $subject = (string)($args['headers']['Subject'] ?? '');
-        $recipients = is_array($args['mailto'] ?? null) ? implode(', ', $args['mailto']) : (string)($args['mailto'] ?? '');
+        $headers = [];
+        $body = '';
+        $rawHeaders = '';
 
-        $serializedHeaders = json_encode($args['headers'] ?? []);
-        $body = (string)($args['body'] ?? '');
+        // 1. Extract from Roundcube Mail_mime / rcube_mime object
+        if (!empty($args['message']) && is_object($args['message'])) {
+            $mime = $args['message'];
+
+            // If delay_file_io was enabled, body may be in a temp file
+            if (method_exists($mime, 'getParam') && $mime->getParam('delay_file_io') && method_exists($mime, 'saveMessageBody')) {
+                $tempFile = rcube_utils::temp_filename('msg_sched');
+                $res = $mime->saveMessageBody($tempFile);
+                if (!is_a($res, 'PEAR_Error') && file_exists($tempFile)) {
+                    $body = (string)file_get_contents($tempFile);
+                    @unlink($tempFile);
+                }
+            }
+
+            // Standard Mail_mime: get() MUST be called before headers() to compile MIME boundaries
+            if ($body === '' && method_exists($mime, 'get')) {
+                $mimeBody = $mime->get();
+                if (is_string($mimeBody) && $mimeBody !== '') {
+                    $body = $mimeBody;
+                }
+            }
+
+            if ($body === '' && method_exists($mime, 'getTXTBody')) {
+                $txt = $mime->getTXTBody();
+                if (is_string($txt) && $txt !== '') {
+                    $body = $txt;
+                }
+            }
+
+            if (method_exists($mime, 'headers')) {
+                $headers = (array)$mime->headers();
+            }
+
+            if (method_exists($mime, 'txtHeaders')) {
+                $rawHeaders = (string)$mime->txtHeaders(['Bcc' => null], true);
+            }
+        }
+
+        // 2. Merge explicit headers/body if provided in $args (e.g. tests or custom callers)
+        if (!empty($args['headers']) && is_array($args['headers'])) {
+            $headers = array_merge($headers, $args['headers']);
+        }
+        if ($body === '' && !empty($args['body'])) {
+            $body = (string)$args['body'];
+        }
+
+        // 3. Subject extraction with POST fallback
+        $subject = '';
+        if (!empty($headers['Subject'])) {
+            $subject = (string)$headers['Subject'];
+        } elseif (!empty($headers['subject'])) {
+            $subject = (string)$headers['subject'];
+        }
+
+        if ($subject === '') {
+            $postSubject = rcube_utils::get_input_value('_subject', rcube_utils::INPUT_POST);
+            if ($postSubject !== null && $postSubject !== '') {
+                $subject = trim((string)$postSubject);
+                $headers['Subject'] = $subject;
+            }
+        }
+
+        // 4. Body extraction with POST fallback
+        if ($body === '') {
+            $postBody = rcube_utils::get_input_value('_message', rcube_utils::INPUT_POST);
+            if ($postBody !== null && $postBody !== '') {
+                $body = (string)$postBody;
+                $isHtml = (bool)rcube_utils::get_input_value('_is_html', rcube_utils::INPUT_POST);
+                if ($isHtml && empty($headers['Content-Type'])) {
+                    $headers['Content-Type'] = 'text/html; charset=UTF-8';
+                }
+            }
+        }
+
+        // 5. From extraction with POST fallback
+        $from = (string)($args['from'] ?? ($headers['From'] ?? ''));
+        if ($from === '') {
+            $postFrom = rcube_utils::get_input_value('_from', rcube_utils::INPUT_POST);
+            if ($postFrom !== null && $postFrom !== '') {
+                $from = (string)$postFrom;
+                $headers['From'] = $from;
+            }
+        }
+
+        // 6. Recipients extraction with POST fallback
+        $mailto = $args['mailto'] ?? ($headers['To'] ?? '');
+        if (is_array($mailto)) {
+            $recipients = implode(', ', $mailto);
+        } else {
+            $recipients = (string)$mailto;
+        }
+
+        if ($recipients === '') {
+            $postTo = rcube_utils::get_input_value('_to', rcube_utils::INPUT_POST);
+            if ($postTo !== null && $postTo !== '') {
+                $recipients = (string)$postTo;
+                $headers['To'] = $recipients;
+            }
+        }
+
+        // 7. Message-ID
+        $messageId = $headers['Message-ID'] ?? ($args['headers']['Message-ID'] ?? sprintf('<%s@%s>', md5(uniqid((string)mt_rand(), true)), $_SERVER['SERVER_NAME'] ?? 'localhost'));
+        $headers['Message-ID'] = $messageId;
+
+        // 8. Default Date and MIME-Version if missing
+        if (empty($headers['Date'])) {
+            $headers['Date'] = date('r');
+        }
+        if (empty($headers['MIME-Version'])) {
+            $headers['MIME-Version'] = '1.0';
+        }
+
+        $serializedHeaders = json_encode($headers, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $serializedParams = json_encode([
-            'from' => $args['from'] ?? '',
-            'mailto' => $args['mailto'] ?? [],
+            'from' => $from,
+            'mailto' => $recipients,
+            'options' => $args['options'] ?? [],
+            'raw_headers' => $rawHeaders,
             'charset' => $args['charset'] ?? 'UTF-8',
-        ]);
+        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         $query = "INSERT INTO {$this->table}
             (user_id, message_id, subject, recipients, status, headers, body, parameters, send_at, created_at)
@@ -334,34 +447,157 @@ class email_scheduler extends rcube_plugin
         $db = $this->rcmail->get_dbh();
         $headers = json_decode($row['headers'] ?? '{}', true) ?: [];
         $params = json_decode($row['parameters'] ?? '{}', true) ?: [];
-        $body = $row['body'] ?? '';
-        $recipients = $row['recipients'] ?? '';
+        $body = (string)($row['body'] ?? '');
+        $recipients = (string)($row['recipients'] ?? '');
+        $subject = (string)($row['subject'] ?? ($headers['Subject'] ?? ''));
+        $from = (string)($params['from'] ?? ($headers['From'] ?? ''));
+
+        // Restore missing properties from headers or row
+        if ($subject === '' && !empty($headers['Subject'])) {
+            $subject = (string)$headers['Subject'];
+        }
+        if ($from === '' && !empty($headers['From'])) {
+            $from = (string)$headers['From'];
+        }
+        if ($recipients === '' && !empty($headers['To'])) {
+            $recipients = (string)$headers['To'];
+        }
+
+        // Standardize required MIME headers
+        if (empty($headers['Date'])) {
+            $headers['Date'] = date('r');
+        }
+        if (empty($headers['MIME-Version'])) {
+            $headers['MIME-Version'] = '1.0';
+        }
+        if ($subject !== '' && empty($headers['Subject'])) {
+            $headers['Subject'] = $subject;
+        }
+        if ($from !== '' && empty($headers['From'])) {
+            $headers['From'] = $from;
+        }
+        if ($recipients !== '' && empty($headers['To'])) {
+            $headers['To'] = $recipients;
+        }
+        if (empty($headers['Content-Type'])) {
+            $headers['Content-Type'] = 'text/plain; charset=UTF-8';
+        }
+
+        $cleanSubject = preg_replace('/[\r\n]+/', ' ', trim($subject));
+        $cleanFrom = preg_replace('/[\r\n]+/', '', trim($from));
+        $cleanRecipients = preg_replace('/[\r\n]+/', '', trim($recipients));
+        $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($cleanSubject, 'UTF-8') : $cleanSubject;
+
+        // Build recipient list
+        $recipientsList = [];
+        foreach (explode(',', $cleanRecipients) as $rcpt) {
+            $rcpt = trim($rcpt);
+            if ($rcpt !== '') {
+                $recipientsList[] = $rcpt;
+            }
+        }
+        if (!empty($headers['Cc'])) {
+            foreach (explode(',', (string)$headers['Cc']) as $rcpt) {
+                $rcpt = trim($rcpt);
+                if ($rcpt !== '' && !in_array($rcpt, $recipientsList, true)) {
+                    $recipientsList[] = $rcpt;
+                }
+            }
+        }
+        if (!empty($headers['Bcc'])) {
+            foreach (explode(',', (string)$headers['Bcc']) as $rcpt) {
+                $rcpt = trim($rcpt);
+                if ($rcpt !== '' && !in_array($rcpt, $recipientsList, true)) {
+                    $recipientsList[] = $rcpt;
+                }
+            }
+        }
+
+        // Build SMTP headers string
+        $rawHeadersStr = (string)($params['raw_headers'] ?? '');
+        if ($rawHeadersStr === '') {
+            $headerLines = [];
+            foreach ($headers as $k => $v) {
+                if (strcasecmp($k, 'Bcc') === 0) {
+                    continue; // Exclude Bcc from message payload
+                }
+                if (is_array($v)) {
+                    foreach ($v as $subV) {
+                        $headerLines[] = "{$k}: {$subV}";
+                    }
+                } else {
+                    $headerLines[] = "{$k}: {$v}";
+                }
+            }
+            $smtpHeadersStr = implode("\r\n", $headerLines);
+        } else {
+            $smtpHeadersStr = $rawHeadersStr;
+        }
+
+        $delivered = false;
+        $errorMsg = '';
 
         try {
-            // Deliver using native mail delivery or PHP mail
-            $rawSubject = $row['subject'] ?? ($headers['Subject'] ?? 'No Subject');
-            $rawFrom = $params['from'] ?? ($headers['From'] ?? 'webmail@localhost');
+            // 1. Try delivery using Roundcube's native SMTP engine
+            if (isset($this->rcmail)) {
+                if (method_exists($this->rcmail, 'smtp_init')) {
+                    $this->rcmail->smtp_init(true);
+                }
+                if (!empty($this->rcmail->smtp) && is_object($this->rcmail->smtp) && method_exists($this->rcmail->smtp, 'send_mail')) {
+                    $smtpOpts = $params['options'] ?? [];
+                    $delivered = (bool)$this->rcmail->smtp->send_mail($cleanFrom, $recipientsList, $smtpHeadersStr, $body, $smtpOpts);
+                    if (!$delivered) {
+                        $smtpErr = method_exists($this->rcmail->smtp, 'get_error') ? $this->rcmail->smtp->get_error() : null;
+                        if ($smtpErr) {
+                            $errorMsg = is_array($smtpErr) ? ($smtpErr['message'] ?? json_encode($smtpErr)) : (string)$smtpErr;
+                        }
+                    }
+                }
+            }
 
-            $cleanSubject = preg_replace('/[\r\n]+/', ' ', trim((string)$rawSubject));
-            $cleanFrom = preg_replace('/[\r\n]+/', '', trim((string)$rawFrom));
-            $cleanRecipients = preg_replace('/[\r\n]+/', '', trim((string)$recipients));
-            $encodedSubject = function_exists('mb_encode_mimeheader') ? mb_encode_mimeheader($cleanSubject, 'UTF-8') : $cleanSubject;
+            // 2. Fallback to PHP native mail() if SMTP was not used or failed
+            if (!$delivered) {
+                // For mail(), omit Subject, To, and Bcc because mail() passes them separately
+                $mailHeaderLines = [];
+                foreach ($headers as $k => $v) {
+                    if (in_array(strtolower($k), ['subject', 'to', 'bcc'], true)) {
+                        continue;
+                    }
+                    if (is_array($v)) {
+                        foreach ($v as $subV) {
+                            $mailHeaderLines[] = "{$k}: {$subV}";
+                        }
+                    } else {
+                        $mailHeaderLines[] = "{$k}: {$v}";
+                    }
+                }
+                $mailHeaders = implode("\r\n", $mailHeaderLines);
 
-            $contentType = $headers['Content-Type'] ?? 'text/plain; charset=UTF-8';
-            $contentType = preg_replace('/[\r\n]+/', ' ', trim((string)$contentType));
-
-            $mailHeaders = "From: {$cleanFrom}\r\n" .
-                           "Subject: {$encodedSubject}\r\n" .
-                           "MIME-Version: 1.0\r\n" .
-                           "Content-Type: {$contentType}\r\n";
-
-            $delivered = @mail($cleanRecipients, $encodedSubject, $body, $mailHeaders);
+                $delivered = @mail($cleanRecipients, $encodedSubject, $body, $mailHeaders);
+                if (!$delivered && empty($errorMsg)) {
+                    $errorMsg = 'SMTP and native mail delivery failed';
+                }
+            }
 
             if ($delivered) {
                 $db->query("UPDATE {$this->table} SET status = 'sent', sent_at = ? WHERE id = ?", date('Y-m-d H:i:s'), $row['id']);
+
+                // Optionally save to Sent mailbox if storage is available
+                try {
+                    if (!empty($this->rcmail) && !empty($this->rcmail->storage) && is_object($this->rcmail->storage) && method_exists($this->rcmail->storage, 'save_message')) {
+                        $sentMbox = (string)$this->rcmail->config->get('sent_mbox');
+                        if ($sentMbox !== '' && !$this->rcmail->config->get('no_save_sent_messages')) {
+                            $fullMsg = $smtpHeadersStr . "\r\n\r\n" . $body;
+                            $this->rcmail->storage->save_message($sentMbox, $fullMsg);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Non-fatal
+                }
+
                 return true;
             } else {
-                $db->query("UPDATE {$this->table} SET status = 'failed', error = ? WHERE id = ?", 'SMTP delivery failed', $row['id']);
+                $db->query("UPDATE {$this->table} SET status = 'failed', error = ? WHERE id = ?", $errorMsg ?: 'Delivery failed', $row['id']);
                 return false;
             }
         } catch (\Throwable $e) {

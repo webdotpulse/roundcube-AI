@@ -196,13 +196,22 @@
         sendBtn.setAttribute('data-undo-bound', '1');
 
         var undoDelay = parseInt(rcmail.env ? (rcmail.env.email_scheduler_undo_delay || 0) : 0, 10);
-        if (undoDelay <= 0) return;
 
         sendBtn.addEventListener('click', function(e) {
             var actionField = document.getElementById('_email_scheduler_action');
+            var timeField = document.getElementById('_email_scheduler_send_at');
+
+            // If normal send is clicked directly, ensure schedule action is not leftover from a closed modal
+            if (actionField && actionField.value === 'schedule' && !sendBtn.getAttribute('data-is-scheduled')) {
+                actionField.value = '';
+                if (timeField) timeField.value = '';
+            }
+
             if (actionField && actionField.value === 'schedule') {
                 return; // Scheduled send passes through directly to database queue
             }
+
+            if (undoDelay <= 0) return;
 
             if (!sendBtn.getAttribute('data-undo-bypass')) {
                 e.preventDefault();
@@ -286,7 +295,7 @@
         modal.id = 'schedule-send-modal';
         modal.className = 'email-scheduler-modal-overlay';
         modal.innerHTML = '<div class="email-scheduler-modal">' +
-            '<div class="modal-header"><h3>' + (rcmail.gettext('schedule_modal_title', 'email_scheduler') || 'Schedule Message Delivery') + '</h3><button type="button" class="close-btn" onclick="document.getElementById(\'schedule-send-modal\').remove()">&times;</button></div>' +
+            '<div class="modal-header"><h3>' + (rcmail.gettext('schedule_modal_title', 'email_scheduler') || 'Schedule Message Delivery') + '</h3><button type="button" class="close-btn" onclick="email_scheduler_close_modal()">&times;</button></div>' +
             '<div class="modal-body">' +
             '<div class="preset-group">' +
             '<button type="button" class="btn btn-preset" onclick="email_scheduler_choose(\'' + tomorrowM + '\')"><span class="icon">☀️</span> ' + tomorrowMLabel + '</button>' +
@@ -317,6 +326,15 @@
         }
     }
 
+    window.email_scheduler_close_modal = function() {
+        var modal = document.getElementById('schedule-send-modal');
+        if (modal) modal.remove();
+        var act = document.getElementById('_email_scheduler_action');
+        var time = document.getElementById('_email_scheduler_send_at');
+        if (act) act.value = '';
+        if (time) time.value = '';
+    };
+
     window.email_scheduler_choose = function(dateTimeStr) {
         var act = document.getElementById('_email_scheduler_action');
         var time = document.getElementById('_email_scheduler_send_at');
@@ -326,8 +344,19 @@
         var modal = document.getElementById('schedule-send-modal');
         if (modal) modal.remove();
 
+        var sendBtn = document.querySelector('.formbuttons button.send, .formbuttons .btn.send, button[command="send"], button[name="_send"], a.button.send');
+        if (sendBtn) {
+            sendBtn.setAttribute('data-is-scheduled', '1');
+        }
+
         // Trigger compose send
         rcmail.command('send', {});
+
+        setTimeout(function() {
+            if (sendBtn) sendBtn.removeAttribute('data-is-scheduled');
+            if (act) act.value = '';
+            if (time) time.value = '';
+        }, 3000);
     };
 
     window.email_scheduler_choose_custom = function() {

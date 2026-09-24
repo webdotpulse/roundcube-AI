@@ -84,6 +84,57 @@ if (!class_exists('rcube')) {
         }
     }
 
+    class rcube_smtp_mock
+    {
+        public array $sentMails = [];
+        public function send_mail($from, $recipients, $headers, $body, $options = [])
+        {
+            $this->sentMails[] = [
+                'from' => $from,
+                'recipients' => $recipients,
+                'headers' => $headers,
+                'body' => $body,
+                'options' => $options,
+            ];
+            return true;
+        }
+        public function get_error()
+        {
+            return null;
+        }
+    }
+
+    class Mail_mime_mock
+    {
+        private array $headers = [];
+        private string $body = '';
+
+        public function __construct(array $headers, string $body)
+        {
+            $this->headers = $headers;
+            $this->body = $body;
+        }
+
+        public function get()
+        {
+            return $this->body;
+        }
+
+        public function headers(array $xtra = [])
+        {
+            return array_merge($this->headers, $xtra);
+        }
+
+        public function txtHeaders($xtra = [], $raw = false)
+        {
+            $lines = [];
+            foreach ($this->headers as $k => $v) {
+                $lines[] = "$k: $v";
+            }
+            return implode("\r\n", $lines);
+        }
+    }
+
     class rcmail extends rcube
     {
         private static $rcmailInstance;
@@ -91,6 +142,7 @@ if (!class_exists('rcube')) {
         public $output;
         public $user;
         public $dbh;
+        public $smtp;
         public $task = 'mail';
         public $action = '';
 
@@ -100,6 +152,15 @@ if (!class_exists('rcube')) {
             $this->output = new rcmail_output_mock();
             $this->user = new rcube_user_mock();
             $this->dbh = new rcube_db_mock();
+            $this->smtp = new rcube_smtp_mock();
+        }
+
+        public function smtp_init($connect = false)
+        {
+            if (!$this->smtp) {
+                $this->smtp = new rcube_smtp_mock();
+            }
+            return true;
         }
 
         public static function get_instance()
@@ -419,6 +480,41 @@ assert_true($stored['recipients'] === 'team@example.com, boss@example.com', "Que
 assert_true($stored['status'] === 'scheduled', "Queue record marks status as 'scheduled'");
 assert_true($stored['send_at'] === $futureTime, "Queue record preserves future send_at timestamp");
 
+// 3.2 Extract from Mail_mime object (Roundcube runtime message_before_send hook)
+$mimeMock = new Mail_mime_mock([
+    'Subject' => 'Actual Non-Empty Subject via Mail_mime',
+    'From' => 'alice@example.com',
+    'To' => 'bob@example.com',
+    'Content-Type' => 'text/html; charset=UTF-8',
+], '<h1>This is a real non-empty email body</h1>');
+
+$mimeArgs = [
+    'message' => $mimeMock,
+    'from' => 'alice@example.com',
+    'mailto' => 'bob@example.com',
+];
+
+$mimeQueueId = $scheduler->enqueueMessage($mimeArgs, $futureTime, 'scheduled');
+$storedMime = $rcmail->dbh->rows[$mimeQueueId] ?? null;
+assert_true(!empty($storedMime), "Mail_mime message stored in queue");
+assert_true($storedMime['subject'] === 'Actual Non-Empty Subject via Mail_mime', "Preserves non-empty subject from Mail_mime object");
+assert_true(str_contains($storedMime['body'], 'This is a real non-empty email body'), "Preserves non-empty body from Mail_mime object");
+assert_true(!empty($storedMime['headers']) && str_contains($storedMime['headers'], 'text/html'), "Preserves MIME headers in JSON payload");
+
+// 3.3 Extract from POST form parameters fallback
+rcube_utils::$mockPost = [
+    '_subject' => 'Subject from POST form input',
+    '_message' => 'Body text from POST form input',
+    '_from' => 'carol@example.com',
+    '_to' => 'dave@example.com',
+];
+$postQueueId = $scheduler->enqueueMessage([], $futureTime, 'scheduled');
+$storedPost = $rcmail->dbh->rows[$postQueueId] ?? null;
+assert_true(!empty($storedPost), "POST-fallback message stored in queue");
+assert_true($storedPost['subject'] === 'Subject from POST form input', "Extracts non-empty subject from POST _subject input");
+assert_true($storedPost['body'] === 'Body text from POST form input', "Extracts non-empty body from POST _message input");
+assert_true($storedPost['recipients'] === 'dave@example.com', "Extracts non-empty recipient from POST _to input");
+
 // --------------------------------------------------------------------------
 // Test Suite 4: Hook Interception on Send Later
 // --------------------------------------------------------------------------
@@ -476,11 +572,23 @@ assert_true($rcmail->dbh->rows[$schedToCancelId]['status'] === 'cancelled', "Sch
 $schedToSendId = $scheduler->enqueueMessage($sendArgs, date('Y-m-d H:i:s', time() + 86400), 'scheduled');
 $rowToSend = $rcmail->dbh->rows[$schedToSendId];
 
-// In test environment without active sendmail/postfix, deliverQueuedMessage uses mail()
-// Mock delivery test
-$rcmail->dbh->query("UPDATE email_scheduler_queue SET status = 'sent', sent_at = ? WHERE id = ?", date('Y-m-d H:i:s'), $schedToSendId);
+// Delivery via deliverQueuedMessage using mock SMTP
+$rcmail->smtp->sentMails = [];
+$deliveredResult = $scheduler->deliverQueuedMessage($rowToSend);
+assert_true($deliveredResult === true, "deliverQueuedMessage delivers successfully via SMTP");
 assert_true($rcmail->dbh->rows[$schedToSendId]['status'] === 'sent', "Send Now marks status as 'sent'");
 assert_true(!empty($rcmail->dbh->rows[$schedToSendId]['sent_at']), "Send Now records sent_at timestamp");
+assert_true(count($rcmail->smtp->sentMails) === 1, "Delivered exactly 1 message via SMTP");
+assert_true($rcmail->smtp->sentMails[0]['body'] === 'Company announcement body', "Delivered body is not empty");
+assert_true(str_contains($rcmail->smtp->sentMails[0]['headers'], 'Subject: Scheduled Announcements'), "Delivered subject header is not empty");
+
+// Delivery of Mail_mime queued record
+$rcmail->smtp->sentMails = [];
+$deliveredMime = $scheduler->deliverQueuedMessage($storedMime);
+assert_true($deliveredMime === true, "deliverQueuedMessage delivers Mail_mime record successfully");
+assert_true(count($rcmail->smtp->sentMails) === 1, "Delivered Mail_mime message via SMTP");
+assert_true($rcmail->smtp->sentMails[0]['body'] === '<h1>This is a real non-empty email body</h1>', "Mail_mime delivered body is not empty");
+assert_true(str_contains($rcmail->smtp->sentMails[0]['headers'], 'Subject: Actual Non-Empty Subject via Mail_mime'), "Mail_mime delivered subject is not empty");
 
 // 6.3 Queue Delivery Worker (processDueMessages)
 $pastDueId = $scheduler->enqueueMessage($sendArgs, date('Y-m-d H:i:s', time() - 300), 'scheduled'); // Due 5 minutes ago
