@@ -222,6 +222,9 @@ class RoundcubeExtraContentInstaller
         // 7. Check / Assist Roundcube Configuration
         $this->checkRoundcubeConfig($targetDir);
 
+        // 8. Ensure LifePrisma AI persistent storage (Bayesian models & AI memory) exists outside package dir
+        $this->preserveAndMigrateLifeprismaData($targetDir);
+
         $this->info("-------------------------------------------------");
         $this->success("Extra content installation complete. ({$installedCount} components processed)");
         $this->info("=================================================");
@@ -592,6 +595,68 @@ class RoundcubeExtraContentInstaller
                 $this->info("Created compatibility symlink: {$roundcubeAiTarget} -> lifeprisma_ai");
             }
         }
+    }
+
+    /**
+     * Preserves and migrates LifePrisma AI persistent storage (Bayesian spam models and learned memory)
+     * into host Roundcube data directory (<roundcube_root>/data/lifeprisma_ai) so that
+     * composer update / require commands never wipe or reset user memory.
+     */
+    private function preserveAndMigrateLifeprismaData(string $targetDir): void
+    {
+        $persistentDataDir = $targetDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'lifeprisma_ai';
+        $persistentSpamDir = $persistentDataDir . DIRECTORY_SEPARATOR . 'spam';
+        $persistentMemoryDir = $persistentDataDir . DIRECTORY_SEPARATOR . 'memory';
+
+        if (!$this->dryRun) {
+            foreach ([$persistentDataDir, $persistentSpamDir, $persistentMemoryDir] as $d) {
+                if (!is_dir($d)) {
+                    @mkdir($d, 0775, true);
+                }
+            }
+
+            $htaccess = $persistentDataDir . DIRECTORY_SEPARATOR . '.htaccess';
+            if (!file_exists($htaccess)) {
+                @file_put_contents(
+                    $htaccess,
+                    "# LifePrisma AI data protection\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\nOptions -Indexes\n"
+                );
+            }
+
+            // Migrate legacy models from plugin local directory
+            $legacySpam = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'spam';
+            if (is_dir($legacySpam)) {
+                $files = glob($legacySpam . DIRECTORY_SEPARATOR . 'bayes_*.json') ?: [];
+                foreach ($files as $f) {
+                    $targetFile = $persistentSpamDir . DIRECTORY_SEPARATOR . basename($f);
+                    if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
+                        @copy($f, $targetFile);
+                    }
+                }
+            }
+
+            // Migrate legacy memory from plugin local directory
+            $legacyMemory = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'memory';
+            if (is_dir($legacyMemory)) {
+                $files = glob($legacyMemory . DIRECTORY_SEPARATOR . '*.json') ?: [];
+                foreach ($files as $f) {
+                    $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . basename($f);
+                    if (!file_exists($targetFile) || filemtime($f) > filemtime($targetFile)) {
+                        @copy($f, $targetFile);
+                    }
+                }
+            }
+
+            $legacyAiMemory = $this->pluginDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'ai_memory.json';
+            if (file_exists($legacyAiMemory)) {
+                $targetFile = $persistentMemoryDir . DIRECTORY_SEPARATOR . 'ai_memory.json';
+                if (!file_exists($targetFile) || filemtime($legacyAiMemory) > filemtime($targetFile)) {
+                    @copy($legacyAiMemory, $targetFile);
+                }
+            }
+        }
+
+        $this->success("Preserved LifePrisma AI persistent storage (Bayesian models & Memory): {$persistentDataDir}");
     }
 
     /**

@@ -81,7 +81,10 @@
             "post-install-script": "bin/install-extra.php",
             "post-update-script": "bin/install-extra.php",
             "persistent-files": [
-                "config.inc.php"
+                "config.inc.php",
+                "data/ai_memory.json",
+                "data/memory",
+                "data/spam"
             ]
         }
     },

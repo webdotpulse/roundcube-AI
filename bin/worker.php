@@ -156,9 +156,19 @@ function lpai_worker_load_config($custom_config = null) {
 // ============================================================
 function lpai_worker_load_memory($config, $account_id = null) {
     $candidates = [];
+    $rc_root = class_exists('LpaiSpamFilter') ? LpaiSpamFilter::find_roundcube_root() : null;
+
     if (!empty($account_id)) {
         $user_hash = md5("lpai_user_mem_" . $account_id);
+        if ($rc_root) {
+            $candidates[] = $rc_root . '/data/lifeprisma_ai/memory/user_' . $user_hash . '.json';
+            $candidates[] = $rc_root . '/data/memory/user_' . $user_hash . '.json';
+        }
         $candidates[] = dirname(__DIR__) . '/data/memory/user_' . $user_hash . '.json';
+    }
+    if ($rc_root) {
+        $candidates[] = $rc_root . '/data/lifeprisma_ai/memory/ai_memory.json';
+        $candidates[] = $rc_root . '/data/memory/ai_memory.json';
     }
     $candidates[] = dirname(__DIR__) . '/data/ai_memory.json';
     $candidates[] = dirname(__DIR__) . '/.ai_memory.json';
@@ -1062,7 +1072,10 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 // Main Execution Loop
 // ============================================================
 if (isset($argv[0]) && realpath($argv[0]) === realpath(__FILE__)) {
-    $state_file = __DIR__ . '/.worker_state.json';
+    $rc_root = class_exists('LpaiSpamFilter') ? LpaiSpamFilter::find_roundcube_root() : null;
+    $state_file = ($rc_root && is_dir($rc_root . '/data/lifeprisma_ai'))
+        ? $rc_root . '/data/lifeprisma_ai/.worker_state.json'
+        : __DIR__ . '/.worker_state.json';
     $state = new LpaiWorkerState($state_file);
 
     if ($is_reset_state) {

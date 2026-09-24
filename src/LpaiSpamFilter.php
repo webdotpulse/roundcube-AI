@@ -222,7 +222,53 @@ class LpaiSpamFilter
     ];
 
     /**
+     * Locates the host Roundcube root directory.
+     */
+    public static function find_roundcube_root(): ?string
+    {
+        if (defined('RCUBE_INSTALL_PATH') && is_dir(RCUBE_INSTALL_PATH)) {
+            return rtrim(RCUBE_INSTALL_PATH, '/\\');
+        }
+        if (defined('INSTALL_PATH') && is_dir(INSTALL_PATH)) {
+            return rtrim(INSTALL_PATH, '/\\');
+        }
+        if (class_exists('rcmail', false)) {
+            try {
+                $rcmail = rcmail::get_instance();
+                if ($rcmail && $rcmail->config) {
+                    $dir = $rcmail->config->get('roundcube_dir');
+                    if ($dir && is_dir($dir)) {
+                        return rtrim($dir, '/\\');
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // Walk up directory tree from plugin src
+        $candidates = [
+            dirname(__DIR__, 3), // plugins/lifeprisma_ai/src -> <roundcube_root>
+            dirname(__DIR__, 4), // vendor/webdotpulse/roundcube-ai/src -> <roundcube_root>
+            dirname(__DIR__, 2),
+        ];
+
+        foreach ($candidates as $cand) {
+            if (is_dir($cand) && (
+                is_dir($cand . '/plugins') ||
+                is_dir($cand . '/skins') ||
+                file_exists($cand . '/program/include/iniset.php') ||
+                file_exists($cand . '/index.php')
+            )) {
+                return rtrim($cand, '/\\');
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Resolves and ensures writable storage directory for spam models.
+     * Prioritizes persistent paths OUTSIDE the plugin folder so that
+     * `composer require` / `composer update` never resets learned data.
      */
     public static function get_storage_dir(): string
     {
@@ -230,17 +276,59 @@ class LpaiSpamFilter
             return self::$storage_dir;
         }
 
-        $candidates = [
-            dirname(__DIR__) . '/data/spam',
-            dirname(__DIR__, 3) . '/temp/spam',
-            sys_get_temp_dir() . '/roundcube_spam_filter',
-        ];
+        $candidates = [];
+
+        // 1. Explicitly configured storage directory in Roundcube config
+        if (class_exists('rcmail', false)) {
+            try {
+                $rcmail = rcmail::get_instance();
+                if ($rcmail && $rcmail->config) {
+                    $custom_spam_dir = $rcmail->config->get('lifeprisma_ai_spam_storage_dir');
+                    if ($custom_spam_dir) {
+                        $candidates[] = rtrim($custom_spam_dir, '/\\');
+                    }
+                    $custom_data_dir = $rcmail->config->get('lifeprisma_ai_data_dir');
+                    if ($custom_data_dir) {
+                        $candidates[] = rtrim($custom_data_dir, '/\\') . '/spam';
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        // 2. Canonical Roundcube host data directory (OUTSIDE plugin folder)
+        $rc_root = self::find_roundcube_root();
+        if ($rc_root) {
+            $candidates[] = $rc_root . '/data/lifeprisma_ai/spam';
+            $candidates[] = $rc_root . '/data/spam';
+            $candidates[] = $rc_root . '/temp/lifeprisma_ai/spam';
+        }
+
+        // 3. System persistent directory
+        if (is_dir('/var/lib/roundcube')) {
+            $candidates[] = '/var/lib/roundcube/lifeprisma_ai/spam';
+        }
+
+        // 4. Legacy local plugin directory
+        $legacy_local_dir = dirname(__DIR__) . '/data/spam';
+        $candidates[] = $legacy_local_dir;
+
+        // 5. System temp fallback
+        $candidates[] = sys_get_temp_dir() . '/roundcube_lifeprisma_ai/spam';
+        $candidates[] = sys_get_temp_dir() . '/roundcube_spam_filter';
 
         foreach ($candidates as $dir) {
             if (!is_dir($dir)) {
                 @mkdir($dir, 0775, true);
             }
             if (is_dir($dir) && is_writable($dir)) {
+                // Secure with .htaccess if under web-accessible data directory
+                self::secure_storage_directory($dir);
+
+                // Auto-migrate any legacy files from plugin directory to persistent directory
+                if ($dir !== $legacy_local_dir && is_dir($legacy_local_dir)) {
+                    self::migrate_legacy_storage_files($legacy_local_dir, $dir);
+                }
+
                 self::$storage_dir = $dir;
                 return self::$storage_dir;
             }
@@ -248,6 +336,141 @@ class LpaiSpamFilter
 
         self::$storage_dir = sys_get_temp_dir();
         return self::$storage_dir;
+    }
+
+    /**
+     * Secures a storage directory by adding an .htaccess file.
+     */
+    private static function secure_storage_directory(string $dir): void
+    {
+        $htaccess = $dir . '/.htaccess';
+        if (!file_exists($htaccess)) {
+            @file_put_contents($htaccess, "# LifePrisma AI data protection\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\nOptions -Indexes\n");
+        }
+    }
+
+    /**
+     * Migrates legacy bayes_*.json model files into persistent storage.
+     */
+    private static function migrate_legacy_storage_files(string $legacy_dir, string $target_dir): void
+    {
+        static $migrated = false;
+        if ($migrated) return;
+        $migrated = true;
+
+        $files = glob($legacy_dir . '/bayes_*.json') ?: [];
+        foreach ($files as $src_file) {
+            $dest_file = $target_dir . '/' . basename($src_file);
+            if (!file_exists($dest_file) || (filemtime($src_file) > filemtime($dest_file))) {
+                @copy($src_file, $dest_file);
+            }
+        }
+    }
+
+    /**
+     * Resolves the Roundcube database handler and ensures the persistent table exists.
+     */
+    private static function get_db()
+    {
+        if (!class_exists('rcmail', false)) {
+            return null;
+        }
+        try {
+            $rcmail = rcmail::get_instance();
+            if ($rcmail && method_exists($rcmail, 'get_dbh')) {
+                $db = $rcmail->get_dbh();
+                if ($db) {
+                    self::ensure_database_table($db);
+                    return $db;
+                }
+            }
+        } catch (\Throwable $e) {}
+        return null;
+    }
+
+    /**
+     * Creates the lpai_spam_models table in the Roundcube database if missing.
+     */
+    private static function ensure_database_table($db): void
+    {
+        static $checked = false;
+        if ($checked) {
+            return;
+        }
+        $checked = true;
+
+        $table = method_exists($db, 'table_name') ? $db->table_name('lpai_spam_models') : 'lpai_spam_models';
+        $driver = strtolower($db->db_provider ?? 'mysql');
+
+        $sql = match ($driver) {
+            'sqlite' => "CREATE TABLE IF NOT EXISTS {$table} (
+                user_id VARCHAR(128) PRIMARY KEY,
+                total_spam INTEGER NOT NULL DEFAULT 0,
+                total_ham INTEGER NOT NULL DEFAULT 0,
+                tokens_count INTEGER NOT NULL DEFAULT 0,
+                model_data TEXT NOT NULL,
+                created_at INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL DEFAULT 0
+            );",
+            'pgsql', 'postgres' => "CREATE TABLE IF NOT EXISTS {$table} (
+                user_id VARCHAR(128) PRIMARY KEY,
+                total_spam INTEGER NOT NULL DEFAULT 0,
+                total_ham INTEGER NOT NULL DEFAULT 0,
+                tokens_count INTEGER NOT NULL DEFAULT 0,
+                model_data TEXT NOT NULL,
+                created_at INTEGER NOT NULL DEFAULT 0,
+                updated_at INTEGER NOT NULL DEFAULT 0
+            );",
+            default => "CREATE TABLE IF NOT EXISTS `{$table}` (
+                `user_id` VARCHAR(128) NOT NULL,
+                `total_spam` INT UNSIGNED NOT NULL DEFAULT 0,
+                `total_ham` INT UNSIGNED NOT NULL DEFAULT 0,
+                `tokens_count` INT UNSIGNED NOT NULL DEFAULT 0,
+                `model_data` LONGTEXT NOT NULL,
+                `created_at` INT UNSIGNED NOT NULL DEFAULT 0,
+                `updated_at` INT UNSIGNED NOT NULL DEFAULT 0,
+                PRIMARY KEY (`user_id`),
+                INDEX `idx_lpai_updated` (`updated_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        };
+
+        try {
+            @$db->query($sql);
+        } catch (\Throwable $e) {}
+    }
+
+    /**
+     * Synchronizes a Bayesian model into the persistent database table.
+     */
+    private static function sync_model_to_db($db, string $user_identifier, array $model): bool
+    {
+        try {
+            $table = method_exists($db, 'table_name') ? $db->table_name('lpai_spam_models') : 'lpai_spam_models';
+            $json = json_encode($model, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($json === false) return false;
+
+            $tokens_count = count($model['tokens'] ?? []);
+            $total_spam = (int)($model['total_spam'] ?? 0);
+            $total_ham = (int)($model['total_ham'] ?? 0);
+            $now = (int)($model['updated_at'] ?? time());
+            $created_at = (int)($model['created_at'] ?? $now);
+
+            $res = $db->query("SELECT user_id FROM {$table} WHERE user_id = ?", $user_identifier);
+            if ($res && $db->fetch_assoc($res)) {
+                $db->query(
+                    "UPDATE {$table} SET total_spam = ?, total_ham = ?, tokens_count = ?, model_data = ?, updated_at = ? WHERE user_id = ?",
+                    $total_spam, $total_ham, $tokens_count, $json, $now, $user_identifier
+                );
+            } else {
+                $db->query(
+                    "INSERT INTO {$table} (user_id, total_spam, total_ham, tokens_count, model_data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    $user_identifier, $total_spam, $total_ham, $tokens_count, $json, $created_at, $now
+                );
+            }
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
@@ -273,7 +496,32 @@ class LpaiSpamFilter
     }
 
     /**
+     * Atomically writes a model JSON file to disk.
+     */
+    public static function write_model_file(string $file, array $model): bool
+    {
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0775, true);
+        }
+        $tmp_file = $file . '.' . uniqid('tmp_', true);
+
+        $json = json_encode($model, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if ($json === false) {
+            return false;
+        }
+
+        $written = @file_put_contents($tmp_file, $json, LOCK_EX);
+        if ($written === false) {
+            return false;
+        }
+
+        return @rename($tmp_file, $file);
+    }
+
+    /**
      * Loads the user's learned model, initializing default structure if new.
+     * Restores automatically from Roundcube database if disk file is missing (e.g. composer update).
      */
     public static function load_model(string $user_identifier): array
     {
@@ -294,6 +542,7 @@ class LpaiSpamFilter
             'learned_message_ids' => [], // ID => 'spam' | 'ham' for auto-correction
         ];
 
+        $disk_model = null;
         if (file_exists($file)) {
             $fp = @fopen($file, 'rb');
             if ($fp) {
@@ -305,19 +554,61 @@ class LpaiSpamFilter
                 if (!empty($content)) {
                     $data = json_decode($content, true);
                     if (is_array($data) && isset($data['tokens'])) {
-                        self::$models_cache[$user_identifier] = array_merge($default_model, $data);
-                        return self::$models_cache[$user_identifier];
+                        $disk_model = array_merge($default_model, $data);
                     }
                 }
             }
         }
 
-        self::$models_cache[$user_identifier] = $default_model;
+        $db = self::get_db();
+        $db_model = null;
+        if ($db) {
+            try {
+                $table = method_exists($db, 'table_name') ? $db->table_name('lpai_spam_models') : 'lpai_spam_models';
+                $res = $db->query("SELECT model_data, updated_at FROM {$table} WHERE user_id = ?", $user_identifier);
+                if ($res && ($row = $db->fetch_assoc($res))) {
+                    $parsed = json_decode($row['model_data'] ?? '', true);
+                    if (is_array($parsed) && isset($parsed['tokens'])) {
+                        $db_model = array_merge($default_model, $parsed);
+                        if (!empty($row['updated_at'])) {
+                            $db_model['updated_at'] = (int)$row['updated_at'];
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if ($disk_model && $db_model) {
+            $disk_updated = (int)($disk_model['updated_at'] ?? 0);
+            $db_updated = (int)($db_model['updated_at'] ?? 0);
+            if ($db_updated > $disk_updated) {
+                $model = $db_model;
+                self::write_model_file($file, $model);
+            } else {
+                $model = $disk_model;
+                if ($disk_updated > $db_updated && $db) {
+                    self::sync_model_to_db($db, $user_identifier, $model);
+                }
+            }
+        } elseif ($disk_model) {
+            $model = $disk_model;
+            if ($db) {
+                self::sync_model_to_db($db, $user_identifier, $model);
+            }
+        } elseif ($db_model) {
+            // Restored from database after file deletion / composer update!
+            $model = $db_model;
+            self::write_model_file($file, $model);
+        } else {
+            $model = $default_model;
+        }
+
+        self::$models_cache[$user_identifier] = $model;
         return self::$models_cache[$user_identifier];
     }
 
     /**
-     * Persists the user's learned model atomically to disk.
+     * Persists the user's learned model atomically to disk and database.
      */
     public static function save_model(string $user_identifier, array $model): bool
     {
@@ -331,19 +622,15 @@ class LpaiSpamFilter
         }
 
         $file = self::get_model_path($user_identifier);
-        $tmp_file = $file . '.' . uniqid('tmp_', true);
+        $written = self::write_model_file($file, $model);
 
-        $json = json_encode($model, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        if ($json === false) {
-            return false;
+        // Synchronize atomically to Roundcube database
+        $db = self::get_db();
+        if ($db) {
+            self::sync_model_to_db($db, $user_identifier, $model);
         }
 
-        $written = @file_put_contents($tmp_file, $json, LOCK_EX);
-        if ($written === false) {
-            return false;
-        }
-
-        return @rename($tmp_file, $file);
+        return $written;
     }
 
     /**
@@ -356,6 +643,13 @@ class LpaiSpamFilter
         $file = self::get_model_path($user_identifier);
         if (file_exists($file)) {
             @unlink($file);
+        }
+        $db = self::get_db();
+        if ($db) {
+            try {
+                $table = method_exists($db, 'table_name') ? $db->table_name('lpai_spam_models') : 'lpai_spam_models';
+                $db->query("DELETE FROM {$table} WHERE user_id = ?", $user_identifier);
+            } catch (\Throwable $e) {}
         }
         return true;
     }

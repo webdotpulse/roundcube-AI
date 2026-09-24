@@ -2925,33 +2925,198 @@ Return ONLY the deliverability-optimized newsletter HTML.";
     /**
      * AI Memory Helpers (Knowledge Base & Verified Answer Replication)
      */
+    public function get_memory_dir()
+    {
+        $rcmail = rcmail::get_instance();
+        $candidates = [];
+
+        // 1. Configured memory or data directory
+        if ($rcmail && $rcmail->config) {
+            $custom_dir = $rcmail->config->get('lifeprisma_ai_memory_dir') ?: $rcmail->config->get('lifeprisma_ai_data_dir');
+            if ($custom_dir) {
+                $trimmed_dir = rtrim($custom_dir, '/\\');
+                if (basename($trimmed_dir) === 'memory') {
+                    $candidates[] = $trimmed_dir;
+                } else {
+                    $candidates[] = $trimmed_dir . '/memory';
+                    $candidates[] = $trimmed_dir;
+                }
+            }
+        }
+
+        // 2. Persistent host Roundcube data directory (outside plugin folder)
+        $rc_root = LpaiSpamFilter::find_roundcube_root();
+        if ($rc_root) {
+            $candidates[] = $rc_root . '/data/lifeprisma_ai/memory';
+            $candidates[] = $rc_root . '/data/memory';
+            $candidates[] = $rc_root . '/temp/lifeprisma_ai/memory';
+        }
+
+        // 3. Local plugin directory (legacy)
+        $plugin_home = !empty($this->home) ? $this->home : __DIR__;
+        $legacy_dir = $plugin_home . '/data/memory';
+        $candidates[] = $legacy_dir;
+
+        // 4. System temp directory
+        $candidates[] = sys_get_temp_dir() . '/roundcube_lifeprisma_ai/memory';
+
+        foreach ($candidates as $dir) {
+            if (!is_dir($dir)) {
+                @mkdir($dir, 0750, true);
+            }
+            if (is_dir($dir) && is_writable($dir)) {
+                $htaccess = $dir . '/.htaccess';
+                if (!file_exists($htaccess)) {
+                    @file_put_contents($htaccess, "# LifePrisma AI data protection\n<IfModule mod_authz_core.c>\n    Require all denied\n</IfModule>\n<IfModule !mod_authz_core.c>\n    Deny from all\n</IfModule>\nOptions -Indexes\n");
+                }
+                // Migrate legacy memory files if present
+                if ($dir !== $legacy_dir && is_dir($legacy_dir)) {
+                    $leg_files = glob($legacy_dir . '/*.json') ?: [];
+                    foreach ($leg_files as $lf) {
+                        $tf = $dir . '/' . basename($lf);
+                        if (!file_exists($tf) || filemtime($lf) > filemtime($tf)) {
+                            @copy($lf, $tf);
+                        }
+                    }
+                }
+                $leg_file = $plugin_home . '/data/ai_memory.json';
+                if (file_exists($leg_file) && !file_exists($dir . '/ai_memory.json')) {
+                    @copy($leg_file, $dir . '/ai_memory.json');
+                }
+                return $dir;
+            }
+        }
+
+        return $plugin_home . '/data/memory';
+    }
+
     public function get_memory_file()
     {
         $rcmail = rcmail::get_instance();
         $user_id = ($rcmail->user && isset($rcmail->user->ID)) ? (int) $rcmail->user->ID : 0;
-
-        $dir = $this->home . '/data/memory';
-        if (!is_dir($dir)) {
-            @mkdir($dir, 0750, true);
-        }
+        $dir = $this->get_memory_dir();
 
         if ($user_id > 0) {
             $user_hash = md5("lpai_user_mem_" . $user_id);
             return $dir . '/user_' . $user_hash . '.json';
         }
 
-        return $this->home . '/data/ai_memory.json';
+        return $dir . '/ai_memory.json';
+    }
+
+    private function get_memory_db_key(): string
+    {
+        $rcmail = rcmail::get_instance();
+        $user_id = ($rcmail->user && isset($rcmail->user->ID)) ? (int) $rcmail->user->ID : 0;
+        return $user_id > 0 ? "user_{$user_id}" : "default";
+    }
+
+    private function ensure_ai_memory_table($db): void
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        $table = method_exists($db, 'table_name') ? $db->table_name('lpai_ai_memory') : 'lpai_ai_memory';
+        $driver = strtolower($db->db_provider ?? 'mysql');
+
+        $sql = match ($driver) {
+            'sqlite' => "CREATE TABLE IF NOT EXISTS {$table} (
+                user_id VARCHAR(128) PRIMARY KEY,
+                memory_data TEXT NOT NULL,
+                updated_at INTEGER NOT NULL DEFAULT 0
+            );",
+            'pgsql', 'postgres' => "CREATE TABLE IF NOT EXISTS {$table} (
+                user_id VARCHAR(128) PRIMARY KEY,
+                memory_data TEXT NOT NULL,
+                updated_at INTEGER NOT NULL DEFAULT 0
+            );",
+            default => "CREATE TABLE IF NOT EXISTS `{$table}` (
+                `user_id` VARCHAR(128) NOT NULL,
+                `memory_data` LONGTEXT NOT NULL,
+                `updated_at` INT UNSIGNED NOT NULL DEFAULT 0,
+                PRIMARY KEY (`user_id`),
+                INDEX `idx_lpai_mem_updated` (`updated_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;",
+        };
+
+        try {
+            @$db->query($sql);
+        } catch (\Throwable $e) {}
+    }
+
+    private function sync_ai_memory_to_db($db, string $user_key, array $items): bool
+    {
+        try {
+            $this->ensure_ai_memory_table($db);
+            $table = method_exists($db, 'table_name') ? $db->table_name('lpai_ai_memory') : 'lpai_ai_memory';
+            $json = json_encode($items, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            if ($json === false) return false;
+            $now = time();
+
+            $res = $db->query("SELECT user_id FROM {$table} WHERE user_id = ?", $user_key);
+            if ($res && $db->fetch_assoc($res)) {
+                $db->query("UPDATE {$table} SET memory_data = ?, updated_at = ? WHERE user_id = ?", $json, $now, $user_key);
+            } else {
+                $db->query("INSERT INTO {$table} (user_id, memory_data, updated_at) VALUES (?, ?, ?)", $user_key, $json, $now);
+            }
+            return true;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     public function load_ai_memory()
     {
         $file = $this->get_memory_file();
-        if (!file_exists($file)) {
-            return [];
+        $disk_data = null;
+        if (file_exists($file)) {
+            $raw = @file_get_contents($file);
+            $data = json_decode((string)$raw, true);
+            if (is_array($data)) {
+                $disk_data = $data;
+            }
         }
-        $raw = @file_get_contents($file);
-        $data = json_decode((string)$raw, true);
-        return is_array($data) ? $data : [];
+
+        $rcmail = rcmail::get_instance();
+        $db = ($rcmail && method_exists($rcmail, 'get_dbh')) ? $rcmail->get_dbh() : null;
+        $db_data = null;
+        if ($db) {
+            try {
+                $this->ensure_ai_memory_table($db);
+                $table = method_exists($db, 'table_name') ? $db->table_name('lpai_ai_memory') : 'lpai_ai_memory';
+                $user_key = $this->get_memory_db_key();
+                $res = $db->query("SELECT memory_data FROM {$table} WHERE user_id = ?", $user_key);
+                if ($res && ($row = $db->fetch_assoc($res))) {
+                    $parsed = json_decode($row['memory_data'] ?? '', true);
+                    if (is_array($parsed)) {
+                        $db_data = $parsed;
+                    }
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if ($disk_data !== null && $db_data !== null) {
+            // Both exist; take the larger/more complete set or disk data
+            $resolved = (count($db_data) > count($disk_data)) ? $db_data : $disk_data;
+            if (count($disk_data) > count($db_data) && $db) {
+                $this->sync_ai_memory_to_db($db, $this->get_memory_db_key(), $resolved);
+            } elseif (count($db_data) > count($disk_data)) {
+                @file_put_contents($file, json_encode($resolved, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+            }
+            return $resolved;
+        } elseif ($disk_data !== null) {
+            if ($db && !empty($disk_data)) {
+                $this->sync_ai_memory_to_db($db, $this->get_memory_db_key(), $disk_data);
+            }
+            return $disk_data;
+        } elseif ($db_data !== null) {
+            // Restored from database after composer update!
+            @file_put_contents($file, json_encode($db_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+            return $db_data;
+        }
+
+        return [];
     }
 
     public function save_ai_memory(array $items)
@@ -2962,7 +3127,20 @@ Return ONLY the deliverability-optimized newsletter HTML.";
         if (count($items) > $max) {
             $items = array_slice($items, -$max);
         }
-        return @file_put_contents($file, json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+
+        $dir = dirname($file);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0750, true);
+        }
+
+        $written = @file_put_contents($file, json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX);
+
+        $db = ($rcmail && method_exists($rcmail, 'get_dbh')) ? $rcmail->get_dbh() : null;
+        if ($db) {
+            $this->sync_ai_memory_to_db($db, $this->get_memory_db_key(), $items);
+        }
+
+        return $written;
     }
 
     public function find_matching_memory($query, array $memories, $limit = 3)
