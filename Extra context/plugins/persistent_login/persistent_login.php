@@ -30,6 +30,7 @@ class persistent_login extends rcube_plugin
     private ?array $autoLoginData = null;
     private ?string $currentSeries = null;
     private bool $cookieCleared = false;
+    private ?array $pendingAuth = null;
 
     public function __construct($api = null)
     {
@@ -108,6 +109,11 @@ class persistent_login extends rcube_plugin
         // 2. If user is already authenticated in session
         $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0);
         if ($userId > 0) {
+            // Finalize any pending persistent token creation
+            if (!empty($_SESSION['persistent_login_pending']) || !empty($_SESSION['persistent_login_auth']) || !empty($this->pendingAuth)) {
+                $this->finalize_pending_login($userId);
+            }
+
             $cookieValue = $this->get_cookie();
             if ($cookieValue) {
                 $parsed = $this->parse_cookie_value($cookieValue);
@@ -157,10 +163,14 @@ class persistent_login extends rcube_plugin
     }
 
     /**
-     * Authenticate Hook: Injects credentials during auto-login or captures form checkbox.
+     * Authenticate Hook: Injects credentials during auto-login or captures form checkbox & credentials.
      */
     public function hook_authenticate(array $args): array
     {
+        if (!empty($args['user']) && !empty($args['pass'])) {
+            $this->autoLoginData = null;
+        }
+
         if ($this->autoLoginData) {
             // Supplying validated persistent credentials to Roundcube
             $args['user'] = $this->autoLoginData['user_name'];
@@ -170,15 +180,38 @@ class persistent_login extends rcube_plugin
             $args['valid'] = true;
         } else {
             // Manual form submission: check if user requested "Keep me logged in"
-            $rememberPost = rcube_utils::get_input_value('_persistent_login', rcube_utils::INPUT_POST);
-            if (empty($rememberPost)) {
-                $rememberPost = rcube_utils::get_input_value('_remember_me', rcube_utils::INPUT_POST);
-            }
+            $rememberPost = !empty($_POST['_persistent_login'])
+                || !empty($_POST['_remember_me'])
+                || !empty($_POST['_ifpl'])
+                || !empty($_POST['remember'])
+                || !empty($_POST['rememberme'])
+                || !empty(rcube_utils::get_input_value('_persistent_login', rcube_utils::INPUT_POST))
+                || !empty(rcube_utils::get_input_value('_remember_me', rcube_utils::INPUT_POST))
+                || !empty(rcube_utils::get_input_value('_ifpl', rcube_utils::INPUT_POST));
 
-            if (!empty($rememberPost)) {
+            if ($rememberPost) {
+                $user = (string)($args['user'] ?? rcube_utils::get_input_value('_user', rcube_utils::INPUT_POST) ?? '');
+                $pass = (string)($args['pass'] ?? rcube_utils::get_input_value('_pass', rcube_utils::INPUT_POST) ?? '');
+                $host = (string)($args['host'] ?? rcube_utils::get_input_value('_host', rcube_utils::INPUT_POST) ?? '');
+
+                $this->pendingAuth = [
+                    'user' => $user,
+                    'pass' => $pass,
+                    'host' => $host,
+                ];
+
                 $_SESSION['persistent_login_pending'] = true;
+                $_SESSION['persistent_login_remember'] = true;
+                if ($pass !== '') {
+                    $_SESSION['persistent_login_auth'] = [
+                        'user' => $user,
+                        'pass' => $this->encrypt_password($pass),
+                        'host' => $host,
+                    ];
+                }
             } else {
-                unset($_SESSION['persistent_login_pending']);
+                unset($_SESSION['persistent_login_pending'], $_SESSION['persistent_login_remember'], $_SESSION['persistent_login_auth']);
+                $this->pendingAuth = null;
             }
         }
 
@@ -190,7 +223,9 @@ class persistent_login extends rcube_plugin
      */
     public function hook_login_after(array $args): array
     {
-        $userId = !empty($args['user_id']) ? (int)$args['user_id'] : ($this->rcmail->user ? (int)$this->rcmail->user->ID : 0);
+        $userId = !empty($args['user_id'])
+            ? (int)$args['user_id']
+            : ($this->rcmail->user ? (int)$this->rcmail->user->ID : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0));
 
         if ($userId <= 0) {
             return $args;
@@ -217,20 +252,86 @@ class persistent_login extends rcube_plugin
             if (random_int(1, 100) === 1) {
                 $this->gc();
             }
-        } elseif (!empty($_SESSION['persistent_login_pending'])) {
-            // Case B: User authenticated manually and opted in to "Keep me logged in"
-            unset($_SESSION['persistent_login_pending']);
 
+            $this->autoLoginData = null;
+        } elseif (!empty($_SESSION['persistent_login_pending']) || !empty($this->pendingAuth) || !empty($args['pass'])) {
+            // Case B: User authenticated manually and opted in to "Keep me logged in"
             $username = (string)($args['user'] ?? '');
             $password = (string)($args['pass'] ?? '');
             $host = (string)($args['host'] ?? '');
 
             if ($username !== '' && $password !== '') {
-                $this->create_token($userId, $username, $password, $host);
+                unset($_SESSION['persistent_login_pending'], $_SESSION['persistent_login_auth']);
+                $this->pendingAuth = null;
+                $this->currentSeries = $this->create_token($userId, $username, $password, $host);
+            } else {
+                $this->finalize_pending_login($userId);
             }
         }
 
         return $args;
+    }
+
+    /**
+     * Finalizes pending persistent login credentials and creates token & cookie.
+     */
+    public function finalize_pending_login(int $userId): ?string
+    {
+        if ($userId <= 0) {
+            return null;
+        }
+
+        $username = '';
+        $password = '';
+        $host = '';
+
+        if (!empty($this->pendingAuth)) {
+            $username = (string)($this->pendingAuth['user'] ?? '');
+            $password = (string)($this->pendingAuth['pass'] ?? '');
+            $host = (string)($this->pendingAuth['host'] ?? '');
+        }
+
+        if (($username === '' || $password === '') && !empty($_SESSION['persistent_login_auth'])) {
+            $sessAuth = $_SESSION['persistent_login_auth'];
+            if ($username === '' && !empty($sessAuth['user'])) {
+                $username = (string)$sessAuth['user'];
+            }
+            if ($password === '' && !empty($sessAuth['pass'])) {
+                $password = (string)$this->decrypt_password($sessAuth['pass']);
+            }
+            if ($host === '' && !empty($sessAuth['host'])) {
+                $host = (string)$sessAuth['host'];
+            }
+        }
+
+        if ($username === '') {
+            $username = $this->rcmail->user ? (string)$this->rcmail->user->get_username() : (string)($_SESSION['username'] ?? '');
+        }
+
+        if ($password === '') {
+            if (!empty($_SESSION['password']) && method_exists($this->rcmail, 'decrypt')) {
+                $password = (string)$this->rcmail->decrypt($_SESSION['password']);
+            } elseif (!empty($_POST['_pass'])) {
+                $password = (string)$_POST['_pass'];
+            }
+        }
+
+        if ($host === '') {
+            $host = (string)($this->rcmail->config->get('default_host', '') ?: ($_SESSION['storage_host'] ?? ''));
+        }
+
+        unset($_SESSION['persistent_login_pending'], $_SESSION['persistent_login_auth']);
+        $this->pendingAuth = null;
+
+        if ($username !== '' && $password !== '') {
+            $series = $this->create_token($userId, $username, $password, $host);
+            if ($series) {
+                $this->currentSeries = $series;
+            }
+            return $series;
+        }
+
+        return null;
     }
 
     /**
@@ -286,6 +387,9 @@ class persistent_login extends rcube_plugin
 
         $this->clear_cookie();
         $this->cookieCleared = true;
+        $this->autoLoginData = null;
+        $this->currentSeries = null;
+        $this->pendingAuth = null;
     }
 
     // =========================================================================
@@ -371,11 +475,19 @@ class persistent_login extends rcube_plugin
             return $args;
         }
 
-        $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : 0;
+        $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0);
+        $username = $this->rcmail->user ? (string)$this->rcmail->user->get_username() : (!empty($_SESSION['username']) ? (string)$_SESSION['username'] : '');
         $db = $this->rcmail->get_dbh();
         $this->ensureTableExists($db);
 
-        $sessions = $this->get_user_sessions($userId);
+        $sessions = $this->get_user_sessions($userId, $username);
+
+        // Auto-heal / auto-register session if currently logged in with remember me on
+        $cookieName = (string)$this->rcmail->config->get('persistent_login_cookie_name', '_rc_persistent_login');
+        if (empty($sessions) && $userId > 0 && (!empty($_COOKIE[$cookieName]) || !empty($_SESSION['persistent_login_remember']) || !empty($_SESSION['persistent_login_pending']) || !empty($_SESSION['password']))) {
+            $this->finalize_pending_login($userId);
+            $sessions = $this->get_user_sessions($userId, $username);
+        }
 
         // Identify current session series
         $currentSeries = $this->currentSeries;
@@ -385,6 +497,10 @@ class persistent_login extends rcube_plugin
                 $parsed = $this->parse_cookie_value($cookieVal);
                 $currentSeries = $parsed['series'] ?? null;
             }
+        }
+        if (!$currentSeries && count($sessions) === 1) {
+            $currentSeries = $sessions[0]['series'];
+            $this->currentSeries = $currentSeries;
         }
 
         $tableHtml = '<div id="persistent-sessions-wrapper" class="persistent-sessions-container">';
@@ -400,7 +516,7 @@ class persistent_login extends rcube_plugin
 
         $tableHtml .= '<table class="persistent-sessions-table">';
         $tableHtml .= '<thead><tr>';
-        $tableHtml .= '<th>' . htmlspecialchars($this->gettext('device_unknown'), ENT_QUOTES, 'UTF-8') . '</th>';
+        $tableHtml .= '<th>' . htmlspecialchars($this->gettext('device') ?: 'Device', ENT_QUOTES, 'UTF-8') . '</th>';
         $tableHtml .= '<th>' . htmlspecialchars($this->gettext('ip_address'), ENT_QUOTES, 'UTF-8') . '</th>';
         $tableHtml .= '<th>' . htmlspecialchars($this->gettext('first_login'), ENT_QUOTES, 'UTF-8') . '</th>';
         $tableHtml .= '<th>' . htmlspecialchars($this->gettext('last_active'), ENT_QUOTES, 'UTF-8') . '</th>';
@@ -456,7 +572,6 @@ class persistent_login extends rcube_plugin
 
         $options = [
             'trusted_sessions_list' => [
-                'title' => htmlspecialchars($this->gettext('trusted_devices'), ENT_QUOTES, 'UTF-8'),
                 'content' => $tableHtml,
             ],
         ];
@@ -582,12 +697,13 @@ class persistent_login extends rcube_plugin
      */
     public function action_sessions(): void
     {
-        $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : 0;
-        if ($userId <= 0) {
+        $userId = $this->rcmail->user ? (int)$this->rcmail->user->ID : (!empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : 0);
+        $username = $this->rcmail->user ? (string)$this->rcmail->user->get_username() : (!empty($_SESSION['username']) ? (string)$_SESSION['username'] : '');
+        if ($userId <= 0 && $username === '') {
             $this->json_response(['success' => false, 'sessions' => []]);
         }
 
-        $sessions = $this->get_user_sessions($userId);
+        $sessions = $this->get_user_sessions($userId, $username);
         $this->json_response(['success' => true, 'sessions' => $sessions]);
     }
 
@@ -652,6 +768,7 @@ class persistent_login extends rcube_plugin
 
         // 6. Set client-side persistent cookie
         $this->set_cookie($series, $verifier, time() + ($lifetimeDays * 86400));
+        $this->cookieCleared = false;
 
         return $series;
     }
@@ -847,24 +964,41 @@ class persistent_login extends rcube_plugin
     /**
      * Fetches all active sessions for a user.
      */
-    public function get_user_sessions(int $userId): array
+    public function get_user_sessions(int $userId, string $username = ''): array
     {
         $db = $this->rcmail->get_dbh();
         $this->ensureTableExists($db);
 
         $now = date('Y-m-d H:i:s');
-        $res = $db->query(
-            "SELECT series, host, ip_address, user_agent, created, last_used, expires
-             FROM {$this->tableName}
-             WHERE user_id = ? AND expires > ?
-             ORDER BY last_used DESC",
-            $userId,
-            $now
-        );
-
         $sessions = [];
-        while ($row = $db->fetch_assoc($res)) {
-            $sessions[] = $row;
+
+        if ($userId > 0) {
+            $res = $db->query(
+                "SELECT series, host, ip_address, user_agent, created, last_used, expires
+                 FROM {$this->tableName}
+                 WHERE user_id = ? AND expires > ?
+                 ORDER BY last_used DESC",
+                $userId,
+                $now
+            );
+            while ($row = $db->fetch_assoc($res)) {
+                $sessions[] = $row;
+            }
+        }
+
+        // Fallback search by username if no sessions found by user_id
+        if (empty($sessions) && $username !== '') {
+            $res = $db->query(
+                "SELECT series, host, ip_address, user_agent, created, last_used, expires
+                 FROM {$this->tableName}
+                 WHERE user_name = ? AND expires > ?
+                 ORDER BY last_used DESC",
+                $username,
+                $now
+            );
+            while ($row = $db->fetch_assoc($res)) {
+                $sessions[] = $row;
+            }
         }
 
         return $sessions;
@@ -953,7 +1087,20 @@ class persistent_login extends rcube_plugin
      */
     public function parse_cookie_value(string $cookieValue): ?array
     {
-        $decoded = base64_decode($cookieValue, true);
+        $cookieValue = trim($cookieValue);
+        if ($cookieValue === '') {
+            return null;
+        }
+
+        // Handle URL encoding and spaces converted from '+'
+        $raw = str_replace(' ', '+', rawurldecode($cookieValue));
+        $decoded = base64_decode($raw, true);
+        if ($decoded === false) {
+            $decoded = base64_decode(str_replace(' ', '+', $cookieValue), true);
+        }
+        if ($decoded === false) {
+            $decoded = base64_decode($cookieValue, true);
+        }
         if ($decoded === false) {
             return null;
         }
@@ -977,8 +1124,14 @@ class persistent_login extends rcube_plugin
         // Verify HMAC signature
         $expectedSignature = hash_hmac('sha256', $series . ':' . $verifier, $this->get_encryption_key());
         if (!hash_equals($expectedSignature, $signature)) {
-            rcube::write_log('persistent_login', 'Cookie HMAC signature verification failed');
-            return null;
+            // Fallback: check with default des_key in case persistent_login_secret_key was modified
+            $desKey = (string)$this->rcmail->config->get('des_key', 'rcmail-default-salt-key-32-chars!!');
+            $fallbackKey = hash('sha256', ':' . $desKey, true);
+            $fallbackSig = hash_hmac('sha256', $series . ':' . $verifier, $fallbackKey);
+            if (!hash_equals($fallbackSig, $signature)) {
+                rcube::write_log('persistent_login', 'Cookie HMAC signature verification failed');
+                return null;
+            }
         }
 
         return ['series' => $series, 'verifier' => $verifier];

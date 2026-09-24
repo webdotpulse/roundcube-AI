@@ -153,6 +153,23 @@ class MockRcubeDb extends rcube_db
                 return new MockDbStatement($matched);
             }
 
+            if (stripos($sqlTrim, 'WHERE user_name =') !== false) {
+                $userName = (string)($params[0] ?? '');
+                $filterExpires = (count($params) > 1) ? $params[1] : null;
+
+                $matched = [];
+                foreach ($this->rows as $r) {
+                    if (($r['user_name'] ?? '') === $userName) {
+                        if ($filterExpires !== null && $r['expires'] <= $filterExpires) {
+                            continue;
+                        }
+                        $matched[] = $r;
+                    }
+                }
+                usort($matched, fn($a, $b) => strcmp($b['last_used'], $a['last_used']));
+                return new MockDbStatement($matched);
+            }
+
             return new MockDbStatement(array_values($this->rows));
         }
 
@@ -295,6 +312,7 @@ class MockRcubeUser
 
     public function get_prefs() { return $this->prefs; }
     public function set_pref($k, $v) { $this->prefs[$k] = $v; }
+    public function get_username() { return 'charlie'; }
 }
 
 // Mock rcmail
@@ -540,4 +558,57 @@ $rc->task = 'logout';
 $plugin->hook_logout_after(['task' => 'logout']);
 assert_true(empty($_COOKIE[$cookieName]), "Logout cleans up persistent cookie");
 
+// --------------------------------------------------------------------------
+// Test Suite 9: Real-World Roundcube Login Lifecycle & Preferences Page UI
+// --------------------------------------------------------------------------
+echo "\n--- Test Suite 9: Real-World Login & Preferences UI ---\n";
+
+// 9.1 Real Roundcube login flow: authenticate hook receives user/pass,
+// but login_after receives only task/action parameters without user or pass.
+$_SESSION = [];
+unset($_COOKIE[$cookieName]);
+$rc->db->rows = [];
+$rc->user = new MockRcubeUser();
+$rc->user->ID = 99;
+
+$_POST['_persistent_login'] = '1';
+$authArgs = ['user' => 'charlie', 'pass' => 'topsecret', 'host' => 'imap.example.com'];
+$plugin->hook_authenticate($authArgs);
+
+// In standard Roundcube core (rcmail.php), login_after hook arguments are only request query params:
+$rcLoginAfterArgs = ['_task' => 'mail'];
+$plugin->hook_login_after($rcLoginAfterArgs);
+
+assert_true(!empty($_COOKIE[$cookieName]), "Real-world login_after creates token and sets cookie without args credentials");
+$activeSessions = $plugin->get_user_sessions(99, 'charlie');
+assert_true(count($activeSessions) === 1, "Session stored in database for user 99");
+
+// 9.2 Preferences list renders table full-width (no 'title') and uses 'Device' header
+$prefArgs = ['section' => 'persistent_login', 'blocks' => []];
+$prefResult = $plugin->hook_preferences_list($prefArgs);
+$sessionsOpt = $prefResult['blocks']['persistent_login']['options']['trusted_sessions_list'];
+
+assert_true(!isset($sessionsOpt['title']), "trusted_sessions_list option has NO title so it renders full width");
+assert_true(str_contains($sessionsOpt['content'], 'id="persistent-sessions-wrapper"'), "Wrapper container present");
+assert_true(str_contains($sessionsOpt['content'], '<th>device</th>') || str_contains($sessionsOpt['content'], '<th>Device</th>'), "Header displays Device instead of unknown device");
+assert_true(!str_contains($sessionsOpt['content'], 'UNKNOWN DEVICE'), "Header does not display UNKNOWN DEVICE");
+assert_true(str_contains($sessionsOpt['content'], 'session-row-current'), "Active session row has current session styling");
+assert_true(str_contains($sessionsOpt['content'], 'badge-current-device'), "Active session row shows Current Device badge");
+
+// 9.3 Auto-healing: If user is logged in with remember-me active but DB record missing, preferences list auto-creates it
+$_SESSION = [
+    'user_id' => 99,
+    'username' => 'charlie',
+    'password' => $rc->encrypt('topsecret'),
+    'persistent_login_remember' => true,
+];
+$rc->db->rows = [];
+unset($_COOKIE[$cookieName]);
+
+$prefHeal = $plugin->hook_preferences_list($prefArgs);
+$healedContent = $prefHeal['blocks']['persistent_login']['options']['trusted_sessions_list']['content'];
+assert_true(!str_contains($healedContent, 'no_active_sessions'), "Auto-heal prevented 'No active persistent sessions found'");
+assert_true(str_contains($healedContent, 'session-row-current'), "Auto-heal rendered active session row for current device");
+
 echo "\n*** ALL PERSISTENT LOGIN TESTS PASSED SUCCESSFULLY ***\n";
+

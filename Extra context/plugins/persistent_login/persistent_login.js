@@ -84,9 +84,42 @@
     }
 
     /**
+     * Ensures the trusted devices table takes 100% full width and removes second-column constraints.
+     */
+    function makeSessionsTableFullWidth() {
+        var wrapper = document.getElementById('persistent-sessions-wrapper');
+        if (!wrapper) return;
+
+        // Traverse up to find form row (tr or form-group row)
+        var row = wrapper.closest('tr') || wrapper.closest('.form-group') || wrapper.closest('.row');
+        if (row) {
+            row.classList.add('persistent-sessions-fullwidth-row');
+
+            // Hide any adjacent label or title column in this row
+            var labels = row.querySelectorAll('td.title, th.title, .title, label, .col-form-label, .col-sm-4, .col-sm-3, .col-sm-2');
+            for (var i = 0; i < labels.length; i++) {
+                if (!labels[i].contains(wrapper)) {
+                    labels[i].style.display = 'none';
+                }
+            }
+
+            // Expand cell to full width and set colspan="2" if table cell
+            var cell = wrapper.closest('td') || wrapper.closest('div[class*="col-"]');
+            if (cell) {
+                cell.classList.add('persistent-sessions-fullwidth-cell');
+                if (cell.tagName && cell.tagName.toLowerCase() === 'td') {
+                    cell.setAttribute('colspan', '2');
+                }
+            }
+        }
+    }
+
+    /**
      * Initializes interactive revocation handlers on Settings -> Trusted Devices.
      */
     function initSettingsHandlers() {
+        makeSessionsTableFullWidth();
+
         var container = document.getElementById('persistent-sessions-wrapper');
         if (!container) {
             return;

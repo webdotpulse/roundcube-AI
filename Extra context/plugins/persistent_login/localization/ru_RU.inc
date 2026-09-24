@@ -14,6 +14,7 @@ $labels['current_device'] = 'Текущее устройство';
 $labels['device_type_desktop'] = 'Компьютер';
 $labels['device_type_mobile'] = 'Смартфон / Телефон';
 $labels['device_type_tablet'] = 'Планшет';
+$labels['device'] = 'Устройство';
 $labels['device_unknown'] = 'Неизвестное устройство';
 $labels['ip_address'] = 'IP-адрес';
 $labels['first_login'] = 'Первый вход';

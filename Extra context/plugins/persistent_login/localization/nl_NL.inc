@@ -14,6 +14,7 @@ $labels['current_device'] = 'Huidig apparaat';
 $labels['device_type_desktop'] = 'Computer';
 $labels['device_type_mobile'] = 'Mobiele telefoon';
 $labels['device_type_tablet'] = 'Tablet';
+$labels['device'] = 'Apparaat';
 $labels['device_unknown'] = 'Onbekend apparaat';
 $labels['ip_address'] = 'IP-adres';
 $labels['first_login'] = 'Eerste aanmelding';

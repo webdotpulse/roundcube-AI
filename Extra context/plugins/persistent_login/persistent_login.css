@@ -58,28 +58,88 @@
 }
 
 /* ============================================================
-   2. Settings -> Trusted Devices Table & Cards
+   2. Settings -> Trusted Devices Table & Cards (Full-Width)
    ============================================================ */
 .persistent-sessions-container {
-    max-width: 100%;
-    margin-top: 10px;
-}
-
-.persistent-sessions-toolbar {
-    margin-bottom: 16px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 12px;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 8px 0 20px 0 !important;
 }
 
 .persistent-sessions-table {
-    width: 100%;
+    width: 100% !important;
+    min-width: 100% !important;
     border-collapse: collapse;
     background: #ffffff;
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    table-layout: auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Ensure settings row hosting the table spans full width (not a second column) */
+table.propform tr:has(#persistent-sessions-wrapper),
+.propform tr:has(#persistent-sessions-wrapper),
+tr:has(#persistent-sessions-wrapper),
+.form-group:has(#persistent-sessions-wrapper),
+.form-group.row:has(#persistent-sessions-wrapper),
+.persistent-sessions-fullwidth-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 20px !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+/* Hide any duplicate or empty label/title column next to the table */
+table.propform tr:has(#persistent-sessions-wrapper) > td.title,
+table.propform tr:has(#persistent-sessions-wrapper) > th.title,
+.propform tr:has(#persistent-sessions-wrapper) > td.title,
+.propform tr:has(#persistent-sessions-wrapper) > th.title,
+tr:has(#persistent-sessions-wrapper) > td.title,
+tr:has(#persistent-sessions-wrapper) > th.title,
+.form-group:has(#persistent-sessions-wrapper) > label,
+.form-group.row:has(#persistent-sessions-wrapper) > label,
+.persistent-sessions-fullwidth-row > td.title,
+.persistent-sessions-fullwidth-row > th.title,
+.persistent-sessions-fullwidth-row > label,
+.persistent-sessions-fullwidth-row > .col-form-label {
+    display: none !important;
+}
+
+/* Make table container cell/div take 100% width across all themes */
+table.propform tr:has(#persistent-sessions-wrapper) > td,
+.propform tr:has(#persistent-sessions-wrapper) > td,
+tr:has(#persistent-sessions-wrapper) > td,
+.form-group:has(#persistent-sessions-wrapper) > div,
+.form-group.row:has(#persistent-sessions-wrapper) > div,
+.form-group.row:has(#persistent-sessions-wrapper) > [class*="col-"],
+.persistent-sessions-fullwidth-cell,
+.persistent-sessions-fullwidth-row > td,
+.persistent-sessions-fullwidth-row > div {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+}
+
+/* Table Layout Specifics */
+table.propform tr:has(#persistent-sessions-wrapper),
+.persistent-sessions-fullwidth-row:not(.form-group):not(.row) {
+    display: table-row !important;
+    width: 100% !important;
+}
+
+table.propform tr:has(#persistent-sessions-wrapper) > td,
+.persistent-sessions-fullwidth-row:not(.form-group):not(.row) > td {
+    display: table-cell !important;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
 .persistent-sessions-table th {

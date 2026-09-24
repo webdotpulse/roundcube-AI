@@ -14,6 +14,7 @@ $labels['current_device'] = 'Dispositivo actual';
 $labels['device_type_desktop'] = 'Computadora de escritorio';
 $labels['device_type_mobile'] = 'Teléfono móvil';
 $labels['device_type_tablet'] = 'Tableta';
+$labels['device'] = 'Dispositivo';
 $labels['device_unknown'] = 'Dispositivo desconocido';
 $labels['ip_address'] = 'Dirección IP';
 $labels['first_login'] = 'Primer inicio de sesión';
