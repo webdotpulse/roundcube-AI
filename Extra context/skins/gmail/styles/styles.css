@@ -6743,12 +6743,19 @@ html table.messagelist td.subject span.tb_label_dots {
 }
 html .tb-label-filter-rules-container,
 html #tb-label-filter-rules-list,
-html .tb-filter-table {
+html .tb-filter-table,
+html .scheduled-messages-container,
+html #scheduled-messages-container,
+html #scheduled-emails-table {
   width: 100% !important;
   max-width: 100% !important;
 }
 html .form-group:has(#tb-label-filter-rules-container),
-html .form-group.row:has(#tb-label-filter-rules-container) {
+html .form-group.row:has(#tb-label-filter-rules-container),
+html .form-group:has(#scheduled-messages-container),
+html .form-group.row:has(#scheduled-messages-container),
+html .form-group:has(#scheduled-emails-table),
+html .form-group.row:has(#scheduled-emails-table) {
   display: block !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -6758,11 +6765,19 @@ html .form-group.row:has(#tb-label-filter-rules-container) {
   padding: 0 !important;
 }
 html .form-group:has(#tb-label-filter-rules-container) > label,
-html .form-group.row:has(#tb-label-filter-rules-container) > label {
+html .form-group.row:has(#tb-label-filter-rules-container) > label,
+html .form-group:has(#scheduled-messages-container) > label,
+html .form-group.row:has(#scheduled-messages-container) > label,
+html .form-group:has(#scheduled-emails-table) > label,
+html .form-group.row:has(#scheduled-emails-table) > label {
   display: none !important;
 }
 html .form-group:has(#tb-label-filter-rules-container) > div[class*="col-"],
-html .form-group.row:has(#tb-label-filter-rules-container) > div[class*="col-"] {
+html .form-group.row:has(#tb-label-filter-rules-container) > div[class*="col-"],
+html .form-group:has(#scheduled-messages-container) > div[class*="col-"],
+html .form-group.row:has(#scheduled-messages-container) > div[class*="col-"],
+html .form-group:has(#scheduled-emails-table) > div[class*="col-"],
+html .form-group.row:has(#scheduled-emails-table) > div[class*="col-"] {
   display: block !important;
   width: 100% !important;
   max-width: 100% !important;

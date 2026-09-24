@@ -374,18 +374,52 @@
             });
     };
 
+    /**
+     * Settings View Enhancement: Ensure Scheduled Messages Table uses 100% full width.
+     */
+    function initSettingsFullWidth() {
+        var container = document.getElementById('scheduled-messages-container') || document.getElementById('scheduled-emails-table');
+        if (container) {
+            var parentCol = container.closest('[class*="col-"]');
+            if (parentCol) {
+                parentCol.className = parentCol.className.replace(/(^|\s)col-(sm|md|lg|xl|xxl)?-?\d+/g, '$1').trim() + ' col-12 col-sm-12';
+                parentCol.style.width = '100%';
+                parentCol.style.maxWidth = '100%';
+                parentCol.style.flex = '0 0 100%';
+            }
+            var formGroup = container.closest('.form-group, tr, .row');
+            if (formGroup) {
+                var label = formGroup.querySelector(':scope > label, :scope > td.title');
+                if (label) label.style.display = 'none';
+                var contentTd = formGroup.querySelector(':scope > td.content');
+                if (contentTd) {
+                    contentTd.colSpan = 2;
+                    contentTd.style.width = '100%';
+                }
+                formGroup.style.width = '100%';
+                formGroup.style.maxWidth = '100%';
+                formGroup.style.display = 'block';
+            }
+        }
+    }
+
+    function runEnhancements() {
+        setupComposeEnhancements();
+        initSettingsFullWidth();
+    }
+
     // Attach listeners across all lifecycle events
-    rcmail.addEventListener('init', setupComposeEnhancements);
-    rcmail.addEventListener('actionafter', setupComposeEnhancements);
-    rcmail.addEventListener('responseafter', setupComposeEnhancements);
+    rcmail.addEventListener('init', runEnhancements);
+    rcmail.addEventListener('actionafter', runEnhancements);
+    rcmail.addEventListener('responseafter', runEnhancements);
 
     // Document ready & load listeners
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupComposeEnhancements);
+        document.addEventListener('DOMContentLoaded', runEnhancements);
     } else {
-        setupComposeEnhancements();
+        runEnhancements();
     }
-    window.addEventListener('load', setupComposeEnhancements);
+    window.addEventListener('load', runEnhancements);
 
     // Polling retry for asynchronous single-page interface transitions
     var retries = 0;
@@ -394,6 +428,7 @@
         if (isComposeView()) {
             setupComposeEnhancements();
         }
+        initSettingsFullWidth();
         if (retries > 15) {
             clearInterval(retryTimer);
         }

@@ -407,20 +407,23 @@ class email_scheduler extends rcube_plugin
         $this->ensureTableExists($db);
 
         $res = $db->query("SELECT id, subject, recipients, send_at, status FROM {$this->table} WHERE user_id = ? AND status IN ('scheduled', 'delayed') ORDER BY send_at ASC", $userId);
-        $tableHtml = '<div class="table-responsive mt-3">';
-        $tableHtml .= '<table class="table table-bordered table-striped" id="scheduled-emails-table">';
+        $schedTitle = rcube::Q($this->gettext('scheduled_messages_list'));
+        $tableHtml = '<div id="scheduled-messages-container" class="scheduled-messages-container" style="width: 100%; margin-top: 16px;">';
+        $tableHtml .= '<h3 class="scheduled-messages-heading" style="font-size: 15px; font-weight: 600; margin: 0 0 12px 0; color: inherit;">' . $schedTitle . '</h3>';
+        $tableHtml .= '<div class="table-responsive" style="width: 100%; overflow-x: auto;">';
+        $tableHtml .= '<table class="table table-bordered table-striped" id="scheduled-emails-table" style="width: 100%; margin-bottom: 0;">';
         $tableHtml .= '<thead><tr>';
-        $tableHtml .= '<th>' . rcube::Q($this->gettext('col_subject')) . '</th>';
-        $tableHtml .= '<th>' . rcube::Q($this->gettext('col_recipients')) . '</th>';
-        $tableHtml .= '<th>' . rcube::Q($this->gettext('col_send_at')) . '</th>';
-        $tableHtml .= '<th>' . rcube::Q($this->gettext('col_actions')) . '</th>';
+        $tableHtml .= '<th style="width: 35%;">' . rcube::Q($this->gettext('col_subject')) . '</th>';
+        $tableHtml .= '<th style="width: 30%;">' . rcube::Q($this->gettext('col_recipients')) . '</th>';
+        $tableHtml .= '<th style="width: 20%;">' . rcube::Q($this->gettext('col_send_at')) . '</th>';
+        $tableHtml .= '<th style="width: 15%; text-align: right; white-space: nowrap;">' . rcube::Q($this->gettext('col_actions')) . '</th>';
         $tableHtml .= '</tr></thead><tbody>';
 
         $hasRows = false;
         while ($row = $db->fetch_assoc($res)) {
             $hasRows = true;
             $tableHtml .= sprintf(
-                '<tr id="sched-row-%d"><td>%s</td><td>%s</td><td>%s</td><td>' .
+                '<tr id="sched-row-%d"><td>%s</td><td>%s</td><td>%s</td><td style="text-align: right; white-space: nowrap;">' .
                 '<button type="button" class="btn btn-sm btn-primary mr-1" onclick="email_scheduler_send_now(%d)">%s</button> ' .
                 '<button type="button" class="btn btn-sm btn-danger" onclick="email_scheduler_cancel(%d)">%s</button>' .
                 '</td></tr>',
@@ -436,9 +439,9 @@ class email_scheduler extends rcube_plugin
         }
 
         if (!$hasRows) {
-            $tableHtml .= '<tr><td colspan="4" class="text-center text-muted p-3">' . rcube::Q($this->gettext('scheduled_none')) . '</td></tr>';
+            $tableHtml .= '<tr><td colspan="4" class="text-center text-muted p-3" style="text-align: center; padding: 16px; color: #5f6368; font-style: italic;">' . rcube::Q($this->gettext('scheduled_none')) . '</td></tr>';
         }
-        $tableHtml .= '</tbody></table></div>';
+        $tableHtml .= '</tbody></table></div></div>';
 
         $args['blocks']['email_scheduler'] = [
             'name' => $this->gettext('email_scheduler_title'),
@@ -448,7 +451,6 @@ class email_scheduler extends rcube_plugin
                     'content' => $select->show($undoDelay),
                 ],
                 'scheduled_messages' => [
-                    'title' => rcube::Q($this->gettext('scheduled_messages_list')),
                     'content' => $tableHtml,
                 ],
             ],

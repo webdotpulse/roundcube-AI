@@ -553,6 +553,19 @@ assert_true(isset($prefList['blocks']['email_scheduler']), "Renders email_schedu
 $options = $prefList['blocks']['email_scheduler']['options'];
 assert_true(isset($options['undo_send_delay']), "Includes undo_send_delay configuration dropdown");
 assert_true(isset($options['scheduled_messages']), "Includes scheduled_messages management table");
+assert_true(empty($options['scheduled_messages']['title']), "scheduled_messages option has empty title to avoid two-column split");
+assert_true(strpos($options['scheduled_messages']['content'], 'scheduled-messages-container') !== false, "scheduled_messages content includes scheduled-messages-container wrapper");
+assert_true(strpos($options['scheduled_messages']['content'], 'scheduled-emails-table') !== false, "scheduled_messages content includes scheduled-emails-table");
+assert_true(strpos($options['scheduled_messages']['content'], '<h3') !== false, "scheduled_messages content includes full-width h3 heading");
+
+// CSS full-width layout assertions
+$cssFile = __DIR__ . '/../Extra context/plugins/email_scheduler/email_scheduler.css';
+if (file_exists($cssFile)) {
+    $css = file_get_contents($cssFile);
+    assert_true(strpos($css, '.scheduled-messages-container') !== false, "email_scheduler.css targets .scheduled-messages-container");
+    assert_true(strpos($css, '#scheduled-emails-table') !== false, "email_scheduler.css targets #scheduled-emails-table");
+    assert_true(strpos($css, 'width: 100% !important') !== false, "email_scheduler.css enforces 100% full-width");
+}
 
 // Preferences save with clamping
 rcube_utils::$mockPost = ['_undo_send_delay' => '20'];
