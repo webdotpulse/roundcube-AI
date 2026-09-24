@@ -1,0 +1,213 @@
+/**
+ * Easy Unsubscribe - Larry Skin Stylesheet
+ *
+ * Tailored to match Roundcube's classic Larry skin aesthetic.
+ */
+
+.easy-unsubscribe-wrapper {
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 6px;
+    font-size: 11px;
+    line-height: normal;
+}
+
+.easy-unsubscribe-sep {
+    color: #999999;
+    margin: 0 4px;
+    font-size: 11px;
+    user-select: none;
+}
+
+/* Button for Larry Skin */
+.easy-unsubscribe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #0077c5;
+    background: -moz-linear-gradient(top, #008be5 0%, #006eb7 100%);
+    background: -webkit-linear-gradient(top, #008be5 0%, #006eb7 100%);
+    background: -o-linear-gradient(top, #008be5 0%, #006eb7 100%);
+    background: -ms-linear-gradient(top, #008be5 0%, #006eb7 100%);
+    background: linear-gradient(to bottom, #008be5 0%, #006eb7 100%);
+    border: 1px solid #005a96;
+    color: #ffffff !important;
+    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.4);
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none !important;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+
+.easy-unsubscribe-btn:hover {
+    background: #008be5;
+    background: -moz-linear-gradient(top, #149df7 0%, #007bc9 100%);
+    background: -webkit-linear-gradient(top, #149df7 0%, #007bc9 100%);
+    background: -o-linear-gradient(top, #149df7 0%, #007bc9 100%);
+    background: -ms-linear-gradient(top, #149df7 0%, #007bc9 100%);
+    background: linear-gradient(to bottom, #149df7 0%, #007bc9 100%);
+    border-color: #004b7d;
+}
+
+/* Disabled badge for Larry */
+.easy-unsubscribe-badge.unsubscribed {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: #e6e6e6;
+    border: 1px solid #cccccc;
+    color: #666666;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: default;
+}
+
+.easy-unsubscribe-badge.unsubscribed .easy-unsubscribe-badge-icon {
+    color: #2e7d32;
+}
+
+/* Larry Modal Dialog */
+.easy-unsubscribe-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.easy-unsubscribe-modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.easy-unsubscribe-modal-dialog {
+    background-color: #ffffff;
+    border: 1px solid #999999;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    width: 440px;
+    max-width: 90%;
+    overflow: hidden;
+}
+
+.easy-unsubscribe-modal-header {
+    background: #f0f0f0;
+    background: -moz-linear-gradient(top, #f8f8f8 0%, #eaeaea 100%);
+    background: -webkit-linear-gradient(top, #f8f8f8 0%, #eaeaea 100%);
+    background: linear-gradient(to bottom, #f8f8f8 0%, #eaeaea 100%);
+    border-bottom: 1px solid #cccccc;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.easy-unsubscribe-modal-title {
+    margin: 0;
+    font-size: 13px;
+    font-weight: bold;
+    color: #333333;
+}
+
+.easy-unsubscribe-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    line-height: 1;
+    color: #666666;
+    cursor: pointer;
+}
+
+.easy-unsubscribe-modal-close:hover {
+    color: #000000;
+}
+
+.easy-unsubscribe-modal-body {
+    padding: 16px 14px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #444444;
+}
+
+.easy-unsubscribe-modal-footer {
+    padding: 10px 14px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.easy-unsub-btn-cancel {
+    padding: 5px 12px;
+    font-size: 12px;
+    background: #e6e6e6;
+    border: 1px solid #b5b5b5;
+    color: #333333;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.easy-unsub-btn-cancel:hover {
+    background: #d4d4d4;
+}
+
+.easy-unsub-btn-confirm {
+    padding: 5px 14px;
+    font-size: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.easy-unsub-btn-confirm.btn-danger {
+    background: #d93025;
+    border: 1px solid #a81c13;
+    color: #ffffff;
+}
+
+.easy-unsub-btn-confirm.btn-danger:hover {
+    background: #b31412;
+}
+
+.easy-unsub-btn-confirm.btn-primary {
+    background: #0077c5;
+    border: 1px solid #005a96;
+    color: #ffffff;
+}
+
+.easy-unsub-btn-confirm.btn-primary:hover {
+    background: #006eb7;
+}
+
+.easy-unsub-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: easy-unsub-spin 0.65s linear infinite;
+}
+
+@keyframes easy-unsub-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

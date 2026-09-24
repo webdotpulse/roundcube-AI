@@ -1,0 +1,38 @@
+{
+    "name": "webdotpulse/easy_unsubscribe",
+    "type": "roundcube-plugin",
+    "description": "Gmail-like native Unsubscribe button for Roundcube Webmail supporting RFC 8058 One-Click POST, RFC 2369 Mailto, and web unsubscribe links.",
+    "keywords": [
+        "roundcube",
+        "plugin",
+        "easy-unsubscribe",
+        "unsubscribe",
+        "rfc8058",
+        "rfc2369",
+        "one-click-unsubscribe",
+        "list-unsubscribe",
+        "gmail-unsubscribe",
+        "webmail"
+    ],
+    "homepage": "https://github.com/webdotpulse/roundcube-AI",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Webdotpulse",
+            "email": "support@webdotpulse.com",
+            "homepage": "https://github.com/webdotpulse"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "roundcube/plugin-installer": ">=0.1.6"
+    },
+    "suggest": {
+        "ext-curl": "Recommended for high-performance RFC 8058 One-Click POST requests"
+    },
+    "extra": {
+        "roundcube": {
+            "min-version": "1.3.0"
+        }
+    }
+}

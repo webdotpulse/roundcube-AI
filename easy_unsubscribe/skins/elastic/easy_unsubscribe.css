@@ -1,0 +1,466 @@
+/**
+ * Easy Unsubscribe - Elastic Skin Stylesheet
+ *
+ * Designed to seamlessly blend with Roundcube's modern Elastic skin.
+ * Fully responsive with light and dark mode support.
+ */
+
+/* -------------------------------------------------------------
+ * 1. Inline Header Wrapper & Unsubscribe Button
+ * ------------------------------------------------------------- */
+.easy-unsubscribe-wrapper {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    margin-left: 4px;
+    font-size: 0.8125rem;
+    line-height: 1.2;
+}
+
+.easy-unsubscribe-sep {
+    display: inline-block;
+    color: #9aa0a6;
+    margin: 0 6px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+    user-select: none;
+}
+
+/* Interactive Unsubscribe Button */
+.easy-unsubscribe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--color-primary, #1a73e8);
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+    line-height: normal;
+    white-space: nowrap;
+}
+
+.easy-unsubscribe-btn .easy-unsubscribe-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    opacity: 0.85;
+}
+
+.easy-unsubscribe-btn:hover {
+    background-color: rgba(26, 115, 232, 0.08);
+    border-color: rgba(26, 115, 232, 0.22);
+    color: #1557b0;
+    text-decoration: none;
+}
+
+.easy-unsubscribe-btn:active {
+    background-color: rgba(26, 115, 232, 0.16);
+}
+
+.easy-unsubscribe-btn:focus-visible {
+    box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.35);
+}
+
+/* -------------------------------------------------------------
+ * 2. Disabled "Unsubscribed" Badge
+ * ------------------------------------------------------------- */
+.easy-unsubscribe-badge.unsubscribed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #f1f3f4;
+    border: 1px solid #dadce0;
+    color: #5f6368;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 4px;
+    cursor: default;
+    user-select: none;
+    white-space: nowrap;
+    line-height: normal;
+    transition: all 0.2s ease;
+}
+
+.easy-unsubscribe-badge.unsubscribed .easy-unsubscribe-badge-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #1e8e3e;
+}
+
+/* -------------------------------------------------------------
+ * 3. Modal Dialog Overlay & Backdrop
+ * ------------------------------------------------------------- */
+.easy-unsubscribe-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10500;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.easy-unsubscribe-modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.easy-unsubscribe-modal-dialog {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    width: calc(100% - 32px);
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.easy-unsubscribe-modal-overlay.visible .easy-unsubscribe-modal-dialog {
+    transform: translateY(0) scale(1);
+}
+
+/* Modal Header */
+.easy-unsubscribe-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #eef2f6;
+}
+
+.easy-unsubscribe-modal-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    line-height: 1.4;
+}
+
+.easy-unsubscribe-modal-close {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0 4px;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+
+.easy-unsubscribe-modal-close:hover {
+    color: #1e293b;
+}
+
+/* Modal Body */
+.easy-unsubscribe-modal-body {
+    padding: 20px;
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: #334155;
+}
+
+.easy-unsubscribe-modal-body strong {
+    color: #0f172a;
+}
+
+.easy-unsubscribe-modal-body code {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    word-break: break-all;
+}
+
+.easy-unsub-url-preview {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background-color: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    overflow-x: auto;
+}
+
+/* Modal Footer */
+.easy-unsubscribe-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    background-color: #f8fafc;
+    border-top: 1px solid #eef2f6;
+}
+
+.easy-unsub-btn-cancel {
+    padding: 7px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.easy-unsub-btn-cancel:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.easy-unsub-btn-confirm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 18px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+    border: none;
+}
+
+.easy-unsub-btn-confirm.btn-danger {
+    background-color: #d93025;
+    color: #ffffff;
+}
+
+.easy-unsub-btn-confirm.btn-danger:hover {
+    background-color: #b31412;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.easy-unsub-btn-confirm.btn-primary {
+    background-color: #1a73e8;
+    color: #ffffff;
+}
+
+.easy-unsub-btn-confirm.btn-primary:hover {
+    background-color: #1557b0;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.easy-unsub-external-icon {
+    font-size: 0.9em;
+    line-height: 1;
+}
+
+/* Button Loading Spinner */
+.easy-unsub-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: easy-unsub-spin 0.65s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes easy-unsub-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* -------------------------------------------------------------
+ * 4. Dark Mode Support (Elastic Theme)
+ * ------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+    body:not(.light-mode) .easy-unsubscribe-btn {
+        color: #8ab4f8;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-btn:hover {
+        background-color: rgba(138, 180, 248, 0.12);
+        border-color: rgba(138, 180, 248, 0.3);
+        color: #aecbfa;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-badge.unsubscribed {
+        background-color: #2d3136;
+        border-color: #3c4043;
+        color: #9aa0a6;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-badge.unsubscribed .easy-unsubscribe-badge-icon {
+        color: #81c995;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-dialog {
+        background-color: #202124;
+        border-color: #3c4043;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-header {
+        border-bottom-color: #3c4043;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-title {
+        color: #e8eaed;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-close {
+        color: #9aa0a6;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-close:hover {
+        color: #e8eaed;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-body {
+        color: #bdc1c6;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-body strong {
+        color: #ffffff;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-body code {
+        background-color: #2d3136;
+        color: #8ab4f8;
+    }
+
+    body:not(.light-mode) .easy-unsub-url-preview {
+        background-color: #17181b;
+        border-color: #3c4043;
+    }
+
+    body:not(.light-mode) .easy-unsubscribe-modal-footer {
+        background-color: #1a1a1c;
+        border-top-color: #3c4043;
+    }
+
+    body:not(.light-mode) .easy-unsub-btn-cancel {
+        background-color: #2d3136;
+        border-color: #5f6368;
+        color: #e8eaed;
+    }
+
+    body:not(.light-mode) .easy-unsub-btn-cancel:hover {
+        background-color: #3c4043;
+    }
+}
+
+html.dark-mode .easy-unsubscribe-btn,
+body.dark-mode .easy-unsubscribe-btn {
+    color: #8ab4f8;
+}
+
+html.dark-mode .easy-unsubscribe-btn:hover,
+body.dark-mode .easy-unsubscribe-btn:hover {
+    background-color: rgba(138, 180, 248, 0.12);
+    border-color: rgba(138, 180, 248, 0.3);
+    color: #aecbfa;
+}
+
+html.dark-mode .easy-unsubscribe-badge.unsubscribed,
+body.dark-mode .easy-unsubscribe-badge.unsubscribed {
+    background-color: #2d3136;
+    border-color: #3c4043;
+    color: #9aa0a6;
+}
+
+html.dark-mode .easy-unsubscribe-badge.unsubscribed .easy-unsubscribe-badge-icon,
+body.dark-mode .easy-unsubscribe-badge.unsubscribed .easy-unsubscribe-badge-icon {
+    color: #81c995;
+}
+
+html.dark-mode .easy-unsubscribe-modal-dialog,
+body.dark-mode .easy-unsubscribe-modal-dialog {
+    background-color: #202124;
+    border-color: #3c4043;
+}
+
+html.dark-mode .easy-unsubscribe-modal-header,
+body.dark-mode .easy-unsubscribe-modal-header {
+    border-bottom-color: #3c4043;
+}
+
+html.dark-mode .easy-unsubscribe-modal-title,
+body.dark-mode .easy-unsubscribe-modal-title {
+    color: #e8eaed;
+}
+
+html.dark-mode .easy-unsubscribe-modal-close,
+body.dark-mode .easy-unsubscribe-modal-close {
+    color: #9aa0a6;
+}
+
+html.dark-mode .easy-unsubscribe-modal-close:hover,
+body.dark-mode .easy-unsubscribe-modal-close:hover {
+    color: #e8eaed;
+}
+
+html.dark-mode .easy-unsubscribe-modal-body,
+body.dark-mode .easy-unsubscribe-modal-body {
+    color: #bdc1c6;
+}
+
+html.dark-mode .easy-unsubscribe-modal-body strong,
+body.dark-mode .easy-unsubscribe-modal-body strong {
+    color: #ffffff;
+}
+
+html.dark-mode .easy-unsubscribe-modal-body code,
+body.dark-mode .easy-unsubscribe-modal-body code {
+    background-color: #2d3136;
+    color: #8ab4f8;
+}
+
+html.dark-mode .easy-unsub-url-preview,
+body.dark-mode .easy-unsub-url-preview {
+    background-color: #17181b;
+    border-color: #3c4043;
+}
+
+html.dark-mode .easy-unsubscribe-modal-footer,
+body.dark-mode .easy-unsubscribe-modal-footer {
+    background-color: #1a1a1c;
+    border-top-color: #3c4043;
+}
+
+html.dark-mode .easy-unsub-btn-cancel,
+body.dark-mode .easy-unsub-btn-cancel {
+    background-color: #2d3136;
+    border-color: #5f6368;
+    color: #e8eaed;
+}
+
+html.dark-mode .easy-unsub-btn-cancel:hover,
+body.dark-mode .easy-unsub-btn-cancel:hover {
+    background-color: #3c4043;
+}

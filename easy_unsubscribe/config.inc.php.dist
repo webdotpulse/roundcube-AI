@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * Configuration file for Roundcube Easy Unsubscribe Plugin
+ *
+ * Copy this file to config.inc.php to customize settings.
+ */
+
+$config = [];
+
+// Prioritize RFC 8058 One-Click POST over Mailto and HTTP links
+// Default: true
+$config['easy_unsubscribe_prefer_oneclick'] = true;
+
+// Allow plain HTTP unsubscribe URIs (in addition to HTTPS)
+// Note: RFC 8058 strictly specifies HTTPS, but some senders use HTTP.
+// Default: false (enforce HTTPS for One-Click POST; allow HTTP for landing page redirects)
+$config['easy_unsubscribe_allow_http_oneclick'] = false;
+
+// HTTP request timeout in seconds for RFC 8058 One-Click POST requests
+// Default: 15
+$config['easy_unsubscribe_timeout'] = 15;
+
+// Enable strict SSRF protection (blocks private IP ranges, loopback, and cloud metadata endpoints)
+// Default: true
+$config['easy_unsubscribe_ssrf_protection'] = true;
+
+// Button placement in message header view:
+// 'sender': Immediately next to sender display name / email address (Gmail style)
+// 'toolbar': In the message preview toolbar
+// 'both': In both places
+// Default: 'sender'
+$config['easy_unsubscribe_placement'] = 'sender';
+
+// Persist unsubscribed status across sessions in user preferences
+// Default: true
+$config['easy_unsubscribe_persist_state'] = true;
+
+// Custom User-Agent header for RFC 8058 HTTP requests
+// Default: 'Roundcube-EasyUnsubscribe/1.0'
+$config['easy_unsubscribe_user_agent'] = 'Roundcube-EasyUnsubscribe/1.0';
