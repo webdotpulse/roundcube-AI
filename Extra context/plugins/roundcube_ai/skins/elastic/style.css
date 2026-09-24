@@ -629,18 +629,10 @@ select.lpai-select:focus,
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-#taskmenu a.button-gemini-ai:before,
-#layout-menu #taskmenu a.button-gemini-ai:before,
-.button-gemini-ai:before,
-#taskmenu a.button-gemini-ai.xi-ai:before,
-#layout-menu #taskmenu a.button-gemini-ai.xi-ai:before,
-a.button-gemini-ai.xi-ai:before,
-.button-gemini-ai.xi-ai:before,
-a.xi-ai:before,
-.xi-ai:before {
-    content: "\ec89" !important; /* xskin outline font icon "ai" */
-    font-family: 'RcpIconFont', Icons, sans-serif !important;
-    font-weight: normal !important;
+#layout-menu #taskmenu a.button-gemini-ai.xi-ai:before, #layout-menu #taskmenu a.button-gemini-ai:before, #taskmenu a.button-gemini-ai.xi-ai:before, #taskmenu a.button-gemini-ai:before, .button-gemini-ai.xi-ai:before, .button-gemini-ai:before, .xi-ai:before, a.button-gemini-ai.xi-ai:before, a.xi-ai:before {
+    content: "\ec89" !important;
+    font-family: RcpIconFont, Icons, sans-serif !important;
+    font-weight: 400 !important;
     font-style: normal !important;
     font-variant: normal !important;
     text-transform: none !important;
@@ -650,15 +642,15 @@ a.xi-ai:before,
     background-image: none !important;
     text-indent: 0 !important;
     font-size: 24px !important;
-    line-height: 1 !important;
+    line-height: 0.5 !important;
     width: 24px !important;
     height: 24px !important;
     display: block !important;
     margin: 0 auto !important;
     text-align: center !important;
     color: #9333ea !important;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    filter: drop-shadow(0 1px 3px rgba(147, 51, 234, 0.3)) !important;
+    transition: all .25s cubic-bezier(.4, 0, .2, 1) !important;
+    filter: drop-shadow(0 1px 3px rgba(147, 51, 234, .3)) !important;
 }
 
 html.xicons-outlined #taskmenu a.button-gemini-ai:before,
