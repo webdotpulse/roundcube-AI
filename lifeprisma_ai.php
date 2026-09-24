@@ -2180,7 +2180,9 @@ Body:
     private function get_admin_config()
     {
         $rcmail = rcmail::get_instance();
+        if (!$rcmail || !method_exists($rcmail, 'get_dbh')) return [];
         $db = $rcmail->get_dbh();
+        if (!$db) return [];
         $table = method_exists($db, 'table_name') ? $db->table_name('users') : 'users';
 
         $result = $db->query("SELECT preferences FROM {$table} WHERE username = ?", '__genia_admin__');
@@ -2197,7 +2199,9 @@ Body:
     private function save_admin_config($config)
     {
         $rcmail = rcmail::get_instance();
+        if (!$rcmail || !method_exists($rcmail, 'get_dbh')) return false;
         $db = $rcmail->get_dbh();
+        if (!$db) return false;
         $table = method_exists($db, 'table_name') ? $db->table_name('users') : 'users';
 
         $result = $db->query("SELECT user_id FROM {$table} WHERE username = ?", '__genia_admin__');
@@ -2214,6 +2218,7 @@ Body:
                 '__genia_admin__', 'localhost', $prefs
             );
         }
+        return true;
     }
 
     private function get_usage_stats()
@@ -2224,7 +2229,13 @@ Body:
         }
 
         $rcmail = rcmail::get_instance();
+        if (!$rcmail || !method_exists($rcmail, 'get_dbh')) {
+            return ['total_users' => 0, 'active_users' => 0];
+        }
         $db = $rcmail->get_dbh();
+        if (!$db) {
+            return ['total_users' => 0, 'active_users' => 0];
+        }
         $table = method_exists($db, 'table_name') ? $db->table_name('users') : 'users';
 
         $result = $db->query("SELECT COUNT(*) as total_users FROM {$table} WHERE username != '__genia_admin__'");

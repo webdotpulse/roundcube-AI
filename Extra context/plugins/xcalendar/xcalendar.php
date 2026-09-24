@@ -335,38 +335,40 @@ class xcalendar extends XFramework\Plugin
                 $this->add_hook('template_object_messagebody', [$this, 'messageBody']);
             }
 
+            $this->register_action('xcalendar.processItipResponse', [$this, 'actionProcessItipResponse']);
+            $this->register_action('plugin.xcalendar.processItipResponse', [$this, 'actionProcessItipResponse']);
+            $this->register_action('xcalendar.processItipUpdateReply', [$this, 'actionProcessItipUpdateReply']);
+            $this->register_action('plugin.xcalendar.processItipUpdateReply', [$this, 'actionProcessItipUpdateReply']);
+            $this->register_action('xcalendar.processItipUpdateEvent', [$this, 'actionProcessItipUpdateEvent']);
+            $this->register_action('plugin.xcalendar.processItipUpdateEvent', [$this, 'actionProcessItipUpdateEvent']);
+            $this->register_action('xcalendar.processItipDelete', [$this, 'actionProcessItipDelete']);
+            $this->register_action('plugin.xcalendar.processItipDelete', [$this, 'actionProcessItipDelete']);
+            $this->register_action('xcalendar.addMessageEventsToCalendar', [$this, 'actionAddMessageEventsToCalendar']);
+            $this->register_action('plugin.xcalendar.addMessageEventsToCalendar', [$this, 'actionAddMessageEventsToCalendar']);
+
             switch ($this->rcmail->action) {
                 case 'xcalendar.processItipResponse':
-                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
-                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
-                    }
-                    $this->itip->processResponse();
+                case 'plugin.xcalendar.processItipResponse':
+                    $this->actionProcessItipResponse();
                     break;
                 case 'xcalendar.processItipUpdateReply':
-                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
-                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
-                    }
-                    $this->itip->processUpdateReply();
+                case 'plugin.xcalendar.processItipUpdateReply':
+                    $this->actionProcessItipUpdateReply();
                     break;
                 case 'xcalendar.processItipUpdateEvent':
-                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
-                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
-                    }
-                    $this->itip->processUpdateEvent();
+                case 'plugin.xcalendar.processItipUpdateEvent':
+                    $this->actionProcessItipUpdateEvent();
                     break;
                 case 'xcalendar.processItipDelete':
-                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
-                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
-                    }
-                    $this->itip->processDelete();
+                case 'plugin.xcalendar.processItipDelete':
+                    $this->actionProcessItipDelete();
                     break;
                 case 'xcalendar.addMessageEventsToCalendar':
-                    if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
-                        $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
-                    }
-                    $this->addMessageEventsToCalendar();
+                case 'plugin.xcalendar.addMessageEventsToCalendar':
+                    $this->actionAddMessageEventsToCalendar();
                     break;
                 case 'xcalendar.getTodaysAgenda':
+                case 'plugin.xcalendar.getTodaysAgenda':
                     $this->getTodaysAgenda();
                     break;
             }
@@ -474,6 +476,96 @@ class xcalendar extends XFramework\Plugin
         }
 
         return $arg;
+    }
+
+    public function actionProcessItipResponse(): void
+    {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+        try {
+            $this->itip->processResponse();
+        } catch (\Throwable $e) {
+            $message = $e->getMessage() ?: $this->gettext("xcalendar.error_importing_events");
+            $this->rcmail->output->command("display_message", $message, "error");
+            Utils::logError($message . " (489923)");
+        }
+        if ($this->rcmail->output) {
+            $this->rcmail->output->send();
+        }
+        exit;
+    }
+
+    public function actionProcessItipUpdateReply(): void
+    {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+        try {
+            $this->itip->processUpdateReply();
+        } catch (\Throwable $e) {
+            $message = $e->getMessage() ?: $this->gettext("xcalendar.error_importing_events");
+            $this->rcmail->output->command("display_message", $message, "error");
+            Utils::logError($message . " (489924)");
+        }
+        if ($this->rcmail->output) {
+            $this->rcmail->output->send();
+        }
+        exit;
+    }
+
+    public function actionProcessItipUpdateEvent(): void
+    {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+        try {
+            $this->itip->processUpdateEvent();
+        } catch (\Throwable $e) {
+            $message = $e->getMessage() ?: $this->gettext("xcalendar.error_importing_events");
+            $this->rcmail->output->command("display_message", $message, "error");
+            Utils::logError($message . " (489925)");
+        }
+        if ($this->rcmail->output) {
+            $this->rcmail->output->send();
+        }
+        exit;
+    }
+
+    public function actionProcessItipDelete(): void
+    {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+        try {
+            $this->itip->processDelete();
+        } catch (\Throwable $e) {
+            $message = $e->getMessage() ?: $this->gettext("xcalendar.error_importing_events");
+            $this->rcmail->output->command("display_message", $message, "error");
+            Utils::logError($message . " (489926)");
+        }
+        if ($this->rcmail->output) {
+            $this->rcmail->output->send();
+        }
+        exit;
+    }
+
+    public function actionAddMessageEventsToCalendar(): void
+    {
+        if ($this->rcmail && method_exists($this->rcmail, 'request_security_check')) {
+            $this->rcmail->request_security_check(rcube_utils::INPUT_POST);
+        }
+        try {
+            $this->addMessageEventsToCalendar();
+        } catch (\Throwable $e) {
+            $message = $e->getMessage() ?: $this->gettext("xcalendar.error_importing_events");
+            $this->rcmail->output->command("display_message", $message, "error");
+            Utils::logError($message . " (57884)");
+        }
+        if ($this->rcmail->output) {
+            $this->rcmail->output->send();
+        }
+        exit;
     }
 
     /**

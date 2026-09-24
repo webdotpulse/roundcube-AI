@@ -39,17 +39,18 @@ class Itip
             }
 
             // decrypt the identifying message data
-            if (!($data = json_decode(
-                $this->rcmail->decrypt(\rcube_utils::get_input_value("data", \rcube_utils::INPUT_POST)))
-            )) {
+            $raw_data = \rcube_utils::get_input_value("data", \rcube_utils::INPUT_POST);
+            $decrypted = $raw_data ? $this->rcmail->decrypt($raw_data) : false;
+            if (!$decrypted || !($data = json_decode($decrypted))) {
                 throw new \Exception("Invalid message data.");
             }
 
             // create a message and pull out its appropriate ics part
-            if (!($message = new \rcube_message($data->uid, $data->folder)) ||
-                !($ics = $message->get_part_body($data->mimeId))
+            $folder = !empty($data->folder) ? $data->folder : 'INBOX';
+            if (empty($data->uid) || !($message = new \rcube_message($data->uid, $folder)) ||
+                empty($data->mimeId) || !($ics = $message->get_part_body($data->mimeId))
             ) {
-                throw new \Exception("Cannot retrieve itip.");
+                throw new \Exception("Cannot retrieve calendar invitation.");
             }
 
             // check the calendar ID (only if not 0, which means don't add to calendar)
@@ -147,9 +148,9 @@ class Itip
             foreach(array_unique($notifications) as $notification) {
                 $this->rcmail->output->command("display_message", $this->rcmail->gettext("xcalendar.$notification"), "confirmation");
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = $e->getMessage() ?: $this->rcmail->gettext("xcalendar.error_importing_events");
-            $this->rcmail->output->command("display_message", $e->getMessage(), "error");
+            $this->rcmail->output->command("display_message", $message, "error");
             Utils::logError($message . " (489923)");
         }
     }
@@ -209,9 +210,9 @@ class Itip
                     );
                 }
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = $e->getMessage() ?: $this->rcmail->gettext("xcalendar.error_importing_events");
-            $this->rcmail->output->command("display_message", $e->getMessage(), "error");
+            $this->rcmail->output->command("display_message", $message, "error");
             Utils::logError($message . " (164344)");
         }
     }
@@ -252,9 +253,9 @@ class Itip
                 "confirmation"
             );
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = $e->getMessage() ?: $this->rcmail->gettext("xcalendar.error_importing_events");
-            $this->rcmail->output->command("display_message", $e->getMessage(), "error");
+            $this->rcmail->output->command("display_message", $message, "error");
             Utils::logError($message . " (489924)");
         }
     }
@@ -284,9 +285,9 @@ class Itip
                 "confirmation"
             );
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $message = $e->getMessage() ?: $this->rcmail->gettext("xcalendar.error_importing_events");
-            $this->rcmail->output->command("display_message", $e->getMessage(), "error");
+            $this->rcmail->output->command("display_message", $message, "error");
             Utils::logError($message . " (449032)");
         }
     }

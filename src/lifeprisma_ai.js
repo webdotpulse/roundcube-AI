@@ -2847,16 +2847,182 @@ function lpai_render_admin(root, data, urlSave, token, urlConfig) {
 
 function lpai_get_target_uids() {
     var uids = [];
-    if (window.rcmail && rcmail.message_list && typeof rcmail.message_list.get_selection === 'function') {
-        var sel = rcmail.message_list.get_selection();
-        if (sel && sel.length) {
-            uids = sel;
+    var wins = [window];
+    try {
+        if (window.parent && window.parent !== window) wins.push(window.parent);
+        if (window.top && window.top !== window && window.top !== window.parent) wins.push(window.top);
+    } catch (e) {}
+
+    for (var i = 0; i < wins.length; i++) {
+        var w = wins[i];
+        try {
+            if (w.rcmail && w.rcmail.message_list && typeof w.rcmail.message_list.get_selection === 'function') {
+                var sel = w.rcmail.message_list.get_selection();
+                if (sel && sel.length) {
+                    for (var s = 0; s < sel.length; s++) {
+                        if (sel[s] && uids.indexOf(sel[s]) === -1) {
+                            uids.push(sel[s]);
+                        }
+                    }
+                    if (uids.length) break;
+                }
+            }
+        } catch (e) {}
+    }
+
+    if (!uids.length) {
+        for (var j = 0; j < wins.length; j++) {
+            var w2 = wins[j];
+            try {
+                if (w2.rcmail && w2.rcmail.env && w2.rcmail.env.uid) {
+                    uids.push(w2.rcmail.env.uid);
+                    break;
+                }
+            } catch (e) {}
         }
     }
-    if (!uids.length && window.rcmail && rcmail.env.uid) {
-        uids = [rcmail.env.uid];
+
+    if (!uids.length) {
+        try {
+            var search = window.location.search;
+            if (search) {
+                var match = search.match(/[?&]_uid=([^&]+)/);
+                if (match && match[1]) {
+                    uids.push(decodeURIComponent(match[1]));
+                }
+            }
+        } catch (e) {}
     }
+
     return uids;
+}
+
+function lpai_remove_message_rows(uids) {
+    if (!uids || !uids.length) return;
+    if (!Array.isArray(uids)) uids = [uids];
+
+    var wins = [window];
+    var docs = [document];
+    try {
+        if (window.parent && window.parent !== window) {
+            wins.push(window.parent);
+            if (window.parent.document) docs.push(window.parent.document);
+        }
+        if (window.top && window.top !== window && window.top !== window.parent) {
+            wins.push(window.top);
+            if (window.top.document) docs.push(window.top.document);
+        }
+    } catch (e) {}
+
+    // 1. Remove rows and update selection in rcmail.message_list across all window contexts
+    wins.forEach(function(win) {
+        try {
+            if (!win.rcmail) return;
+            var rc = win.rcmail;
+            var mlist = rc.message_list;
+
+            uids.forEach(function(rawUid) {
+                var uid = String(rawUid);
+                var numUid = parseInt(rawUid, 10);
+
+                if (mlist) {
+                    // Call Roundcube list widget remove_row
+                    if (typeof mlist.remove_row === 'function') {
+                        try { mlist.remove_row(rawUid, true); } catch (e) {}
+                        try { mlist.remove_row(uid, true); } catch (e) {}
+                        if (!isNaN(numUid)) {
+                            try { mlist.remove_row(numUid, true); } catch (e) {}
+                        }
+                    }
+
+                    // Clean up internal rows hash
+                    if (mlist.rows) {
+                        if (mlist.rows[uid]) delete mlist.rows[uid];
+                        if (mlist.rows[rawUid]) delete mlist.rows[rawUid];
+                        if (!isNaN(numUid) && mlist.rows[numUid]) delete mlist.rows[numUid];
+                    }
+
+                    // Clean up selection array
+                    if (Array.isArray(mlist.selection)) {
+                        mlist.selection = mlist.selection.filter(function(item) {
+                            return String(item) !== uid && item !== rawUid && item !== numUid;
+                        });
+                    }
+
+                    if (typeof mlist.resize === 'function') {
+                        try { mlist.resize(); } catch (e) {}
+                    }
+                }
+
+                // If currently previewed message matches this uid, clear env.uid
+                if (rc.env && (String(rc.env.uid) === uid || rc.env.uid === numUid)) {
+                    rc.env.uid = null;
+                }
+            });
+
+            // Clear preview pane if clear_message method exists
+            if (typeof rc.clear_message === 'function') {
+                try { rc.clear_message(); } catch (e) {}
+            }
+        } catch (e) {}
+    });
+
+    // 2. Remove matching rows and clear preview in all DOM documents
+    docs.forEach(function(doc) {
+        try {
+            uids.forEach(function(rawUid) {
+                var uid = String(rawUid);
+                var numUid = parseInt(rawUid, 10);
+
+                var selectors = [
+                    '#rcmrow' + uid,
+                    'tr[id="rcmrow' + uid + '"]',
+                    'li[id="rcmrow' + uid + '"]',
+                    '[data-uid="' + uid + '"]'
+                ];
+                if (!isNaN(numUid) && String(numUid) !== uid) {
+                    selectors.push('#rcmrow' + numUid);
+                    selectors.push('[data-uid="' + numUid + '"]');
+                }
+
+                var matchedRows = doc.querySelectorAll(selectors.join(', '));
+                matchedRows.forEach(function(row) {
+                    row.style.display = 'none';
+                    if (row.parentNode) {
+                        row.parentNode.removeChild(row);
+                    }
+                });
+
+                // Clear and hide preview iframe/container if it was previewing this UID
+                var iframes = doc.querySelectorAll('iframe#messagecontframe, iframe#messageframe, iframe[name="messagecontframe"]');
+                iframes.forEach(function(ifr) {
+                    try {
+                        var src = ifr.getAttribute('src') || '';
+                        if (src.indexOf('_uid=' + uid) !== -1 || (!isNaN(numUid) && src.indexOf('_uid=' + numUid) !== -1)) {
+                            ifr.src = 'about:blank';
+                            var previewContainer = doc.getElementById('messagepreview') || doc.getElementById('preview-pane') || doc.querySelector('.message-preview');
+                            if (previewContainer) {
+                                previewContainer.style.display = 'none';
+                            }
+                            var listContainer = doc.getElementById('messagelist') || doc.getElementById('layout-list') || doc.querySelector('.messagelist');
+                            if (listContainer) {
+                                listContainer.style.display = '';
+                            }
+                            if (doc.body) {
+                                doc.body.classList.remove('layout-preview', 'preview-active');
+                            }
+                        }
+                    } catch (e) {}
+                });
+            });
+
+            // Remove any spam banner on page
+            var banner = doc.getElementById('lpai-spam-banner');
+            if (banner && banner.parentNode) {
+                banner.parentNode.removeChild(banner);
+            }
+        } catch (e) {}
+    });
 }
 
 function lpai_init_spam_toolbar() {
@@ -3149,6 +3315,9 @@ function lpai_mark_spam() {
         var mbox = rcmail.env.mailbox || 'INBOX';
         var lock = rcmail.set_busy(true, 'Tagging message as spam and training filter...');
 
+        // Immediately and visibly remove the message rows from the mailbox view
+        lpai_remove_message_rows(uids);
+
         $.ajax({
             url: rcmail.url('plugin.lifeprisma_ai_spam_tag'),
             type: 'POST',
@@ -3162,11 +3331,7 @@ function lpai_mark_spam() {
                 rcmail.set_busy(false, null, lock);
                 if (resp && resp.status === 'success') {
                     rcmail.display_message(resp.message || 'Message tagged as spam and moved to Junk folder.', 'confirmation');
-                    if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
-                        uids.forEach(function(uid) {
-                            rcmail.message_list.remove_row(uid);
-                        });
-                    }
+                    lpai_remove_message_rows(uids);
                     if (rcmail.env.action === 'show') {
                         rcmail.command('list');
                     } else if (typeof rcmail.command === 'function') {
@@ -3203,6 +3368,9 @@ function lpai_mark_ham() {
     var mbox = rcmail.env.mailbox || rcmail.env.lpai_junk_mbox || 'Junk';
     var lock = rcmail.set_busy(true, 'Marking message as legitimate and updating filter...');
 
+    // Immediately and visibly remove the message rows from the Junk mailbox view
+    lpai_remove_message_rows(uids);
+
     $.ajax({
         url: rcmail.url('plugin.lifeprisma_ai_spam_untag'),
         type: 'POST',
@@ -3216,11 +3384,7 @@ function lpai_mark_ham() {
             rcmail.set_busy(false, null, lock);
             if (resp && resp.status === 'success') {
                 rcmail.display_message(resp.message || 'Message unmarked as spam and moved to Inbox.', 'confirmation');
-                if (rcmail.message_list && typeof rcmail.message_list.remove_row === 'function') {
-                    uids.forEach(function(uid) {
-                        rcmail.message_list.remove_row(uid);
-                    });
-                }
+                lpai_remove_message_rows(uids);
                 var banner = document.getElementById('lpai-spam-banner');
                 if (banner) banner.remove();
 
