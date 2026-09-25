@@ -3491,8 +3491,11 @@ function lpai_batch_train_folder(mbox, train_as, btn) {
     var token = wrap.dataset.token;
     var feedback = document.getElementById('lpai-spam-feedback');
 
-    btn.disabled = true;
-    btn.innerHTML = '<i class="icon"></i> Training...';
+    var origHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="icon"></i> Training...';
+    }
 
     $.ajax({
         url: url,
@@ -3504,8 +3507,10 @@ function lpai_batch_train_folder(mbox, train_as, btn) {
             _train_as: train_as || 'spam'
         },
         success: function(resp) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="icon"></i> Train from Junk Folder';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || (train_as === 'ham' ? '<i class="icon"></i> Train from Inbox (Ham)' : '<i class="icon"></i> Train from Junk Folder');
+            }
             if (resp && resp.status === 'success') {
                 if (resp.stats) {
                     var elSpam = document.getElementById('lpai-stat-spam');
@@ -3526,8 +3531,10 @@ function lpai_batch_train_folder(mbox, train_as, btn) {
             }
         },
         error: function() {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="icon"></i> Train from Junk Folder';
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml || (train_as === 'ham' ? '<i class="icon"></i> Train from Inbox (Ham)' : '<i class="icon"></i> Train from Junk Folder');
+            }
             if (feedback) {
                 feedback.innerText = 'Training request failed.';
                 feedback.style.color = '#dc2626';

@@ -820,13 +820,22 @@ class LpaiSpamFilter
         }
 
         $common_stopwords = [
+            // English function words, pronouns, prepositions & auxiliaries
             'the','and','that','have','for','not','with','you','this','but','his','from','they','say','her',
             'she','will','one','all','would','there','their','what','out','about','who','get','which','go',
             'when','make','can','like','time','just','him','know','take','people','into','year','your','good',
             'some','could','them','see','other','than','then','now','look','only','come','its','over','think',
             'also','back','after','use','two','how','our','work','first','well','way','even','new','want',
-            'because','any','these','give','day','most','het','de','een','van','naar','met','voor','niet',
-            'dat','die','aan','ook','maar','om','bij','als','zijn','wat','over','door','uit','wel','nog',
+            'because','any','these','give','day','most','are','were','was','been','being','has','had','having',
+            'does','did','done','doing','should','would','could','shall','may','might','must',
+            'between','into','through','during','before','after','above','below','down','off','under',
+            'again','further','then','once','here','there','where','why','how','both','each','few','more',
+            'such','nor','own','same','too','very',
+            // Dutch function words, pronouns, prepositions & auxiliaries
+            'het','de','een','van','naar','met','voor','niet','dat','die','aan','ook','maar','om','bij',
+            'als','zijn','wat','over','door','uit','wel','nog','waren','worden','werd','omdat','haar','hun',
+            'mij','mijn','jou','jouw','wij','ons','onze','jullie','geen','kunnen','zullen','zou','zouden',
+            'moet','moeten','hebt','heeft','hebben','hadden','dan',
         ];
         $stopwords_map = array_flip($common_stopwords);
 
@@ -873,7 +882,7 @@ class LpaiSpamFilter
      */
     public static function calculate_token_probability(string $token, array $model): float
     {
-        $s = 1.0; // Robinson's weight for initial belief
+        $s = 2.0; // Robinson's weight for initial belief (2.0 provides stability against single-occurrence skew)
         $x = 0.5; // Assumed initial probability (neutral)
 
         $token_spam = 0;
@@ -897,13 +906,22 @@ class LpaiSpamFilter
         }
 
         // Relative frequency
-        $total_spam = max(1, (int) ($model['total_spam'] ?? 0) + 50);
-        $total_ham = max(1, (int) ($model['total_ham'] ?? 0) + 50);
+        $user_spam = (int) ($model['total_spam'] ?? 0);
+        $user_ham = (int) ($model['total_ham'] ?? 0);
+
+        $total_spam = max(1, $user_spam + 50);
+        $total_ham = max(1, $user_ham + 50);
 
         $p_spam = $token_spam / $total_spam;
         $p_ham = $token_ham / $total_ham;
 
         $p = $p_spam / ($p_spam + $p_ham);
+
+        // Imbalance guard: if user has trained spam but virtually zero ham,
+        // dampen tokens with zero ham observations that are not pre-trained baseline spam seeds
+        if ($token_ham === 0 && $user_ham === 0 && !isset(self::$baseline_tokens[$token])) {
+            $p = min(0.70, $p);
+        }
 
         // Robinson's smoothing formula: f(w) = (s*x + n*p) / (s + n)
         $smoothed = ($s * $x + $n * $p) / ($s + $n);
@@ -1443,6 +1461,13 @@ class LpaiSpamFilter
         $was_spam = false;
         if (!empty($message_id) && isset($model['learned_message_ids'][$message_id])) {
             $was_spam = ($model['learned_message_ids'][$message_id] === 'spam');
+            if ($model['learned_message_ids'][$message_id] === 'ham') {
+                // Already trained as ham, skip duplicate count (idempotent)
+                $model['success'] = true;
+                $model['spam_count'] = (int) ($model['total_spam'] ?? 0);
+                $model['ham_count'] = (int) ($model['total_ham'] ?? 0);
+                return $model;
+            }
         } elseif ($reverse_spam) {
             $was_spam = true;
         }

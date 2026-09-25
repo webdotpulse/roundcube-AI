@@ -871,8 +871,8 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
                                 $client->add_flags($uid, 'Junk $Junk $Label1 \\Seen');
                             }
 
-                            // Continuous learning: Auto-train Bayesian spam filter
-                            if (!empty($config['lifeprisma_ai_spam_auto_learn'] ?? true)) {
+                            // Continuous learning: Auto-train Bayesian spam filter on high-confidence spam
+                            if (!empty($config['lifeprisma_ai_spam_auto_learn'] ?? true) && !empty($spam_decision['score']) && $spam_decision['score'] >= 95) {
                                 preg_match('/^Message-ID:\s*(<[^>]+>|[^\r\n]+)/mi', $msg['raw_headers'], $m_id);
                                 $msg_id = trim($m_id[1] ?? '');
                                 LpaiSpamFilter::learn_spam($subject, $body, $msg['raw_headers'], $from, $email, $msg_id);
@@ -899,6 +899,15 @@ function lpai_worker_execute_pass($config, LpaiWorkerState $state, $target_accou
 
                         // Skip further processing, triage, or draft generation
                         continue;
+                    }
+
+                    if (!$spam_decision['is_spam'] && !$is_dry_run) {
+                        // Symmetric auto-learning: Auto-train Bayesian engine on arrival for high-confidence clean/legitimate mail (HAM)
+                        if (!empty($config['lifeprisma_ai_spam_auto_learn'] ?? true) && isset($spam_decision['score']) && $spam_decision['score'] <= 15) {
+                            preg_match('/^Message-ID:\s*(<[^>]+>|[^\r\n]+)/mi', $msg['raw_headers'], $m_id);
+                            $msg_id = trim($m_id[1] ?? '');
+                            LpaiSpamFilter::learn_ham($subject, $body, $msg['raw_headers'], $from, $email, $msg_id, false);
+                        }
                     }
                 }
 

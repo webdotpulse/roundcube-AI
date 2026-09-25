@@ -390,6 +390,33 @@ assert_true(strpos($js_src, "xi-save") !== false, "src/lifeprisma_ai.js adds xi-
 $sched_js = file_get_contents(__DIR__ . '/../Extra context/plugins/email_scheduler/email_scheduler.js');
 assert_true(strpos($sched_js, "xi-save") !== false, "email_scheduler.js assigns xi-save class to save draft button");
 
+// --- Test Group 15: Symmetric Auto-Learning & False-Positive Prevention ---
+echo "\n--- Group 15: Symmetric Auto-Learning & False-Positive Prevention --- \n";
+
+// 1. Symmetric auto-learning in lifeprisma_ai.php and worker.php
+assert_true(strpos($php_code, "LpaiSpamFilter::learn_ham(") !== false, "lifeprisma_ai.php invokes learn_ham on incoming legitimate messages");
+assert_true(strpos($php_code, "\$decision['score'] <= 15") !== false, "lifeprisma_ai.php auto-learns ham when score <= 15");
+assert_true(strpos($worker_code, "\$spam_decision['score'] <= 15") !== false, "worker.php auto-learns ham when score <= 15");
+
+// 2. Settings dashboard Train from Inbox button
+assert_true(strpos($php_code, "lpai-btn-train-inbox") !== false, "lifeprisma_ai.php provides 'Train from Inbox (Ham)' button");
+assert_true(strpos($php_code, "lpai_batch_train_folder('INBOX', 'ham'") !== false || strpos($php_code, "lpai_batch_train_folder(\\'INBOX\\', \\'ham\\'") !== false, "Inbox button calls lpai_batch_train_folder with INBOX and ham");
+assert_true(strpos($php_code, "\$default_mbox = (\$train_as === 'ham') ? 'INBOX'") !== false, "handle_spam_batch_train defaults to INBOX for ham training");
+
+// 3. Imbalance dampening guard in LpaiSpamFilter.php
+$spam_filter_code = file_get_contents($ai_dir . '/src/LpaiSpamFilter.php');
+assert_true(strpos($spam_filter_code, "Imbalance guard") !== false, "LpaiSpamFilter.php implements Bayesian imbalance guard");
+assert_true(strpos($spam_filter_code, "min(0.70, \$p)") !== false, "LpaiSpamFilter.php dampens unobserved ham tokens when model has zero ham");
+
+// 4. Test idempotency of learn_ham
+$clean_filter = new LpaiSpamFilter('idempotent_test@example.com', $test_data_dir);
+$clean_filter->learn_ham("Important business contract terms", ['from' => 'client@acme.corp', 'subject' => 'Contract'], false, '<msg123@acme.corp>');
+$stats1 = $clean_filter->get_stats();
+assert_true($stats1['ham_messages'] === 1, "Initial ham training records 1 message");
+$clean_filter->learn_ham("Important business contract terms", ['from' => 'client@acme.corp', 'subject' => 'Contract'], false, '<msg123@acme.corp>');
+$stats2 = $clean_filter->get_stats();
+assert_true($stats2['ham_messages'] === 1, "Duplicate ham training on same message_id is idempotent (count remains 1)");
+
 // Cleanup test scratch directory
 array_map('unlink', glob("{$test_data_dir}/*.*"));
 @rmdir($test_data_dir);

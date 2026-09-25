@@ -1334,6 +1334,12 @@ Body:
                     // Tag as NonJunk so it's not repeatedly scanned on future checks
                     $storage->set_flag($uid, 'NonJunk', $mbox);
                     $storage->set_flag($uid, '$NotJunk', $mbox);
+
+                    // Symmetric auto-learning: Auto-train Bayesian engine on arrival for high-confidence clean/legitimate mail (HAM)
+                    if ($auto_learn && isset($decision['score']) && $decision['score'] <= 15) {
+                        $msg_id = $this->extract_message_id($raw_headers);
+                        LpaiSpamFilter::learn_ham($ctx['subject'] ?? '', $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? '', $user_id, $msg_id, false);
+                    }
                 }
             }
 
@@ -1508,6 +1514,12 @@ Body:
                         if ($storage) {
                             $storage->set_flag($header->uid, 'NonJunk', $curr_mbox);
                             $storage->set_flag($header->uid, '$NotJunk', $curr_mbox);
+                        }
+
+                        // Symmetric auto-learning: Auto-train Bayesian engine on arrival for high-confidence clean/legitimate mail (HAM)
+                        if ($auto_learn && isset($decision['score']) && $decision['score'] <= 15) {
+                            $msg_id = $raw_headers ? $this->extract_message_id($raw_headers) : '';
+                            LpaiSpamFilter::learn_ham($ctx['subject'] ?? ($header->subject ?? ''), $ctx['body'] ?? '', $raw_headers, $ctx['from'] ?? ($header->from ?? ''), $user_id, $msg_id, false);
                         }
                     }
                 }
@@ -3766,8 +3778,9 @@ Return ONLY the deliverability-optimized newsletter HTML.";
     public function handle_spam_batch_train()
     {
         $rcmail = rcmail::get_instance();
-        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_POST) ?: $this->get_junk_folder();
         $train_as = rcube_utils::get_input_value('_train_as', rcube_utils::INPUT_POST) ?: 'spam';
+        $default_mbox = ($train_as === 'ham') ? 'INBOX' : $this->get_junk_folder();
+        $mbox = rcube_utils::get_input_value('_mbox', rcube_utils::INPUT_POST) ?: $default_mbox;
         $storage = $rcmail->get_storage();
         $storage->set_folder($mbox);
         $uids = $storage->search($mbox, 'ALL');
@@ -3869,9 +3882,10 @@ Return ONLY the deliverability-optimized newsletter HTML.";
                     <div class="lpai-stat-label">Spam Ratio</div>
                 </div>
             </div>
-            <div class="lpai-spam-actions-row" style="margin-top: 14px; display: flex; gap: 10px; align-items: center;">
+            <div class="lpai-spam-actions-row" style="margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                 <button type="button" class="btn btn-secondary lpai-btn-reset-db" onclick="lpai_reset_spam_db(this)"><i class="icon"></i> Reset Learned Database</button>
                 <button type="button" class="btn btn-secondary lpai-btn-train-junk" onclick="lpai_batch_train_folder(\'Junk\', \'spam\', this)"><i class="icon"></i> Train from Junk Folder</button>
+                <button type="button" class="btn btn-secondary lpai-btn-train-inbox" onclick="lpai_batch_train_folder(\'INBOX\', \'ham\', this)"><i class="icon"></i> Train from Inbox (Ham)</button>
                 <span id="lpai-spam-feedback" class="lpai-spam-feedback" style="display:none; font-size: 13px; color: #16a34a; font-weight: 500;"></span>
             </div>
         </div>';
