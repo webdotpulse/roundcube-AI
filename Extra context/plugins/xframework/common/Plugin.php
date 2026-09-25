@@ -58,7 +58,6 @@ abstract class Plugin extends \rcube_plugin
         'outlook' => 'Outlook',
         'w21' => 'W21',
         'droid_plus' => 'Droid+',
-        'gmail' => 'Gmail',
         'gmail_plus' => 'GMail+',
         'outlook_plus' => 'Outlook+',
     ];

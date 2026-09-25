@@ -1,6 +1,6 @@
 /**
  * Master Combinatorial E2E Matrix Runner for Roundcube AI Suite
- * Matrix: 4 Skins (gmail_plus, gmail, elastic, larry) x 2 Viewports (Desktop 1920x1080, Mobile 375x812)
+ * Matrix: 3 Skins (gmail_plus, elastic, larry) x 2 Viewports (Desktop 1920x1080, Mobile 375x812)
  */
 
 const { chromium } = require('./node_modules/playwright');
@@ -10,7 +10,7 @@ const { testComposeAndAi } = require('./test_compose_ai');
 const { testCalendar } = require('./test_calendar');
 const { testSettingsAndPlugins } = require('./test_settings_plugins');
 
-const SKINS = ['gmail_plus', 'gmail', 'elastic', 'larry'];
+const SKINS = ['gmail_plus', 'elastic', 'larry'];
 const VIEWPORTS = [
     { name: 'Desktop (1920x1080)', width: 1920, height: 1080, isMobile: false },
     { name: 'Mobile (375x812)', width: 375, height: 812, isMobile: true }

@@ -2,7 +2,7 @@
 /**
  * Roundcube AI Extra Content Installer
  *
- * Automatically installs and synchronizes bundled skins (gmail_plus, gmail)
+ * Automatically installs and synchronizes bundled skins (gmail_plus)
  * and companion plugins (xskin, xframework, customizr, thread_drafts, thunderbird_labels, xcalendar, roundcube_loader, xmultibox, xsignature, roundcube_attachments, twofactor_auth, email_scheduler, newsletter, vacation_forward, persistent_login, easy_unsubscribe)
  * into the host Roundcube Webmail environment during `composer install` / `composer update`.
  *
@@ -760,7 +760,7 @@ class RoundcubeExtraContentInstaller
 
         $targetSkin = $this->selectedSkin;
         $hasTargetSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"]" . preg_quote($targetSkin, '/') . "['\"]/", $configContent);
-        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus|gmail)['\"]/", $configContent);
+        $hasAnyBundledSkin = (bool)preg_match("/\\\$config\\['skin'\\]\\s*=\\s*['\"](?:gmail_plus)['\"]/", $configContent);
         $skinNeedsUpdate = $this->skinExplicitlySet ? !$hasTargetSkin : !$hasAnyBundledSkin;
 
         $hasEmptyLicenseKey = preg_match("/\\\$config\\[['\"]license_key['\"]\\]\\s*=\\s*['\"]['\"];/", $configContent);
@@ -944,29 +944,17 @@ class RoundcubeExtraContentInstaller
             $this->success("  -> Added \$config['remove_vendor_branding'] = true to config.inc.php");
         }
 
-        // Standard Mailbox Logo, Login Page Logo, and Favicon branding (Grid Mail or Gmail)
+        // Standard Mailbox Logo, Login Page Logo, and Favicon branding (Grid Mail)
         if (!preg_match("/\\\$config\\[['\"]skin_logo['\"]\\]/", $content)) {
-            if ($this->selectedSkin === 'gmail') {
-                $content .= "\n// Standard Logo & Favicon branding (Gmail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail/images/logo.svg',\n    'login' => 'skins/gmail/images/logo.svg',\n    '[favicon]' => 'skins/gmail/images/favicon.ico',\n];\n";
-                $modified = true;
-                $this->success("  -> Configured standard Gmail logo & favicon in \$config['skin_logo']");
-            } else {
-                $content .= "\n// Standard Logo & Favicon branding (Grid Mail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail_plus/assets/images/logo_header.svg',\n    'login' => 'skins/gmail_plus/assets/images/logo_login.svg',\n    '[favicon]' => 'skins/gmail_plus/assets/images/favicon.png',\n];\n";
-                $modified = true;
-                $this->success("  -> Configured standard Grid Mail logo & favicon in \$config['skin_logo']");
-            }
+            $content .= "\n// Standard Logo & Favicon branding (Grid Mail)\n\$config['skin_logo'] = [\n    '*' => 'skins/gmail_plus/assets/images/logo_header.svg',\n    'login' => 'skins/gmail_plus/assets/images/logo_login.svg',\n    '[favicon]' => 'skins/gmail_plus/assets/images/favicon.png',\n];\n";
+            $modified = true;
+            $this->success("  -> Configured standard Grid Mail logo & favicon in \$config['skin_logo']");
         }
 
         if (!preg_match("/\\\$config\\[['\"]favicon['\"]\\]/", $content)) {
-            if ($this->selectedSkin === 'gmail') {
-                $content .= "\$config['favicon'] = 'skins/gmail/images/favicon.ico';\n";
-                $modified = true;
-                $this->success("  -> Configured standard favicon in \$config['favicon']");
-            } else {
-                $content .= "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png';\n";
-                $modified = true;
-                $this->success("  -> Configured standard favicon in \$config['favicon']");
-            }
+            $content .= "\$config['favicon'] = 'skins/gmail_plus/assets/images/favicon.png';\n";
+            $modified = true;
+            $this->success("  -> Configured standard favicon in \$config['favicon']");
         }
 
         if (!preg_match("/\\\$config\\[['\"]autoexpand_threads['\"]\\]/", $content)) {
@@ -1161,7 +1149,7 @@ Usage:
 Options:
   --roundcube-path=DIR   Specify target Roundcube root directory
   --target=DIR           Alias for --roundcube-path
-  --skin=SKIN            Skin to activate with --activate (e.g. 'gmail', 'gmail_plus'; default: 'gmail_plus')
+  --skin=SKIN            Skin to activate with --activate (e.g. 'gmail_plus'; default: 'gmail_plus')
   --activate             Automatically enable plugins, skin, license_key and branding removal in config/config.inc.php
   --dry-run              Simulate installation without making filesystem changes
   --verbose, -v          Verbose output

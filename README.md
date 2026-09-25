@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Autonomous Executive AI Assistant & Enterprise Plugin Suite for Roundcube Webmail</strong><br>
-  Powered by Google Gemini 3.8 Flash • 18 Production-Grade Plugins • Multi-Skin Support (GMail+, GMail, Elastic, Larry) • Complete Database Migrations (SQLite, MySQL, PostgreSQL) • Automated Playwright E2E Matrix Verified
+  Powered by Google Gemini 3.8 Flash • 18 Production-Grade Plugins • Multi-Skin Support (GMail+, Elastic, Larry) • Complete Database Migrations (SQLite, MySQL, PostgreSQL) • Automated Playwright E2E Matrix Verified
 </p>
 
 <p align="center">
@@ -21,8 +21,8 @@
   <img src="https://img.shields.io/badge/AI%20Engine-Google%20Gemini-4285F4?style=flat-square&logo=google" alt="Google Gemini">
   <img src="https://img.shields.io/badge/Default%20Model-gemini--3.8--flash-34A853?style=flat-square" alt="gemini-3.8-flash">
   <img src="https://img.shields.io/badge/Plugins%20Bundled-18%20Active-7c3aed?style=flat-square" alt="18 Active Plugins">
-  <img src="https://img.shields.io/badge/Skins-GMail%2B%20%7C%20GMail%20%7C%20Elastic%20%7C%20Larry-f59e0b?style=flat-square" alt="Supported Skins">
-  <img src="https://img.shields.io/badge/PHPUnit%20Tests-29%2F29%20Passing%20(100%25)-success?style=flat-square" alt="PHP Tests Passing">
+  <img src="https://img.shields.io/badge/Skins-GMail%2B%20%7C%20Elastic%20%7C%20Larry-f59e0b?style=flat-square" alt="Supported Skins">
+  <img src="https://img.shields.io/badge/PHPUnit%20Tests-28%2F28%20Passing%20(100%25)-success?style=flat-square" alt="PHP Tests Passing">
   <img src="https://img.shields.io/badge/Playwright%20E2E-8%2F8%20Matrix%20Cells%20(0%20Errors)-blue?style=flat-square" alt="Playwright E2E Verified">
   <img src="https://img.shields.io/badge/Composer-webdotpulse%2Froundcube--plugin-885630?style=flat-square&logo=composer" alt="Composer Package">
   <img src="https://img.shields.io/badge/Roundcube-1.5%2B%20%2F%201.6%2B-blue?style=flat-square" alt="Roundcube">
@@ -142,7 +142,7 @@ composer require webdotpulse/roundcube-plugin:dev-main
 > **What Composer & the Plugin Installer do automatically:**
 > - Downloads `webdotpulse/roundcube-plugin` into `plugins/` (with `roundcube_ai` and `lifeprisma_ai` alias compatibility).
 > - Automatically runs the post-install script (`bin/install-extra.php`) via `roundcube/plugin-installer` hooks.
-> - Deploys all bundled skins (`gmail_plus`, `gmail`) into Roundcube's `skins/` directory.
+> - Deploys the bundled skin (`gmail_plus`) into Roundcube's `skins/` directory.
 > - Synchronizes all 18 enterprise companion plugins (`roundcube_ai`, `xframework`, `xskin`, `customizr`, `xcalendar`, `thunderbird_labels`, `xsignature`, `xmultibox`, `email_scheduler`, `newsletter`, `persistent_login`, `twofactor_auth`, `vacation_forward`, `roundcube_loader`, `roundcube_attachments`, `thread_drafts`, `merge_and_fix`, `easy_unsubscribe`) into Roundcube's `plugins/` directory.
 > - Bootstraps default plugin configuration files (`config.inc.php`) from `.dist`/`.sample` templates.
 
@@ -175,7 +175,7 @@ php plugins/roundcube_suite/bin/install-extra.php --activate
 If you prefer to configure Roundcube manually or want to verify your setup, ensure all 18 plugins are registered in `config/config.inc.php` in the correct dependency order:
 
 ```php
-// Active Skin: 'gmail_plus', 'gmail', 'elastic', or 'larry'
+// Active Skin: 'gmail_plus', 'elastic', or 'larry'
 $config['skin'] = 'gmail_plus';
 
 // Active Plugins (xframework and xskin must precede dependent UI plugins)
@@ -288,12 +288,11 @@ php bin/worker.php --account=user   # Process a specific user account only
 
 ## Skins & Responsive Compatibility
 
-All plugins are styled and verified across four distinct skins:
+All plugins are styled and verified across three distinct skins:
 
 1. **`gmail_plus`**: Modern commercial-grade skin featuring widescreen 3-pane layouts, floating action buttons, dark mode support, and dedicated sidebar AI docking.
-2. **`gmail`**: Clean Gmail-style interface with native dropdown enhancements and minimal toolbar clutter.
-3. **`elastic`**: The official responsive Roundcube skin, fully supported on both desktop and mobile viewports.
-4. **`larry`**: Classic Roundcube interface with full legacy theme styling and context menus.
+2. **`elastic`**: The official responsive Roundcube skin, fully supported on both desktop and mobile viewports.
+3. **`larry`**: Classic Roundcube interface with full legacy theme styling and context menus.
 
 ---
 
@@ -333,7 +332,7 @@ node run_combinatorial_matrix.js
 ===============================================================
 COMBINATORIAL E2E VERIFICATION REPORT
 ===============================================================
-Combinations Tested: 8 / 8 PASSED (100%)
+Combinations Tested: 6 / 6 PASSED (100%)
 Total Interactive Actions: 382
 Buttons & Links Clicked:  199
 Forms & Fields Submitted:  8
@@ -343,8 +342,6 @@ Total Uncaught Console/HTTP Errors: 0
 MATRIX BREAKDOWN:
   ✓ PASS | Skin: gmail_plus  | Viewport: Desktop (1920x1080)  | Actions: 50 | Errors: 0
   ✓ PASS | Skin: gmail_plus  | Viewport: Mobile (375x812)     | Actions: 50 | Errors: 0
-  ✓ PASS | Skin: gmail       | Viewport: Desktop (1920x1080)  | Actions: 48 | Errors: 0
-  ✓ PASS | Skin: gmail       | Viewport: Mobile (375x812)     | Actions: 48 | Errors: 0
   ✓ PASS | Skin: elastic     | Viewport: Desktop (1920x1080)  | Actions: 50 | Errors: 0
   ✓ PASS | Skin: elastic     | Viewport: Mobile (375x812)     | Actions: 50 | Errors: 0
   ✓ PASS | Skin: larry       | Viewport: Desktop (1920x1080)  | Actions: 41 | Errors: 0
